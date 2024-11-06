@@ -1,0 +1,1 @@
+com.momosoftworks.coldsweat.util.compat.kubejs.KubePlugin
