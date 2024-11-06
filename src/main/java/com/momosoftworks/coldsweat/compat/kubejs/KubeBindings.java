@@ -1,4 +1,4 @@
-package com.momosoftworks.coldsweat.util.compat.kubejs;
+package com.momosoftworks.coldsweat.compat.kubejs;
 
 import com.momosoftworks.coldsweat.api.registry.TempModifierRegistry;
 import com.momosoftworks.coldsweat.api.temperature.modifier.TempModifier;

@@ -2,7 +2,6 @@ package com.momosoftworks.coldsweat.util.world;
 
 import com.mojang.datafixers.util.Pair;
 import com.momosoftworks.coldsweat.api.event.core.init.GatherDefaultTempModifiersEvent;
-import com.momosoftworks.coldsweat.api.registry.TempModifierRegistry;
 import com.momosoftworks.coldsweat.api.temperature.modifier.TempModifier;
 import com.momosoftworks.coldsweat.api.util.Placement;
 import com.momosoftworks.coldsweat.api.util.Temperature;
@@ -15,7 +14,7 @@ import com.momosoftworks.coldsweat.core.network.message.ParticleBatchMessage;
 import com.momosoftworks.coldsweat.core.network.message.PlayEntityAttachedSoundMessage;
 import com.momosoftworks.coldsweat.core.network.message.SyncForgeDataMessage;
 import com.momosoftworks.coldsweat.util.ClientOnlyHelper;
-import com.momosoftworks.coldsweat.util.compat.CompatManager;
+import com.momosoftworks.coldsweat.compat.CompatManager;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.registries.ModBlocks;
 import it.unimi.dsi.fastutil.longs.LongSet;

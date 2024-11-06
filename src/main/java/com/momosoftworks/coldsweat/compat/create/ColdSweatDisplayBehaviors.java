@@ -1,4 +1,4 @@
-package com.momosoftworks.coldsweat.util.compat.create;
+package com.momosoftworks.coldsweat.compat.create;
 
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.common.blockentity.ThermolithBlockEntity;

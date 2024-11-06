@@ -26,7 +26,7 @@ import com.momosoftworks.coldsweat.util.serialization.*;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
 import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
 import com.momosoftworks.coldsweat.data.codec.configuration.SpawnBiomeData;
-import com.momosoftworks.coldsweat.util.compat.CompatManager;
+import com.momosoftworks.coldsweat.compat.CompatManager;
 import com.momosoftworks.coldsweat.util.math.Vec2i;
 import com.momosoftworks.coldsweat.util.registries.ModEntities;
 import net.minecraft.core.Registry;

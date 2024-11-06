@@ -1,7 +1,5 @@
 package com.momosoftworks.coldsweat.mixin.compat;
 
-import com.momosoftworks.coldsweat.util.compat.CompatManager;
-import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.simibubi.create.content.equipment.armor.RemainingAirOverlay;
 import net.minecraft.client.player.LocalPlayer;
 import org.spongepowered.asm.mixin.Mixin;
