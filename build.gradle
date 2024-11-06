@@ -39,6 +39,8 @@ minecraft {
     runs {
         client {
             workingDirectory project.file('run')
+            property 'mixin.env.remapRefMap', 'true'
+            property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
             property 'forge.logging.markers', 'REGISTRIES'
             property 'forge.logging.console.level', 'debug'
             property 'forge.enabledGameTestNamespaces', 'coldsweat'
@@ -101,6 +103,21 @@ repositories {
             includeGroup "curse.maven"
         }
     }
+    maven {
+        // location of the maven for Registrate and Flywheel
+        name = 'tterrag maven'
+        url = 'https://maven.tterrag.com'
+    }
+    maven {
+        url "https://maven.architectury.dev/"
+    }
+    maven {
+        url "https://maven.saps.dev/minecraft"
+        content {
+            includeGroup "dev.latvian.mods"
+            includeGroup "dev.ftb.mods"
+        }
+    }
     mavenCentral()
 }
 
@@ -131,6 +148,10 @@ dependencies {
     implementation fg.deobf("curse.maven:spoiled-364918:3776531")
     implementation fg.deobf("curse.maven:ob-aquamirae-536254:4420334")
     implementation fg.deobf("curse.maven:obscure-api-638417:4420298")
+
+    implementation fg.deobf("dev.latvian.mods:kubejs-forge:${kubejs_version}")
+    implementation fg.deobf("dev.latvian.mods:rhino-forge:${rhino_version}")
+    implementation fg.deobf("me.shedaniel:architectury-forge:${architectury_version}")
 
     compileOnly fg.deobf("curse.maven:better-weather-400714:3420517")
     compileOnly fg.deobf("curse.maven:vampirism-233029:4640398")
