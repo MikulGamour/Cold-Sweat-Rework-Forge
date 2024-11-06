@@ -3,6 +3,7 @@ package com.momosoftworks.coldsweat.api.util;
 import com.google.common.collect.ImmutableList;
 import com.mojang.serialization.Codec;
 import com.momosoftworks.coldsweat.api.event.common.temperautre.TempModifierEvent;
+import com.momosoftworks.coldsweat.api.event.common.temperautre.TemperatureChangedEvent;
 import com.momosoftworks.coldsweat.api.temperature.modifier.TempModifier;
 import com.momosoftworks.coldsweat.common.capability.handler.EntityTempManager;
 import com.momosoftworks.coldsweat.common.capability.temperature.ITemperatureCap;
@@ -15,7 +16,6 @@ import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.math.InterruptableStreamer;
 import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
@@ -86,11 +86,22 @@ public class Temperature
     }
 
     public static void set(LivingEntity entity, Trait trait, double value)
-    {   EntityTempManager.getTemperatureCap(entity).ifPresent(cap -> cap.setTrait(trait, value));
+    {
+        if (MinecraftForge.EVENT_BUS.post(new TemperatureChangedEvent(entity, trait, get(entity, trait), value)))
+        {   return;
+        }
+        EntityTempManager.getTemperatureCap(entity).ifPresent(cap -> cap.setTrait(trait, value));
+        updateTemperature(entity);
     }
 
     public static void add(LivingEntity entity, Trait trait, double value)
-    {   EntityTempManager.getTemperatureCap(entity).ifPresent(cap -> cap.setTrait(trait, cap.getTrait(trait) + value));
+    {
+        double oldTemp = get(entity, trait);
+        if (MinecraftForge.EVENT_BUS.post(new TemperatureChangedEvent(entity, trait, oldTemp, oldTemp + value)))
+        {   return;
+        }
+        EntityTempManager.getTemperatureCap(entity).ifPresent(cap -> cap.setTrait(trait, cap.getTrait(trait) + value));
+        updateTemperature(entity);
     }
 
     /**
@@ -371,23 +382,22 @@ public class Temperature
     {
         if (!entity.level.isClientSide)
         {
-            ColdSweatPacketHandler.INSTANCE.send(entity instanceof ServerPlayer player
-                                                 ? PacketDistributor.PLAYER.with(() -> player)
-                                                 : PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> entity),
+            ColdSweatPacketHandler.INSTANCE.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> entity),
             new SyncTemperatureMessage(entity, cap.serializeTraits(), instant));
         }
     }
-    public static void updateTemperature(LivingEntity entity, boolean instant)
-    {   EntityTempManager.getTemperatureCap(entity).ifPresent(cap -> updateTemperature(entity, cap, instant));
+    public static void updateTemperature(LivingEntity entity)
+    {
+        EntityTempManager.getTemperatureCap(entity).ifPresent(cap ->
+        {   cap.syncValues(entity);
+        });
     }
 
     public static void updateModifiers(LivingEntity entity, ITemperatureCap cap)
     {
         if (!entity.level.isClientSide)
         {
-            ColdSweatPacketHandler.INSTANCE.send(entity instanceof ServerPlayer player
-                                                 ? PacketDistributor.PLAYER.with(() -> player)
-                                                 : PacketDistributor.TRACKING_ENTITY.with(() -> entity),
+            ColdSweatPacketHandler.INSTANCE.send(PacketDistributor.TRACKING_ENTITY_AND_SELF.with(() -> entity),
             new SyncTempModifiersMessage(entity, cap.serializeModifiers()));
         }
     }

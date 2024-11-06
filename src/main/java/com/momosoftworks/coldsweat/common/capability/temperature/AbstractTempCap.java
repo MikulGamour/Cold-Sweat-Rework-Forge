@@ -307,8 +307,10 @@ public class AbstractTempCap implements ITemperatureCap
         }
     }
 
+    @Override
     public void syncValues(LivingEntity entity)
-    {   Temperature.updateTemperature(entity, this, false);
+    {
+        Temperature.updateTemperature(entity, this, false);
         changed = false;
         syncTimer = 5;
     }

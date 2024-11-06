@@ -676,12 +676,8 @@ public class EntityTempManager
                 if (player.isSleeping())
                 {
                     // Divide the player's current temperature by 4
-                    getTemperatureCap(player).ifPresent(cap ->
-                    {
-                        double temp = cap.getTrait(Temperature.Trait.CORE);
-                        cap.setTrait(Temperature.Trait.CORE, temp / 4f);
-                        Temperature.updateTemperature(player, cap, true);
-                    });
+                    double temp = Temperature.get(player, Temperature.Trait.CORE);
+                    Temperature.set(player, Temperature.Trait.CORE, temp / 4f);
                 }
             });
         }
