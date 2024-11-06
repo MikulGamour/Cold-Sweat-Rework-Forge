@@ -219,11 +219,9 @@ public class TempCommand extends BaseCommand
         // Set the temperature for all affected targets
         for (Entity entity : entities)
         {
-            if (!(entity instanceof LivingEntity)) continue;
-            EntityTempManager.getTemperatureCap(entity).ifPresent(cap ->
-            {   cap.setTrait(trait == Temperature.Trait.BODY ? Temperature.Trait.CORE : trait, temp);
-                Temperature.updateTemperature((LivingEntity) entity, cap, true);
-            });
+            if (entity instanceof LivingEntity)
+            {   Temperature.set(((LivingEntity) entity), trait == Temperature.Trait.BODY ? Temperature.Trait.CORE : trait, temp);
+            }
         }
 
         Temperature.Units preferredUnits = CSMath.getIfNotNull(source.getEntity(),

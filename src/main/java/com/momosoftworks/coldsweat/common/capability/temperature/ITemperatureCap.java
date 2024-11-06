@@ -32,6 +32,7 @@ public interface ITemperatureCap
     void setPreferredUnits(Temperature.Units units);
 
     void copy(ITemperatureCap cap);
+    void syncValues(LivingEntity entity);
 
     CompoundNBT serializeNBT();
     CompoundNBT serializeModifiers();
