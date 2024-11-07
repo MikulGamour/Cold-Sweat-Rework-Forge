@@ -36,6 +36,7 @@ public class ClientInsulationTooltip extends Tooltip
     Insulation.Slot slot;
     int width = 0;
     ItemStack stack;
+    boolean strikethrough;
 
     private static final Method INNER_BLIT = ObfuscationReflectionHelper.findMethod(AbstractGui.class, "func_238469_a_",
                                                                                     MatrixStack.class, int.class, int.class, int.class,
@@ -58,10 +59,11 @@ public class ClientInsulationTooltip extends Tooltip
     }
 
 
-    public ClientInsulationTooltip(List<Insulation> insulation, Insulation.Slot slot, ItemStack stack)
+    public ClientInsulationTooltip(List<Insulation> insulation, Insulation.Slot slot, ItemStack stack, boolean strikethrough)
     {   this.insulation = insulation;
         this.slot = slot;
         this.stack = stack;
+        this.strikethrough = strikethrough;
     }
 
     @Override
@@ -138,6 +140,11 @@ public class ClientInsulationTooltip extends Tooltip
             width += renderBar(poseStack, x + width, y, negInsulation, slot, true, true, stack);
         }
         poseStack.popPose();
+        if (this.strikethrough)
+        {
+            AbstractGui.fill(poseStack, x - 1, y + 2, x + width + 1, y + 3, 0xaFF63232);
+            AbstractGui.fill(poseStack, x, y + 3, x + width + 2, y + 4, 0xaFF63232);
+        }
     }
 
     static void renderCell(MatrixStack poseStack, int x, int y, double insulation, int uvX, boolean isAdaptive)

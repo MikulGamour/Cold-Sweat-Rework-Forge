@@ -26,10 +26,12 @@ public class ClientInsulationAttributeTooltip extends Tooltip
 
     IFormattableTextComponent original;
     FontRenderer font;
+    boolean strikethrough;
 
-    public ClientInsulationAttributeTooltip(IFormattableTextComponent original, FontRenderer font)
+    public ClientInsulationAttributeTooltip(IFormattableTextComponent original, FontRenderer font, boolean strikethrough)
     {   this.original = original;
         this.font = font;
+        this.strikethrough = strikethrough;
     }
 
     @Override
@@ -50,7 +52,14 @@ public class ClientInsulationAttributeTooltip extends Tooltip
         AbstractGui.blit(ps, x, y + 2, 0, 24, 8, 8, 8, 24, 32);
         // Text
         int color = Optional.ofNullable(this.original.getStyle().getColor()).map(Color::getValue).orElse(16777215);
-        ps.translate(0, 0, 500);
-        font.drawShadow(ps, this.original, x + 10, y + 2, color);
+        ps.pushPose();
+        ps.translate(0, 0, 400);
+        font.drawShadow(ps, this.original, x + 10, y + 1, color);
+        if (strikethrough)
+        {   ps.translate(0, 0, 401);
+            AbstractGui.fill(ps, x - 1, y + 4, x + this.getWidth(font) + 1, y + 5, 0xAFF63232);
+            AbstractGui.fill(ps, x, y + 5, x + this.getWidth(font) + 2, y + 6, 0xAFF63232);
+        }
+        ps.popPose();
     }
 }
