@@ -27,10 +27,12 @@ public class ClientInsulationAttributeTooltip implements ClientTooltipComponent
 
     Component original;
     Font font;
+    boolean strikethrough;
 
-    public ClientInsulationAttributeTooltip(Component original, Font font)
+    public ClientInsulationAttributeTooltip(Component original, Font font, boolean strikethrough)
     {   this.original = original;
         this.font = font;
+        this.strikethrough = strikethrough;
     }
 
     @Override
@@ -54,6 +56,11 @@ public class ClientInsulationAttributeTooltip implements ClientTooltipComponent
         ps.pushPose();
         ps.translate(0, 0, 400);
         font.drawShadow(ps, this.original, x + 10, y + 1, color);
+        if (strikethrough)
+        {   ps.translate(0, 0, 401);
+            Screen.fill(ps, x - 1, y + 4, x + this.getWidth(font) + 1, y + 5, 0xAFF63232);
+            Screen.fill(ps, x, y + 5, x + this.getWidth(font) + 2, y + 6, 0xAFF63232);
+        }
         ps.popPose();
     }
 }

@@ -8,10 +8,12 @@ public class InsulationAttributeTooltip implements TooltipComponent
 {
     Component original;
     Font font;
+    boolean strikethrough;
 
-    public InsulationAttributeTooltip(Component original, Font font)
+    public InsulationAttributeTooltip(Component original, Font font, boolean strikethrough)
     {   this.original = original;
         this.font = font;
+        this.strikethrough = strikethrough;
     }
 
     public Component getOriginal()
@@ -20,5 +22,9 @@ public class InsulationAttributeTooltip implements TooltipComponent
 
     public Font getFont()
     {   return this.font;
+    }
+
+    public boolean isStrikethrough()
+    {   return this.strikethrough;
     }
 }

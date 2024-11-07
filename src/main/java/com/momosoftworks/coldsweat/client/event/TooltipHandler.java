@@ -93,7 +93,7 @@ public class TooltipHandler
         return tooltipEndIndex;
     }
 
-    public static void addModifierTooltipLines(List<MutableComponent> tooltip, AttributeModifierMap map)
+    public static void addModifierTooltipLines(List<MutableComponent> tooltip, AttributeModifierMap map, boolean strikethrough)
     {
         map.getMap().asMap().forEach((attribute, modifiers) ->
         {
@@ -104,13 +104,14 @@ public class TooltipHandler
                 {   value += modifier.getAmount();
                 }
                 if (value != 0)
-                {   tooltip.add(getFormattedAttributeModifier(attribute, value, operation, false));
+                {   tooltip.add(getFormattedAttributeModifier(attribute, value, operation, false, strikethrough));
                 }
             }
         });
     }
 
-    public static MutableComponent getFormattedAttributeModifier(Attribute attribute, double amount, AttributeModifier.Operation operation, boolean forTooltip)
+    public static MutableComponent getFormattedAttributeModifier(Attribute attribute, double amount, AttributeModifier.Operation operation,
+                                                                 boolean forTooltip, boolean strikethrough)
     {
         if (attribute == null) return new TextComponent("");
         double value = amount;
@@ -151,6 +152,9 @@ public class TooltipHandler
         List<String> params = new ArrayList<>(List.of(sign + CSMath.formatDoubleOrInt(CSMath.round(value, 2)) + percent));
         if (forTooltip)
         {   params.add("show_icon");
+        }
+        if (strikethrough)
+        {   params.add("strikethrough");
         }
         return new TranslatableComponent(String.format("attribute.cold_sweat.modifier.%s.%s", operationString, attributeName),
                                                        params.toArray()).withStyle(color);
@@ -242,15 +246,23 @@ public class TooltipHandler
             // Insulation ingredient
             {
                 List<Insulation> insulation = new ArrayList<>();
+                List<Insulation> unmetInsulation = new ArrayList<>();
                 for (Insulator insulator : ConfigSettings.INSULATION_ITEMS.get().get(item))
                 {
-                    if (!insulator.insulation().isEmpty() && insulator.test(player, stack))
-                    {   insulation.addAll(insulator.insulation().split());
+                    if (!insulator.insulation().isEmpty())
+                    {
+                        if (insulator.test(player, stack))
+                        {   insulation.addAll(insulator.insulation().split());
+                        }
+                        else unmetInsulation.addAll(insulator.insulation().split());
                         validInsulations.add(insulator);
                     }
                 }
                 if (!insulation.isEmpty())
-                {   elements.add(tooltipStartIndex, Either.right(new InsulationTooltip(insulation, Insulation.Slot.ITEM, stack)));
+                {   elements.add(tooltipStartIndex, Either.right(new InsulationTooltip(insulation, Insulation.Slot.ITEM, stack, false)));
+                }
+                if (!unmetInsulation.isEmpty())
+                {   elements.add(tooltipStartIndex, Either.right(new InsulationTooltip(unmetInsulation, Insulation.Slot.ITEM, stack, true)));
                 }
             }
 
@@ -258,27 +270,40 @@ public class TooltipHandler
             if (CompatManager.isCuriosLoaded())
             {
                 List<Insulation> insulation = new ArrayList<>();
+                List<Insulation> unmetInsulation = new ArrayList<>();
                 for (Insulator insulator : ConfigSettings.INSULATING_CURIOS.get().get(item))
                 {
-                    if (!insulator.insulation().isEmpty() && insulator.test(player, stack))
-                    {   insulation.addAll(insulator.insulation().split());
+                    if (!insulator.insulation().isEmpty())
+                    {
+                        if (insulator.test(player, stack))
+                        {   insulation.addAll(insulator.insulation().split());
+                        }
+                        else unmetInsulation.addAll(insulator.insulation().split());
                         validInsulations.add(insulator);
                     }
                 }
                 if (!insulation.isEmpty())
-                {   elements.add(tooltipStartIndex, Either.right(new InsulationTooltip(insulation, Insulation.Slot.CURIO, stack)));
+                {   elements.add(tooltipStartIndex, Either.right(new InsulationTooltip(insulation, Insulation.Slot.CURIO, stack, false)));
+                }
+                if (!unmetInsulation.isEmpty())
+                {   elements.add(tooltipStartIndex, Either.right(new InsulationTooltip(unmetInsulation, Insulation.Slot.CURIO, stack, true)));
                 }
             }
 
             List<Insulation> insulation = new ArrayList<>();
+            List<Insulation> unmetInsulation = new ArrayList<>();
 
             // Insulating armor
             if (ItemInsulationManager.isInsulatable(stack))
             {
                 for (Insulator insulator : ConfigSettings.INSULATING_ARMORS.get().get(item))
                 {
-                    if (!validInsulations.contains(insulator) && insulator.test(player, stack))
-                    {   insulation.addAll(insulator.insulation().split());
+                    if (!validInsulations.contains(insulator))
+                    {
+                        if (insulator.test(player, stack))
+                        {   insulation.addAll(insulator.insulation().split());
+                        }
+                        else unmetInsulation.addAll(insulator.insulation().split());
                     }
                 }
             }
@@ -292,7 +317,10 @@ public class TooltipHandler
             });
 
             if (!insulation.isEmpty())
-            {   elements.add(tooltipStartIndex, Either.right(new InsulationTooltip(insulation, Insulation.Slot.ARMOR, stack)));
+            {   elements.add(tooltipStartIndex, Either.right(new InsulationTooltip(insulation, Insulation.Slot.ARMOR, stack, false)));
+            }
+            if (!unmetInsulation.isEmpty())
+            {   elements.add(tooltipStartIndex, Either.right(new InsulationTooltip(unmetInsulation, Insulation.Slot.ARMOR, stack, true)));
             }
         }
 
@@ -304,9 +332,14 @@ public class TooltipHandler
             Either<FormattedText, TooltipComponent> element = elements.get(i);
             if (element.left().isPresent() && element.left().get() instanceof TranslatableComponent component)
             {
-                if (component.getArgs() != null && Arrays.asList(component.getArgs()).contains("show_icon"))
+                if (component.getArgs() != null)
                 {
-                    elements.set(i, Either.right(new InsulationAttributeTooltip(component, Minecraft.getInstance().font)));
+                    List<Object> args = Arrays.asList(component.getArgs());
+                    if (args.contains("show_icon"))
+                    {
+                        boolean strikethrough = args.contains("strikethrough");
+                        elements.set(i, Either.right(new InsulationAttributeTooltip(component, Minecraft.getInstance().font, strikethrough)));
+                    }
                 }
             }
         }

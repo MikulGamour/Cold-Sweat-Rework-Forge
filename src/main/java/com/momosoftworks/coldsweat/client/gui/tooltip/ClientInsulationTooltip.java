@@ -10,6 +10,7 @@ import com.momosoftworks.coldsweat.util.math.CSMath;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiComponent;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.resources.ResourceLocation;
@@ -37,6 +38,7 @@ public class ClientInsulationTooltip implements ClientTooltipComponent
     Insulation.Slot slot;
     int width = 0;
     ItemStack stack;
+    boolean strikethrough;
 
     private static final Method INNER_BLIT = ObfuscationReflectionHelper.findMethod(GuiComponent.class, "m_93187_",
                                                                                     PoseStack.class, int.class, int.class, int.class,
@@ -59,10 +61,11 @@ public class ClientInsulationTooltip implements ClientTooltipComponent
     }
 
 
-    public ClientInsulationTooltip(List<Insulation> insulation, Insulation.Slot slot, ItemStack stack)
+    public ClientInsulationTooltip(List<Insulation> insulation, Insulation.Slot slot, ItemStack stack, boolean strikethrough)
     {   this.insulation = insulation;
         this.slot = slot;
         this.stack = stack;
+        this.strikethrough = strikethrough;
     }
 
     @Override
@@ -136,6 +139,11 @@ public class ClientInsulationTooltip implements ClientTooltipComponent
             width += renderBar(poseStack, x + width, y, negInsulation, slot, true, true, stack);
         }
         poseStack.popPose();
+        if (this.strikethrough)
+        {
+            Screen.fill(poseStack, x - 1, y + 2, x + width + 1, y + 3, 0xaFF63232);
+            Screen.fill(poseStack, x, y + 3, x + width + 2, y + 4, 0xaFF63232);
+        }
     }
 
     static void renderCell(PoseStack poseStack, int x, int y, double insulation, int uvX, boolean isAdaptive)
