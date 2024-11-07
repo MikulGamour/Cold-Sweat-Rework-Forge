@@ -1,7 +1,9 @@
 package com.momosoftworks.coldsweat.data.codec.requirement;
 
+import com.google.gson.JsonElement;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.data.codec.util.IntegerBounds;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
@@ -11,18 +13,15 @@ import net.minecraft.item.EnchantedBookItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.NBTDynamicOps;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionUtils;
 import net.minecraft.tags.ITag;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.util.registry.Registry;
-import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 public class ItemRequirement
 {
@@ -124,14 +123,6 @@ public class ItemRequirement
         return true;
     }
 
-    public CompoundNBT serialize()
-    {   return (CompoundNBT) CODEC.encodeStart(NBTDynamicOps.INSTANCE, this).result().orElseGet(CompoundNBT::new);
-    }
-
-    public static ItemRequirement deserialize(CompoundNBT tag)
-    {   return CODEC.decode(NBTDynamicOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalArgumentException("Could not deserialize ItemRequirement")).getFirst();
-    }
-
     @Override
     public boolean equals(Object obj)
     {
@@ -168,19 +159,6 @@ public class ItemRequirement
     @Override
     public String toString()
     {
-        StringBuilder builder = new StringBuilder();
-        builder.append("ItemRequirement{");
-        items.ifPresent(itemList -> itemList.forEach(either -> builder.append(either.map(tag -> "#" + ItemTags.getAllTags().getId(tag),
-                                                                                         item -> ForgeRegistries.ITEMS.getKey(item)).toString())
-                                                                      .append(", ")));
-        count.ifPresent(bounds -> builder.append(bounds.toString()).append(", "));
-        durability.ifPresent(bounds -> builder.append(bounds.toString()).append(", "));
-        enchantments.ifPresent(enchantments -> builder.append("Enchantments: {").append(enchantments.stream().map(EnchantmentRequirement::toString).collect(Collectors.joining(", "))).append("}, "));
-        storedEnchantments.ifPresent(enchantments -> builder.append("Stored Enchantments: {").append(enchantments.stream().map(EnchantmentRequirement::toString).collect(Collectors.joining(", "))).append("}, "));
-        potion.ifPresent(potion -> builder.append("Potion: ").append(ForgeRegistries.POTION_TYPES.getKey(potion).toString()));
-        builder.append("NBT: ").append(nbt.toString()).append(", ");
-        builder.append("}");
-
-        return builder.toString();
+        return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(JsonElement::toString).orElse("");
     }
 }

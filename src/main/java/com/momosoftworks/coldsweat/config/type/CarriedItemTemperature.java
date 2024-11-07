@@ -1,10 +1,13 @@
 package com.momosoftworks.coldsweat.config.type;
 
 import com.mojang.datafixers.util.Either;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.data.codec.configuration.ItemCarryTempData;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
 import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
+import com.momosoftworks.coldsweat.data.codec.util.ExtraCodecs;
 import com.momosoftworks.coldsweat.data.codec.util.IntegerBounds;
 import com.momosoftworks.coldsweat.util.serialization.NbtSerializable;
 import net.minecraft.entity.LivingEntity;
@@ -12,9 +15,9 @@ import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
+import net.minecraft.nbt.NBTDynamicOps;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
 import java.util.List;
 
 public class CarriedItemTemperature implements NbtSerializable
@@ -36,6 +39,16 @@ public class CarriedItemTemperature implements NbtSerializable
         this.maxEffect = maxEffect;
         this.entityRequirement = entityRequirement;
     }
+    public static final Codec<CarriedItemTemperature> CODEC = RecordCodecBuilder.create(instance ->
+    {
+        return instance.group(ItemRequirement.CODEC.fieldOf("item").forGetter(data -> data.item),
+                              Codec.list(Codec.either(IntegerBounds.CODEC, ExtraCodecs.EQUIPMENT_SLOT)).fieldOf("slots").forGetter(data -> data.slots),
+                              Codec.DOUBLE.fieldOf("temperature").forGetter(data -> data.temperature),
+                              Temperature.Trait.CODEC.optionalFieldOf("trait", Temperature.Trait.CORE).forGetter(data -> data.trait),
+                              Codec.DOUBLE.optionalFieldOf("maxEffect", Double.MAX_VALUE).forGetter(data -> data.maxEffect),
+                              EntityRequirement.getCodec().optionalFieldOf("entity", EntityRequirement.NONE).forGetter(data -> data.entityRequirement))
+                       .apply(instance, CarriedItemTemperature::new);
+    });
 
     public static CarriedItemTemperature createFromData(ItemCarryTempData data)
     {
@@ -93,47 +106,29 @@ public class CarriedItemTemperature implements NbtSerializable
     @Override
     public CompoundNBT serialize()
     {
-        CompoundNBT tag = new CompoundNBT();
-        tag.put("item", item.serialize());
-        ListNBT slotsTag = new ListNBT();
-        for (Either<IntegerBounds, EquipmentSlotType> either : slots)
-        {
-            CompoundNBT slotTag = new CompoundNBT();
-            if (either.left().isPresent())
-            {   slotTag.put("bounds", either.left().get().serialize());
-            }
-            else if (either.right().isPresent())
-            {   slotTag.putString("slot", either.right().get().getName());
-            }
-            slotsTag.add(slotTag);
-        }
-        tag.put("slots", slotsTag);
-        tag.putDouble("temperature", temperature);
-        tag.putString("trait", trait.getSerializedName());
-        tag.putDouble("maxEffect", maxEffect);
-        tag.put("entity", entityRequirement.serialize());
-        return tag;
+        return (CompoundNBT) CODEC.encodeStart(NBTDynamicOps.INSTANCE, this).result().orElseGet(CompoundNBT::new);
     }
 
     public static CarriedItemTemperature deserialize(CompoundNBT tag)
     {
-        ItemRequirement item = ItemRequirement.deserialize(tag.getCompound("item"));
-        List<Either<IntegerBounds, EquipmentSlotType>> slots = new ArrayList<>();
-        ListNBT slotsTag = tag.getList("slots", 10);
-        for (int i = 0; i < slotsTag.size(); i++)
-        {
-            CompoundNBT slotTag = slotsTag.getCompound(i);
-            if (slotTag.contains("bounds"))
-            {   slots.add(Either.left(IntegerBounds.deserialize(slotTag.getCompound("bounds"))));
-            }
-            else if (slotTag.contains("slot"))
-            {   slots.add(Either.right(EquipmentSlotType.byName(slotTag.getString("slot"))));
-            }
+        return CODEC.decode(NBTDynamicOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalArgumentException("Could not deserialize CarriedItemTemperature")).getFirst();
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj)
+        {   return true;
         }
-        double temperature = tag.getDouble("temperature");
-        Temperature.Trait trait = Temperature.Trait.fromID(tag.getString("trait"));
-        double maxEffect = tag.getDouble("maxEffect");
-        EntityRequirement entityRequirement = EntityRequirement.deserialize(tag.getCompound("entity"));
-        return new CarriedItemTemperature(item, slots, temperature, trait, maxEffect, entityRequirement);
+        if (obj == null || getClass() != obj.getClass())
+        {   return false;
+        }
+        CarriedItemTemperature that = (CarriedItemTemperature) obj;
+        return item.equals(that.item)
+            && slots.equals(that.slots)
+            && temperature == that.temperature
+            && trait == that.trait
+            && maxEffect == that.maxEffect
+            && entityRequirement.equals(that.entityRequirement);
     }
 }

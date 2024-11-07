@@ -7,11 +7,10 @@ import com.momosoftworks.coldsweat.util.serialization.NbtSerializable;
 import com.momosoftworks.coldsweat.util.serialization.StringRepresentable;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
+import net.minecraft.nbt.NBTDynamicOps;
 import net.minecraft.nbt.StringNBT;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class FuelData implements NbtSerializable
 {
@@ -37,31 +36,12 @@ public class FuelData implements NbtSerializable
     @Override
     public CompoundNBT serialize()
     {
-        CompoundNBT tag = new CompoundNBT();
-        tag.putString("type", type.getSerializedName());
-        tag.putDouble("fuel", fuel);
-        tag.put("data", data.serialize());
-        ListNBT mods = new ListNBT();
-        requiredMods.ifPresent(mods1 ->
-        {   mods1.forEach(mod -> mods.add(StringNBT.valueOf(mod)));
-        });
-        tag.put("required_mods", mods);
-        return tag;
+        return (CompoundNBT) CODEC.encodeStart(NBTDynamicOps.INSTANCE, this).result().orElseGet(CompoundNBT::new);
     }
 
     public static FuelData deserialize(CompoundNBT nbt)
     {
-        FuelType type = FuelType.byName(nbt.getString("type"));
-        Double fuel = nbt.getDouble("fuel");
-        ItemRequirement requirement = ItemRequirement.deserialize(nbt.getCompound("data"));
-        Optional<List<String>> requiredMods = Optional.of(nbt.getList("required_mods", 8)).map(mods ->
-        {   List<String> mods1 = new ArrayList<>();
-            for (int i = 0; i < mods.size(); i++)
-            {   mods1.add(mods.getString(i));
-            }
-            return mods1;
-        });
-        return new FuelData(type, fuel, requirement, requiredMods);
+        return CODEC.decode(NBTDynamicOps.INSTANCE, nbt).result().orElseThrow(() -> new IllegalStateException("Failed to deserialize FuelData")).getFirst();
     }
 
     public enum FuelType implements StringRepresentable
@@ -95,11 +75,6 @@ public class FuelData implements NbtSerializable
     @Override
     public String toString()
     {
-        StringBuilder builder = new StringBuilder();
-        builder.append("FuelData{type=").append(type).append(", fuel=").append(fuel).append(", data=").append(data);
-        requiredMods.ifPresent(mods -> builder.append(", requiredMods=").append(mods));
-        builder.append("}");
-
-        return builder.toString();
+        return CODEC.encodeStart(NBTDynamicOps.INSTANCE, this).result().map(Object::toString).orElse("");
     }
 }

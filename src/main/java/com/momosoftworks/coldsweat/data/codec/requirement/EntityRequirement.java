@@ -6,8 +6,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.monster.MonsterEntity;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.NBTDynamicOps;
 import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.tags.ITag;
 import net.minecraft.util.registry.Registry;
@@ -152,14 +150,6 @@ public class EntityRequirement
             }
         }
         return true;
-    }
-
-    public CompoundNBT serialize()
-    {   return (CompoundNBT) getCodec().encodeStart(NBTDynamicOps.INSTANCE, this).result().orElseGet(CompoundNBT::new);
-    }
-
-    public static EntityRequirement deserialize(CompoundNBT tag)
-    {   return getCodec().decode(NBTDynamicOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalArgumentException("Could not deserialize EntityRequirement")).getFirst();
     }
 
     @Override

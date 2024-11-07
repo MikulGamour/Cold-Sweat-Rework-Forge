@@ -15,12 +15,12 @@ import static net.minecraft.advancements.criterion.NBTPredicate.getEntityTagToCo
 public class NbtRequirement
 {
     public final CompoundNBT tag;
-    
+
     public NbtRequirement(CompoundNBT tag)
     {   this.tag = tag;
     }
-    
-    public static final Codec<NbtRequirement> CODEC = CompoundNBT.CODEC.xmap(NbtRequirement::deserialize, NbtRequirement::serialize);
+
+    public static final Codec<NbtRequirement> CODEC = CompoundNBT.CODEC.xmap(NbtRequirement::new, req -> req.tag);
 
     public NbtRequirement()
     {   this(new CompoundNBT());
@@ -44,14 +44,6 @@ public class NbtRequirement
         }
     }
 
-    public CompoundNBT serialize()
-    {   return this.tag;
-    }
-
-    public static NbtRequirement deserialize(CompoundNBT nbt)
-    {   return new NbtRequirement(nbt);
-    }
-
     /**
      * It is assumed that the first tag is a predicate, and the second tag is the tag to compare.
      */
@@ -66,9 +58,6 @@ public class NbtRequirement
         else if (other == null)
         {   return false;
         }
-        //else if (!tag.getClass().equals(other.getClass()))
-        //{   return false;
-        //}
         else if (tag instanceof CompoundNBT)
         {
             CompoundNBT compoundNbt1 = (CompoundNBT) tag;

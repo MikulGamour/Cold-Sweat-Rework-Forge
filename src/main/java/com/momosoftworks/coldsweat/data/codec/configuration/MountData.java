@@ -2,6 +2,7 @@ package com.momosoftworks.coldsweat.data.codec.configuration;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
@@ -39,21 +40,6 @@ public class MountData
     @Override
     public String toString()
     {
-        StringBuilder builder = new StringBuilder();
-        builder.append("MountData{entities=[");
-        for (Either<ITag<EntityType<?>>, EntityType<?>> entity : entities)
-        {
-            if (entity.left().isPresent())
-            {   builder.append("#").append(entity.left().get().toString());
-            }
-            else
-            {   builder.append(entity.right().get().toString());
-            }
-            builder.append(", ");
-        }
-        builder.append("], coldInsulation=").append(coldInsulation).append(", heatInsulation=").append(heatInsulation).append(", requirement=").append(requirement);
-        requiredMods.ifPresent(mods -> builder.append(", requiredMods=").append(mods));
-        builder.append("}");
-        return builder.toString();
+        return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("");
     }
 }

@@ -102,14 +102,6 @@ public class LocationRequirement
         return true;
     }
 
-    public CompoundNBT serialize()
-    {   return (CompoundNBT) CODEC.encodeStart(NBTDynamicOps.INSTANCE, this).result().orElseGet(CompoundNBT::new);
-    }
-
-    public static LocationRequirement deserialize(CompoundNBT tag)
-    {   return CODEC.decode(NBTDynamicOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalArgumentException("Could not deserialize LocationRequirement")).getFirst();
-    }
-
     @Override
     public boolean equals(Object obj)
     {

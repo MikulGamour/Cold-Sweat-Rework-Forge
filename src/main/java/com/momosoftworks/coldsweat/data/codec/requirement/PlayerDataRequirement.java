@@ -35,7 +35,7 @@ public class PlayerDataRequirement
     public final Optional<Map<ResourceLocation, Boolean>> recipes;
     public final Optional<Map<ResourceLocation, Either<AdvancementCompletionRequirement, AdvancementCriteriaRequirement>>> advancements;
     public final Optional<EntityRequirement> lookingAt;
-    
+
     public PlayerDataRequirement(Optional<GameType> gameType, Optional<Map<StatRequirement, IntegerBounds>> stats,
                                  Optional<Map<ResourceLocation, Boolean>> recipes,
                                  Optional<Map<ResourceLocation, Either<AdvancementCompletionRequirement, AdvancementCriteriaRequirement>>> advancements,
@@ -122,14 +122,6 @@ public class PlayerDataRequirement
         return true;
     }
 
-    public CompoundNBT serialize()
-    {   return (CompoundNBT) CODEC.encodeStart(NBTDynamicOps.INSTANCE, this).result().orElseGet(CompoundNBT::new);
-    }
-
-    public static PlayerDataRequirement deserialize(CompoundNBT tag)
-    {   return CODEC.decode(NBTDynamicOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalArgumentException("Could not deserialize BlockRequirement")).getFirst();
-    }
-
     @Override
     public boolean equals(Object obj)
     {
@@ -163,7 +155,7 @@ public class PlayerDataRequirement
         private ResourceLocation statId;
         private final Stat<?> stat;
         private final IntegerBounds value;
-        
+
         public static final Codec<StatRequirement> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Registry.STAT_TYPE.fieldOf("type").forGetter(stat -> stat.type),
                 ResourceLocation.CODEC.fieldOf("stat").forGetter(stat -> stat.statId),
@@ -175,7 +167,7 @@ public class PlayerDataRequirement
         }
 
         public StatRequirement(StatType<?> type, ResourceLocation statId, Stat<?> stat, IntegerBounds value)
-        {   
+        {
             this.type = type;
             this.statId = statId;
             this.stat = stat;
@@ -194,14 +186,6 @@ public class PlayerDataRequirement
 
         public boolean test(Stat<?> stat, int value)
         {   return statId.equals(ForgeRegistries.STAT_TYPES.getKey(stat.getType())) && this.value.test(value);
-        }
-
-        public CompoundNBT serialize()
-        {   return (CompoundNBT) CODEC.encodeStart(NBTDynamicOps.INSTANCE, this).result().orElseGet(CompoundNBT::new);
-        }
-
-        public static StatRequirement deserialize(CompoundNBT tag)
-        {   return CODEC.decode(NBTDynamicOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalArgumentException("Could not deserialize BlockRequirement")).getFirst();
         }
 
         @Override
@@ -248,16 +232,6 @@ public class PlayerDataRequirement
         {   return progress.isDone() == this.complete;
         }
 
-        public CompoundNBT serialize()
-        {   CompoundNBT tag = new CompoundNBT();
-            tag.putBoolean("completion", complete);
-            return tag;
-        }
-
-        public static AdvancementCompletionRequirement deserialize(CompoundNBT tag)
-        {   return CODEC.decode(NBTDynamicOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalArgumentException("Could not deserialize BlockRequirement")).getFirst();
-        }
-
         @Override
         public boolean equals(Object obj)
         {
@@ -299,14 +273,6 @@ public class PlayerDataRequirement
                 }
             }
             return true;
-        }
-
-        public CompoundNBT serialize()
-        {   return (CompoundNBT) CODEC.encodeStart(NBTDynamicOps.INSTANCE, this).result().orElseGet(CompoundNBT::new);
-        }
-
-        public static AdvancementCriteriaRequirement deserialize(CompoundNBT tag)
-        {   return CODEC.decode(NBTDynamicOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalArgumentException("Could not deserialize BlockRequirement")).getFirst();
         }
 
         @Override

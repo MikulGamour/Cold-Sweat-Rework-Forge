@@ -6,8 +6,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.inventory.EquipmentSlotType;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.NBTDynamicOps;
 
 import java.util.Optional;
 
@@ -51,14 +49,6 @@ public class EquipmentRequirement
             && (!feet.isPresent() || feet.get().test(((LivingEntity) entity).getItemBySlot(EquipmentSlotType.FEET), true))
             && (!mainHand.isPresent() || mainHand.get().test(((LivingEntity) entity).getMainHandItem(), true))
             && (!offHand.isPresent() || offHand.get().test(((LivingEntity) entity).getOffhandItem(), true));
-    }
-
-    public CompoundNBT serialize()
-    {   return (CompoundNBT) CODEC.encodeStart(NBTDynamicOps.INSTANCE, this).result().orElseGet(CompoundNBT::new);
-    }
-
-    public static EquipmentRequirement deserialize(CompoundNBT tag)
-    {   return CODEC.decode(NBTDynamicOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalArgumentException("Could not deserialize EquipmentRequirement")).getFirst();
     }
 
     @Override

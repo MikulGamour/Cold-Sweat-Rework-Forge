@@ -5,8 +5,6 @@ import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.entity.AgeableEntity;
 import net.minecraft.entity.Entity;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.NBTDynamicOps;
 
 import java.util.Optional;
 
@@ -19,8 +17,8 @@ public class EntityFlagsRequirement
     public final Optional<Boolean> invisible;
     public final Optional<Boolean> glowing;
     public final Optional<Boolean> baby;
-    
-    public EntityFlagsRequirement(Optional<Boolean> onFire, Optional<Boolean> sneaking, Optional<Boolean> sprinting, 
+
+    public EntityFlagsRequirement(Optional<Boolean> onFire, Optional<Boolean> sneaking, Optional<Boolean> sprinting,
                                   Optional<Boolean> swimming, Optional<Boolean> invisible, Optional<Boolean> glowing, Optional<Boolean> baby)
     {
         this.onFire = onFire;
@@ -31,7 +29,7 @@ public class EntityFlagsRequirement
         this.glowing = glowing;
         this.baby = baby;
     }
-    
+
     public static final Codec<EntityFlagsRequirement> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.BOOL.optionalFieldOf("is_on_fire").forGetter(predicate -> predicate.onFire),
             Codec.BOOL.optionalFieldOf("is_sneaking").forGetter(predicate -> predicate.sneaking),
@@ -51,14 +49,6 @@ public class EntityFlagsRequirement
             && (!invisible.isPresent() || entity.isInvisible() == invisible.get())
             && (!glowing.isPresent() || entity.isGlowing() == glowing.get())
             && (!baby.isPresent() || (entity instanceof AgeableEntity && ((AgeableEntity) entity).isBaby()) == baby.get());
-    }
-
-    public CompoundNBT serialize()
-    {   return (CompoundNBT) CODEC.encodeStart(NBTDynamicOps.INSTANCE, this).result().orElseGet(CompoundNBT::new);
-    }
-
-    public static EntityFlagsRequirement deserialize(CompoundNBT tag)
-    {   return CODEC.decode(NBTDynamicOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalArgumentException("Could not deserialize EntityFlagsRequirement")).getFirst();
     }
 
     @Override

@@ -1,5 +1,7 @@
 package com.momosoftworks.coldsweat.config.type;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.api.insulation.Insulation;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
 import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
@@ -39,37 +41,22 @@ public class Insulator implements NbtSerializable
     {   return predicate.test(entity) && data.test(stack, true);
     }
 
+    public static final Codec<Insulator> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            Insulation.getCodec().fieldOf("insulation").forGetter(data -> data.insulation),
+            Insulation.Slot.CODEC.fieldOf("slot").forGetter(data -> data.slot),
+            ItemRequirement.CODEC.fieldOf("data").forGetter(data -> data.data),
+            EntityRequirement.getCodec().optionalFieldOf("predicate", EntityRequirement.NONE).forGetter(data -> data.predicate),
+            AttributeModifierMap.CODEC.optionalFieldOf("attributes", new AttributeModifierMap()).forGetter(data -> data.attributes),
+            Codec.unboundedMap(ResourceLocation.CODEC, Codec.DOUBLE).optionalFieldOf("immune_temp_modifiers", new HashMap<>()).forGetter(data -> data.immuneTempModifiers)
+    ).apply(instance, Insulator::new));
+
     @Override
     public CompoundNBT serialize()
-    {
-        CompoundNBT tag = new CompoundNBT();
-        tag.put("insulation", insulation.serialize());
-        tag.put("slot", Insulation.Slot.CODEC.encodeStart(NBTDynamicOps.INSTANCE, slot).result().get());
-        tag.put("data", data.serialize());
-        if (!predicate.equals(EntityRequirement.NONE)) tag.put("predicate", predicate.serialize());
-        if (!attributes.isEmpty()) tag.put("attributes", attributes.serialize());
-        if (!immuneTempModifiers.isEmpty())
-        {
-            CompoundNBT immuneTempModifiersTag = new CompoundNBT();
-            immuneTempModifiers.forEach((key, value) -> immuneTempModifiersTag.putDouble(key.toString(), value));
-            tag.put("immune_temp_modifiers", immuneTempModifiersTag);
-        }
-
-        return tag;
+    {   return (CompoundNBT) CODEC.encodeStart(NBTDynamicOps.INSTANCE, this).result().orElseGet(CompoundNBT::new);
     }
 
     public static Insulator deserialize(CompoundNBT tag)
-    {
-        Insulation insulation = Insulation.deserialize(tag.getCompound("insulation"));
-        Insulation.Slot slot = Insulation.Slot.CODEC.parse(NBTDynamicOps.INSTANCE, tag.get("slot")).result().get();
-        ItemRequirement data = ItemRequirement.deserialize(tag.getCompound("data"));
-        EntityRequirement predicate = EntityRequirement.deserialize(tag.getCompound("predicate"));
-        AttributeModifierMap attributes = AttributeModifierMap.deserialize(tag.getCompound("attributes"));
-        CompoundNBT immuneTempModifiersTag = tag.getCompound("immune_temp_modifiers");
-        Map<ResourceLocation, Double> immuneTempModifiers = new HashMap<>();
-        immuneTempModifiersTag.getAllKeys().forEach(key -> immuneTempModifiers.put(new ResourceLocation(key), immuneTempModifiersTag.getDouble(key)));
-
-        return new Insulator(insulation, slot, data, predicate, attributes, immuneTempModifiers);
+    {   return CODEC.decode(NBTDynamicOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalArgumentException("Could not deserialize Insulator")).getFirst();
     }
 
     @Override
@@ -77,8 +64,8 @@ public class Insulator implements NbtSerializable
     {
         if (this == obj) return true;
         if (obj == null || getClass() != obj.getClass()) return false;
-        Insulator insulator = (Insulator) obj;
 
+        Insulator insulator = (Insulator) obj;
         return insulation.equals(insulator.insulation)
             && data.equals(insulator.data)
             && predicate.equals(insulator.predicate)

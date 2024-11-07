@@ -6,8 +6,6 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.data.codec.util.IntegerBounds;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.NBTDynamicOps;
 import net.minecraft.potion.Effect;
 import net.minecraft.potion.EffectInstance;
 import net.minecraft.util.registry.Registry;
@@ -79,14 +77,6 @@ public class EffectsRequirement
             && (!instance.visible.isPresent() || instance.visible.get() == effect.isVisible());
     }
 
-    public CompoundNBT serialize()
-    {   return (CompoundNBT) CODEC.encodeStart(NBTDynamicOps.INSTANCE, this).result().orElseGet(CompoundNBT::new);
-    }
-
-    public static EffectsRequirement deserialize(CompoundNBT tag)
-    {   return CODEC.decode(NBTDynamicOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalArgumentException("Could not deserialize EffectsRequirement")).getFirst();
-    }
-
     @Override
     public boolean equals(Object obj)
     {
@@ -123,14 +113,6 @@ public class EffectsRequirement
                 Codec.BOOL.optionalFieldOf("ambient").forGetter(effect -> effect.ambient),
                 Codec.BOOL.optionalFieldOf("visible").forGetter(effect -> effect.visible)
         ).apply(instance, Instance::new));
-
-        public CompoundNBT serialize()
-        {   return (CompoundNBT) CODEC.encodeStart(NBTDynamicOps.INSTANCE, this).result().orElseGet(CompoundNBT::new);
-        }
-
-        public static Instance deserialize(CompoundNBT tag)
-        {   return CODEC.decode(NBTDynamicOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalArgumentException("Could not deserialize BlockRequirement")).getFirst();
-        }
 
         @Override
         public boolean equals(Object obj)

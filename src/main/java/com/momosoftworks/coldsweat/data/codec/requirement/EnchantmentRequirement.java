@@ -16,13 +16,13 @@ public class EnchantmentRequirement
 {
     public final Enchantment enchantment;
     public final Optional<IntegerBounds> level;
-    
+
     public EnchantmentRequirement(Enchantment enchantment, Optional<IntegerBounds> level)
     {
         this.enchantment = enchantment;
         this.level = level;
     }
-    
+
     public static final Codec<EnchantmentRequirement> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Registry.ENCHANTMENT.fieldOf("enchantment").forGetter(requirement -> requirement.enchantment),
             IntegerBounds.CODEC.optionalFieldOf("levels").forGetter(requirement -> requirement.level)
@@ -41,14 +41,6 @@ public class EnchantmentRequirement
             }
         }
         return false;
-    }
-
-    public CompoundNBT serialize()
-    {   return (CompoundNBT) CODEC.encodeStart(NBTDynamicOps.INSTANCE, this).result().orElseGet(CompoundNBT::new);
-    }
-
-    public static EnchantmentRequirement deserialize(CompoundNBT tag)
-    {   return CODEC.decode(NBTDynamicOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalArgumentException("Could not deserialize EnchantmentRequirement")).getFirst();
     }
 
     @Override

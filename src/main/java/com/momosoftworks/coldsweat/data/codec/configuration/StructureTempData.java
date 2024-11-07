@@ -1,6 +1,7 @@
 package com.momosoftworks.coldsweat.data.codec.configuration;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import net.minecraft.util.ResourceLocation;
@@ -40,16 +41,6 @@ public class StructureTempData
     @Override
     public String toString()
     {
-        StringBuilder builder = new StringBuilder();
-        builder.append("StructureTempData{structures=[");
-        for (Structure<?> structure : structures)
-        {
-            builder.append(structure.toString());
-            builder.append(", ");
-        }
-        builder.append("], temperature=").append(temperature).append(", units=").append(units).append(", offset=").append(isOffset);
-        requiredMods.ifPresent(mods -> builder.append(", requiredMods=").append(mods));
-        builder.append("}");
-        return builder.toString();
+        return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("");
     }
 }
