@@ -1,25 +1,37 @@
 package com.momosoftworks.coldsweat.config.type;
 
 import com.mojang.datafixers.util.Either;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.data.codec.configuration.ItemCarryTempData;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
 import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
+import com.momosoftworks.coldsweat.data.codec.util.ExtraCodecs;
 import com.momosoftworks.coldsweat.data.codec.util.IntegerBounds;
 import com.momosoftworks.coldsweat.util.serialization.NbtSerializable;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
 import java.util.List;
 
 public record CarriedItemTemperature(ItemRequirement item, List<Either<IntegerBounds, EquipmentSlot>> slots, double temperature,
                                      Temperature.Trait trait, double maxEffect, EntityRequirement entityRequirement) implements NbtSerializable
 {
+    public static final Codec<CarriedItemTemperature> CODEC = RecordCodecBuilder.create(instance ->
+    {
+        return instance.group(ItemRequirement.CODEC.fieldOf("item").forGetter(CarriedItemTemperature::item),
+                              Codec.list(Codec.either(IntegerBounds.CODEC, ExtraCodecs.EQUIPMENT_SLOT)).fieldOf("slots").forGetter(CarriedItemTemperature::slots),
+                              Codec.DOUBLE.fieldOf("temperature").forGetter(CarriedItemTemperature::temperature),
+                              Temperature.Trait.CODEC.optionalFieldOf("trait", Temperature.Trait.CORE).forGetter(CarriedItemTemperature::trait),
+                              Codec.DOUBLE.optionalFieldOf("maxEffect", Double.MAX_VALUE).forGetter(CarriedItemTemperature::maxEffect),
+                              EntityRequirement.getCodec().optionalFieldOf("entity", EntityRequirement.NONE).forGetter(CarriedItemTemperature::entityRequirement))
+                       .apply(instance, CarriedItemTemperature::new);
+    });
 
     public static CarriedItemTemperature createFromData(ItemCarryTempData data)
     {
@@ -77,47 +89,29 @@ public record CarriedItemTemperature(ItemRequirement item, List<Either<IntegerBo
     @Override
     public CompoundTag serialize()
     {
-        CompoundTag tag = new CompoundTag();
-        tag.put("item", item.serialize());
-        ListTag slotsTag = new ListTag();
-        for (Either<IntegerBounds, EquipmentSlot> either : slots)
-        {
-            CompoundTag slotTag = new CompoundTag();
-            if (either.left().isPresent())
-            {   slotTag.put("bounds", either.left().get().serialize());
-            }
-            else if (either.right().isPresent())
-            {   slotTag.putString("slot", either.right().get().getName());
-            }
-            slotsTag.add(slotTag);
-        }
-        tag.put("slots", slotsTag);
-        tag.putDouble("temperature", temperature);
-        tag.putString("trait", trait.getSerializedName());
-        tag.putDouble("maxEffect", maxEffect);
-        tag.put("entity", entityRequirement.serialize());
-        return tag;
+        return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).result().orElseGet(CompoundTag::new);
     }
 
     public static CarriedItemTemperature deserialize(CompoundTag tag)
     {
-        ItemRequirement item = ItemRequirement.deserialize(tag.getCompound("item"));
-        List<Either<IntegerBounds, EquipmentSlot>> slots = new ArrayList<>();
-        ListTag slotsTag = tag.getList("slots", 10);
-        for (int i = 0; i < slotsTag.size(); i++)
-        {
-            CompoundTag slotTag = slotsTag.getCompound(i);
-            if (slotTag.contains("bounds"))
-            {   slots.add(Either.left(IntegerBounds.deserialize(slotTag.getCompound("bounds"))));
-            }
-            else if (slotTag.contains("slot"))
-            {   slots.add(Either.right(EquipmentSlot.byName(slotTag.getString("slot"))));
-            }
+        return CODEC.decode(NbtOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalArgumentException("Could not deserialize CarriedItemTemperature")).getFirst();
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj)
+        {   return true;
         }
-        double temperature = tag.getDouble("temperature");
-        Temperature.Trait trait = Temperature.Trait.fromID(tag.getString("trait"));
-        double maxEffect = tag.getDouble("maxEffect");
-        EntityRequirement entityRequirement = EntityRequirement.deserialize(tag.getCompound("entity"));
-        return new CarriedItemTemperature(item, slots, temperature, trait, maxEffect, entityRequirement);
+        if (obj == null || getClass() != obj.getClass())
+        {   return false;
+        }
+        CarriedItemTemperature that = (CarriedItemTemperature) obj;
+        return item.equals(that.item)
+            && slots.equals(that.slots)
+            && temperature == that.temperature
+            && trait == that.trait
+            && maxEffect == that.maxEffect
+            && entityRequirement.equals(that.entityRequirement);
     }
 }

@@ -1,22 +1,21 @@
 package com.momosoftworks.coldsweat.data.codec.configuration;
 
-import com.google.common.collect.Multimap;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.api.insulation.Insulation;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
 import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
-import com.momosoftworks.coldsweat.data.codec.util.AttributeCodecs;
 import com.momosoftworks.coldsweat.data.codec.util.AttributeModifierMap;
 import com.momosoftworks.coldsweat.util.serialization.NbtSerializable;
-import net.minecraft.nbt.*;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.ai.attributes.Attribute;
-import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 public record InsulatorData(Insulation.Slot slot,
                             Insulation insulation, ItemRequirement data,
@@ -37,61 +36,12 @@ public record InsulatorData(Insulation.Slot slot,
     @Override
     public CompoundTag serialize()
     {
-        CompoundTag tag = new CompoundTag();
-        ListTag items = new ListTag();
-        ListTag tags = new ListTag();
-        tag.put("items", items);
-        tag.put("tags", tags);
-        tag.putString("type", slot.name());
-        tag.put("insulation", insulation.serialize());
-        tag.put("data", data.serialize());
-        tag.put("predicate", predicate.serialize());
-        if (attributes.isPresent())
-        {
-            Multimap<Attribute, AttributeModifier> attributes1 = attributes.get().getMap();
-            CompoundTag attributesTag = new CompoundTag();
-            attributes1.forEach((attribute, modifier) ->
-            {
-                attributesTag.put(ForgeRegistries.ATTRIBUTES.getKey(attribute).toString(),
-                                  AttributeCodecs.MODIFIER_CODEC.encodeStart(NbtOps.INSTANCE, modifier).result().orElseThrow());
-            });
-            tag.put("attributes", attributesTag);
-        }
-        CompoundTag immuneTempModifiersTag = new CompoundTag();
-        immuneTempModifiers.forEach((key, value) -> immuneTempModifiersTag.putDouble(key.toString(), value));
-        tag.put("immune_temp_modifiers", immuneTempModifiersTag);
-        if (requiredMods.isPresent())
-        {   tag.put("required_mods", NbtOps.INSTANCE.createList(requiredMods.orElseGet(ArrayList::new).stream().map(StringTag::valueOf)));
-        }
-        return tag;
+        return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).result().orElseGet(CompoundTag::new);
     }
 
     public static InsulatorData deserialize(CompoundTag nbt)
     {
-        Insulation.Slot slot = Insulation.Slot.valueOf(nbt.getString("type"));
-        Insulation insulation = Insulation.deserialize(nbt.getCompound("insulation"));
-        ItemRequirement requirement = ItemRequirement.deserialize(nbt.getCompound("data"));
-        EntityRequirement predicate = EntityRequirement.deserialize(nbt.getCompound("predicate"));
-
-        Optional<AttributeModifierMap> attributes = Optional.of(nbt.getCompound("attributes")).map(attributesTag ->
-        {
-            Map<Attribute, AttributeModifier> attributes1 = new HashMap<>();
-            attributesTag.getAllKeys().forEach(key ->
-            {
-                Attribute attribute = ForgeRegistries.ATTRIBUTES.getValue(new ResourceLocation(key));
-                AttributeModifier modifier = AttributeCodecs.MODIFIER_CODEC.decode(NbtOps.INSTANCE, attributesTag.get(key)).result().orElseThrow().getFirst();
-                attributes1.put(attribute, modifier);
-            });
-            return attributes1;
-        }).map(AttributeModifierMap::new);
-
-        CompoundTag immuneTempModifiersTag = nbt.getCompound("immune_temp_modifiers");
-        Map<ResourceLocation, Double> immuneTempModifiers = new HashMap<>();
-        immuneTempModifiersTag.getAllKeys().forEach(key -> immuneTempModifiers.put(new ResourceLocation(key), immuneTempModifiersTag.getDouble(key)));
-
-        Optional<List<String>> mods = Optional.of(nbt.getList("required_mods", 8).stream().map(Tag::getAsString).toList());
-
-        return new InsulatorData(slot, insulation, requirement, predicate, attributes, immuneTempModifiers, mods);
+        return CODEC.decode(NbtOps.INSTANCE, nbt).result().orElseThrow(() -> new IllegalStateException("Failed to deserialize InsulatorData")).getFirst();
     }
 
     @Override
@@ -115,11 +65,6 @@ public record InsulatorData(Insulation.Slot slot,
     @Override
     public String toString()
     {
-        StringBuilder builder = new StringBuilder();
-        builder.append("InsulatorData{slot=").append(slot).append(", insulation=").append(insulation).append(", data=").append(data).append(", predicate=").append(predicate);
-        attributes.ifPresent(attributeModifierMap -> builder.append(", attributes=").append(attributeModifierMap));
-        requiredMods.ifPresent(mods -> builder.append(", requiredMods=").append(mods));
-        builder.append('}');
-        return builder.toString();
+        return CODEC.encodeStart(NbtOps.INSTANCE, this).result().map(Object::toString).orElse("");
     }
 }

@@ -2,6 +2,7 @@ package com.momosoftworks.coldsweat.data.codec.configuration;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
@@ -48,21 +49,6 @@ public record StructureTempData(List<Either<TagKey<ConfiguredStructureFeature<?,
     @Override
     public String toString()
     {
-        StringBuilder builder = new StringBuilder();
-        builder.append("StructureTempData{structures=[");
-        for (Either<TagKey<ConfiguredStructureFeature<?, ?>>, ConfiguredStructureFeature<?, ?>> structure : structures)
-        {
-            if (structure.left().isPresent())
-            {   builder.append("#").append(structure.left().get().toString());
-            }
-            else
-            {   builder.append(structure.right().get().toString());
-            }
-            builder.append(", ");
-        }
-        builder.append("], temperature=").append(temperature).append(", units=").append(units).append(", offset=").append(isOffset);
-        requiredMods.ifPresent(mods -> builder.append(", requiredMods=").append(mods));
-        builder.append("}");
-        return builder.toString();
+        return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("");
     }
 }

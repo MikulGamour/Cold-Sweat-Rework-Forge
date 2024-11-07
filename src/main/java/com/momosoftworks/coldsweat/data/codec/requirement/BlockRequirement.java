@@ -10,8 +10,6 @@ import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Registry;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.DirectionalPlaceContext;
@@ -82,14 +80,6 @@ public record BlockRequirement(Optional<List<Either<TagKey<Block>, Block>>> bloc
         }
     }
 
-    public CompoundTag serialize()
-    {   return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).result().orElseGet(CompoundTag::new);
-    }
-
-    public static BlockRequirement deserialize(CompoundTag tag)
-    {   return CODEC.decode(NbtOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalArgumentException("Could not deserialize BlockRequirement")).getFirst();
-    }
-
     @Override
     public boolean equals(Object obj)
     {
@@ -127,14 +117,6 @@ public record BlockRequirement(Optional<List<Either<TagKey<Block>, Block>>> bloc
     {
         public static final Codec<StateRequirement> CODEC = Codec.unboundedMap(Codec.STRING, ExtraCodecs.anyOf(Codec.BOOL, Codec.INT, Codec.STRING, IntegerBounds.CODEC))
                                                                  .xmap(StateRequirement::new, StateRequirement::properties);
-
-        public CompoundTag serialize()
-        {   return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).result().orElseGet(CompoundTag::new);
-        }
-
-        public static StateRequirement deserialize(CompoundTag tag)
-        {   return CODEC.decode(NbtOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalArgumentException("Could not deserialize BlockRequirement")).getFirst();
-        }
 
         public boolean test(BlockState state)
         {   return this.test(state.getBlock().getStateDefinition(), state);

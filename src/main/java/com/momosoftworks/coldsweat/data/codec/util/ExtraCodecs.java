@@ -4,9 +4,12 @@ import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
+import net.minecraft.world.entity.EquipmentSlot;
 
 public class ExtraCodecs
 {
+    public static final Codec<EquipmentSlot> EQUIPMENT_SLOT = Codec.STRING.xmap(EquipmentSlot::byName, EquipmentSlot::getName);
+
     public static Codec<Object> anyOf(Codec... codecs)
     {
         return new Codec<>()

@@ -1,11 +1,10 @@
 package com.momosoftworks.coldsweat.data.codec.requirement;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Fluid;
@@ -48,14 +47,6 @@ public record FluidRequirement(Optional<List<Fluid>> fluids, Optional<TagKey<Flu
         }
     }
 
-    public CompoundTag serialize()
-    {   return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).result().orElseGet(CompoundTag::new);
-    }
-
-    public static FluidRequirement deserialize(CompoundTag tag)
-    {   return CODEC.decode(NbtOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalArgumentException("Could not deserialize FluidRequirement")).getFirst();
-    }
-
     @Override
     public boolean equals(Object obj)
     {
@@ -83,12 +74,6 @@ public record FluidRequirement(Optional<List<Fluid>> fluids, Optional<TagKey<Flu
     @Override
     public String toString()
     {
-        StringBuilder lBuilder = new StringBuilder();
-        this.fluids.ifPresent(fluids -> lBuilder.append("Fluids: ").append(fluids.toString()));
-        this.tag.ifPresent(tag -> lBuilder.append("Tag: ").append(tag.toString()));
-        this.state.ifPresent(state -> lBuilder.append("State: ").append(state.toString()));
-        this.nbt.ifPresent(nbt -> lBuilder.append("NBT: ").append(nbt.toString()));
-
-        return lBuilder.toString();
+        return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
     }
 }

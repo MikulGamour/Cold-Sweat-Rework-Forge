@@ -3,8 +3,6 @@ package com.momosoftworks.coldsweat.data.codec.requirement;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
 import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
 
@@ -31,14 +29,6 @@ public record EntityFlagsRequirement(Optional<Boolean> onFire, Optional<Boolean>
             && (invisible.isEmpty() || entity.isInvisible() == invisible.get())
             && (glowing.isEmpty() || entity.isCurrentlyGlowing() == glowing.get())
             && (baby.isEmpty() || (entity instanceof AgeableMob mob && mob.isBaby()) == baby.get());
-    }
-
-    public CompoundTag serialize()
-    {   return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).result().orElseGet(CompoundTag::new);
-    }
-
-    public static EntityFlagsRequirement deserialize(CompoundTag tag)
-    {   return CODEC.decode(NbtOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalArgumentException("Could not deserialize EntityFlagsRequirement")).getFirst();
     }
 
     @Override

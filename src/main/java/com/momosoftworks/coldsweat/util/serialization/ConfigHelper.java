@@ -672,7 +672,7 @@ public class ConfigHelper
             itemData.add(insulator.insulation() instanceof StaticInsulation
                          ? "static"
                          : "adaptive");
-            itemData.add(insulator.data().nbt().serialize().toString());
+            itemData.add(insulator.data().nbt().tag().toString());
 
             return itemData;
         });

@@ -8,9 +8,6 @@ import com.momosoftworks.coldsweat.data.codec.util.IntegerBounds;
 import com.momosoftworks.coldsweat.util.entity.EntityHelper;
 import net.minecraft.advancements.AdvancementProgress;
 import net.minecraft.advancements.CriterionProgress;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.NbtOps;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.stats.Stat;
@@ -27,7 +24,6 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 public record PlayerDataRequirement(Optional<GameType> gameType, Optional<Map<StatRequirement, IntegerBounds>> stats,
                                     Optional<Map<ResourceLocation, Boolean>> recipes,
@@ -108,14 +104,6 @@ public record PlayerDataRequirement(Optional<GameType> gameType, Optional<Map<St
         return true;
     }
 
-    public CompoundTag serialize()
-    {   return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).result().orElseGet(CompoundTag::new);
-    }
-
-    public static PlayerDataRequirement deserialize(CompoundTag tag)
-    {   return CODEC.decode(NbtOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalArgumentException("Could not deserialize BlockRequirement")).getFirst();
-    }
-
     @Override
     public boolean equals(Object obj)
     {
@@ -169,14 +157,6 @@ public record PlayerDataRequirement(Optional<GameType> gameType, Optional<Map<St
         {   return statId.equals(ForgeRegistries.STAT_TYPES.getKey(stat.getType())) && this.value.test(value);
         }
 
-        public CompoundTag serialize()
-        {   return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).result().orElseGet(CompoundTag::new);
-        }
-
-        public static StatRequirement deserialize(CompoundTag tag)
-        {   return CODEC.decode(NbtOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalArgumentException("Could not deserialize BlockRequirement")).getFirst();
-        }
-
         @Override
         public boolean equals(Object obj)
         {
@@ -215,14 +195,6 @@ public record PlayerDataRequirement(Optional<GameType> gameType, Optional<Map<St
         {   return progress.isDone() == this.complete;
         }
 
-        public CompoundTag serialize()
-        {   return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).result().orElseGet(CompoundTag::new);
-        }
-
-        public static AdvancementCompletionRequirement deserialize(CompoundTag tag)
-        {   return CODEC.decode(NbtOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalArgumentException("Could not deserialize BlockRequirement")).getFirst();
-        }
-
         @Override
         public boolean equals(Object obj)
         {
@@ -258,14 +230,6 @@ public record PlayerDataRequirement(Optional<GameType> gameType, Optional<Map<St
                 }
             }
             return true;
-        }
-
-        public CompoundTag serialize()
-        {   return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).result().orElseGet(CompoundTag::new);
-        }
-
-        public static AdvancementCriteriaRequirement deserialize(CompoundTag tag)
-        {   return CODEC.decode(NbtOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalArgumentException("Could not deserialize BlockRequirement")).getFirst();
         }
 
         @Override

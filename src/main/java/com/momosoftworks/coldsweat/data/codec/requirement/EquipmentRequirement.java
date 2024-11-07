@@ -3,8 +3,6 @@ package com.momosoftworks.coldsweat.data.codec.requirement;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
@@ -34,14 +32,6 @@ public record EquipmentRequirement(Optional<ItemRequirement> head, Optional<Item
             && (feet.isEmpty()  || feet.get().test(living.getItemBySlot(EquipmentSlot.FEET), true))
             && (mainHand.isEmpty() || mainHand.get().test(living.getMainHandItem(), true))
             && (offHand.isEmpty()  || offHand.get().test(living.getOffhandItem(), true));
-    }
-
-    public CompoundTag serialize()
-    {   return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).result().orElseGet(CompoundTag::new);
-    }
-
-    public static EquipmentRequirement deserialize(CompoundTag tag)
-    {   return CODEC.decode(NbtOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalArgumentException("Could not deserialize EquipmentRequirement")).getFirst();
     }
 
     @Override

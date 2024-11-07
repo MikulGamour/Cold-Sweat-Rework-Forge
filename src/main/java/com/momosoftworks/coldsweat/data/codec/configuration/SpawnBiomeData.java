@@ -2,6 +2,7 @@ package com.momosoftworks.coldsweat.data.codec.configuration;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
 import net.minecraft.core.Registry;
@@ -50,32 +51,6 @@ public record SpawnBiomeData(List<Either<TagKey<Biome>, Biome>> biomes, MobCateg
     @Override
     public String toString()
     {
-        StringBuilder builder = new StringBuilder();
-        builder.append("SpawnBiomeData{biomes=[");
-        for (Either<TagKey<Biome>, Biome> biome : biomes)
-        {
-            if (biome.left().isPresent())
-            {   builder.append("#").append(biome.left().get().toString());
-            }
-            else
-            {   builder.append(biome.right().get().toString());
-            }
-            builder.append(", ");
-        }
-        builder.append("], category=").append(category).append(", weight=").append(weight).append(", entities=[");
-        for (Either<TagKey<EntityType<?>>, EntityType<?>> entity : entities)
-        {
-            if (entity.left().isPresent())
-            {   builder.append("#").append(entity.left().get().toString());
-            }
-            else
-            {   builder.append(entity.right().get().toString());
-            }
-            builder.append(", ");
-        }
-        builder.append("]");
-        requiredMods.ifPresent(mods -> builder.append(", requiredMods=").append(mods));
-        builder.append("}");
-        return builder.toString();
+        return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("");
     }
 }

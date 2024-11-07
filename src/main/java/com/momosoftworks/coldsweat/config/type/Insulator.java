@@ -1,5 +1,7 @@
 package com.momosoftworks.coldsweat.config.type;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.api.insulation.Insulation;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
 import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
@@ -21,37 +23,22 @@ public record Insulator(Insulation insulation, Insulation.Slot slot, ItemRequire
     {   return predicate.test(entity) && data.test(stack, true);
     }
 
+    public static final Codec<Insulator> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            Insulation.getCodec().fieldOf("insulation").forGetter(Insulator::insulation),
+            Insulation.Slot.CODEC.fieldOf("slot").forGetter(Insulator::slot),
+            ItemRequirement.CODEC.fieldOf("data").forGetter(Insulator::data),
+            EntityRequirement.getCodec().optionalFieldOf("predicate", EntityRequirement.NONE).forGetter(Insulator::predicate),
+            AttributeModifierMap.CODEC.optionalFieldOf("attributes", new AttributeModifierMap()).forGetter(Insulator::attributes),
+            Codec.unboundedMap(ResourceLocation.CODEC, Codec.DOUBLE).optionalFieldOf("immune_temp_modifiers", new HashMap<>()).forGetter(Insulator::immuneTempModifiers)
+    ).apply(instance, Insulator::new));
+
     @Override
     public CompoundTag serialize()
-    {
-        CompoundTag tag = new CompoundTag();
-        tag.put("insulation", insulation.serialize());
-        tag.put("slot", Insulation.Slot.CODEC.encodeStart(NbtOps.INSTANCE, slot).result().get());
-        tag.put("data", data.serialize());
-        if (!predicate.equals(EntityRequirement.NONE)) tag.put("predicate", predicate.serialize());
-        if (!attributes.isEmpty()) tag.put("attributes", attributes.serialize());
-        if (!immuneTempModifiers.isEmpty())
-        {
-            CompoundTag immuneTempModifiersTag = new CompoundTag();
-            immuneTempModifiers.forEach((key, value) -> immuneTempModifiersTag.putDouble(key.toString(), value));
-            tag.put("immune_temp_modifiers", immuneTempModifiersTag);
-        }
-
-        return tag;
+    {   return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).result().orElseGet(CompoundTag::new);
     }
 
     public static Insulator deserialize(CompoundTag tag)
-    {
-        Insulation insulation = Insulation.deserialize(tag.getCompound("insulation"));
-        Insulation.Slot slot = Insulation.Slot.CODEC.parse(NbtOps.INSTANCE, tag.get("slot")).result().get();
-        ItemRequirement data = ItemRequirement.deserialize(tag.getCompound("data"));
-        EntityRequirement predicate = EntityRequirement.deserialize(tag.getCompound("predicate"));
-        AttributeModifierMap attributes = AttributeModifierMap.deserialize(tag.getCompound("attributes"));
-        CompoundTag immuneTempModifiersTag = tag.getCompound("immune_temp_modifiers");
-        Map<ResourceLocation, Double> immuneTempModifiers = new HashMap<>();
-        immuneTempModifiersTag.getAllKeys().forEach(key -> immuneTempModifiers.put(new ResourceLocation(key), immuneTempModifiersTag.getDouble(key)));
-
-        return new Insulator(insulation, slot, data, predicate, attributes, immuneTempModifiers);
+    {   return CODEC.decode(NbtOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalArgumentException("Could not deserialize Insulator")).getFirst();
     }
 
     @Override
@@ -59,8 +46,8 @@ public record Insulator(Insulation insulation, Insulation.Slot slot, ItemRequire
     {
         if (this == obj) return true;
         if (obj == null || getClass() != obj.getClass()) return false;
-        Insulator insulator = (Insulator) obj;
 
+        Insulator insulator = (Insulator) obj;
         return insulation.equals(insulator.insulation)
             && data.equals(insulator.data)
             && predicate.equals(insulator.predicate)
