@@ -2606,9 +2606,11 @@ Technical Changes:
 * Added new textures for when a filled waterskin is hot or cold
 - Removed the Far Lands and Modulo custom music tracks
 - Added option to expand all collapsible tooltips by default
+- Added a "trait" argument to the /temperature set & get sub-commands
 
 Fixes:
-- (1.18 - 1.19) Fixed crash when rendering the heatstroke blur effect
+* (1.18 - 1.19) Fixed crash when rendering the heatstroke blur effect
+- (1.21) Fixed command parameters for temperature trait arguments not working properly
 
 Translation Updates:
 - Updated Russian translation (Heimdallr-1 on GitHub)
@@ -2617,6 +2619,12 @@ Technical Changes:
 * Several major changes have been made to how block requirements and block_temps work in JSON
       - Much better support for blockstates and a slight change to NBT
       - See the online documentation for the new syntax
+* Added new methods to TempModifiers: markDirty(), markClean(), isDirty()
+      - A TempModifier being "dirty" indicates that it should be synchronized to the client
+      - Dirty TempModifiers will be automatically synchronized via Temperature.updateModifiers(), then marked clean
+- All methods for adding TempModifiers in the Temperature class now return a boolean indicating if the operation was successful
+- Added addModifierById() method to GatherDefaultTempModifiersEvent
+      - Adds a modifier based on its registered ResourceLocation ID (useful for mod compat!)
 * Added removeModifiers() method to GatherDefaultTempModifiersEvent
 - The hearth, icebox, and boiler now use fluid tags for fueling:
       - cold_sweat:hot
