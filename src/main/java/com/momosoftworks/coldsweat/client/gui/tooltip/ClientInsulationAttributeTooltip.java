@@ -57,8 +57,8 @@ public class ClientInsulationAttributeTooltip extends Tooltip
         font.drawShadow(ps, this.original, x + 10, y + 1, color);
         if (strikethrough)
         {   ps.translate(0, 0, 401);
-            AbstractGui.fill(ps, x - 1, y + 4, x + this.getWidth(font) + 1, y + 5, 0xAFF63232);
-            AbstractGui.fill(ps, x, y + 5, x + this.getWidth(font) + 2, y + 6, 0xAFF63232);
+            AbstractGui.fill(ps, x - 1, y + 4, x + this.getWidth(font) + 1, y + 5, 0xFFF63232);
+            AbstractGui.fill(ps, x, y + 5, x + this.getWidth(font) + 2, y + 6, 0xFFF63232);
         }
         ps.popPose();
     }

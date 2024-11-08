@@ -142,8 +142,8 @@ public class ClientInsulationTooltip extends Tooltip
         poseStack.popPose();
         if (this.strikethrough)
         {
-            AbstractGui.fill(poseStack, x - 1, y + 2, x + width + 1, y + 3, 0xaFF63232);
-            AbstractGui.fill(poseStack, x, y + 3, x + width + 2, y + 4, 0xaFF63232);
+            AbstractGui.fill(poseStack, x - 1, y + 2, x + width + 1, y + 3, 0xFFF63232);
+            AbstractGui.fill(poseStack, x, y + 3, x + width + 2, y + 4, 0xFFF63232);
         }
     }
 
