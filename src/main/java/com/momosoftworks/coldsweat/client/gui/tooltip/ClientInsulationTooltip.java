@@ -141,8 +141,8 @@ public class ClientInsulationTooltip implements ClientTooltipComponent
         poseStack.popPose();
         if (this.strikethrough)
         {
-            Screen.fill(poseStack, x - 1, y + 2, x + width + 1, y + 3, 0xaFF63232);
-            Screen.fill(poseStack, x, y + 3, x + width + 2, y + 4, 0xaFF63232);
+            Screen.fill(poseStack, x - 1, y + 2, x + width + 1, y + 3, 0xFFF63232);
+            Screen.fill(poseStack, x, y + 3, x + width + 2, y + 4, 0xFFF63232);
         }
     }
 
