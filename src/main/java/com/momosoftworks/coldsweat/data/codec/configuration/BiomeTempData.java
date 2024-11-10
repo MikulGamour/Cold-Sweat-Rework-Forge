@@ -2,6 +2,7 @@ package com.momosoftworks.coldsweat.data.codec.configuration;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
@@ -62,23 +63,21 @@ public record BiomeTempData(List<Either<TagKey<Biome>, Biome>> biomes, double mi
 
     @Override
     public String toString()
-    {
-        StringBuilder builder = new StringBuilder();
-        builder.append("BiomeTempData{biomes=[");
-        for (Either<TagKey<Biome>, Biome> biome : biomes)
-        {
-            if (biome.left().isPresent())
-            {   builder.append("#").append(biome.left().get().toString());
-            }
-            else
-            {   builder.append(biome.right().get().toString());
-            }
-            builder.append(", ");
-        }
-        builder.append("], min=").append(min).append(", max=").append(max).append(", units=").append(units).append(", isOffset=").append(isOffset);
-        requiredMods.ifPresent(mods -> builder.append(", requiredMods=").append(mods));
-        builder.append("}");
+    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
+    }
 
-        return builder.toString();
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+
+        BiomeTempData that = (BiomeTempData) obj;
+        return Double.compare(that.min, min) == 0
+            && Double.compare(that.max, max) == 0
+            && isOffset == that.isOffset
+            && biomes.equals(that.biomes)
+            && units == that.units
+            && requiredMods.equals(that.requiredMods);
     }
 }

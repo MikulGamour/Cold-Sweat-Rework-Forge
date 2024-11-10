@@ -32,17 +32,17 @@ public record EntityFlagsRequirement(Optional<Boolean> onFire, Optional<Boolean>
     }
 
     @Override
+    public String toString()
+    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
+    }
+
+    @Override
     public boolean equals(Object obj)
     {
-        if (this == obj)
-        {   return true;
-        }
-        if (obj == null || getClass() != obj.getClass())
-        {   return false;
-        }
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
 
         EntityFlagsRequirement that = (EntityFlagsRequirement) obj;
-
         return onFire.equals(that.onFire)
             && sneaking.equals(that.sneaking)
             && sprinting.equals(that.sprinting)
@@ -50,10 +50,5 @@ public record EntityFlagsRequirement(Optional<Boolean> onFire, Optional<Boolean>
             && invisible.equals(that.invisible)
             && glowing.equals(that.glowing)
             && baby.equals(that.baby);
-    }
-
-    @Override
-    public String toString()
-    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
     }
 }

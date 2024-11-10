@@ -54,4 +54,22 @@ public record BlockTempData(List<Either<TagKey<Block>, Block>> blocks, double te
     public String toString()
     {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
     }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+
+        BlockTempData that = (BlockTempData) obj;
+        return Double.compare(that.temperature, temperature) == 0
+            && Double.compare(that.range, range) == 0
+            && Double.compare(that.maxEffect, maxEffect) == 0
+            && Double.compare(that.maxTemp, maxTemp) == 0
+            && Double.compare(that.minTemp, minTemp) == 0
+            && fade == that.fade
+            && blocks.equals(that.blocks)
+            && conditions.equals(that.conditions)
+            && requiredMods.equals(that.requiredMods);
+    }
 }

@@ -90,17 +90,17 @@ public record LocationRequirement(Optional<Integer> x, Optional<Integer> y, Opti
     }
 
     @Override
+    public String toString()
+    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
+    }
+
+    @Override
     public boolean equals(Object obj)
     {
-        if (this == obj)
-        {   return true;
-        }
-        if (obj == null || getClass() != obj.getClass())
-        {   return false;
-        }
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
 
         LocationRequirement that = (LocationRequirement) obj;
-
         return x.equals(that.x)
             && y.equals(that.y)
             && z.equals(that.z)
@@ -110,10 +110,5 @@ public record LocationRequirement(Optional<Integer> x, Optional<Integer> y, Opti
             && light.equals(that.light)
             && block.equals(that.block)
             && fluid.equals(that.fluid);
-    }
-
-    @Override
-    public String toString()
-    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
     }
 }

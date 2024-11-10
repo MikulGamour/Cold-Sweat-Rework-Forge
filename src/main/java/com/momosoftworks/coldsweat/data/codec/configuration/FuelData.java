@@ -1,11 +1,9 @@
 package com.momosoftworks.coldsweat.data.codec.configuration;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
-import com.momosoftworks.coldsweat.util.serialization.NbtSerializable;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.StringRepresentable;
 import net.minecraftforge.registries.IForgeRegistryEntry;
@@ -13,7 +11,7 @@ import net.minecraftforge.registries.IForgeRegistryEntry;
 import java.util.*;
 
 public record FuelData(FuelType type, Double fuel,
-                       ItemRequirement data, Optional<List<String>> requiredMods) implements NbtSerializable, IForgeRegistryEntry<FuelData>
+                       ItemRequirement data, Optional<List<String>> requiredMods) implements IForgeRegistryEntry<FuelData>
 {
     public static final Codec<FuelData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             FuelType.CODEC.fieldOf("type").forGetter(FuelData::type),
@@ -21,17 +19,6 @@ public record FuelData(FuelType type, Double fuel,
             ItemRequirement.CODEC.fieldOf("data").forGetter(FuelData::data),
             Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(FuelData::requiredMods)
     ).apply(instance, FuelData::new));
-
-    @Override
-    public CompoundTag serialize()
-    {
-        return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).result().orElseGet(CompoundTag::new);
-    }
-
-    public static FuelData deserialize(CompoundTag nbt)
-    {
-        return CODEC.decode(NbtOps.INSTANCE, nbt).result().orElseThrow(() -> new IllegalStateException("Failed to deserialize FuelData")).getFirst();
-    }
 
     public enum FuelType implements StringRepresentable
     {
@@ -81,7 +68,18 @@ public record FuelData(FuelType type, Double fuel,
 
     @Override
     public String toString()
+    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
+    }
+
+    @Override
+    public boolean equals(Object obj)
     {
-        return CODEC.encodeStart(NbtOps.INSTANCE, this).result().map(Object::toString).orElse("");
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+
+        FuelData that = (FuelData) obj;
+        return fuel.equals(that.fuel)
+            && data.equals(that.data)
+            && requiredMods.equals(that.requiredMods);
     }
 }

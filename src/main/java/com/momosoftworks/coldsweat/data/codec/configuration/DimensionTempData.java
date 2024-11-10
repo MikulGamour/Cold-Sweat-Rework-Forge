@@ -2,6 +2,7 @@ package com.momosoftworks.coldsweat.data.codec.configuration;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
@@ -47,22 +48,20 @@ public record DimensionTempData(List<Either<TagKey<DimensionType>, DimensionType
 
     @Override
     public String toString()
+    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
+    }
+
+    @Override
+    public boolean equals(Object obj)
     {
-        StringBuilder builder = new StringBuilder();
-        builder.append("DimensionTempData{dimensions=[");
-        for (Either<TagKey<DimensionType>, DimensionType> dimension : dimensions)
-        {
-            if (dimension.left().isPresent())
-            {   builder.append("#").append(dimension.left().get().toString());
-            }
-            else
-            {   builder.append(dimension.right().get().toString());
-            }
-            builder.append(", ");
-        }
-        builder.append("], temperature=").append(temperature).append(", units=").append(units).append(", isOffset=").append(isOffset);
-        requiredMods.ifPresent(mods -> builder.append(", requiredMods=").append(mods));
-        builder.append("}");
-        return builder.toString();
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+
+        DimensionTempData that = (DimensionTempData) obj;
+        return Double.compare(that.temperature, temperature) == 0
+            && isOffset == that.isOffset
+            && dimensions.equals(that.dimensions)
+            && units == that.units
+            && requiredMods.equals(that.requiredMods);
     }
 }

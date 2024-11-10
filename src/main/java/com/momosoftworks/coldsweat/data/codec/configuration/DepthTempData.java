@@ -2,6 +2,7 @@ package com.momosoftworks.coldsweat.data.codec.configuration;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
@@ -56,6 +57,23 @@ public record DepthTempData(List<TempRegion> temperatures, List<Either<TagKey<Di
             }
         }
         return null;
+    }
+
+    @Override
+    public String toString()
+    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+
+        DepthTempData that = (DepthTempData) obj;
+        return temperatures.equals(that.temperatures)
+            && dimensions.equals(that.dimensions)
+            && requiredMods.equals(that.requiredMods);
     }
 
     public record TempRegion(RampType rampType, VerticalBound top, VerticalBound bottom)
@@ -132,6 +150,23 @@ public record DepthTempData(List<TempRegion> temperatures, List<Either<TagKey<Di
                                           top.getHeight(pos, level));
                 }
             };
+        }
+
+        @Override
+        public String toString()
+        {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
+        }
+
+        @Override
+        public boolean equals(Object obj)
+        {
+            if (this == obj) return true;
+            if (obj == null || getClass() != obj.getClass()) return false;
+
+            TempRegion that = (TempRegion) obj;
+            return rampType == that.rampType
+                && top.equals(that.top)
+                && bottom.equals(that.bottom);
         }
     }
 
@@ -231,6 +266,24 @@ public record DepthTempData(List<TempRegion> temperatures, List<Either<TagKey<Di
                 }
                 throw new IllegalArgumentException("Unknown special temperature value: " + name);
             }
+        }
+
+        @Override
+        public String toString()
+        {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
+        }
+
+        @Override
+        public boolean equals(Object obj)
+        {
+            if (this == obj) return true;
+            if (obj == null || getClass() != obj.getClass()) return false;
+
+            VerticalBound that = (VerticalBound) obj;
+            return anchor == that.anchor
+                && depth.equals(that.depth)
+                && units == that.units
+                && temperature.equals(that.temperature);
         }
     }
 

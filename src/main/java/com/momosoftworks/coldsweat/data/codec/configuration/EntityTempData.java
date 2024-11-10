@@ -1,6 +1,7 @@
 package com.momosoftworks.coldsweat.data.codec.configuration;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
@@ -41,6 +42,26 @@ public record EntityTempData(EntityRequirement entity, double temperature, doubl
 
     public double getTemperature(Entity entity, Entity affectedPlayer)
     {   return CSMath.blend(0, this.temperature, entity.distanceTo(affectedPlayer), range, 0);
+    }
+
+    @Override
+    public String toString()
+    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+
+        EntityTempData that = (EntityTempData) obj;
+        return Double.compare(that.temperature, temperature) == 0
+            && Double.compare(that.range, range) == 0
+            && entity.equals(that.entity)
+            && units == that.units
+            && playerRequirement.equals(that.playerRequirement)
+            && requiredMods.equals(that.requiredMods);
     }
 
     @Override

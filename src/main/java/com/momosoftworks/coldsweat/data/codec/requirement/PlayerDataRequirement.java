@@ -105,30 +105,22 @@ public record PlayerDataRequirement(Optional<GameType> gameType, Optional<Map<St
     }
 
     @Override
+    public String toString()
+    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
+    }
+
+    @Override
     public boolean equals(Object obj)
     {
-        if (this == obj)
-        {   return true;
-        }
-        if (obj == null || getClass() != obj.getClass())
-        {   return false;
-        }
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
 
         PlayerDataRequirement that = (PlayerDataRequirement) obj;
-
-        if (!gameType.equals(that.gameType))
-        {   return false;
-        }
-        if (!stats.equals(that.stats))
-        {   return false;
-        }
-        if (!recipes.equals(that.recipes))
-        {   return false;
-        }
-        if (!advancements.equals(that.advancements))
-        {   return false;
-        }
-        return lookingAt.equals(that.lookingAt);
+        return gameType.equals(that.gameType)
+            && stats.equals(that.stats)
+            && recipes.equals(that.recipes)
+            && advancements.equals(that.advancements)
+            && lookingAt.equals(that.lookingAt);
     }
 
     public record StatRequirement(StatType<?> type, ResourceLocation statId, Stat<?> stat, IntegerBounds value)
@@ -160,25 +152,13 @@ public record PlayerDataRequirement(Optional<GameType> gameType, Optional<Map<St
         @Override
         public boolean equals(Object obj)
         {
-            if (this == obj)
-            {   return true;
-            }
-            if (obj == null || getClass() != obj.getClass())
-            {   return false;
-            }
+            if (this == obj) return true;
+            if (obj == null || getClass() != obj.getClass()) return false;
 
             StatRequirement that = (StatRequirement) obj;
-
-            if (!type.equals(that.type))
-            {   return false;
-            }
-            if (!statId.equals(that.statId))
-            {   return false;
-            }
-            if (!stat.equals(that.stat))
-            {   return false;
-            }
-            return value.equals(that.value);
+            return type.equals(that.type)
+                && statId.equals(that.statId)
+                && value.equals(that.value);
         }
 
         @Override
@@ -196,24 +176,18 @@ public record PlayerDataRequirement(Optional<GameType> gameType, Optional<Map<St
         }
 
         @Override
-        public boolean equals(Object obj)
-        {
-            if (this == obj)
-            {   return true;
-            }
-            if (obj == null || getClass() != obj.getClass())
-            {   return false;
-            }
-
-            AdvancementCompletionRequirement that = (AdvancementCompletionRequirement) obj;
-
-            return complete.equals(that.complete);
-
+        public String toString()
+        {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
         }
 
         @Override
-        public String toString()
-        {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
+        public boolean equals(Object obj)
+        {
+            if (this == obj) return true;
+            if (obj == null || getClass() != obj.getClass()) return false;
+
+            AdvancementCompletionRequirement that = (AdvancementCompletionRequirement) obj;
+            return complete.equals(that.complete);
         }
     }
     public record AdvancementCriteriaRequirement(Map<String, Boolean> criteria)
@@ -233,28 +207,18 @@ public record PlayerDataRequirement(Optional<GameType> gameType, Optional<Map<St
         }
 
         @Override
-        public boolean equals(Object obj)
-        {
-            if (this == obj)
-            {   return true;
-            }
-            if (obj == null || getClass() != obj.getClass())
-            {   return false;
-            }
-
-            AdvancementCriteriaRequirement that = (AdvancementCriteriaRequirement) obj;
-
-            return criteria.equals(that.criteria);
-        }
-
-        @Override
         public String toString()
         {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
         }
-    }
 
-    @Override
-    public String toString()
-    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
+        @Override
+        public boolean equals(Object obj)
+        {
+            if (this == obj) return true;
+            if (obj == null || getClass() != obj.getClass()) return false;
+
+            AdvancementCriteriaRequirement that = (AdvancementCriteriaRequirement) obj;
+            return criteria.equals(that.criteria);
+        }
     }
 }

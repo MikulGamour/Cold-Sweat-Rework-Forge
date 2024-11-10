@@ -81,36 +81,24 @@ public record BlockRequirement(Optional<List<Either<TagKey<Block>, Block>>> bloc
     }
 
     @Override
+    public String toString()
+    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
+    }
+
+    @Override
     public boolean equals(Object obj)
     {
-        if (this == obj)
-        {   return true;
-        }
-        if (obj == null || getClass() != obj.getClass())
-        {   return false;
-        }
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
 
         BlockRequirement that = (BlockRequirement) obj;
-
-        if (!blocks.equals(that.blocks))
-        {   return false;
-        }
-        if (!state.equals(that.state))
-        {   return false;
-        }
-        if (!nbt.equals(that.nbt))
-        {   return false;
-        }
-        if (!sturdyFace.equals(that.sturdyFace))
-        {   return false;
-        }
-        if (!withinWorldBounds.equals(that.withinWorldBounds))
-        {   return false;
-        }
-        if (!replaceable.equals(that.replaceable))
-        {   return false;
-        }
-        return negate == that.negate;
+        return negate == that.negate
+            && blocks.equals(that.blocks)
+            && state.equals(that.state)
+            && nbt.equals(that.nbt)
+            && sturdyFace.equals(that.sturdyFace)
+            && withinWorldBounds.equals(that.withinWorldBounds)
+            && replaceable.equals(that.replaceable);
     }
 
     public record StateRequirement(Map<String, Object> properties)
@@ -160,21 +148,11 @@ public record BlockRequirement(Optional<List<Either<TagKey<Block>, Block>>> bloc
         @Override
         public boolean equals(Object obj)
         {
-            if (this == obj)
-            {   return true;
-            }
-            if (obj == null || getClass() != obj.getClass())
-            {   return false;
-            }
+            if (this == obj) return true;
+            if (obj == null || getClass() != obj.getClass()) return false;
 
             StateRequirement that = (StateRequirement) obj;
-
             return properties.equals(that.properties);
         }
-    }
-
-    @Override
-    public String toString()
-    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
     }
 }

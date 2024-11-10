@@ -2,6 +2,7 @@ package com.momosoftworks.coldsweat.data.codec.configuration;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
@@ -31,6 +32,27 @@ public record ItemCarryTempData(ItemRequirement data, List<Either<IntegerBounds,
             EntityRequirement.getCodec().optionalFieldOf("entity").forGetter(ItemCarryTempData::entityRequirement),
             Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(ItemCarryTempData::requiredMods)
     ).apply(instance, ItemCarryTempData::new));
+
+    @Override
+    public String toString()
+    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+
+        ItemCarryTempData that = (ItemCarryTempData) obj;
+        return temp == that.temp
+            && data.equals(that.data)
+            && slots.equals(that.slots)
+            && trait.equals(that.trait)
+            && maxEffect.equals(that.maxEffect)
+            && entityRequirement.equals(that.entityRequirement)
+            && requiredMods.equals(that.requiredMods);
+    }
 
     @Override
     public ItemCarryTempData setRegistryName(ResourceLocation name)

@@ -1,6 +1,7 @@
 package com.momosoftworks.coldsweat.data.codec.configuration;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.api.insulation.Insulation;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
@@ -21,7 +22,7 @@ public record InsulatorData(Insulation.Slot slot,
                             Insulation insulation, ItemRequirement data,
                             EntityRequirement predicate, Optional<AttributeModifierMap> attributes,
                             Map<ResourceLocation, Double> immuneTempModifiers,
-                            Optional<List<String>> requiredMods) implements NbtSerializable, IForgeRegistryEntry<InsulatorData>
+                            Optional<List<String>> requiredMods) implements IForgeRegistryEntry<InsulatorData>
 {
     public static final Codec<InsulatorData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Insulation.Slot.CODEC.fieldOf("type").forGetter(InsulatorData::slot),
@@ -34,14 +35,24 @@ public record InsulatorData(Insulation.Slot slot,
     ).apply(instance, InsulatorData::new));
 
     @Override
-    public CompoundTag serialize()
-    {
-        return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).result().orElseGet(CompoundTag::new);
+    public String toString()
+    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
     }
 
-    public static InsulatorData deserialize(CompoundTag nbt)
+    @Override
+    public boolean equals(Object obj)
     {
-        return CODEC.decode(NbtOps.INSTANCE, nbt).result().orElseThrow(() -> new IllegalStateException("Failed to deserialize InsulatorData")).getFirst();
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+
+        InsulatorData that = (InsulatorData) obj;
+        return slot == that.slot
+            && insulation.equals(that.insulation)
+            && data.equals(that.data)
+            && predicate.equals(that.predicate)
+            && attributes.equals(that.attributes)
+            && immuneTempModifiers.equals(that.immuneTempModifiers)
+            && requiredMods.equals(that.requiredMods);
     }
 
     @Override
@@ -60,11 +71,5 @@ public record InsulatorData(Insulation.Slot slot,
     public Class<InsulatorData> getRegistryType()
     {
         return InsulatorData.class;
-    }
-
-    @Override
-    public String toString()
-    {
-        return CODEC.encodeStart(NbtOps.INSTANCE, this).result().map(Object::toString).orElse("");
     }
 }

@@ -117,6 +117,14 @@ public record NbtRequirement(CompoundTag tag)
     }
 
     @Override
+    public String toString()
+    {
+        return "NbtRequirement{" +
+                "tag=" + tag +
+                '}';
+    }
+
+    @Override
     public boolean equals(Object obj)
     {
         if (this == obj)
@@ -127,15 +135,6 @@ public record NbtRequirement(CompoundTag tag)
         }
 
         NbtRequirement that = (NbtRequirement) obj;
-
         return tag.equals(that.tag);
-    }
-
-    @Override
-    public String toString()
-    {
-        return "NbtRequirement{" +
-                "tag=" + tag +
-                '}';
     }
 }

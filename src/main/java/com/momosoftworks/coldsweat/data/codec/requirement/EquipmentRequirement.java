@@ -35,22 +35,22 @@ public record EquipmentRequirement(Optional<ItemRequirement> head, Optional<Item
     }
 
     @Override
-    public boolean equals(Object obj)
-    {
-        if (this == obj)
-        {   return true;
-        }
-        if (obj == null || getClass() != obj.getClass())
-        {   return false;
-        }
-
-        EquipmentRequirement that = (EquipmentRequirement) obj;
-
-        return head.equals(that.head) && chest.equals(that.chest) && legs.equals(that.legs) && feet.equals(that.feet) && mainHand.equals(that.mainHand) && offHand.equals(that.offHand);
+    public String toString()
+    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
     }
 
     @Override
-    public String toString()
-    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
+    public boolean equals(Object obj)
+    {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+
+        EquipmentRequirement that = (EquipmentRequirement) obj;
+        return head.equals(that.head)
+            && chest.equals(that.chest)
+            && legs.equals(that.legs)
+            && feet.equals(that.feet)
+            && mainHand.equals(that.mainHand)
+            && offHand.equals(that.offHand);
     }
 }

@@ -41,25 +41,17 @@ public record EnchantmentRequirement(Either<TagKey<Enchantment>, Enchantment> en
     }
 
     @Override
-    public boolean equals(Object obj)
-    {
-        if (this == obj)
-        {   return true;
-        }
-        if (obj == null || getClass() != obj.getClass())
-        {   return false;
-        }
-
-        EnchantmentRequirement that = (EnchantmentRequirement) obj;
-
-        if (!enchantment.equals(that.enchantment))
-        {   return false;
-        }
-        return level.equals(that.level);
+    public String toString()
+    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
     }
 
     @Override
-    public String toString()
-    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
+    public boolean equals(Object obj)
+    {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+
+        EnchantmentRequirement that = (EnchantmentRequirement) obj;
+        return enchantment.equals(that.enchantment) && level.equals(that.level);
     }
 }
