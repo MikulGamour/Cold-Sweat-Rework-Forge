@@ -61,32 +61,20 @@ public class FluidRequirement
     }
 
     @Override
-    public boolean equals(Object obj)
-    {
-        if (this == obj)
-        {   return true;
-        }
-        if (obj == null || getClass() != obj.getClass())
-        {   return false;
-        }
-
-        FluidRequirement that = (FluidRequirement) obj;
-
-        if (!fluids.equals(that.fluids))
-        {   return false;
-        }
-        if (!tag.equals(that.tag))
-        {   return false;
-        }
-        if (!state.equals(that.state))
-        {   return false;
-        }
-        return nbt.equals(that.nbt);
+    public String toString()
+    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
     }
 
     @Override
-    public String toString()
+    public boolean equals(Object obj)
     {
-        return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+
+        FluidRequirement that = (FluidRequirement) obj;
+        return fluids.equals(that.fluids)
+            && tag.equals(that.tag)
+            && state.equals(that.state)
+            && nbt.equals(that.nbt);
     }
 }

@@ -40,7 +40,20 @@ public class StructureTempData
 
     @Override
     public String toString()
+    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
+    }
+
+    @Override
+    public boolean equals(Object obj)
     {
-        return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("");
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+
+        StructureTempData that = (StructureTempData) obj;
+        return Double.compare(that.temperature, temperature) == 0
+            && isOffset == that.isOffset
+            && structures.equals(that.structures)
+            && units == that.units
+            && requiredMods.equals(that.requiredMods);
     }
 }

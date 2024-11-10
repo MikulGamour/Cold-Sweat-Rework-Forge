@@ -1,18 +1,15 @@
 package com.momosoftworks.coldsweat.data.codec.configuration;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
-import com.momosoftworks.coldsweat.util.serialization.NbtSerializable;
 import com.momosoftworks.coldsweat.util.serialization.StringRepresentable;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.ListNBT;
-import net.minecraft.nbt.NBTDynamicOps;
-import net.minecraft.nbt.StringNBT;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 
-public class FuelData implements NbtSerializable
+public class FuelData
 {
     public final FuelType type;
     public final Double fuel;
@@ -32,17 +29,6 @@ public class FuelData implements NbtSerializable
             ItemRequirement.CODEC.fieldOf("data").forGetter(data -> data.data),
             Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(data -> data.requiredMods)
     ).apply(instance, FuelData::new));
-
-    @Override
-    public CompoundNBT serialize()
-    {
-        return (CompoundNBT) CODEC.encodeStart(NBTDynamicOps.INSTANCE, this).result().orElseGet(CompoundNBT::new);
-    }
-
-    public static FuelData deserialize(CompoundNBT nbt)
-    {
-        return CODEC.decode(NBTDynamicOps.INSTANCE, nbt).result().orElseThrow(() -> new IllegalStateException("Failed to deserialize FuelData")).getFirst();
-    }
 
     public enum FuelType implements StringRepresentable
     {
@@ -74,7 +60,18 @@ public class FuelData implements NbtSerializable
 
     @Override
     public String toString()
+    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
+    }
+
+    @Override
+    public boolean equals(Object obj)
     {
-        return CODEC.encodeStart(NBTDynamicOps.INSTANCE, this).result().map(Object::toString).orElse("");
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+
+        FuelData that = (FuelData) obj;
+        return fuel.equals(that.fuel)
+            && data.equals(that.data)
+            && requiredMods.equals(that.requiredMods);
     }
 }

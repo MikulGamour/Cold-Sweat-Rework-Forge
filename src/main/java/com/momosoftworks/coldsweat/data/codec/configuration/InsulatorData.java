@@ -1,29 +1,20 @@
 package com.momosoftworks.coldsweat.data.codec.configuration;
 
-import com.google.common.collect.Multimap;
-import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.api.insulation.Insulation;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
 import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
 import com.momosoftworks.coldsweat.data.codec.util.AttributeModifierMap;
-import com.momosoftworks.coldsweat.util.serialization.NbtSerializable;
-import net.minecraft.entity.ai.attributes.Attribute;
-import net.minecraft.entity.ai.attributes.AttributeModifier;
-import net.minecraft.item.Item;
-import net.minecraft.nbt.*;
-import net.minecraft.tags.ITag;
 import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
-public class InsulatorData implements NbtSerializable
+public class InsulatorData
 {
     public final Insulation.Slot slot;
     public final Insulation insulation;
@@ -59,19 +50,23 @@ public class InsulatorData implements NbtSerializable
     ).apply(instance, InsulatorData::new));
 
     @Override
-    public CompoundNBT serialize()
-    {
-        return (CompoundNBT) CODEC.encodeStart(NBTDynamicOps.INSTANCE, this).result().orElseGet(CompoundNBT::new);
-    }
-
-    public static InsulatorData deserialize(CompoundNBT nbt)
-    {
-        return CODEC.decode(NBTDynamicOps.INSTANCE, nbt).result().orElseThrow(() -> new IllegalStateException("Failed to deserialize InsulatorData")).getFirst();
+    public String toString()
+    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
     }
 
     @Override
-    public String toString()
+    public boolean equals(Object obj)
     {
-        return CODEC.encodeStart(NBTDynamicOps.INSTANCE, this).result().map(Object::toString).orElse("");
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+
+        InsulatorData that = (InsulatorData) obj;
+        return slot == that.slot
+            && insulation.equals(that.insulation)
+            && data.equals(that.data)
+            && predicate.equals(that.predicate)
+            && attributes.equals(that.attributes)
+            && immuneTempModifiers.equals(that.immuneTempModifiers)
+            && requiredMods.equals(that.requiredMods);
     }
 }

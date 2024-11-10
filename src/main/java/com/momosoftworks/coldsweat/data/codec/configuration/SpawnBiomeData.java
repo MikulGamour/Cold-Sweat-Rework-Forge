@@ -43,7 +43,6 @@ public class SpawnBiomeData
 
     @Override
     public String toString()
-    {
-        return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("");
+    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
     }
 }

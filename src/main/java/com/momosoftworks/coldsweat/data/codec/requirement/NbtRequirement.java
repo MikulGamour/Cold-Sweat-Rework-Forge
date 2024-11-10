@@ -125,6 +125,14 @@ public class NbtRequirement
     }
 
     @Override
+    public String toString()
+    {
+        return "NbtRequirement{" +
+                "tag=" + tag +
+                '}';
+    }
+
+    @Override
     public boolean equals(Object obj)
     {
         if (this == obj)
@@ -135,15 +143,6 @@ public class NbtRequirement
         }
 
         NbtRequirement that = (NbtRequirement) obj;
-
         return tag.equals(that.tag);
-    }
-
-    @Override
-    public String toString()
-    {
-        return "NbtRequirement{" +
-                "tag=" + tag +
-                '}';
     }
 }

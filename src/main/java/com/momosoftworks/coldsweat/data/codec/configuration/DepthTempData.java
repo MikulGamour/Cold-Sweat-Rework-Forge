@@ -2,6 +2,7 @@ package com.momosoftworks.coldsweat.data.codec.configuration;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
@@ -63,6 +64,23 @@ public class DepthTempData implements IForgeRegistryEntry<DepthTempData>
             }
         }
         return null;
+    }
+
+    @Override
+    public String toString()
+    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+
+        DepthTempData that = (DepthTempData) obj;
+        return temperatures.equals(that.temperatures)
+            && dimensions.equals(that.dimensions)
+            && requiredMods.equals(that.requiredMods);
     }
 
     public static class TempRegion
@@ -141,6 +159,23 @@ public class DepthTempData implements IForgeRegistryEntry<DepthTempData>
             }
             return topTemp;
         }
+
+        @Override
+        public String toString()
+        {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
+        }
+
+        @Override
+        public boolean equals(Object obj)
+        {
+            if (this == obj) return true;
+            if (obj == null || getClass() != obj.getClass()) return false;
+
+            TempRegion that = (TempRegion) obj;
+            return rampType == that.rampType
+                && top.equals(that.top)
+                && bottom.equals(that.bottom);
+        }
     }
 
     public static class VerticalBound
@@ -155,7 +190,7 @@ public class DepthTempData implements IForgeRegistryEntry<DepthTempData>
         ).apply(instance, VerticalBound::new));
 
         public final VerticalAnchor anchor;
-        public final int depth;
+        public final Integer depth;
         public final Temperature.Units units;
         public final TempContainer temperature;
 
@@ -269,6 +304,24 @@ public class DepthTempData implements IForgeRegistryEntry<DepthTempData>
                 }
                 throw new IllegalArgumentException("Unknown special temperature value: " + name);
             }
+        }
+
+        @Override
+        public String toString()
+        {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
+        }
+
+        @Override
+        public boolean equals(Object obj)
+        {
+            if (this == obj) return true;
+            if (obj == null || getClass() != obj.getClass()) return false;
+
+            VerticalBound that = (VerticalBound) obj;
+            return anchor == that.anchor
+                && depth.equals(that.depth)
+                && units == that.units
+                && temperature.equals(that.temperature);
         }
     }
 
