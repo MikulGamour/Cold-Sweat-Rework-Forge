@@ -9,6 +9,7 @@ import net.minecraft.world.item.ItemStack;
 import javax.annotation.Nullable;
 
 import java.util.Arrays;
+import java.util.stream.IntStream;
 
 import static net.minecraft.advancements.critereon.NbtPredicate.getEntityTagToCompare;
 
@@ -43,77 +44,84 @@ public record NbtRequirement(CompoundTag tag)
      */
     public static boolean compareNbt(@Nullable Tag tag, @Nullable Tag other, boolean compareListTag)
     {
-        if (tag == other)
-        {   return true;
+        if (tag == other) return true;
+        if (tag == null) return true;
+        if (other == null) return false;
+
+        // Handle CompoundTag comparison
+        if (tag instanceof CompoundTag compoundTag)
+        {   return handleCompoundTagComparison(compoundTag, other, compareListTag);
         }
-        else if (tag == null)
-        {   return true;
+
+        // Handle ListTag comparison
+        if (tag instanceof ListTag && other instanceof ListTag && compareListTag)
+        {   return compareListTags((ListTag) tag, (ListTag) other, compareListTag);
         }
-        else if (other == null)
+
+        // Handle numeric range comparison
+        if (tag instanceof StringTag string && other instanceof NumericTag numericTag)
+        {   return compareNumericRange(string, numericTag);
+        }
+
+        return tag.equals(other);
+    }
+
+    private static boolean handleCompoundTagComparison(CompoundTag compoundTag, Tag other, boolean compareListTag)
+    {
+        // Case 1: Compare with another CompoundTag
+        if (other instanceof CompoundTag otherCompound)
+        {
+            return compoundTag.getAllKeys().stream()
+                    .allMatch(key -> compareNbt(compoundTag.get(key), otherCompound.get(key), compareListTag));
+        }
+
+        // Case 2: Special comparison with cs:contains or cs:any_of
+        if (compoundTag.getAllKeys().size() != 1) return false;
+
+        ListTag anyOfValues = (ListTag) compoundTag.get("cs:any_of");
+        if (anyOfValues != null && !anyOfValues.isEmpty())
+        {
+            return anyOfValues.stream()
+                    .anyMatch(value -> compareNbt(value, other, compareListTag));
+        }
+
+        ListTag containsValues = (ListTag) compoundTag.get("cs:contains");
+        if (containsValues != null && !containsValues.isEmpty() && other instanceof ListTag otherList)
+        {
+            return containsValues.stream()
+                    .anyMatch(otherList::contains);
+        }
+
+        return false;
+    }
+
+    private static boolean compareListTags(ListTag list1, ListTag list2, boolean compareListTag)
+    {
+        if (list1.isEmpty()) return list2.isEmpty();
+
+        return list1.stream()
+                .allMatch(element ->
+                                  IntStream.range(0, list2.size())
+                                          .anyMatch(j -> compareNbt(element, list2.get(j), compareListTag))
+                );
+    }
+
+    private static boolean compareNumericRange(StringTag rangeTag, NumericTag numberTag)
+    {
+        try
+        {
+            String[] parts = rangeTag.getAsString().split("-");
+            if (parts.length != 2) return false;
+
+            double min = Double.parseDouble(parts[0]);
+            double max = Double.parseDouble(parts[1]);
+            double value = numberTag.getAsDouble();
+
+            return CSMath.betweenInclusive(value, min, max);
+        }
+        catch (Exception e)
         {   return false;
         }
-        else if (tag instanceof CompoundTag)
-        {
-            CompoundTag compoundNbt1 = (CompoundTag) tag;
-            CompoundTag compoundNbt2 = (CompoundTag) other;
-
-            for (String s : compoundNbt1.getAllKeys())
-            {
-                Tag tag1 = compoundNbt1.get(s);
-                Tag tag2 = compoundNbt2.get(s);
-                if (!compareNbt(tag1, tag2, compareListTag))
-                {   return false;
-                }
-            }
-
-            return true;
-        }
-        else if (tag instanceof ListTag && compareListTag)
-        {
-            ListTag listtag = (ListTag) tag;
-            ListTag listtag1 = (ListTag) other;
-            if (listtag.isEmpty())
-            {   return listtag1.isEmpty();
-            }
-            else
-            {
-                for (int i = 0; i < listtag.size(); ++i)
-                {
-                    Tag element = listtag.get(i);
-                    boolean flag = false;
-
-                    for (int j = 0; j < listtag1.size(); ++j)
-                    {
-                        if (compareNbt(element, listtag1.get(j), compareListTag))
-                        {   flag = true;
-                            break;
-                        }
-                    }
-
-                    if (!flag)
-                    {   return false;
-                    }
-                }
-
-                return true;
-            }
-        }
-        // Compare a number range (represented as a string "min-max") in the predicate tag to a number in the compared tag
-        else if (tag instanceof StringTag string && other instanceof NumericTag otherNumber)
-        {
-            try
-            {
-                // Parse value ranges in to min and max values
-                Double[] range = Arrays.stream(string.getAsString().split("-")).map(Double::parseDouble).toArray(Double[]::new);
-                if (range.length == 2)
-                {   return CSMath.betweenInclusive(otherNumber.getAsDouble(), range[0], range[1]);
-                }
-            }
-            catch (Exception e)
-            {   return false;
-            }
-        }
-        return tag.equals(other);
     }
 
     @Override
