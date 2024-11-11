@@ -9,6 +9,7 @@ import net.minecraft.nbt.*;
 import javax.annotation.Nullable;
 
 import java.util.Arrays;
+import java.util.stream.IntStream;
 
 import static net.minecraft.advancements.criterion.NBTPredicate.getEntityTagToCompare;
 
@@ -49,79 +50,84 @@ public class NbtRequirement
      */
     public static boolean compareNbt(@Nullable INBT tag, @Nullable INBT other, boolean compareListNBT)
     {
-        if (tag == other)
-        {   return true;
+        if (tag == other) return true;
+        if (tag == null) return true;
+        if (other == null) return false;
+
+        // Handle CompoundNBT comparison
+        if (tag instanceof CompoundNBT)
+        {   return handleCompoundNBTComparison((CompoundNBT) tag, other, compareListNBT);
         }
-        else if (tag == null)
-        {   return true;
+
+        // Handle ListNBT comparison
+        if (tag instanceof ListNBT && other instanceof ListNBT && compareListNBT)
+        {   return compareListNBTs((ListNBT) tag, (ListNBT) other, compareListNBT);
         }
-        else if (other == null)
+
+        // Handle numeric range comparison
+        if (tag instanceof StringNBT && other instanceof NumberNBT)
+        {   return compareNumericRange((StringNBT) tag, (NumberNBT) other);
+        }
+
+        return tag.equals(other);
+    }
+
+    private static boolean handleCompoundNBTComparison(CompoundNBT CompoundNBT, INBT other, boolean compareListNBT)
+    {
+        // Case 1: Compare with another CompoundNBT
+        if (other instanceof CompoundNBT)
+        {
+            return CompoundNBT.getAllKeys().stream()
+                    .allMatch(key -> compareNbt(CompoundNBT.get(key), ((CompoundNBT) other).get(key), compareListNBT));
+        }
+
+        // Case 2: Special comparison with cs:contains or cs:any_of
+        if (CompoundNBT.getAllKeys().size() != 1) return false;
+
+        ListNBT anyOfValues = (ListNBT) CompoundNBT.get("cs:any_of");
+        if (anyOfValues != null && !anyOfValues.isEmpty())
+        {
+            return anyOfValues.stream()
+                    .anyMatch(value -> compareNbt(value, other, compareListNBT));
+        }
+
+        ListNBT containsValues = (ListNBT) CompoundNBT.get("cs:contains");
+        if (containsValues != null && !containsValues.isEmpty() && other instanceof ListNBT)
+        {
+            return containsValues.stream()
+                    .anyMatch(((ListNBT) other)::contains);
+        }
+
+        return false;
+    }
+
+    private static boolean compareListNBTs(ListNBT list1, ListNBT list2, boolean compareListNBT)
+    {
+        if (list1.isEmpty()) return list2.isEmpty();
+
+        return list1.stream()
+                .allMatch(element ->
+                                  IntStream.range(0, list2.size())
+                                          .anyMatch(j -> compareNbt(element, list2.get(j), compareListNBT))
+                );
+    }
+
+    private static boolean compareNumericRange(StringNBT rangeTag, NumberNBT numberTag)
+    {
+        try
+        {
+            String[] parts = rangeTag.getAsString().split("-");
+            if (parts.length != 2) return false;
+
+            double min = Double.parseDouble(parts[0]);
+            double max = Double.parseDouble(parts[1]);
+            double value = numberTag.getAsDouble();
+
+            return CSMath.betweenInclusive(value, min, max);
+        }
+        catch (Exception e)
         {   return false;
         }
-        else if (tag instanceof CompoundNBT)
-        {
-            CompoundNBT compoundNbt1 = (CompoundNBT) tag;
-            CompoundNBT compoundNbt2 = (CompoundNBT) other;
-
-            for (String s : compoundNbt1.getAllKeys())
-            {
-                INBT tag1 = compoundNbt1.get(s);
-                INBT tag2 = compoundNbt2.get(s);
-                if (!compareNbt(tag1, tag2, compareListNBT))
-                {   return false;
-                }
-            }
-
-            return true;
-        }
-        else if (tag instanceof ListNBT && compareListNBT)
-        {
-            ListNBT listtag = (ListNBT) tag;
-            ListNBT listtag1 = (ListNBT) other;
-            if (listtag.isEmpty())
-            {   return listtag1.isEmpty();
-            }
-            else
-            {
-                for (int i = 0; i < listtag.size(); ++i)
-                {
-                    INBT element = listtag.get(i);
-                    boolean flag = false;
-
-                    for (int j = 0; j < listtag1.size(); ++j)
-                    {
-                        if (compareNbt(element, listtag1.get(j), compareListNBT))
-                        {   flag = true;
-                            break;
-                        }
-                    }
-
-                    if (!flag)
-                    {   return false;
-                    }
-                }
-
-                return true;
-            }
-        }
-        // Compare a number range (represented as a string "min-max") in the predicate tag to a number in the compared tag
-        else if (tag instanceof StringNBT && other instanceof NumberNBT)
-        {
-            StringNBT string = (StringNBT) tag;
-            NumberNBT otherNumber = (NumberNBT) other;
-            try
-            {
-                // Parse value ranges in to min and max values
-                Double[] range = Arrays.stream(string.getAsString().split("-")).map(Double::parseDouble).toArray(Double[]::new);
-                if (range.length == 2)
-                {   return CSMath.betweenInclusive(otherNumber.getAsDouble(), range[0], range[1]);
-                }
-            }
-            catch (Exception e)
-            {   return false;
-            }
-        }
-        return tag.equals(other);
     }
 
     @Override
