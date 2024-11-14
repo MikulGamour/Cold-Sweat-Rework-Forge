@@ -12,6 +12,7 @@
   "item.cold_sweat.waterskin.filled":    "Lleno",
 
   "tooltip.cold_sweat.insulated":      "Aislado",
+  "tooltip.cold_sweat.waterskin.drink": "Mantén [%s] para beber",
 
   "effect.cold_sweat.insulated":           "Aislado",
   "effect.cold_sweat.ice_resistance":      "Resistencia al hielo",

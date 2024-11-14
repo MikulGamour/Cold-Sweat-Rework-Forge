@@ -40,6 +40,7 @@
   "tooltip.cold_sweat.hotbar": "Se nella hotbar:",
   "tooltip.cold_sweat.consumed": "Se consumato:",
   "tooltip.cold_sweat.temperature_effect": "%d Temperatura",
+  "tooltip.cold_sweat.waterskin.drink": "Tieni premuto [%s] per bere",
 
 
   "effect.cold_sweat.insulated":            "Isolamento",

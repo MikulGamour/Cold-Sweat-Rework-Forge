@@ -40,6 +40,7 @@
 "tooltip.cold_sweat.consumed": "Когда съедено:",
 "tooltip.cold_sweat.temperature_effect": "Температура %d",
 "tooltip.cold_sweat.per_second": "в/сек",
+"tooltip.cold_sweat.waterskin.drink": "Удерживайте [%s], чтобы выпить",
 
 "item.modifiers.insulation": "Когда применено на броню:",
 "item.modifiers.curio": "Когда надет в качестве Curio:",

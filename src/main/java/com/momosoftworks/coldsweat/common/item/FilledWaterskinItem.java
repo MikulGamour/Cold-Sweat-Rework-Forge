@@ -8,19 +8,16 @@ import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.core.event.TaskScheduler;
 import com.momosoftworks.coldsweat.core.init.ItemInit;
 import com.momosoftworks.coldsweat.core.itemgroup.ColdSweatGroup;
-import com.momosoftworks.coldsweat.core.network.ColdSweatPacketHandler;
 import com.momosoftworks.coldsweat.core.network.message.ParticleBatchMessage;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.registries.ModItems;
 import com.momosoftworks.coldsweat.util.registries.ModSounds;
 import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import net.minecraft.block.BlockState;
-import net.minecraft.client.Minecraft;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.CauldronBlock;
 import net.minecraft.block.DispenserBlock;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.settings.ParticleStatus;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.util.ITooltipFlag;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -36,14 +33,12 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.*;
 import net.minecraft.world.World;
-import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.IChunk;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.network.PacketDistributor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -306,26 +301,25 @@ public class FilledWaterskinItem extends Item
         double temp = CSMath.round(stack.getOrCreateTag().getDouble(FilledWaterskinItem.NBT_TEMPERATURE), 2);
         if (TooltipHandler.isShiftDown())
         {
+            String crouchKey = Minecraft.getInstance().options.keyShift.getKey().getDisplayName().getString();
+            tooltip.add(new TranslationTextComponent("tooltip.cold_sweat.waterskin.drink", new StringTextComponent(crouchKey).withStyle(TextFormatting.WHITE)).withStyle(TextFormatting.GRAY));
+
             // Info tooltip for hotbar functionality
             String perSecond = new TranslationTextComponent("tooltip.cold_sweat.per_second").getString();
 
             tooltip.add(new StringTextComponent(""));
             tooltip.add(new TranslationTextComponent("tooltip.cold_sweat.hotbar").withStyle(TextFormatting.GRAY));
             IFormattableTextComponent tempEffectText =
-                        (temp > 0
-                        ? new TranslationTextComponent("tooltip.cold_sweat.temperature_effect", "+" + CSMath.round(EFFECT_RATE * ConfigSettings.TEMP_RATE.get(), 2)).withStyle(TooltipHandler.HOT) :
-                        temp == 0
-                        ? new TranslationTextComponent("tooltip.cold_sweat.temperature_effect", "+0") :
-                        new TranslationTextComponent("tooltip.cold_sweat.temperature_effect", CSMath.round(EFFECT_RATE * ConfigSettings.TEMP_RATE.get(), 2)).withStyle(TooltipHandler.COLD))
+                        (temp > 0  ? new TranslationTextComponent("tooltip.cold_sweat.temperature_effect", "+" + CSMath.round(EFFECT_RATE * ConfigSettings.TEMP_RATE.get(), 2)).withStyle(TooltipHandler.HOT) :
+                                        temp == 0 ? new TranslationTextComponent("tooltip.cold_sweat.temperature_effect", "+0").withStyle(TextFormatting.WHITE)
+                                                  : new TranslationTextComponent("tooltip.cold_sweat.temperature_effect", "-" + CSMath.round(EFFECT_RATE * ConfigSettings.TEMP_RATE.get(), 2)).withStyle(TooltipHandler.COLD))
                         .append(perSecond);
             tooltip.add(tempEffectText);
 
             IFormattableTextComponent tempText =
-                                 temp > 0
-                                 ? new TranslationTextComponent("tooltip.cold_sweat.temperature_effect", "+" + CSMath.formatDoubleOrInt(temp)).withStyle(TooltipHandler.HOT) :
-                                 temp == 0
-                                 ? new TranslationTextComponent("tooltip.cold_sweat.temperature_effect", "+" + CSMath.formatDoubleOrInt(temp)) :
-                                 new TranslationTextComponent("tooltip.cold_sweat.temperature_effect", CSMath.formatDoubleOrInt(temp)).withStyle(TooltipHandler.COLD);
+                                 temp > 0  ? new TranslationTextComponent("tooltip.cold_sweat.temperature_effect", "+" + CSMath.formatDoubleOrInt(temp)).withStyle(TooltipHandler.HOT) :
+                                 temp == 0 ? new TranslationTextComponent("tooltip.cold_sweat.temperature_effect", "+" + CSMath.formatDoubleOrInt(temp)).withStyle(TextFormatting.WHITE)
+                                           : new TranslationTextComponent("tooltip.cold_sweat.temperature_effect", CSMath.formatDoubleOrInt(temp)).withStyle(TooltipHandler.COLD);
 
             // Info tooltip for drinking/pouring functionality
             tooltip.add(new StringTextComponent(""));

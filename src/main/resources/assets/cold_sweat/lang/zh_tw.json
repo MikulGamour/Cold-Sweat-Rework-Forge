@@ -43,6 +43,7 @@
   "tooltip.cold_sweat.consumed": "食用時：",
   "tooltip.cold_sweat.temperature_effect": "%d 溫度",
   "tooltip.cold_sweat.per_second": "/秒",
+  "tooltip.cold_sweat.waterskin.drink": "按住[%s]鍵飲用",
 
   "item.modifiers.insulation": "應用於盔甲時：",
   "item.modifiers.curio":      "作為飾品佩戴時：",
