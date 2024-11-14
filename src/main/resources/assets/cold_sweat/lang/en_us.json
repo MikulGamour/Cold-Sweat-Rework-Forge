@@ -43,6 +43,7 @@
   "tooltip.cold_sweat.consumed": "When Consumed:",
   "tooltip.cold_sweat.temperature_effect": "%d Temperature",
   "tooltip.cold_sweat.per_second": "/sec",
+  "tooltip.cold_sweat.waterskin.drink": "Hold [%s] to drink",
 
   "item.modifiers.insulation": "When Applied to Armor:",
   "item.modifiers.curio":      "When Worn as Curio:",

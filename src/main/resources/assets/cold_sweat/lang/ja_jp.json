@@ -43,6 +43,7 @@
   "tooltip.cold_sweat.consumed": "使用した時:",
   "tooltip.cold_sweat.temperature_effect": "%d0 体温",
   "tooltip.cold_sweat.per_second": "/sec",
+  "tooltip.cold_sweat.waterskin.drink": "[%s]を押し続けると飲む",
 
   "item.modifiers.insulation": "防具に使用する場合:",
   "item.modifiers.curio":      "アクセサリーとして着用する場合:",

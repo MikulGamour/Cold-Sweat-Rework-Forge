@@ -42,6 +42,7 @@
   "tooltip.cold_sweat.consumed": "Bij consumptie:",
   "tooltip.cold_sweat.temperature_effect": "%d Temperatuur",
   "tooltip.cold_sweat.per_second": "/sec",
+  "tooltip.cold_sweat.waterskin.drink": "Houd [%s] ingedrukt om te drinken",
 
   "item.modifiers.insulation": "Wanneer toegepast op pantser:",
 
