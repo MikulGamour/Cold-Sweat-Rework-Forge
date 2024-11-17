@@ -82,14 +82,8 @@ public class EntityRequirement
                                                                 Optional.empty(), Optional.empty(), Optional.empty(),
                                                                 Optional.empty(), Optional.empty(), Optional.empty());
 
-    private static final Codec<List<Either<ITag<EntityType<?>>, EntityType<?>>>> ENTITY_TYPE_LIST_CODEC =
-            Codec.either(ConfigHelper.tagOrBuiltinCodec(Registry.ENTITY_TYPE_REGISTRY, Registry.ENTITY_TYPE).listOf(),
-                         Registry.ENTITY_TYPE)
-                 .xmap(either -> either.map(list -> list, type -> Arrays.asList(Either.right(type))),
-                       Either::left);
-
     public static final Codec<EntityRequirement> SIMPLE_CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            ENTITY_TYPE_LIST_CODEC.optionalFieldOf("entity").forGetter(requirement -> requirement.entities),
+            ConfigHelper.tagOrBuiltinCodec(Registry.ENTITY_TYPE_REGISTRY, Registry.ENTITY_TYPE).listOf().optionalFieldOf("entity").forGetter(requirement -> requirement.entities),
             LocationRequirement.CODEC.optionalFieldOf("location").forGetter(requirement -> requirement.location),
             LocationRequirement.CODEC.optionalFieldOf("stepping_on").forGetter(requirement -> requirement.steppingOn),
             EffectsRequirement.CODEC.optionalFieldOf("effects").forGetter(requirement -> requirement.effects),
@@ -116,7 +110,7 @@ public class EntityRequirement
     {
         Codec<EntityRequirement> latestCodec = REQUIREMENT_CODEC_STACK.get(REQUIREMENT_CODEC_STACK.size() - 1);
         Codec<EntityRequirement> codec = RecordCodecBuilder.create(instance -> instance.group(
-                ENTITY_TYPE_LIST_CODEC.optionalFieldOf("entities").forGetter(requirement -> requirement.entities),
+                ConfigHelper.tagOrBuiltinCodec(Registry.ENTITY_TYPE_REGISTRY, Registry.ENTITY_TYPE).listOf().optionalFieldOf("entities").forGetter(requirement -> requirement.entities),
                 LocationRequirement.CODEC.optionalFieldOf("location").forGetter(requirement -> requirement.location),
                 LocationRequirement.CODEC.optionalFieldOf("stepping_on").forGetter(requirement -> requirement.steppingOn),
                 EffectsRequirement.CODEC.optionalFieldOf("effects").forGetter(requirement -> requirement.effects),
