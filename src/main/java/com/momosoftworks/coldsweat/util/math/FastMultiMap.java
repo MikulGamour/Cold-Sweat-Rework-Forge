@@ -214,6 +214,12 @@ public class FastMultiMap<K, V> implements Multimap<K, V>
                         }
                         return currentIterator.next();
                     }
+
+                    @Override
+                    public void remove()
+                    {
+                        currentIterator.remove();
+                    }
                 };
             }
 
@@ -258,6 +264,16 @@ public class FastMultiMap<K, V> implements Multimap<K, V>
                             throw new NoSuchElementException();
                         }
                         return new AbstractMap.SimpleEntry<>(currentEntry.getKey(), valueIterator.next());
+                    }
+
+                    @Override
+                    public void remove()
+                    {
+                        valueIterator.remove();
+                        if (currentEntry.getValue().isEmpty())
+                        {
+                            entryIterator.remove();
+                        }
                     }
                 };
             }

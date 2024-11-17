@@ -1,10 +1,8 @@
 package com.momosoftworks.coldsweat.compat.kubejs.event.builder;
 
-import com.momosoftworks.coldsweat.config.type.PredicateItem;
-import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
+import com.momosoftworks.coldsweat.data.codec.configuration.FuelData;
 import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
 import net.minecraft.core.Registry;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
@@ -49,8 +47,8 @@ public class FuelBuilderJS
         return this;
     }
 
-    public PredicateItem build()
+    public FuelData build(FuelData.FuelType fuelType)
     {
-        return new PredicateItem(this.fuel, new ItemRequirement(this.itemPredicate), EntityRequirement.NONE, new CompoundTag());
+        return new FuelData(fuelType, this.fuel, new ItemRequirement(this.itemPredicate));
     }
 }

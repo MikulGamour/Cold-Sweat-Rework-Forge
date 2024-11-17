@@ -4,6 +4,8 @@ import com.mojang.datafixers.util.Pair;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.compat.CompatManager;
+import com.momosoftworks.coldsweat.data.codec.configuration.DimensionTempData;
+import com.momosoftworks.coldsweat.data.codec.configuration.StructureTempData;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import net.minecraft.core.BlockPos;
@@ -38,9 +40,9 @@ public class BiomeTempModifier extends TempModifier
             BlockPos entPos = entity.blockPosition();
 
             // In the case that the dimension temperature is overridden by config, use that and skip everything else
-            Pair<Double, Temperature.Units> dimTempOverride = ConfigSettings.DIMENSION_TEMPS.get(entity.level.registryAccess()).get(level.dimensionType());
+            DimensionTempData dimTempOverride = ConfigSettings.DIMENSION_TEMPS.get(entity.level.registryAccess()).get(level.dimensionType());
             if (dimTempOverride != null)
-            {   return temp -> temp + dimTempOverride.getFirst();
+            {   return temp -> temp + dimTempOverride.temperature();
             }
 
             // If there's a temperature structure here, ignore biome temp
@@ -87,9 +89,9 @@ public class BiomeTempModifier extends TempModifier
             worldTemp /= Math.max(1, biomeCount);
 
             // Add dimension offset, if present
-            Pair<Double, Temperature.Units> dimTempOffsetConf = ConfigSettings.DIMENSION_OFFSETS.get(entity.level.registryAccess()).get(level.dimensionType());
+            DimensionTempData dimTempOffsetConf = ConfigSettings.DIMENSION_OFFSETS.get(entity.level.registryAccess()).get(level.dimensionType());
             if (dimTempOffsetConf != null)
-            {   worldTemp += dimTempOffsetConf.getFirst();
+            {   worldTemp += dimTempOffsetConf.temperature();
             }
 
             // Add structure offset, if present
@@ -108,8 +110,8 @@ public class BiomeTempModifier extends TempModifier
         ConfiguredStructureFeature<?, ?> structure = WorldHelper.getStructureAt(level, pos);
         if (structure == null) return Pair.of(null, 0d);
 
-        Double strucTemp = CSMath.getIfNotNull(ConfigSettings.STRUCTURE_TEMPS.get(level.registryAccess()).get(structure.feature), Pair::getFirst, null);
-        Double strucOffset = CSMath.getIfNotNull(ConfigSettings.STRUCTURE_OFFSETS.get(level.registryAccess()).get(structure.feature), Pair::getFirst, 0d);
+        Double strucTemp = CSMath.getIfNotNull(ConfigSettings.STRUCTURE_TEMPS.get(level.registryAccess()).get(structure), StructureTempData::temperature, null);
+        Double strucOffset = CSMath.getIfNotNull(ConfigSettings.STRUCTURE_OFFSETS.get(level.registryAccess()).get(structure), StructureTempData::temperature, 0d);
 
         return Pair.of(strucTemp, strucOffset);
     }

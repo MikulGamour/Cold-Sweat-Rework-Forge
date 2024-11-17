@@ -33,5 +33,6 @@ public class ColdSweatPacketHandler
         INSTANCE.registerMessage(12, SyncPreferredUnitsMessage.class, SyncPreferredUnitsMessage::encode, SyncPreferredUnitsMessage::decode, SyncPreferredUnitsMessage::handle);
         INSTANCE.registerMessage(13, SyncContainerSlotMessage.class, SyncContainerSlotMessage::encode, SyncContainerSlotMessage::decode, SyncContainerSlotMessage::handle);
         INSTANCE.registerMessage(14, EntityMountMessage.class, EntityMountMessage::encode, EntityMountMessage::decode, EntityMountMessage::handle);
+        INSTANCE.registerMessage(15, SyncItemPredicatesMessage.class, SyncItemPredicatesMessage::encode, SyncItemPredicatesMessage::decode, SyncItemPredicatesMessage::handle);
     }
 }

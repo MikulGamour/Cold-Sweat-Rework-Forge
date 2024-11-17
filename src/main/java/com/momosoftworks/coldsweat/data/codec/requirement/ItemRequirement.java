@@ -1,11 +1,9 @@
 package com.momosoftworks.coldsweat.data.codec.requirement;
 
-import com.google.gson.JsonElement;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import com.momosoftworks.coldsweat.util.serialization.SerializablePredicate;
 import com.momosoftworks.coldsweat.data.codec.util.IntegerBounds;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
 import net.minecraft.core.Registry;
@@ -28,7 +26,7 @@ import java.util.function.Predicate;
 public record ItemRequirement(Optional<List<Either<TagKey<Item>, Item>>> items, Optional<TagKey<Item>> tag,
                               Optional<IntegerBounds> count, Optional<IntegerBounds> durability,
                               Optional<List<EnchantmentRequirement>> enchantments, Optional<List<EnchantmentRequirement>> storedEnchantments,
-                              Optional<Potion> potion, NbtRequirement nbt, Optional<SerializablePredicate<ItemStack>> predicate)
+                              Optional<Potion> potion, NbtRequirement nbt, Optional<Predicate<ItemStack>> predicate)
 {
     public static final Codec<ItemRequirement> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             ConfigHelper.tagOrForgeRegistryCodec(Registry.ITEM_REGISTRY, ForgeRegistries.ITEMS).listOf().optionalFieldOf("items").forGetter(predicate -> predicate.items),
@@ -38,9 +36,7 @@ public record ItemRequirement(Optional<List<Either<TagKey<Item>, Item>>> items, 
             EnchantmentRequirement.CODEC.listOf().optionalFieldOf("enchantments").forGetter(predicate -> predicate.enchantments),
             EnchantmentRequirement.CODEC.listOf().optionalFieldOf("stored_enchantments").forGetter(predicate -> predicate.storedEnchantments),
             ForgeRegistries.POTIONS.getCodec().optionalFieldOf("potion").forGetter(predicate -> predicate.potion),
-            NbtRequirement.CODEC.optionalFieldOf("nbt", new NbtRequirement(new CompoundTag())).forGetter(predicate -> predicate.nbt),
-            Codec.STRING.xmap(SerializablePredicate::<ItemStack>deserialize, SerializablePredicate::serialize)
-                        .optionalFieldOf("predicate").forGetter(predicate -> predicate.predicate)
+            NbtRequirement.CODEC.optionalFieldOf("nbt", new NbtRequirement(new CompoundTag())).forGetter(predicate -> predicate.nbt)
     ).apply(instance, ItemRequirement::new));
 
     public static final ItemRequirement NONE = new ItemRequirement(Optional.empty(), Optional.empty(), Optional.empty(),
@@ -56,11 +52,17 @@ public record ItemRequirement(Optional<List<Either<TagKey<Item>, Item>>> items, 
         this(items, tag, count, durability, enchantments, storedEnchantments, potion, nbt, Optional.empty());
     }
 
+    public ItemRequirement(List<Item> items, NbtRequirement nbt)
+    {
+        this(Optional.of(items.stream().map(Either::<TagKey<Item>, Item>right).toList()), Optional.empty(),
+             Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), nbt);
+    }
+
     public ItemRequirement(Predicate<ItemStack> predicate)
     {
         this(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
              Optional.empty(), Optional.empty(), Optional.empty(), new NbtRequirement(),
-             Optional.of(new SerializablePredicate<>(predicate)));
+             Optional.of(predicate));
     }
 
     public boolean test(ItemStack stack, boolean ignoreCount)
@@ -77,15 +79,16 @@ public record ItemRequirement(Optional<List<Either<TagKey<Item>, Item>>> items, 
         }
         if (items.isPresent())
         {
-            for (int i = 0; i < items.get().size(); i++)
+            checkItem:
             {
-                Either<TagKey<Item>, Item> either = items.get().get(i);
-                if (either.map(stack::is, stack::is))
-                {   break;
+                for (int i = 0; i < items.get().size(); i++)
+                {
+                    Either<TagKey<Item>, Item> either = items.get().get(i);
+                    if (either.map(stack::is, stack::is))
+                    {   break checkItem;
+                    }
                 }
-                if (i == items.get().size() - 1)
-                {   return false;
-                }
+                return false;
             }
         }
         if (tag.isPresent() && !stack.is(tag.get()))

@@ -20,11 +20,15 @@ public class ExtraCodecs
             {
                 for (Codec codec : codecs)
                 {
-                    DataResult<T> result = codec.encode(input, ops, prefix);
-                    if (result.result().isPresent())
+                    try
                     {
-                        return result;
+                        DataResult<T> result = codec.encode(input, ops, prefix);
+                        if (result.result().isPresent())
+                        {   return result;
+                        }
                     }
+                    catch (ClassCastException ignored)
+                    {}
                 }
                 return DataResult.error("No codecs could encode input " + input);
             }

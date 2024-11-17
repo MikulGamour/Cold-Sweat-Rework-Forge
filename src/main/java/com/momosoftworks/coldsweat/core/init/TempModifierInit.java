@@ -7,27 +7,28 @@ import com.momosoftworks.coldsweat.api.registry.BlockTempRegistry;
 import com.momosoftworks.coldsweat.api.registry.TempModifierRegistry;
 import com.momosoftworks.coldsweat.api.temperature.block_temp.*;
 import com.momosoftworks.coldsweat.api.temperature.modifier.*;
-import com.momosoftworks.coldsweat.config.spec.WorldSettingsConfig;
-import com.momosoftworks.coldsweat.data.codec.requirement.NbtRequirement;
 import com.momosoftworks.coldsweat.compat.CompatManager;
-import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
-import com.momosoftworks.coldsweat.util.serialization.NBTHelper;
+import com.momosoftworks.coldsweat.config.ConfigLoadingHandler;
+import com.momosoftworks.coldsweat.config.spec.WorldSettingsConfig;
+import com.momosoftworks.coldsweat.data.ModRegistries;
+import com.momosoftworks.coldsweat.data.codec.configuration.BlockTempData;
+import com.momosoftworks.coldsweat.util.serialization.RegistryHelper;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.server.ServerAboutToStartEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.registries.ForgeRegistries;
 
-import java.util.*;
-import java.util.function.Predicate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 @Mod.EventBusSubscriber
 public class TempModifierInit
@@ -63,71 +64,27 @@ public class TempModifierInit
     public static void buildBlockConfigs()
     {
         // Auto-generate BlockTemps from config
-        for (List<?> effectBuilder : WorldSettingsConfig.getInstance().getBlockTemps())
+        List<BlockTempData> blockTemps = WorldSettingsConfig.BLOCK_TEMPERATURES.get().stream()
+                                         .map(BlockTempData::fromToml)
+                                         .filter(Objects::nonNull).collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
+        // Handle entries removed by configs
+        ConfigLoadingHandler.removeEntries(blockTemps, ModRegistries.BLOCK_TEMP_DATA);
+
+        for (BlockTempData blockConfig : blockTemps)
         {
-            if (effectBuilder.size() < 3)
-            {   ColdSweat.LOGGER.error("Malformed configuration for block temperature: {}", effectBuilder);
-                continue;
-            }
-            try
+            Block[] blocks = RegistryHelper.mapForgeRegistryTagList(ForgeRegistries.BLOCKS, blockConfig.blocks()).toArray(new Block[0]);
+
+            BlockTemp blockTemp = new BlockTempConfig(-blockConfig.maxEffect(), blockConfig.maxEffect(),
+                                                      blockConfig.minTemp(), blockConfig.maxTemp(),
+                                                      blockConfig.range(), true, blockConfig.conditions(), blocks)
             {
-                // Get IDs associated with this config entry
-                String[] blockIDs = ((String) effectBuilder.get(0)).split(",");
+                @Override
+                public double getTemperature(Level level, LivingEntity entity, BlockState state, BlockPos pos, double distance)
+                {   return blockConfig.temperature();
+                }
+            };
 
-                // Parse block IDs into blocks
-                Block[] effectBlocks = Arrays.stream(blockIDs).map(ConfigHelper::getBlocks).flatMap(List::stream).toArray(Block[]::new);
-
-                // Temp of block
-                final double blockTemp = ((Number) effectBuilder.get(1)).doubleValue();
-                // Range of effect
-                final double blockRange = ((Number) effectBuilder.get(2)).doubleValue();
-
-                // Get min/max effect
-                final double maxChange = effectBuilder.size() > 3 && effectBuilder.get(3) instanceof Number
-                                         ? ((Number) effectBuilder.get(3)).doubleValue()
-                                         : Double.MAX_VALUE;
-
-                // Get block predicate
-                Map<String, Predicate<BlockState>> blockPredicates = effectBuilder.size() > 4 && effectBuilder.get(4) instanceof String str && !str.isEmpty()
-                                                                     ? ConfigHelper.getBlockStatePredicates(effectBlocks[0], str)
-                                                                     : new HashMap<>();
-
-                NbtRequirement tag = effectBuilder.size() > 5 && effectBuilder.get(5) instanceof String str && !str.isEmpty()
-                                            ? new NbtRequirement(NBTHelper.parseCompoundNbt(str))
-                                            : new NbtRequirement();
-
-                double tempLimit = effectBuilder.size() > 6
-                                   ? ((Number) effectBuilder.get(6)).doubleValue()
-                                   : Double.MAX_VALUE;
-
-                double maxEffect = blockTemp > 0 ?  maxChange :  Double.MAX_VALUE;
-                double minEffect = blockTemp < 0 ? -maxChange : -Double.MAX_VALUE;
-
-                double maxTemperature = blockTemp > 0 ? tempLimit : Double.MAX_VALUE;
-                double minTemperature = blockTemp < 0 ? tempLimit : -Double.MAX_VALUE;
-
-                BlockTempRegistry.register(new BlockTempConfig(minEffect, maxEffect, minTemperature, maxTemperature, blockRange, true, blockPredicates, effectBlocks)
-                {
-                    @Override
-                    public double getTemperature(Level level, LivingEntity entity, BlockState state, BlockPos pos, double distance)
-                    {
-                        // Check the list of predicates first
-                        BlockEntity blockEntity = level.getBlockEntity(pos);
-                        if (blockEntity != null)
-                        {
-                            CompoundTag blockTag = blockEntity.saveWithFullMetadata();
-                            if (!tag.test(blockTag))
-                            {   return 0;
-                            }
-                        }
-                        return blockTemp;
-                    }
-                });
-            }
-            catch (Exception e)
-            {   ColdSweat.LOGGER.error("Invalid configuration for BlockTemps", e);
-                break;
-            }
+            BlockTempRegistry.register(blockTemp);
         }
     }
 

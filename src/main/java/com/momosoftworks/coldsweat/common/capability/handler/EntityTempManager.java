@@ -17,11 +17,12 @@ import com.momosoftworks.coldsweat.common.capability.temperature.EntityTempCap;
 import com.momosoftworks.coldsweat.common.capability.temperature.ITemperatureCap;
 import com.momosoftworks.coldsweat.common.capability.temperature.PlayerTempCap;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
-import com.momosoftworks.coldsweat.config.type.CarriedItemTemperature;
 import com.momosoftworks.coldsweat.config.type.InsulatingMount;
-import com.momosoftworks.coldsweat.config.type.Insulator;
-import com.momosoftworks.coldsweat.config.type.PredicateItem;
 import com.momosoftworks.coldsweat.core.event.TaskScheduler;
+import com.momosoftworks.coldsweat.data.codec.configuration.FoodData;
+import com.momosoftworks.coldsweat.data.codec.configuration.InsulatorData;
+import com.momosoftworks.coldsweat.data.codec.configuration.ItemCarryTempData;
+import com.momosoftworks.coldsweat.data.codec.configuration.MountData;
 import com.momosoftworks.coldsweat.util.ClientOnlyHelper;
 import com.momosoftworks.coldsweat.compat.CompatManager;
 import com.momosoftworks.coldsweat.util.entity.DummyPlayer;
@@ -34,7 +35,6 @@ import com.momosoftworks.coldsweat.util.registries.ModItems;
 import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.damagesource.DamageSource;
@@ -241,7 +241,7 @@ public class EntityTempManager
                 () -> new EnumMap<>(Temperature.Trait.class),
                 (map, type) -> map.put(type, 0.0),
                 EnumMap::putAll);
-        Map<CarriedItemTemperature, Double> effectsPerCarriedTemp = new FastMap<>();
+        Map<ItemCarryTempData, Double> effectsPerCarriedTemp = new FastMap<>();
 
         // Get temperature of equipped items
         for (EquipmentSlot slot : EquipmentSlot.values())
@@ -274,7 +274,7 @@ public class EntityTempManager
             }
         }
 
-        for (Map.Entry<CarriedItemTemperature, Double> entry : effectsPerCarriedTemp.entrySet())
+        for (Map.Entry<ItemCarryTempData, Double> entry : effectsPerCarriedTemp.entrySet())
         {
             Temperature.Trait trait = entry.getKey().trait();
             double temp = entry.getValue();
@@ -295,9 +295,9 @@ public class EntityTempManager
     }
 
     private static void checkAndAddCarriedTemp(LivingEntity entity, ItemStack stack, Integer slot, EquipmentSlot equipmentSlot,
-                                               CarriedItemTemperature carried, Map<CarriedItemTemperature, Double> effectsPerCarriedTemp)
+                                               ItemCarryTempData carried, Map<ItemCarryTempData, Double> effectsPerCarriedTemp)
     {
-        if (carried.testEntity(entity) && carried.testSlot(stack, slot, equipmentSlot))
+        if (carried.test(entity, stack, slot, equipmentSlot))
         {
             double temp = carried.temperature() * stack.getCount();
             double currentEffect = effectsPerCarriedTemp.getOrDefault(carried, 0.0);
@@ -487,9 +487,9 @@ public class EntityTempManager
                            : modifier.getLastInput();
 
         // Calculate modifier immunity from equipped insulators
-        for (Map.Entry<ItemStack, Insulator> entry : getInsulatorsOnEntity(entity).entrySet())
+        for (Map.Entry<ItemStack, InsulatorData> entry : getInsulatorsOnEntity(entity).entrySet())
         {
-            Insulator insulator = entry.getValue();
+            InsulatorData insulator = entry.getValue();
             ItemStack stack = entry.getKey();
 
             Double immunity = insulator.immuneTempModifiers().get(modifierKey);
@@ -572,9 +572,9 @@ public class EntityTempManager
             }
         });
 
-        for (Map.Entry<ItemStack, Insulator> insulationItem : getInsulatorsOnEntity(entity).entrySet())
+        for (Map.Entry<ItemStack, InsulatorData> insulationItem : getInsulatorsOnEntity(entity).entrySet())
         {
-            Insulator insulator = insulationItem.getValue();
+            InsulatorData insulator = insulationItem.getValue();
             ItemStack stack = insulationItem.getKey();
             if (insulator.test(entity, stack))
             {
@@ -702,7 +702,7 @@ public class EntityTempManager
                 // If insulated entity (defined in config)
                 else
                 {
-                    InsulatingMount entityInsul = ConfigSettings.INSULATED_ENTITIES.get().get(mount.getType())
+                    MountData entityInsul = ConfigSettings.INSULATED_MOUNTS.get().get(mount.getType())
                                                   .stream().filter(mnt -> mnt.test(mount)).findFirst().orElse(null);
                     if (entityInsul != null && entityInsul.test(mount))
                     {   Temperature.addOrReplaceModifier(player, new MountTempModifier(entityInsul.coldInsulation(), entityInsul.heatInsulation()).tickRate(5).expires(5), Temperature.Trait.RATE, Placement.Duplicates.BY_CLASS);
@@ -723,22 +723,21 @@ public class EntityTempManager
         && !event.getEntity().level.isClientSide)
         {
             // If food item defined in config
-            for (PredicateItem foodData : ConfigSettings.FOOD_TEMPERATURES.get().get(event.getItem().getItem()))
+            for (FoodData foodData : ConfigSettings.FOOD_TEMPERATURES.get().get(event.getItem().getItem()))
             {
                 if (foodData != null && foodData.test(event.getItem()))
                 {
-                    double effect = foodData.value();
-                    if (foodData.extraData().contains("duration", Tag.TAG_INT))
+                    double effect = foodData.temperature();
+                    if (foodData.duration() > 0)
                     {
-                        int duration = foodData.extraData().getInt("duration");
                         // Special case for soul sprouts
                         FoodTempModifier foodModifier = event.getItem().getItem() == ModItems.SOUL_SPROUT
                                                         ? new SoulSproutTempModifier(effect)
                                                         : new FoodTempModifier(effect);
                         // Store the duration of the TempModifier
-                        foodModifier.getNBT().put("extraData", foodData.extraData());
+                        foodModifier.getNBT().putInt("duration", foodData.duration());
                         // Add the TempModifier
-                        Temperature.addModifier(player, foodModifier.expires(duration), Temperature.Trait.BASE, Placement.Duplicates.BY_CLASS);
+                        Temperature.addModifier(player, foodModifier.expires(foodData.duration()), Temperature.Trait.BASE, Placement.Duplicates.BY_CLASS);
                     }
                     else
                     {   Temperature.addModifier(player, new FoodTempModifier(effect).expires(0), Temperature.Trait.CORE, Placement.Duplicates.EXACT);
@@ -760,9 +759,9 @@ public class EntityTempManager
     {   return entity.level.getDifficulty() == Difficulty.PEACEFUL && ConfigSettings.USE_PEACEFUL_MODE.get();
     }
 
-    public static Map<ItemStack, Insulator> getInsulatorsOnEntity(LivingEntity entity)
+    public static Map<ItemStack, InsulatorData> getInsulatorsOnEntity(LivingEntity entity)
     {
-        Map<ItemStack, Insulator> insulators = new HashMap<>();
+        Map<ItemStack, InsulatorData> insulators = new HashMap<>();
         for (EquipmentSlot slot : EquipmentSlot.values())
         {
             if (slot.getType() != EquipmentSlot.Type.ARMOR) continue;

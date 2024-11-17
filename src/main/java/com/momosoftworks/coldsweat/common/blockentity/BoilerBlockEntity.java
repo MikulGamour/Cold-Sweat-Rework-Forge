@@ -6,9 +6,9 @@ import com.momosoftworks.coldsweat.common.container.BoilerContainer;
 import com.momosoftworks.coldsweat.common.capability.handler.EntityTempManager;
 import com.momosoftworks.coldsweat.common.item.FilledWaterskinItem;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
-import com.momosoftworks.coldsweat.config.type.PredicateItem;
 import com.momosoftworks.coldsweat.core.network.ColdSweatPacketHandler;
 import com.momosoftworks.coldsweat.core.network.message.BlockDataUpdateMessage;
+import com.momosoftworks.coldsweat.data.codec.configuration.FuelData;
 import com.momosoftworks.coldsweat.data.tag.ModItemTags;
 import com.momosoftworks.coldsweat.compat.CompatManager;
 import com.momosoftworks.coldsweat.util.registries.ModBlockEntities;
@@ -195,8 +195,8 @@ public class BoilerBlockEntity extends HearthBlockEntity implements MenuProvider
 
     @Override
     public int getItemFuel(ItemStack item)
-    {   return ConfigHelper.findFirstItemMatching(ConfigSettings.BOILER_FUEL, item)
-               .map(PredicateItem::value).orElse(0d).intValue();
+    {   return ConfigHelper.findFirstFuelMatching(ConfigSettings.BOILER_FUEL, item)
+               .map(FuelData::fuel).orElse(0d).intValue();
     }
 
     @Override

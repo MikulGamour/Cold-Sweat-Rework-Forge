@@ -2,6 +2,8 @@ package com.momosoftworks.coldsweat.api.insulation.slot;
 
 import com.mojang.serialization.Codec;
 import com.momosoftworks.coldsweat.util.math.CSMath;
+import com.momosoftworks.coldsweat.util.serialization.NbtSerializable;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -12,7 +14,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
-public abstract class ScalingFormula
+public abstract class ScalingFormula implements NbtSerializable
 {
     Type scaling;
 
@@ -25,6 +27,24 @@ public abstract class ScalingFormula
 
     public Type getType()
     {   return scaling;
+    }
+
+    @Override
+    public CompoundTag serialize()
+    {
+        CompoundTag tag = new CompoundTag();
+        tag.putString("scaling", scaling.getSerializedName());
+        return tag;
+    }
+
+    public static ScalingFormula deserialize(CompoundTag nbt)
+    {
+        Type scaling = Type.byName(nbt.getString("scaling"));
+        return switch (scaling)
+        {
+            case STATIC -> Static.deserialize(nbt);
+            default -> Dynamic.deserialize(nbt);
+        };
     }
 
     public static class Static extends ScalingFormula
@@ -55,6 +75,20 @@ public abstract class ScalingFormula
             values.add(3, slots.get(EquipmentSlot.FEET));
             return values;
         }
+
+        public static Static deserialize(CompoundTag nbt)
+        {   return new Static(nbt.getInt("head"), nbt.getInt("body"), nbt.getInt("legs"), nbt.getInt("feet"));
+        }
+
+        @Override
+        public CompoundTag serialize()
+        {
+            CompoundTag tag = super.serialize();
+            for (Map.Entry<EquipmentSlot, Integer> entry : slots.entrySet())
+            {   tag.putInt(entry.getKey().getName(), entry.getValue());
+            }
+            return tag;
+        }
     }
 
     public static class Dynamic extends ScalingFormula
@@ -84,6 +118,19 @@ public abstract class ScalingFormula
         @Override
         public List<? extends Number> getValues()
         {   return List.of(factor, max);
+        }
+
+        public static Dynamic deserialize(CompoundTag nbt)
+        {   return new Dynamic(Type.byName(nbt.getString("scaling")), nbt.getDouble("factor"), nbt.getDouble("max"));
+        }
+
+        @Override
+        public CompoundTag serialize()
+        {
+            CompoundTag tag = super.serialize();
+            tag.putDouble("factor", factor);
+            tag.putDouble("max", max);
+            return tag;
         }
     }
 

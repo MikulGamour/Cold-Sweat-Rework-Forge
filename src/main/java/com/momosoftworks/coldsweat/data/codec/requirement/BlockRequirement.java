@@ -23,6 +23,7 @@ import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraftforge.registries.ForgeRegistries;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -143,6 +144,33 @@ public record BlockRequirement(Optional<List<Either<TagKey<Block>, Block>>> bloc
                 }
             }
             return true;
+        }
+
+        public static StateRequirement fromToml(List<String> entry, Block block)
+        {
+            Map<String, Object> blockPredicates = new HashMap<>();
+
+            // Iterate predicates
+            for (String predicate : entry)
+            {
+                // Split predicate into key-value pairs separated by "="
+                String[] pair = predicate.split("=");
+                String key = pair[0];
+                String value = pair[1];
+
+                // Get the property with the given name
+                Property<?> property = block.getStateDefinition().getProperty(key);
+                if (property != null)
+                {
+                    // Parse the desired value for this property
+                    property.getValue(value).ifPresent(propertyValue ->
+                                                       {
+                                                           // Add a new predicate to the list
+                                                           blockPredicates.put(key, propertyValue);
+                                                       });
+                }
+            }
+            return new StateRequirement(blockPredicates);
         }
 
         @Override

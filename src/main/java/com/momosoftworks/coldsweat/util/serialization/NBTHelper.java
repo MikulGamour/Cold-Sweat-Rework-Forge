@@ -240,14 +240,4 @@ public class NBTHelper
         }
         return null;
     }
-
-    public static <T, V> T deserializePredicate(CompoundTag tag, Function<SerializablePredicate<V>, T> constructor, String errorMessage)
-    {
-        try
-        {   return constructor.apply(SerializablePredicate.deserialize(tag.getString("predicate")));
-        }
-        catch (Exception e)
-        {   throw ColdSweat.LOGGER.throwing(new RuntimeException(errorMessage));
-        }
-    }
 }

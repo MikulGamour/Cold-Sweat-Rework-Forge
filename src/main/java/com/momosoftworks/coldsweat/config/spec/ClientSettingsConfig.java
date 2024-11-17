@@ -174,24 +174,24 @@ public class ClientSettingsConfig
     {   return TEMPERATURE_OFFSET.get();
     }
 
-    public int getBodyIconX()
+    public static int getBodyIconX()
     {   return BODY_TEMP_ICON_POS.get().get(0);
     }
-    public int getBodyIconY()
+    public static int getBodyIconY()
     {   return BODY_TEMP_ICON_POS.get().get(1);
     }
 
-    public int getBodyReadoutX()
+    public static int getBodyReadoutX()
     {   return BODY_TEMP_READOUT_POS.get().get(0);
     }
-    public int getBodyReadoutY()
+    public static int getBodyReadoutY()
     {   return BODY_TEMP_READOUT_POS.get().get(1);
     }
 
-    public int getWorldGaugeX()
+    public static int getWorldGaugeX()
     {   return WORLD_TEMP_GAUGE_POS.get().get(0);
     }
-    public int getWorldGaugeY()
+    public static int getWorldGaugeY()
     {   return WORLD_TEMP_GAUGE_POS.get().get(1);
     }
 
@@ -285,8 +285,11 @@ public class ClientSettingsConfig
     public boolean isConfigButtonEnabled()
     {   return SHOW_CONFIG_BUTTON.get();
     }
-    public List<? extends Integer> getConfigButtonPos()
-    {   return CONFIG_BUTTON_POS.get();
+    public static int getConfigButtonX()
+    {   return CONFIG_BUTTON_POS.get().get(0);
+    }
+    public static int getConfigButtonY()
+    {   return CONFIG_BUTTON_POS.get().get(1);
     }
     public void setConfigButtonPos(List<Integer> pos)
     {   CONFIG_BUTTON_POS.set(pos);

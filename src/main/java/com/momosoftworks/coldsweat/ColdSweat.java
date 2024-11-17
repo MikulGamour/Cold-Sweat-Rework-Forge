@@ -94,6 +94,7 @@ public class ColdSweat
             event.create(new RegistryBuilder<DepthTempData>().setType(DepthTempData.class).setName(ModRegistries.DEPTH_TEMP_DATA.location()).dataPackRegistry(DepthTempData.CODEC));
             event.create(new RegistryBuilder<ItemCarryTempData>().setType(ItemCarryTempData.class).setName(ModRegistries.CARRY_TEMP_DATA.location()).dataPackRegistry(ItemCarryTempData.CODEC));
             event.create(new RegistryBuilder<EntityTempData>().setType(EntityTempData.class).setName(ModRegistries.ENTITY_TEMP_DATA.location()).dataPackRegistry(EntityTempData.CODEC));
+            event.create(new RegistryBuilder<RemoveRegistryData<?>>().setType((Class<RemoveRegistryData<?>>) (Object) RemoveRegistryData.class).setName(ModRegistries.REMOVE_REGISTRY_DATA.location()).dataPackRegistry(RemoveRegistryData.CODEC));
         });
     }
 

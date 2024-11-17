@@ -7,6 +7,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -17,6 +18,7 @@ import net.minecraftforge.common.util.LogicalSidedProvider;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 
 public class EntityHelper
@@ -58,5 +60,28 @@ public class EntityHelper
 
     public static ServerPlayer getServerPlayer(Player player)
     {   return ((MinecraftServer) LogicalSidedProvider.WORKQUEUE.get(LogicalSide.SERVER)).getPlayerList().getPlayer(player.getUUID());
+    }
+
+    @Nullable
+    public static EquipmentSlot getEquipmentSlot(int index)
+    {
+        if (index == 100 + EquipmentSlot.HEAD.getIndex())
+        {   return EquipmentSlot.HEAD;
+        }
+        else if (index == 100 + EquipmentSlot.CHEST.getIndex())
+        {   return EquipmentSlot.CHEST;
+        }
+        else if (index == 100 + EquipmentSlot.LEGS.getIndex())
+        {   return EquipmentSlot.LEGS;
+        }
+        else if (index == 100 + EquipmentSlot.FEET.getIndex())
+        {   return EquipmentSlot.FEET;
+        }
+        else if (index == 98)
+        {   return EquipmentSlot.MAINHAND;
+        }
+        else
+        {   return index == 99 ? EquipmentSlot.OFFHAND : null;
+        }
     }
 }

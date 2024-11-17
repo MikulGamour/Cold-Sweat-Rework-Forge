@@ -52,8 +52,7 @@ public class ItemSettingsConfig
         BOILER_FUELS = BUILDER
                 .defineListAllowEmpty(List.of("Boiler"), () -> ListBuilder.begin(
                                 List.of("#minecraft:planks",         10),
-                                List.of("minecraft:coal",            37),
-                                List.of("minecraft:charcoal",        37),
+                                List.of("#minecraft:coals",          37),
                                 List.of("#minecraft:logs_that_burn", 37),
                                 List.of("minecraft:coal_block",      333),
                                 List.of("minecraft:magma_block",     333),
@@ -79,8 +78,7 @@ public class ItemSettingsConfig
                 .defineListAllowEmpty(List.of("Hearth"), () -> ListBuilder.begin(
                                 // Hot
                                 List.of("#minecraft:planks",         10),
-                                List.of("minecraft:coal",            37),
-                                List.of("minecraft:charcoal",        37),
+                                List.of("#minecraft:coals",          37),
                                 List.of("#minecraft:logs_that_burn", 37),
                                 List.of("minecraft:coal_block",      333),
                                 List.of("minecraft:magma_block",     333),

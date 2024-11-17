@@ -1,31 +1,24 @@
 package com.momosoftworks.coldsweat.config;
 
+import com.google.common.collect.Multimap;
 import com.mojang.datafixers.util.Either;
-import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.momosoftworks.coldsweat.ColdSweat;
+import com.momosoftworks.coldsweat.api.event.core.registry.CreateRegistriesEvent;
 import com.momosoftworks.coldsweat.api.event.vanilla.ServerConfigsLoadedEvent;
 import com.momosoftworks.coldsweat.api.registry.BlockTempRegistry;
 import com.momosoftworks.coldsweat.api.temperature.block_temp.BlockTemp;
-import com.momosoftworks.coldsweat.api.util.Temperature;
-import com.momosoftworks.coldsweat.config.type.CarriedItemTemperature;
-import com.momosoftworks.coldsweat.config.type.InsulatingMount;
-import com.momosoftworks.coldsweat.config.type.Insulator;
-import com.momosoftworks.coldsweat.config.type.PredicateItem;
 import com.momosoftworks.coldsweat.core.init.TempModifierInit;
 import com.momosoftworks.coldsweat.data.ModRegistries;
 import com.momosoftworks.coldsweat.data.codec.configuration.*;
 import com.momosoftworks.coldsweat.data.codec.requirement.BlockRequirement;
-import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
-import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
-import com.momosoftworks.coldsweat.data.codec.util.AttributeModifierMap;
 import com.momosoftworks.coldsweat.data.tag.ModBlockTags;
 import com.momosoftworks.coldsweat.data.tag.ModDimensionTags;
 import com.momosoftworks.coldsweat.data.tag.ModEffectTags;
 import com.momosoftworks.coldsweat.data.tag.ModItemTags;
 import com.momosoftworks.coldsweat.compat.CompatManager;
-import com.momosoftworks.coldsweat.util.math.CSMath;
+import com.momosoftworks.coldsweat.util.math.FastMultiMap;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
 import com.momosoftworks.coldsweat.util.serialization.RegistryHelper;
 import net.minecraft.core.BlockPos;
@@ -49,26 +42,25 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.levelgen.feature.ConfiguredStructureFeature;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.minecraftforge.fml.loading.FMLPaths;
 import net.minecraftforge.registries.ForgeRegistries;
-import oshi.util.tuples.Triplet;
 
 import java.io.File;
 import java.io.FileReader;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Mod.EventBusSubscriber
 public class ConfigLoadingHandler
 {
+    public static final Multimap<ResourceKey<Registry<?>>, RemoveRegistryData<?>> REMOVED_REGISTRIES = new FastMultiMap<>();
+
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void loadConfigs(ServerConfigsLoadedEvent event)
     {
@@ -76,22 +68,26 @@ public class ConfigLoadingHandler
         BlockTempRegistry.flush();
         getDefaultConfigs(event.getServer());
 
-        RegistryAccess registries = event.getServer().registryAccess();
+        RegistryAccess registryAccess = event.getServer().registryAccess();
+        Multimap<ResourceKey<Registry<?>>, Holder<?>> registries = new FastMultiMap<>();
 
         // User JSON configs (config folder)
         ColdSweat.LOGGER.info("Loading registries from configs...");
-        collectUserRegistries(registries);
+        registries.putAll(collectUserRegistries(registryAccess));
 
         // JSON configs (data resources)
         ColdSweat.LOGGER.info("Loading registries from data resources...");
-        collectRegistries(registries);
+        registries.putAll(collectDataRegistries(registryAccess));
+
+        // Load JSON data into the config settings
+        logAndAddRegistries(registryAccess, registries);
 
         // User configs (TOML)
         ColdSweat.LOGGER.info("Loading TOML configs...");
-        ConfigSettings.load(registries, false);
+        ConfigSettings.load(registryAccess, false);
         TempModifierInit.buildBlockConfigs();
 
-        // Post-toml Java BlockTemps
+        // Java BlockTemps
         ColdSweat.LOGGER.info("Loading BlockTemps...");
         TempModifierInit.buildBlockRegistries();
     }
@@ -108,152 +104,161 @@ public class ConfigLoadingHandler
     /**
      * Loads JSON-based configs from data resources
      */
-    public static void collectRegistries(RegistryAccess registries)
+    public static Multimap<ResourceKey<Registry<?>>, Holder<?>> collectDataRegistries(RegistryAccess registryAccess)
     {
+        if (registryAccess == null)
+        {   ColdSweat.LOGGER.error("Failed to load registries from null RegistryAccess");
+            return new FastMultiMap<>();
+        }
         /*
          Add blocks from tags to configs
          */
-        ConfigSettings.HEARTH_SPREAD_WHITELIST.get().addAll(registries.registryOrThrow(Registry.BLOCK_REGISTRY)
-                                                                    .getTag(ModBlockTags.HEARTH_SPREAD_WHITELIST).orElseThrow()
-                                                                    .stream().map(holder ->
-                                                                                  {   ColdSweat.LOGGER.info("Adding block {} to hearth spread whitelist", holder.value());
-                                                                                      return holder.value();
-                                                                                  }).toList());
-        ConfigSettings.HEARTH_SPREAD_BLACKLIST.get().addAll(registries.registryOrThrow(Registry.BLOCK_REGISTRY)
-                                                                    .getTag(ModBlockTags.HEARTH_SPREAD_BLACKLIST).orElseThrow()
-                                                                    .stream().map(holder ->
-                                                                                  {
-                                                                                      ColdSweat.LOGGER.info("Adding block {} to hearth spread blacklist", holder.value());
-                                                                                      return holder.value();
-                                                                                  }).toList());
-        ConfigSettings.SLEEP_CHECK_IGNORE_BLOCKS.get().addAll(registries.registryOrThrow(Registry.BLOCK_REGISTRY)
-                                                                      .getTag(ModBlockTags.IGNORE_SLEEP_CHECK).orElseThrow()
-                                                                      .stream().map(holder ->
-                                                                                    {   ColdSweat.LOGGER.info("Disabling sleeping conditions check for block {}", holder.value());
-                                                                                        return holder.value();
-                                                                                    }).toList());
-        ConfigSettings.LAMP_DIMENSIONS.get(registries).addAll(registries.registryOrThrow(Registry.DIMENSION_TYPE_REGISTRY)
-                                                                      .getTag(ModDimensionTags.SOUL_LAMP_VALID).orElseThrow()
-                                                                      .stream().map(holder ->
-                                                                                    {   ColdSweat.LOGGER.info("Enabling dimension {} for soulspring lamp", holder.value());
-                                                                                        return holder.value();
-                                                                                    }).toList());
-        ConfigSettings.INSULATION_BLACKLIST.get().addAll(registries.registryOrThrow(Registry.ITEM_REGISTRY)
-                                                                 .getTag(ModItemTags.NOT_INSULATABLE).orElseThrow()
-                                                                 .stream().map(holder ->
-                                                                               {   ColdSweat.LOGGER.info("Adding item {} to insulation blacklist", holder.value());
-                                                                                   return holder.value();
-                                                                               }).toList());
-        ConfigSettings.HEARTH_POTION_BLACKLIST.get().addAll(registries.registryOrThrow(Registry.MOB_EFFECT_REGISTRY)
-                                                                    .getTag(ModEffectTags.HEARTH_BLACKLISTED).orElseThrow()
-                                                                    .stream().map(holder ->
-                                                                                  {   ColdSweat.LOGGER.info("Adding effect {} to hearth potion blacklist", holder.value());
-                                                                                      return holder.value();
-                                                                                  }).toList());
+        ConfigSettings.HEARTH_SPREAD_WHITELIST.get()
+                .addAll(registryAccess.registryOrThrow(Registry.BLOCK_REGISTRY)
+                        .getTag(ModBlockTags.HEARTH_SPREAD_WHITELIST).orElseThrow()
+                        .stream().map(holder ->
+                        {   ColdSweat.LOGGER.info("Adding block {} to hearth spread whitelist", holder.value());
+                            return holder.value();
+                        }).toList());
+
+        ConfigSettings.HEARTH_SPREAD_BLACKLIST.get().
+                addAll(registryAccess.registryOrThrow(Registry.BLOCK_REGISTRY)
+                       .getTag(ModBlockTags.HEARTH_SPREAD_BLACKLIST).orElseThrow()
+                       .stream().map(holder ->
+                       {
+                           ColdSweat.LOGGER.info("Adding block {} to hearth spread blacklist", holder.value());
+                           return holder.value();
+                       }).toList());
+
+        ConfigSettings.SLEEP_CHECK_IGNORE_BLOCKS.get()
+                .addAll(registryAccess.registryOrThrow(Registry.BLOCK_REGISTRY)
+                        .getTag(ModBlockTags.IGNORE_SLEEP_CHECK).orElseThrow()
+                        .stream().map(holder ->
+                        {   ColdSweat.LOGGER.info("Disabling sleeping conditions check for block {}", holder.value());
+                            return holder.value();
+                        }).toList());
+
+        ConfigSettings.LAMP_DIMENSIONS.get(registryAccess)
+                .addAll(registryAccess.registryOrThrow(Registry.DIMENSION_TYPE_REGISTRY)
+                        .getTag(ModDimensionTags.SOUL_LAMP_VALID).orElseThrow()
+                        .stream().map(holder ->
+                        {   ColdSweat.LOGGER.info("Enabling dimension {} for soulspring lamp", holder.value());
+                            return holder.value();
+                        }).toList());
+
+        ConfigSettings.INSULATION_BLACKLIST.get()
+                .addAll(registryAccess.registryOrThrow(Registry.ITEM_REGISTRY)
+                        .getTag(ModItemTags.NOT_INSULATABLE).orElseThrow()
+                        .stream().map(holder ->
+                        {   ColdSweat.LOGGER.info("Adding item {} to insulation blacklist", holder.value());
+                            return holder.value();
+                        }).toList());
+
+        ConfigSettings.HEARTH_POTION_BLACKLIST.get()
+                .addAll(registryAccess.registryOrThrow(Registry.MOB_EFFECT_REGISTRY)
+                        .getTag(ModEffectTags.HEARTH_BLACKLISTED).orElseThrow()
+                        .stream().map(holder ->
+                        {   ColdSweat.LOGGER.info("Adding effect {} to hearth potion blacklist", holder.value());
+                            return holder.value();
+                        }).toList());
 
         /*
          Fetch JSON registries
         */
-        Set<Holder<InsulatorData>> insulators = registries.registryOrThrow(ModRegistries.INSULATOR_DATA).holders().collect(Collectors.toSet());
-        Set<Holder<FuelData>> fuels = registries.registryOrThrow(ModRegistries.FUEL_DATA).holders().collect(Collectors.toSet());
-        Set<Holder<FoodData>> foods = registries.registryOrThrow(ModRegistries.FOOD_DATA).holders().collect(Collectors.toSet());
-        Set<Holder<ItemCarryTempData>> carryTemps = registries.registryOrThrow(ModRegistries.CARRY_TEMP_DATA).holders().collect(Collectors.toSet());
-
-        Set<Holder<BlockTempData>> blockTemps = registries.registryOrThrow(ModRegistries.BLOCK_TEMP_DATA).holders().collect(Collectors.toSet());
-        Set<Holder<BiomeTempData>> biomeTemps = registries.registryOrThrow(ModRegistries.BIOME_TEMP_DATA).holders().collect(Collectors.toSet());
-        Set<Holder<DimensionTempData>> dimensionTemps = registries.registryOrThrow(ModRegistries.DIMENSION_TEMP_DATA).holders().collect(Collectors.toSet());
-        Set<Holder<StructureTempData>> structureTemps = registries.registryOrThrow(ModRegistries.STRUCTURE_TEMP_DATA).holders().collect(Collectors.toSet());
-        Set<Holder<DepthTempData>> depthTemps = registries.registryOrThrow(ModRegistries.DEPTH_TEMP_DATA).holders().collect(Collectors.toSet());
-
-        Set<Holder<MountData>> mounts = registries.registryOrThrow(ModRegistries.MOUNT_DATA).holders().collect(Collectors.toSet());
-        Set<Holder<SpawnBiomeData>> spawnBiomes = registries.registryOrThrow(ModRegistries.ENTITY_SPAWN_BIOME_DATA).holders().collect(Collectors.toSet());
-        Set<Holder<EntityTempData>> entityTemps = registries.registryOrThrow(ModRegistries.ENTITY_TEMP_DATA).holders().collect(Collectors.toSet());
-
-        logAndAddRegistries(registries, insulators, fuels, foods, carryTemps, blockTemps, biomeTemps,
-                            dimensionTemps, structureTemps, depthTemps, mounts, spawnBiomes, entityTemps);
+        Multimap<ResourceKey<Registry<?>>, Holder<?>> registries = new FastMultiMap<>();
+        for (Map.Entry<String, ModRegistries.RegistryHolder<?>> entry : ModRegistries.getRegistries().entrySet())
+        {
+            ResourceKey<Registry<?>> key = (ResourceKey) entry.getValue().registry();
+            registries.putAll(key, registryAccess.registryOrThrow(key).holders().collect(Collectors.toSet()));
+        }
+        return registries;
     }
 
     /**
      * Loads JSON-based configs from the configs folder
      */
-    public static void collectUserRegistries(RegistryAccess registries)
+    public static Multimap<ResourceKey<Registry<?>>, Holder<?>> collectUserRegistries(RegistryAccess registryAccess)
     {
-        if (registries == null)
+        if (registryAccess == null)
         {   ColdSweat.LOGGER.error("Failed to load registries from null RegistryAccess");
-            return;
+            return new FastMultiMap<>();
         }
 
         /*
          Parse user-defined JSON data from the configs folder
         */
-        Set<Holder<InsulatorData>> insulators = new HashSet<>(parseConfigData(ModRegistries.INSULATOR_DATA, InsulatorData.CODEC));
-        Set<Holder<FuelData>> fuels = new HashSet<>(parseConfigData(ModRegistries.FUEL_DATA, FuelData.CODEC));
-        Set<Holder<FoodData>> foods = new HashSet<>(parseConfigData(ModRegistries.FOOD_DATA, FoodData.CODEC));
-        Set<Holder<ItemCarryTempData>> carryTemps = new HashSet<>(parseConfigData(ModRegistries.CARRY_TEMP_DATA, ItemCarryTempData.CODEC));
-
-        Set<Holder<BlockTempData>> blockTemps = new HashSet<>(parseConfigData(ModRegistries.BLOCK_TEMP_DATA, BlockTempData.CODEC));
-        Set<Holder<BiomeTempData>> biomeTemps = new HashSet<>(parseConfigData(ModRegistries.BIOME_TEMP_DATA, BiomeTempData.CODEC));
-        Set<Holder<DimensionTempData>> dimensionTemps = new HashSet<>(parseConfigData(ModRegistries.DIMENSION_TEMP_DATA, DimensionTempData.CODEC));
-        Set<Holder<StructureTempData>> structureTemps = new HashSet<>(parseConfigData(ModRegistries.STRUCTURE_TEMP_DATA, StructureTempData.CODEC));
-        Set<Holder<DepthTempData>> depthTemps = new HashSet<>(parseConfigData(ModRegistries.DEPTH_TEMP_DATA, DepthTempData.CODEC));
-
-        Set<Holder<MountData>> mounts = new HashSet<>(parseConfigData(ModRegistries.MOUNT_DATA, MountData.CODEC));
-        Set<Holder<SpawnBiomeData>> spawnBiomes = new HashSet<>(parseConfigData(ModRegistries.ENTITY_SPAWN_BIOME_DATA, SpawnBiomeData.CODEC));
-        Set<Holder<EntityTempData>> entityTemps = new HashSet<>(parseConfigData(ModRegistries.ENTITY_TEMP_DATA, EntityTempData.CODEC));
-
-        logAndAddRegistries(registries, insulators, fuels, foods, carryTemps, blockTemps, biomeTemps,
-                            dimensionTemps, structureTemps, depthTemps, mounts, spawnBiomes, entityTemps);
+        Multimap<ResourceKey<Registry<?>>, Holder<?>> registries = new FastMultiMap<>();
+        for (Map.Entry<String, ModRegistries.RegistryHolder<?>> entry : ModRegistries.getRegistries().entrySet())
+        {
+            ResourceKey<Registry<?>> key = (ResourceKey) entry.getValue().registry();
+            Codec<?> codec = entry.getValue().codec();
+            registries.putAll(key, parseConfigData((ResourceKey) key, (Codec) codec));
+        }
+        return registries;
     }
 
-    private static void logAndAddRegistries(RegistryAccess registries, Set<Holder<InsulatorData>> insulators,
-                                            Set<Holder<FuelData>> fuels, Set<Holder<FoodData>> foods,
-                                            Set<Holder<ItemCarryTempData>> carryTemps, Set<Holder<BlockTempData>> blockTemps,
-                                            Set<Holder<BiomeTempData>> biomeTemps, Set<Holder<DimensionTempData>> dimensionTemps,
-                                            Set<Holder<StructureTempData>> structureTemps, Set<Holder<DepthTempData>> depthTemps,
-                                            Set<Holder<MountData>> mounts, Set<Holder<SpawnBiomeData>> spawnBiomes,
-                                            Set<Holder<EntityTempData>> entityTemps)
+    private static void logAndAddRegistries(RegistryAccess registryAccess, Multimap<ResourceKey<Registry<?>>, Holder<?>> registries)
     {
+        // Clear the static map
+        REMOVED_REGISTRIES.clear();
+        // Gather registry removals & add them to the static map
+        Set<Holder<RemoveRegistryData<?>>> removals = registryAccess.registryOrThrow(ModRegistries.REMOVE_REGISTRY_DATA).holders().collect(Collectors.toSet());
+        removals.addAll(parseConfigData(ModRegistries.REMOVE_REGISTRY_DATA, RemoveRegistryData.CODEC));
+        removals.forEach(holder ->
+        {
+            RemoveRegistryData<?> data = holder.value();
+            ResourceKey<Registry<?>> key = data.registry();
+            REMOVED_REGISTRIES.put(key, data);
+        });
+
+        // Fire registry creation event
+        CreateRegistriesEvent event = new CreateRegistriesEvent(registryAccess, registries);
+        MinecraftForge.EVENT_BUS.post(event);
+
+        // Remove registry entries that match removal criteria
+        removeRegistries(event.getRegistries());
+
         /*
          Add JSON data to the config settings
          */
         // insulators
-        addInsulatorConfigs(insulators);
-        logRegistryLoaded(String.format("Loaded %s insulators", insulators.size()), insulators);
+        addInsulatorConfigs(event.getInsulators());
+        logRegistryLoaded(String.format("Loaded %s insulators", event.getInsulators().size()), event.getInsulators());
         // fuels
-        addFuelConfigs(fuels);
-        logRegistryLoaded(String.format("Loaded %s fuels", fuels.size()), fuels);
+        addFuelConfigs(event.getFuels());
+        logRegistryLoaded(String.format("Loaded %s fuels", event.getFuels().size()), event.getFuels());
         // foods
-        addFoodConfigs(foods);
-        logRegistryLoaded(String.format("Loaded %s foods", foods.size()), foods);
+        addFoodConfigs(event.getFoods());
+        logRegistryLoaded(String.format("Loaded %s foods", event.getFoods().size()), event.getFoods());
         // carry temperatures
-        addCarryTempConfigs(carryTemps);
-        logRegistryLoaded(String.format("Loaded %s carried item temperatures", carryTemps.size()), carryTemps);
+        addCarryTempConfigs(event.getCarryTemps());
+        logRegistryLoaded(String.format("Loaded %s carried item temperatures", event.getCarryTemps().size()), event.getCarryTemps());
 
         // block temperatures
-        addBlockTempConfigs(blockTemps);
-        logRegistryLoaded(String.format("Loaded %s block temperatures", blockTemps.size()), blockTemps);
+        addBlockTempConfigs(event.getBlockTemps());
+        logRegistryLoaded(String.format("Loaded %s block temperatures", event.getBlockTemps().size()), event.getBlockTemps());
         // biome temperatures
-        addBiomeTempConfigs(biomeTemps, registries);
-        logRegistryLoaded(String.format("Loaded %s biome temperatures", biomeTemps.size()), biomeTemps);
+        addBiomeTempConfigs(event.getBiomeTemps(), registryAccess);
+        logRegistryLoaded(String.format("Loaded %s biome temperatures", event.getBiomeTemps().size()), event.getBiomeTemps());
         // dimension temperatures
-        addDimensionTempConfigs(dimensionTemps, registries);
-        logRegistryLoaded(String.format("Loaded %s dimension temperatures", dimensionTemps.size()), dimensionTemps);
+        addDimensionTempConfigs(event.getDimensionTemps(), registryAccess);
+        logRegistryLoaded(String.format("Loaded %s dimension temperatures", event.getDimensionTemps().size()), event.getDimensionTemps());
         // structure temperatures
-        addStructureTempConfigs(structureTemps, registries);
-        logRegistryLoaded(String.format("Loaded %s structure temperatures", structureTemps.size()), structureTemps);
+        addStructureTempConfigs(event.getStructureTemps(), registryAccess);
+        logRegistryLoaded(String.format("Loaded %s structure temperatures", event.getStructureTemps().size()), event.getStructureTemps());
         // depth temperatures
-        addDepthTempConfigs(depthTemps);
-        logRegistryLoaded(String.format("Loaded %s depth temperatures", depthTemps.size()), depthTemps);
+        addDepthTempConfigs(event.getDepthTemps());
+        logRegistryLoaded(String.format("Loaded %s depth temperatures", event.getDepthTemps().size()), event.getDepthTemps());
 
         // mounts
-        addMountConfigs(mounts);
-        logRegistryLoaded(String.format("Loaded %s insulated mounts", mounts.size()), mounts);
+        addMountConfigs(event.getMounts());
+        logRegistryLoaded(String.format("Loaded %s insulated mounts", event.getMounts().size()), event.getMounts());
         // spawn biomes
-        addSpawnBiomeConfigs(spawnBiomes, registries);
-        logRegistryLoaded(String.format("Loaded %s entity spawn biomes", spawnBiomes.size()), spawnBiomes);
+        addSpawnBiomeConfigs(event.getSpawnBiomes(), registryAccess);
+        logRegistryLoaded(String.format("Loaded %s entity spawn biomes", event.getSpawnBiomes().size()), event.getSpawnBiomes());
         // entity temperatures
-        addEntityTempConfigs(entityTemps);
-        logRegistryLoaded(String.format("Loaded %s entity temperatures", entityTemps.size()), entityTemps);
+        addEntityTempConfigs(event.getEntityTemps());
+        logRegistryLoaded(String.format("Loaded %s entity temperatures", event.getEntityTemps().size()), event.getEntityTemps());
     }
 
     private static void logRegistryLoaded(String message, Set<?> registry)
@@ -277,6 +282,39 @@ public class ConfigLoadingHandler
         }
     }
 
+    private static void removeRegistries(Multimap<ResourceKey<Registry<?>>, Holder<?>> registries)
+    {
+        ColdSweat.LOGGER.info("Handling registry removals...");
+        for (Map.Entry<ResourceKey<Registry<?>>, Collection<RemoveRegistryData<?>>> entry : REMOVED_REGISTRIES.asMap().entrySet())
+        {
+            removeEntries((Collection) entry.getValue(), (Collection) registries.get(entry.getKey()));
+        }
+    }
+
+    private static <T> void removeEntries(Collection<RemoveRegistryData<T>> removals, Collection<T> registry)
+    {
+        for (RemoveRegistryData<T> data : removals)
+        {   registry.removeIf(entry -> data.matches(((Holder<T>) entry).value()));
+        }
+    }
+
+    public static <T> Collection<T> removeEntries(Collection<T> registries, ResourceKey<Registry<T>> registryName)
+    {
+        REMOVED_REGISTRIES.get((ResourceKey) registryName).forEach(data ->
+        {
+            RemoveRegistryData<T> removeData = ((RemoveRegistryData<T>) data);
+            if (removeData.getRegistry() == registryName)
+            {   registries.removeIf(removeData::matches);
+            }
+        });
+        return registries;
+    }
+
+    public static <T> boolean isRemoved(T entry, ResourceKey<Registry<T>> registryName)
+    {
+        return REMOVED_REGISTRIES.get((ResourceKey) registryName).stream().anyMatch(data -> ((RemoveRegistryData<T>) data).matches(entry));
+    }
+
     private static void getDefaultConfigs(MinecraftServer server)
     {
         DEFAULT_REGION = ConfigHelper.parseResource(server.getResourceManager(), new ResourceLocation(ColdSweat.MOD_ID, "cold_sweat/world/temp_region/default.json"), DepthTempData.CODEC).orElseThrow();
@@ -286,31 +324,28 @@ public class ConfigLoadingHandler
     {
         insulators.forEach(holder ->
         {
-            InsulatorData insulatorData = holder.value();
+            InsulatorData insulator = holder.value();
             // Check if the required mods are loaded
-            if (insulatorData.requiredMods().isPresent())
+            if (insulator.requiredMods().isPresent())
             {
-                List<String> requiredMods = insulatorData.requiredMods().get();
+                List<String> requiredMods = insulator.requiredMods().get();
                 if (requiredMods.stream().anyMatch(mod -> !CompatManager.modLoaded(mod)))
                 {   return;
                 }
             }
-            AttributeModifierMap attributeModifiers = insulatorData.attributes().orElse(new AttributeModifierMap());
-            Insulator insulator = new Insulator(insulatorData.insulation(), insulatorData.slot(), insulatorData.data(),
-                                                insulatorData.predicate(), attributeModifiers, insulatorData.immuneTempModifiers());
 
             // Add listed items as insulators
             List<Item> items = new ArrayList<>();
-            insulatorData.data().items().ifPresent(itemList ->
+            insulator.data().items().ifPresent(itemList ->
             {   items.addAll(RegistryHelper.mapForgeRegistryTagList(ForgeRegistries.ITEMS, itemList));
             });
-            insulatorData.data().tag().ifPresent(tag ->
+            insulator.data().tag().ifPresent(tag ->
             {   items.addAll(ForgeRegistries.ITEMS.tags().getTag(tag).stream().toList());
             });
 
             for (Item item : items)
             {
-                switch (insulatorData.slot())
+                switch (insulator.slot())
                 {
                     case ITEM -> ConfigSettings.INSULATION_ITEMS.get().put(item, insulator);
                     case ARMOR -> ConfigSettings.INSULATING_ARMORS.get().put(item, insulator);
@@ -339,12 +374,6 @@ public class ConfigLoadingHandler
                 }
             }
 
-            FuelData.FuelType type = fuelData.type();
-            ItemRequirement data = fuelData.data();
-            double fuel = fuelData.fuel();
-
-            PredicateItem predicateItem = new PredicateItem(fuel, data, EntityRequirement.NONE);
-
             List<Item> items = new ArrayList<>();
             fuelData.data().items().ifPresent(itemList ->
             {   items.addAll(RegistryHelper.mapForgeRegistryTagList(ForgeRegistries.ITEMS, itemList));
@@ -355,12 +384,12 @@ public class ConfigLoadingHandler
 
             for (Item item : items)
             {
-                switch (type)
+                switch (fuelData.type())
                 {
-                    case BOILER -> ConfigSettings.BOILER_FUEL.get().put(item, predicateItem);
-                    case ICEBOX -> ConfigSettings.ICEBOX_FUEL.get().put(item, predicateItem);
-                    case HEARTH -> ConfigSettings.HEARTH_FUEL.get().put(item, predicateItem);
-                    case SOUL_LAMP -> ConfigSettings.SOULSPRING_LAMP_FUEL.get().put(item, predicateItem);
+                    case BOILER -> ConfigSettings.BOILER_FUEL.get().put(item, fuelData);
+                    case ICEBOX -> ConfigSettings.ICEBOX_FUEL.get().put(item, fuelData);
+                    case HEARTH -> ConfigSettings.HEARTH_FUEL.get().put(item, fuelData);
+                    case SOUL_LAMP -> ConfigSettings.SOULSPRING_LAMP_FUEL.get().put(item, fuelData);
                 }
             }
         });
@@ -380,16 +409,6 @@ public class ConfigLoadingHandler
                 }
             }
 
-            EntityRequirement predicate = foodData.entityRequirement().orElse(EntityRequirement.NONE);
-            CompoundTag extraData = null;
-            if (foodData.duration().isPresent())
-            {
-                extraData = new CompoundTag();
-                extraData.putInt("duration", foodData.duration().get());
-            }
-
-            PredicateItem predicateItem = new PredicateItem(foodData.value(), foodData.data(), predicate, extraData);
-
             List<Item> items = new ArrayList<>();
             foodData.data().items().ifPresent(itemList ->
             {   items.addAll(RegistryHelper.mapForgeRegistryTagList(ForgeRegistries.ITEMS, itemList));
@@ -399,8 +418,7 @@ public class ConfigLoadingHandler
             });
 
             for (Item item : items)
-            {
-                ConfigSettings.FOOD_TEMPERATURES.get().put(item, predicateItem);
+            {   ConfigSettings.FOOD_TEMPERATURES.get().put(item, foodData);
             }
         });
     }
@@ -419,22 +437,28 @@ public class ConfigLoadingHandler
                 }
             }
 
-            CarriedItemTemperature carriedItemTemperature = CarriedItemTemperature.createFromData(carryTempData);
-            List<Either<TagKey<Item>, Item>> items = CSMath.orElse(carryTempData.data().items().orElse(null),
-                                                                   List.of(Either.left(carryTempData.data().tag().orElse(null))),
-                                                                   List.of());
-            for (Item item : RegistryHelper.mapForgeRegistryTagList(ForgeRegistries.ITEMS, items))
+            List<Item> items = new ArrayList<>();
+            carryTempData.data().items().ifPresent(itemList ->
+            {   items.addAll(RegistryHelper.mapForgeRegistryTagList(ForgeRegistries.ITEMS, itemList));
+            });
+            carryTempData.data().tag().ifPresent(tag ->
+            {   items.addAll(ForgeRegistries.ITEMS.tags().getTag(tag).stream().toList());
+            });
+            for (Item item : items)
             {
-                ConfigSettings.CARRIED_ITEM_TEMPERATURES.get().put(item, carriedItemTemperature);
+                ConfigSettings.CARRIED_ITEM_TEMPERATURES.get().put(item, carryTempData);
             }
         });
     }
 
-    private static void addBlockTempConfigs(Set<Holder<BlockTempData>> blockTemps)
+    private static void addBlockTempConfigs(Set<Holder<BlockTempData>> holders)
     {
-        blockTemps.forEach(holder ->
+        List<BlockTempData> blockTemps = new ArrayList<>(holders.stream().map(Holder::value).toList());
+        // Handle entries removed by configs
+        removeEntries(blockTemps, ModRegistries.BLOCK_TEMP_DATA);
+
+        blockTemps.forEach(blockTempData ->
         {
-            BlockTempData blockTempData = holder.value();
             // Check if the required mods are loaded
             if (blockTempData.requiredMods().isPresent())
             {
@@ -490,16 +514,11 @@ public class ConfigLoadingHandler
             }
             for (Biome biome : RegistryHelper.mapVanillaRegistryTagList(Registry.BIOME_REGISTRY, biomeTempData.biomes(), registryAccess))
             {
-                Temperature.Units units = biomeTempData.units();
                 if (biomeTempData.isOffset())
-                {   ConfigSettings.BIOME_OFFSETS.get(registryAccess).put(biome, new Triplet<>(Temperature.convert(biomeTempData.min(), units, Temperature.Units.MC, true),
-                                                                                Temperature.convert(biomeTempData.max(), units, Temperature.Units.MC, true),
-                                                                                biomeTempData.units()));
+                {   ConfigSettings.BIOME_OFFSETS.get(registryAccess).put(biome, biomeTempData);
                 }
                 else
-                {   ConfigSettings.BIOME_TEMPS.get(registryAccess).put(biome, new Triplet<>(Temperature.convert(biomeTempData.min(), units, Temperature.Units.MC, true),
-                                                                              Temperature.convert(biomeTempData.max(), units, Temperature.Units.MC, true),
-                                                                              biomeTempData.units()));
+                {   ConfigSettings.BIOME_TEMPS.get(registryAccess).put(biome, biomeTempData);
                 }
             }
         });
@@ -518,16 +537,14 @@ public class ConfigLoadingHandler
                 {   return;
                 }
             }
+
             for (DimensionType dimension : RegistryHelper.mapVanillaRegistryTagList(Registry.DIMENSION_TYPE_REGISTRY, dimensionTempData.dimensions(), registryAccess))
             {
-                Temperature.Units units = dimensionTempData.units();
                 if (dimensionTempData.isOffset())
-                {   ConfigSettings.DIMENSION_OFFSETS.get(registryAccess).put(dimension, Pair.of(Temperature.convert(dimensionTempData.temperature(), units, Temperature.Units.MC, true),
-                                                                                  dimensionTempData.units()));
+                {   ConfigSettings.DIMENSION_OFFSETS.get(registryAccess).put(dimension, dimensionTempData);
                 }
                 else
-                {   ConfigSettings.DIMENSION_TEMPS.get(registryAccess).put(dimension, Pair.of(Temperature.convert(dimensionTempData.temperature(), units, Temperature.Units.MC, true),
-                                                                                dimensionTempData.units()));
+                {   ConfigSettings.DIMENSION_TEMPS.get(registryAccess).put(dimension, dimensionTempData);
                 }
             }
         });
@@ -548,12 +565,11 @@ public class ConfigLoadingHandler
             }
             for (ConfiguredStructureFeature<?, ?> structure : RegistryHelper.mapVanillaRegistryTagList(Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY, structureTempData.structures(), registryAccess))
             {
-                double temperature = Temperature.convert(structureTempData.temperature(), structureTempData.units(), Temperature.Units.MC, !structureTempData.isOffset());
                 if (structureTempData.isOffset())
-                {   ConfigSettings.STRUCTURE_OFFSETS.get(registryAccess).put(structure.feature, Pair.of(temperature, structureTempData.units()));
+                {   ConfigSettings.STRUCTURE_OFFSETS.get(registryAccess).put(structure, structureTempData);
                 }
                 else
-                {   ConfigSettings.STRUCTURE_TEMPS.get(registryAccess).put(structure.feature, Pair.of(temperature, structureTempData.units()));
+                {   ConfigSettings.STRUCTURE_TEMPS.get(registryAccess).put(structure, structureTempData);
                 }
             }
         });
@@ -597,8 +613,9 @@ public class ConfigLoadingHandler
                 {   return;
                 }
             }
-            for (EntityType<?> entity : RegistryHelper.mapForgeRegistryTagList(ForgeRegistries.ENTITIES, mountData.entities()))
-            {   ConfigSettings.INSULATED_ENTITIES.get().put(entity, new InsulatingMount(entity, mountData.coldInsulation(), mountData.heatInsulation(), mountData.requirement()));
+            List<EntityType<?>> entities = RegistryHelper.mapForgeRegistryTagList(ForgeRegistries.ENTITIES, mountData.entities());
+            for (EntityType<?> entity : entities)
+            {   ConfigSettings.INSULATED_MOUNTS.get().put(entity, new MountData(entities, mountData.coldInsulation(), mountData.heatInsulation(), mountData.requirement()));
             }
         });
     }
@@ -637,8 +654,7 @@ public class ConfigLoadingHandler
             }
             // Gather entity types and tags
             List<Either<TagKey<EntityType<?>>, EntityType<?>>> types = new ArrayList<>();
-            entityTempData.entity().type().ifPresent(type -> types.add(Either.right(type)));
-            entityTempData.entity().tag().ifPresent(tag -> types.add(Either.left(tag)));
+            entityTempData.entity().entities().ifPresent(type -> types.addAll(type));
 
             for (EntityType<?> entity : RegistryHelper.mapForgeRegistryTagList(ForgeRegistries.ENTITIES, types))
             {   ConfigSettings.ENTITY_TEMPERATURES.get().put(entity, entityTempData);

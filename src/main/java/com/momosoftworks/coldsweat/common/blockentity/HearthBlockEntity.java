@@ -13,11 +13,11 @@ import com.momosoftworks.coldsweat.common.container.HearthContainer;
 import com.momosoftworks.coldsweat.common.event.HearthSaveDataHandler;
 import com.momosoftworks.coldsweat.common.capability.handler.EntityTempManager;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
-import com.momosoftworks.coldsweat.config.type.PredicateItem;
 import com.momosoftworks.coldsweat.core.init.BlockEntityInit;
 import com.momosoftworks.coldsweat.core.init.ParticleTypesInit;
 import com.momosoftworks.coldsweat.core.network.ColdSweatPacketHandler;
 import com.momosoftworks.coldsweat.core.network.message.HearthResetMessage;
+import com.momosoftworks.coldsweat.data.codec.configuration.FuelData;
 import com.momosoftworks.coldsweat.data.tag.ModFluidTags;
 import com.momosoftworks.coldsweat.util.ClientOnlyHelper;
 import com.momosoftworks.coldsweat.compat.CompatManager;
@@ -798,8 +798,8 @@ public class HearthBlockEntity extends RandomizableContainerBlockEntity
     }
 
     public int getItemFuel(ItemStack item)
-    {   return ConfigHelper.findFirstItemMatching(ConfigSettings.HEARTH_FUEL, item)
-               .map(PredicateItem::value).orElse(0d).intValue();
+    {   return ConfigHelper.findFirstFuelMatching(ConfigSettings.HEARTH_FUEL, item)
+               .map(FuelData::fuel).orElse(0d).intValue();
     }
 
     public int getHotFuel()

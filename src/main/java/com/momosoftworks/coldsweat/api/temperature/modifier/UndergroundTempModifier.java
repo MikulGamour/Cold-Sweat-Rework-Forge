@@ -3,6 +3,7 @@ package com.momosoftworks.coldsweat.api.temperature.modifier;
 import com.mojang.datafixers.util.Pair;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
+import com.momosoftworks.coldsweat.data.codec.configuration.BiomeTempData;
 import com.momosoftworks.coldsweat.data.codec.configuration.DepthTempData;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.math.FastMap;
@@ -14,7 +15,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraftforge.common.Tags;
-import oshi.util.tuples.Triplet;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,11 +64,13 @@ public class UndergroundTempModifier extends TempModifier
                 Biome biome = holder.value();
                 double baseTemp = biome.getBaseTemperature();
 
-                Triplet<Double, Double, Temperature.Units> cTemp = ConfigSettings.BIOME_TEMPS.get(entity.level.registryAccess()).getOrDefault(biome, new Triplet<>(baseTemp, baseTemp, Temperature.Units.MC));
-                Triplet<Double, Double, Temperature.Units> cOffset = ConfigSettings.BIOME_OFFSETS.get(entity.level.registryAccess()).getOrDefault(biome, new Triplet<>(0d, 0d, Temperature.Units.MC));
+                BiomeTempData configTemp = ConfigSettings.BIOME_TEMPS.get(entity.level.registryAccess())
+                                      .getOrDefault(biome, new BiomeTempData(biome, baseTemp, baseTemp, Temperature.Units.MC));
+                BiomeTempData configOffset = ConfigSettings.BIOME_OFFSETS.get(entity.level.registryAccess())
+                                        .getOrDefault(biome, new BiomeTempData(biome, 0d, 0d, Temperature.Units.MC));
 
-                double biomeTemp = CSMath.averagePair(Pair.of(cTemp.getA(), cTemp.getB()))
-                                 + CSMath.averagePair(Pair.of(cOffset.getA(), cOffset.getB()));
+                double biomeTemp = CSMath.averagePair(Pair.of(configTemp.min(), configTemp.max()))
+                                 + CSMath.averagePair(Pair.of(configOffset.min(), configOffset.max()));
 
                 biomeTempTotal += biomeTemp;
                 caveBiomeCount++;
