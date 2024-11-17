@@ -54,14 +54,8 @@ public record EntityRequirement(Optional<List<Either<TagKey<EntityType<?>>, Enti
                                                                        Optional.empty(), Optional.empty(), Optional.empty(),
                                                                        Optional.empty(), Optional.empty(), Optional.empty());
 
-    private static final Codec<List<Either<TagKey<EntityType<?>>, EntityType<?>>>> ENTITY_TYPE_LIST_CODEC =
-            Codec.either(ConfigHelper.tagOrForgeRegistryCodec(Registry.ENTITY_TYPE_REGISTRY, ForgeRegistries.ENTITIES).listOf(),
-                         ForgeRegistries.ENTITIES.getCodec())
-                 .xmap(either -> either.map(list -> list, type -> List.of(Either.right(type))),
-                       Either::left);
-
     public static final Codec<EntityRequirement> SIMPLE_CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            ENTITY_TYPE_LIST_CODEC.optionalFieldOf("entity").forGetter(requirement -> requirement.entities),
+            ConfigHelper.tagOrForgeRegistryCodec(Registry.ENTITY_TYPE_REGISTRY, ForgeRegistries.ENTITIES).listOf().optionalFieldOf("entity").forGetter(requirement -> requirement.entities),
             LocationRequirement.CODEC.optionalFieldOf("location").forGetter(requirement -> requirement.location),
             LocationRequirement.CODEC.optionalFieldOf("stepping_on").forGetter(requirement -> requirement.steppingOn),
             EffectsRequirement.CODEC.optionalFieldOf("effects").forGetter(requirement -> requirement.effects),
@@ -88,7 +82,7 @@ public record EntityRequirement(Optional<List<Either<TagKey<EntityType<?>>, Enti
     {
         var latestCodec = REQUIREMENT_CODEC_STACK.get(REQUIREMENT_CODEC_STACK.size() - 1);
         var codec = RecordCodecBuilder.<EntityRequirement>create(instance -> instance.group(
-                ENTITY_TYPE_LIST_CODEC.optionalFieldOf("entities").forGetter(requirement -> requirement.entities),
+                ConfigHelper.tagOrForgeRegistryCodec(Registry.ENTITY_TYPE_REGISTRY, ForgeRegistries.ENTITIES).listOf().optionalFieldOf("entities").forGetter(requirement -> requirement.entities),
                 LocationRequirement.CODEC.optionalFieldOf("location").forGetter(requirement -> requirement.location),
                 LocationRequirement.CODEC.optionalFieldOf("stepping_on").forGetter(requirement -> requirement.steppingOn),
                 EffectsRequirement.CODEC.optionalFieldOf("effects").forGetter(requirement -> requirement.effects),
