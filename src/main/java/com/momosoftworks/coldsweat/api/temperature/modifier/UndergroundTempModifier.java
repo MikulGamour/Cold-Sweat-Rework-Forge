@@ -36,7 +36,6 @@ public class UndergroundTempModifier extends TempModifier
     {
         if (entity.level.dimensionType().hasCeiling()) return temp -> temp;
 
-        BlockPos playerPos = new BlockPos(entity.getEyePosition());
         Level level = entity.level;
 
         List<Pair<BlockPos, Double>> depthTable = new ArrayList<>();
@@ -44,7 +43,7 @@ public class UndergroundTempModifier extends TempModifier
         // Collect a list of depths taken at regular intervals around the entity, and their distances from the player
         for (BlockPos pos : WorldHelper.getPositionGrid(entity.blockPosition(), this.getNBT().getInt("Samples"), 10))
         {
-            depthTable.add(Pair.of(pos, Math.sqrt(pos.distSqr(playerPos))));
+            depthTable.add(Pair.of(pos, CSMath.getDistance(entity.blockPosition(), pos)));
         }
 
         // Calculate the average temperature of underground biomes
@@ -114,8 +113,8 @@ public class UndergroundTempModifier extends TempModifier
                 DepthTempData depthData = entry.getValue().getFirst();
                 double distance = entry.getValue().getSecond();
 
-                double depthTemp = depthData.getTemperature(temp, pos, level);
-                double weight = 1 / (distance + 1);
+                double depthTemp = CSMath.orElse(depthData.getTemperature(temp, pos, level), temp);
+                double weight = 1 / (distance / 10 + 1);
                 // Add the weighted temperature to the list
                 depthTemps.add(new Pair<>(depthTemp, weight));
             }
