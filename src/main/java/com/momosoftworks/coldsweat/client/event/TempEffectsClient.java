@@ -52,7 +52,7 @@ public class TempEffectsClient
     public static void setCamera(EntityViewRenderEvent.CameraSetup event)
     {
         Player player = Minecraft.getInstance().player;
-        if (player == null || EntityTempManager.immuneToTempEffects(player)) return;
+        if (player == null || !player.isAlive() && EntityTempManager.immuneToTempEffects(player)) return;
 
         if (!Minecraft.getInstance().isPaused())
         {
@@ -87,8 +87,8 @@ public class TempEffectsClient
                     if (TIME_SINCE_NEW_SWAY > 100 || X_SWAY_SPEED == 0 || Y_SWAY_SPEED == 0)
                     {
                         TIME_SINCE_NEW_SWAY = 0;
-                        X_SWAY_SPEED = (float) (Math.random() * 0.005f + 0.005f);
-                        Y_SWAY_SPEED = (float) (Math.random() * 0.005f + 0.005f);
+                        X_SWAY_SPEED = (float) (Math.random() * 0.003f + 0.004f);
+                        Y_SWAY_SPEED = (float) (Math.random() * 0.003f + 0.004f);
                     }
                     TIME_SINCE_NEW_SWAY += frameTime;
 
@@ -98,7 +98,7 @@ public class TempEffectsClient
 
                     // Apply the sway speed to a sin function
                     float xOffs = (float) (Math.sin(X_SWAY_PHASE) * factor);
-                    float yOffs = (float) (Math.sin(Y_SWAY_PHASE) * factor * 2);
+                    float yOffs = (float) ((Math.sin(Y_SWAY_PHASE) + Math.cos(Y_SWAY_PHASE / 4) * 2) * factor * 3);
 
                     // Apply the sway
                     player.setXRot(player.getXRot() + xOffs - PREV_X_SWAY);
@@ -223,7 +223,7 @@ public class TempEffectsClient
         if (ConfigSettings.DISTORTION_EFFECTS.get() && playerTemp >= 50 && HOT_IMMUNITY < 4
         && mc.player != null && !EntityTempManager.immuneToTempEffects(mc.player))
         {
-            float blur = CSMath.blend(0f, 7f, playerTemp, 50, 100) / (HOT_IMMUNITY + 1);
+            float blur = CSMath.blend(0f, 12f, playerTemp, 50, 100) / (HOT_IMMUNITY + 1);
             if (!shaderManager.hasEffect("heat_blur"))
             {   shaderManager.loadEffect("heat_blur", PostProcessShaderManager.BLOBS);
             }
