@@ -1,6 +1,6 @@
 package com.momosoftworks.coldsweat.compat.kubejs.event.builder;
 
-import com.momosoftworks.coldsweat.config.type.PredicateItem;
+import com.momosoftworks.coldsweat.data.codec.configuration.FoodData;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
 import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
 import net.minecraft.entity.Entity;
@@ -62,12 +62,8 @@ public class FoodBuilderJS
         return this;
     }
 
-    public PredicateItem build()
+    public FoodData build()
     {
-        CompoundNBT extraData = new CompoundNBT();
-        if (this.duration != -1)
-        {   extraData.putInt("duration", this.duration);
-        }
-        return new PredicateItem(this.temperature, new ItemRequirement(this.itemPredicate), new EntityRequirement(this.entityPredicate), extraData);
+        return new FoodData(this.temperature, new ItemRequirement(this.itemPredicate), this.duration, new EntityRequirement(this.entityPredicate));
     }
 }

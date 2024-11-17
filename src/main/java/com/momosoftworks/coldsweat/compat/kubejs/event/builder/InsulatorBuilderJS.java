@@ -3,7 +3,7 @@ package com.momosoftworks.coldsweat.compat.kubejs.event.builder;
 import com.momosoftworks.coldsweat.api.insulation.AdaptiveInsulation;
 import com.momosoftworks.coldsweat.api.insulation.Insulation;
 import com.momosoftworks.coldsweat.api.insulation.StaticInsulation;
-import com.momosoftworks.coldsweat.config.type.Insulator;
+import com.momosoftworks.coldsweat.data.codec.configuration.InsulatorData;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
 import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
 import com.momosoftworks.coldsweat.data.codec.util.AttributeModifierMap;
@@ -87,9 +87,9 @@ public class InsulatorBuilderJS
         return this;
     }
 
-    public Insulator build()
+    public InsulatorData build()
     {
-        return new Insulator(insulation, slot, new ItemRequirement(itemPredicate), new EntityRequirement(entityPredicate),
+        return new InsulatorData(slot, insulation, new ItemRequirement(itemPredicate), new EntityRequirement(entityPredicate),
                              attributes, immuneTempModifiers);
     }
 }

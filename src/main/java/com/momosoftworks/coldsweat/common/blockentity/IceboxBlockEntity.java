@@ -9,6 +9,7 @@ import com.momosoftworks.coldsweat.core.init.BlockEntityInit;
 import com.momosoftworks.coldsweat.core.init.ParticleTypesInit;
 import com.momosoftworks.coldsweat.core.network.ColdSweatPacketHandler;
 import com.momosoftworks.coldsweat.core.network.message.BlockDataUpdateMessage;
+import com.momosoftworks.coldsweat.data.codec.configuration.FuelData;
 import com.momosoftworks.coldsweat.data.tag.ModItemTags;
 import com.momosoftworks.coldsweat.compat.CompatManager;
 import com.momosoftworks.coldsweat.util.registries.ModItems;
@@ -237,8 +238,8 @@ public class IceboxBlockEntity extends HearthBlockEntity implements ITickableTil
 
     @Override
     public int getItemFuel(ItemStack item)
-    {   return ConfigHelper.findFirstItemMatching(ConfigSettings.ICEBOX_FUEL, item)
-               .map(it -> it.value).orElse(0d).intValue();
+    {   return ConfigHelper.findFirstFuelMatching(ConfigSettings.ICEBOX_FUEL, item)
+               .map(fuelData -> fuelData.fuel).orElse(0d).intValue();
     }
 
     @Override
@@ -361,7 +362,7 @@ public class IceboxBlockEntity extends HearthBlockEntity implements ITickableTil
     {
         if (slot == 0)
             return this.getItemFuel(stack) != 0;
-        else return ModItemTags.ICEBOX_VALID.contains(stack.getItem()) || (CompatManager.isSpoiledLoaded() && stack.isEdible());
+        else return ModItemTags.ICEBOX_VALID.contains(stack.getItem()) || stack.isEdible();
     }
 
     @Override

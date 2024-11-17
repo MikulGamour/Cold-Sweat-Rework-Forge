@@ -9,16 +9,10 @@ import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
 import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.api.insulation.AdaptiveInsulation;
-import com.momosoftworks.coldsweat.api.insulation.Insulation;
 import com.momosoftworks.coldsweat.api.insulation.StaticInsulation;
-import com.momosoftworks.coldsweat.api.util.Temperature;
-import com.momosoftworks.coldsweat.config.type.Insulator;
-import com.momosoftworks.coldsweat.config.type.PredicateItem;
+import com.momosoftworks.coldsweat.data.ModRegistries;
+import com.momosoftworks.coldsweat.data.codec.configuration.*;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
-import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
-import com.momosoftworks.coldsweat.data.codec.requirement.NbtRequirement;
-import com.momosoftworks.coldsweat.data.codec.util.AttributeModifierMap;
-import com.momosoftworks.coldsweat.util.exceptions.ArgumentCountException;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import net.minecraft.block.Block;
@@ -29,6 +23,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
+import net.minecraft.nbt.NBTDynamicOps;
 import net.minecraft.resources.IResource;
 import net.minecraft.resources.IResourceManager;
 import net.minecraft.state.Property;
@@ -166,111 +161,45 @@ public class ConfigHelper
         return items;
     }
 
-    public static Map<Biome, Triplet<Double, Double, Temperature.Units>> getBiomesWithValues(List<? extends List<?>> source, boolean absolute, DynamicRegistries registryAccess)
+    public static <K, V> Map<K, V> getRegistryMap(List<? extends List<?>> source, DynamicRegistries registryAccess, RegistryKey<Registry<K>> keyRegistry,
+                                                  Function<List<?>, V> valueCreator, Function<V, List<Either<ITag<K>, K>>> taggedListGetter)
     {
-        Map<Biome, Triplet<Double, Double, Temperature.Units>> map = new HashMap<>();
+        Map<K, V> map = new HashMap<>();
         for (List<?> entry : source)
         {
-            try
+            V data = valueCreator.apply(entry);
+            if (data != null)
             {
-                String biomeIdString = (String) entry.get(0);
-                for (Biome biome : parseRegistryItems(Registry.BIOME_REGISTRY, registryAccess, biomeIdString))
-                {
-                    if (biome == null)
-                    {   ColdSweat.LOGGER.error("Error parsing biome config: string \"{}\" contains a biome that does not exist or is not loaded yet", biomeIdString);
-                        continue;
-                    }
-
-                    double min;
-                    double max;
-                    Temperature.Units units;
-                    // The config defines a min and max value, with optional unit conversion
-                    if (entry.size() > 2)
-                    {   units = entry.size() == 4 ? Temperature.Units.valueOf(((String) entry.get(3)).toUpperCase()) : Temperature.Units.MC;
-                        min = Temperature.convert(((Number) entry.get(1)).doubleValue(), units, Temperature.Units.MC, absolute);
-                        max = Temperature.convert(((Number) entry.get(2)).doubleValue(), units, Temperature.Units.MC, absolute);
-                    }
-                    // The config only defines a mid-temperature
-                    else
-                    {   double mid = ((Number) entry.get(1)).doubleValue();
-                        double variance = 1 / Math.max(1, 2 + biome.getDownfall() * 2);
-                        min = mid - variance;
-                        max = mid + variance;
-                        units = Temperature.Units.MC;
-                    }
-
-                    // Maps the biome ID to the temperature (and variance if present)
-                    map.put(biome, new Triplet<>(min, max, units));
+                for (K key : RegistryHelper.mapTaggableList(taggedListGetter.apply(data)))
+                {   map.put(key, data);
                 }
             }
-            catch (Exception e)
-            {
-                ColdSweat.LOGGER.error("Error parsing biome config \"{}\"", entry.toString());
-                e.printStackTrace();
-            }
+            else ColdSweat.LOGGER.error("Error parsing {} config \"{}\"", keyRegistry.location(), entry.toString());
         }
         return map;
     }
 
-    public static Map<DimensionType, Pair<Double, Temperature.Units>> getDimensionsWithValues(List<? extends List<?>> source, boolean absolute, DynamicRegistries registryAccess)
+    public static <K, V> Map<K, V> getRegistryMap(List<? extends List<?>> source, RegistryKey<Registry<K>> keyRegistry,
+                                                  Function<List<?>, V> valueCreator, Function<V, List<K>> listGetter)
     {
-        Map<DimensionType, Pair<Double, Temperature.Units>> map = new HashMap<>();
+        Map<K, V> map = new HashMap<>();
         for (List<?> entry : source)
         {
-            try
+            V data = valueCreator.apply(entry);
+            if (data != null)
             {
-                String dimensionIdString = (String) entry.get(0);
-                for (DimensionType dimension : parseRegistryItems(Registry.DIMENSION_TYPE_REGISTRY, registryAccess, dimensionIdString))
-                {
-                    if (dimension == null)
-                    {   ColdSweat.LOGGER.error("Error parsing dimension config: string \"{}\" contains a dimension that does not exist or is not loaded yet", dimensionIdString);
-                        continue;
-                    }
-                    double temp = ((Number) entry.get(1)).doubleValue();
-                    Temperature.Units units = entry.size() == 3 ? Temperature.Units.valueOf(((String) entry.get(2)).toUpperCase()) : Temperature.Units.MC;
-                    map.put(dimension, Pair.of(Temperature.convert(temp, units, Temperature.Units.MC, absolute), units));
-
+                for (K key : listGetter.apply(data))
+                {   map.put(key, data);
                 }
             }
-            catch (Exception e)
-            {
-                ColdSweat.LOGGER.error("Error parsing dimension config \"{}\"", entry.toString());
-                e.printStackTrace();
-            }
+            else ColdSweat.LOGGER.error("Error parsing {} config \"{}\"", keyRegistry.location(), entry.toString());
         }
         return map;
     }
 
-    public static Map<Structure<?>, Pair<Double, Temperature.Units>> getStructuresWithValues(List<? extends List<?>> source, boolean absolute, DynamicRegistries registryAccess)
+    public static Map<String, Object> getBlockStatePredicates(Block block, String predicates)
     {
-        Map<Structure<?>, Pair<Double, Temperature.Units>> map = new HashMap<>();
-        for (List<?> entry : source)
-        {
-            try
-            {
-                String structureIdString = (String) entry.get(0);
-                for (Structure<?> structure : parseRegistryItems(Registry.STRUCTURE_FEATURE_REGISTRY, registryAccess, structureIdString))
-                {
-                    if (structure == null)
-                    {   ColdSweat.LOGGER.error("Error parsing structure config: string \"{}\" contains a structure that does not exist or is not loaded yet", structureIdString);
-                        continue;
-                    }
-                    double temp = ((Number) entry.get(1)).doubleValue();
-                    Temperature.Units units = entry.size() == 3 ? Temperature.Units.valueOf(((String) entry.get(2)).toUpperCase()) : Temperature.Units.MC;
-                    map.put(structure, Pair.of(Temperature.convert(temp, units, Temperature.Units.MC, absolute), units));
-                }
-            }
-            catch (Exception e)
-            {   ColdSweat.LOGGER.error("Error parsing structure config \"{}\"", entry.toString());
-                e.printStackTrace();
-            }
-        }
-        return map;
-    }
-
-    public static Map<String, Predicate<BlockState>> getBlockStatePredicates(Block block, String predicates)
-    {
-        Map<String, Predicate<BlockState>> blockPredicates = new HashMap<>();
+        Map<String, Object> blockPredicates = new HashMap<>();
         // Separate comma-delineated predicates
         String[] predicateList = predicates.split(",");
 
@@ -290,10 +219,7 @@ public class ConfigHelper
                 property.getValue(value).ifPresent(propertyValue ->
                 {
                     // Add a new predicate to the list
-                    blockPredicates.put(predicate, state ->
-                    {   // If the value matches, this predicate returns true
-                        return state.getValue(property).equals(propertyValue);
-                    });
+                    blockPredicates.put(key, propertyValue);
                 });
             }
         }
@@ -355,117 +281,43 @@ public class ConfigHelper
         return tag;
     }
 
-    public static CompoundNBT serializeBiomeTemps(Map<Biome, Triplet<Double, Double, Temperature.Units>> map, String key, DynamicRegistries registryAccess)
+    public static <K, V> CompoundNBT serializeRegistry(Map<K, V> map, String key, RegistryKey<Registry<K>> keyRegistry, RegistryKey<Registry<V>> modRegistry, DynamicRegistries registryAccess)
     {
+        Codec<V> codec = ModRegistries.getCodec(modRegistry);
         CompoundNBT tag = new CompoundNBT();
         CompoundNBT mapTag = new CompoundNBT();
-        for (Map.Entry<Biome, Triplet<Double, Double, Temperature.Units>> entry : map.entrySet())
+
+        for (Map.Entry<K, V> entry : map.entrySet())
         {
-            CompoundNBT biomeTag = new CompoundNBT();
-            ResourceLocation biomeId = RegistryHelper.getBiomeId(entry.getKey(), registryAccess);
-            if (biomeId == null)
-            {   ColdSweat.LOGGER.error("Error serializing biome temperatures: biome \"{}\" does not exist", entry.getKey());
+            ResourceLocation elementId = registryAccess.registryOrThrow(keyRegistry).getKey(entry.getKey());
+            if (elementId == null)
+            {   ColdSweat.LOGGER.error("Error serializing {}: dimension \"{}\" does not exist", keyRegistry.location(), entry.getKey());
                 continue;
             }
-            biomeTag.putDouble("Min", entry.getValue().getA());
-            biomeTag.putDouble("Max", entry.getValue().getB());
-            biomeTag.putString("Units", entry.getValue().getC().toString());
-            mapTag.put(biomeId.toString(), biomeTag);
+            codec.encodeStart(NBTDynamicOps.INSTANCE, entry.getValue()).result().ifPresent(
+                    result -> mapTag.put(elementId.toString(), result));
         }
         tag.put(key, mapTag);
         return tag;
     }
 
-    public static Map<Biome, Triplet<Double, Double, Temperature.Units>> deserializeBiomeTemps(CompoundNBT tag, String key, DynamicRegistries registryAccess)
+    public static <K, V> Map<K, V> deserializeRegistry(CompoundNBT tag, String key, RegistryKey<Registry<K>> keyRegistry, RegistryKey<Registry<V>> modRegistry, DynamicRegistries registryAccess)
     {
-        Map<Biome, Triplet<Double, Double, Temperature.Units>> map = new HashMap<>();
-        CompoundNBT mapTag = tag.getCompound(key);
-        for (String biomeID : mapTag.getAllKeys())
-        {
-            CompoundNBT biomeTag = mapTag.getCompound(biomeID);
-            Biome biome = RegistryHelper.getBiome(new ResourceLocation(biomeID), registryAccess);
-            if (biome == null)
-            {   ColdSweat.LOGGER.error("Error deserializing biome temperatures: biome \"{}\" does not exist", biomeID);
-                continue;
-            }
-            map.put(biome, new Triplet<>(biomeTag.getDouble("Min"), biomeTag.getDouble("Max"), Temperature.Units.valueOf(biomeTag.getString("Units"))));
-        }
-        return map;
-    }
+        Codec<V> codec = ModRegistries.getCodec(modRegistry);
 
-    public static CompoundNBT serializeDimensionTemps(Map<DimensionType, Pair<Double, Temperature.Units>> map, String key, DynamicRegistries registryAccess)
-    {
-        CompoundNBT tag = new CompoundNBT();
-        CompoundNBT mapTag = new CompoundNBT();
-        for (Map.Entry<DimensionType, Pair<Double, Temperature.Units>> entry : map.entrySet())
-        {
-            CompoundNBT dimensionTag = new CompoundNBT();
-            ResourceLocation dimensionId = RegistryHelper.getDimensionId(entry.getKey(), registryAccess);
-            if (dimensionId == null)
-            {   ColdSweat.LOGGER.error("Error serializing dimension temperatures: dimension \"{}\" does not exist", entry.getKey());
-                continue;
-            }
-            mapTag.put(dimensionId.toString(), dimensionTag);
-            dimensionTag.putDouble("Temp", entry.getValue().getFirst());
-            dimensionTag.putString("Units", entry.getValue().getSecond().toString());
-            mapTag.put(RegistryHelper.getDimensionId(entry.getKey(), registryAccess).toString(), dimensionTag);
-        }
-        tag.put(key, mapTag);
-        return tag;
-    }
-
-    public static Map<DimensionType, Pair<Double, Temperature.Units>> deserializeDimensionTemps(CompoundNBT tag, String key, DynamicRegistries registryAccess)
-    {
-        Map<DimensionType, Pair<Double, Temperature.Units>> map = new HashMap<>();
+        Map<K, V> map = new HashMap<>();
         CompoundNBT mapTag = tag.getCompound(key);
-        for (String dimensionId : mapTag.getAllKeys())
+
+        for (String entryKey : mapTag.getAllKeys())
         {
-            CompoundNBT biomeTag = mapTag.getCompound(dimensionId);
-            DimensionType dimension = RegistryHelper.getDimension(new ResourceLocation(dimensionId), registryAccess);
+            CompoundNBT entryData = mapTag.getCompound(entryKey);
+            K dimension = registryAccess.registryOrThrow(keyRegistry).get(new ResourceLocation(entryKey));
             if (dimension == null)
-            {   ColdSweat.LOGGER.error("Error deserializing dimension temperatures: dimension \"{}\" does not exist", dimensionId);
+            {   ColdSweat.LOGGER.error("Error deserializing {}: \"{}\" does not exist", keyRegistry.location(), entryKey);
                 continue;
             }
-            map.put(dimension, Pair.of(biomeTag.getDouble("Temp"), Temperature.Units.valueOf(biomeTag.getString("Units"))));
-        }
-        return map;
-    }
-
-    public static CompoundNBT serializeStructureTemps(Map<Structure<?>, Pair<Double, Temperature.Units>> map, String key, DynamicRegistries registryAccess)
-    {
-        CompoundNBT tag = new CompoundNBT();
-        CompoundNBT mapTag = new CompoundNBT();
-        for (Map.Entry<Structure<?>, Pair<Double, Temperature.Units>> entry : map.entrySet())
-        {
-            CompoundNBT structureTag = new CompoundNBT();
-            ResourceLocation structureId = RegistryHelper.getStructureId(entry.getKey(), registryAccess);
-            if (structureId == null)
-            {   ColdSweat.LOGGER.error("Error serializing structure temperatures: structure \"{}\" does not exist", entry.getKey());
-                continue;
-            }
-            mapTag.put(structureId.toString(), structureTag);
-            structureTag.putDouble("Temp", entry.getValue().getFirst());
-            structureTag.putString("Units", entry.getValue().getSecond().toString());
-            mapTag.put(structureId.toString(), structureTag);
-        }
-        tag.put(key, mapTag);
-
-        return tag;
-    }
-
-    public static Map<Structure<?>, Pair<Double, Temperature.Units>> deserializeStructureTemps(CompoundNBT tag, String key, DynamicRegistries registryAccess)
-    {
-        Map<Structure<?>, Pair<Double, Temperature.Units>> map = new HashMap<>();
-        CompoundNBT mapTag = tag.getCompound(key);
-        for (String structureId : mapTag.getAllKeys())
-        {
-            CompoundNBT biomeTag = mapTag.getCompound(structureId);
-            Structure<?> structure = RegistryHelper.getStructure(new ResourceLocation(structureId), registryAccess);
-            if (structure == null)
-            {   ColdSweat.LOGGER.error("Error deserializing structure temperatures: structure \"{}\" does not exist", structureId);
-                continue;
-            }
-            map.put(structure, Pair.of(biomeTag.getDouble("Temp"), Temperature.Units.valueOf(biomeTag.getString("Units"))));
+            codec.decode(NBTDynamicOps.INSTANCE, entryData).result().ifPresent(
+                    result -> map.put(dimension, result.getFirst()));
         }
         return map;
     }
@@ -553,7 +405,7 @@ public class ConfigHelper
         for (List<?> entry : source)
         {
             String itemId = (String) entry.get(0);
-            for (Item item : getItems(itemId))
+            for (Item item : getItems(itemId.split(",")))
             {
                 T value = valueParser.apply(item, entry.subList(1, entry.size()));
                 if (value != null)
@@ -580,94 +432,22 @@ public class ConfigHelper
         {
             Item item = entry.getKey();
             T value = entry.getValue();
+
             List<Object> itemData = new ArrayList<>();
             ResourceLocation itemID = ForgeRegistries.ITEMS.getKey(item);
-            if (itemID == null)
-            {   ColdSweat.LOGGER.error("Error writing item map: item \"{}\" does not exist", item);
-                continue;
-            }
+
             itemData.add(itemID.toString());
+
             List<?> args = valueWriter.apply(value);
             if (args == null) continue;
+
             itemData.addAll(args);
             list.add(itemData);
         }
         saver.accept(list);
     }
 
-    public static CompoundNBT serializeItemInsulations(Multimap<Item, Insulator> map, String key)
-    {
-        CompoundNBT tag = new CompoundNBT();
-        ListNBT mapTag = new ListNBT();
-        for (Map.Entry<Item, Insulator> entry : map.entries())
-        {
-            Item item = entry.getKey();
-            Insulator insulator = entry.getValue();
-            ResourceLocation itemID = ForgeRegistries.ITEMS.getKey(item);
-
-            if (itemID == null)
-            {   ColdSweat.LOGGER.error("Error serializing item insulations: item \"{}\" does not exist", item);
-                continue;
-            }
-            if (insulator == null)
-            {   ColdSweat.LOGGER.error("Error serializing item insulations: insulation value for item \"{}\" is null", item);
-                continue;
-            }
-
-            CompoundNBT insulatorTag = new CompoundNBT();
-            insulatorTag.put("Insulator", insulator.serialize());
-            insulatorTag.putString("Item", itemID.toString());
-
-            mapTag.add(insulatorTag);
-        }
-        tag.put(key, mapTag);
-
-        return tag;
-    }
-
-    public static Multimap<Item, Insulator> deserializeItemInsulations(CompoundNBT tag, String key)
-    {
-        Multimap<Item, Insulator> map = new FastMultiMap<>();
-        ListNBT mapTag = tag.getList(key, 10);
-        for (int i = 0; i < mapTag.size(); i++)
-        {
-            CompoundNBT insulatorTag = mapTag.getCompound(i);
-            Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(insulatorTag.getString("Item")));
-            Insulator insulator = Insulator.deserialize(insulatorTag.getCompound("Insulator"));
-
-            if (item != null && insulator != null)
-            {   map.put(item, insulator);
-            }
-        }
-        return map;
-    }
-
-    public static Multimap<Item, Insulator> readItemInsulations(List<? extends List<?>> items, Insulation.Slot slot)
-    {
-        return readItemMultimap(items, (item, args) ->
-        {
-            if (args.size() < 2)
-            {   ColdSweat.LOGGER.error(new ArgumentCountException(args.size(), 2, String.format("Error parsing insulation config for item %s", item)).getMessage());
-                return null;
-            }
-            double value1 = ((Number) args.get(0)).doubleValue();
-            double value2 = ((Number) args.get(1)).doubleValue();
-            String type = args.size() > 2 ? (String) args.get(2) : "static";
-            CompoundNBT nbt = args.size() > 3 ? NBTHelper.parseCompoundNbt(((String) args.get(3))) : new CompoundNBT();
-            Insulation insulation = type.equals("static")
-                                    ? new StaticInsulation(value1, value2)
-                                    : new AdaptiveInsulation(value1, value2);
-            ItemRequirement requirement = new ItemRequirement(Optional.of(Arrays.asList(Either.right(item))),
-                                                              Optional.empty(), Optional.empty(),
-                                                              Optional.empty(), Optional.empty(),
-                                                              Optional.empty(), Optional.empty(),
-                                                              new NbtRequirement(nbt));
-
-            return new Insulator(insulation, slot, requirement, EntityRequirement.NONE, new AttributeModifierMap(), new HashMap<>());
-        });
-    }
-
-    public static void writeItemInsulations(Multimap<Item, Insulator> items, Consumer<List<? extends List<?>>> saver)
+    public static void writeItemInsulations(Multimap<Item, InsulatorData> items, Consumer<List<? extends List<?>>> saver)
     {
         writeItemMultimap(items, saver, insulator ->
         {
@@ -717,9 +497,9 @@ public class ConfigHelper
                                  item -> registry.getKey(item).toString());
     }
 
-    public static Optional<PredicateItem> findFirstItemMatching(DynamicHolder<Multimap<Item, PredicateItem>> predicates, ItemStack stack)
+    public static Optional<FuelData> findFirstFuelMatching(DynamicHolder<Multimap<Item, FuelData>> predicates, ItemStack stack)
     {
-        for (PredicateItem predicate : predicates.get().get(stack.getItem()))
+        for (FuelData predicate : predicates.get().get(stack.getItem()))
         {
             if (predicate.test(stack))
             {   return Optional.of(predicate);

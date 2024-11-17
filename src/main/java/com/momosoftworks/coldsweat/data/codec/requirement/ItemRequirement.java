@@ -1,11 +1,9 @@
 package com.momosoftworks.coldsweat.data.codec.requirement;
 
-import com.google.gson.JsonElement;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import com.momosoftworks.coldsweat.util.serialization.SerializablePredicate;
 import com.momosoftworks.coldsweat.data.codec.util.IntegerBounds;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
 import net.minecraft.enchantment.Enchantment;
@@ -24,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class ItemRequirement
 {
@@ -35,12 +34,12 @@ public class ItemRequirement
     public final Optional<List<EnchantmentRequirement>> storedEnchantments;
     public final Optional<Potion> potion;
     public final NbtRequirement nbt;
-    public final Optional<SerializablePredicate<ItemStack>> predicate;
+    public final Optional<Predicate<ItemStack>> predicate;
 
     public ItemRequirement(Optional<List<Either<ITag<Item>, Item>>> items, Optional<ITag<Item>> tag,
                            Optional<IntegerBounds> count, Optional<IntegerBounds> durability,
                            Optional<List<EnchantmentRequirement>> enchantments, Optional<List<EnchantmentRequirement>> storedEnchantments,
-                           Optional<Potion> potion, NbtRequirement nbt, Optional<SerializablePredicate<ItemStack>> predicate)
+                           Optional<Potion> potion, NbtRequirement nbt, Optional<Predicate<ItemStack>> predicate)
     {
         this.items = items;
         this.tag = tag;
@@ -60,9 +59,7 @@ public class ItemRequirement
             EnchantmentRequirement.CODEC.listOf().optionalFieldOf("enchantments").forGetter(predicate -> predicate.enchantments),
             EnchantmentRequirement.CODEC.listOf().optionalFieldOf("stored_enchantments").forGetter(predicate -> predicate.storedEnchantments),
             Registry.POTION.optionalFieldOf("potion").forGetter(predicate -> predicate.potion),
-            NbtRequirement.CODEC.optionalFieldOf("nbt", new NbtRequirement(new CompoundNBT())).forGetter(predicate -> predicate.nbt),
-            Codec.STRING.xmap(SerializablePredicate::<ItemStack>deserialize, SerializablePredicate::serialize)
-                        .optionalFieldOf("predicate").forGetter(predicate -> predicate.predicate)
+            NbtRequirement.CODEC.optionalFieldOf("nbt", new NbtRequirement(new CompoundNBT())).forGetter(predicate -> predicate.nbt)
     ).apply(instance, ItemRequirement::new));
 
     public static final ItemRequirement NONE = new ItemRequirement(Optional.empty(), Optional.empty(), Optional.empty(),
@@ -78,11 +75,17 @@ public class ItemRequirement
         this(items, tag, count, durability, enchantments, storedEnchantments, potion, nbt, Optional.empty());
     }
 
+    public ItemRequirement(List<Item> items, NbtRequirement nbt)
+    {
+        this(Optional.of(items.stream().map(Either::<ITag<Item>, Item>right).collect(Collectors.toList())), Optional.empty(),
+             Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), nbt);
+    }
+
     public ItemRequirement(Predicate<ItemStack> predicate)
     {
         this(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
              Optional.empty(), Optional.empty(), Optional.empty(), new NbtRequirement(),
-             Optional.of(new SerializablePredicate<>(predicate)));
+             Optional.of(predicate));
     }
 
     public boolean test(ItemStack stack, boolean ignoreCount)
@@ -99,15 +102,16 @@ public class ItemRequirement
         }
         if (items.isPresent())
         {
-            for (int i = 0; i < items.get().size(); i++)
+            checkItem:
             {
-                Either<ITag<Item>, Item> either = items.get().get(i);
-                if (either.map(tag -> tag.contains(stack.getItem()), item -> stack.getItem() == item))
-                {   break;
+                for (int i = 0; i < items.get().size(); i++)
+                {
+                    Either<ITag<Item>, Item> either = items.get().get(i);
+                    if (either.map(tag -> tag.contains(stack.getItem()), item -> stack.getItem() == item))
+                    {   break checkItem;
+                    }
                 }
-                if (i == items.get().size() - 1)
-                {   return false;
-                }
+                return false;
             }
         }
         if (tag.isPresent() && !tag.get().contains(stack.getItem()))

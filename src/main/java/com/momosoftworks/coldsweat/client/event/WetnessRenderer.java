@@ -121,7 +121,8 @@ public class WetnessRenderer
         WAS_SUBMERGED = isSubmerged;
 
         // Spawn droplets randomly when the player is wet
-        if (!paused && !isSubmerged && wetness > 0.01f && ((float) Math.random() * 0.05) < 0.0015f * wetness * (frametime * 2))
+        if (!paused && !isSubmerged && wetness > 0.01f && ((float) Math.random() * 0.05) < 0.0015f * wetness * (frametime * 2)
+        && WATER_DROPS.size() < 5)
         {
             WATER_DROPS.add(createDrop(screenWidth, screenHeight));
         }
@@ -245,7 +246,7 @@ public class WetnessRenderer
 
     private static Droplet createDrop(int screenWidth, int screenHeight)
     {
-        int size = new Random().nextInt(8) + 32;
+        int size = new Random().nextInt(8) + 40;
         return new Droplet(new Vec2f((int) (Math.random() * screenWidth), -size), 1f, size);
     }
 

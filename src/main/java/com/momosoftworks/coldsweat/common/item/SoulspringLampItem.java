@@ -10,9 +10,9 @@ import com.momosoftworks.coldsweat.common.capability.handler.EntityTempManager;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.core.advancement.trigger.ModAdvancementTriggers;
 import com.momosoftworks.coldsweat.core.itemgroup.ColdSweatGroup;
-import com.momosoftworks.coldsweat.config.type.PredicateItem;
 import com.momosoftworks.coldsweat.core.network.message.ParticleBatchMessage;
 import com.momosoftworks.coldsweat.util.registries.ModItems;
+import com.momosoftworks.coldsweat.data.codec.configuration.FuelData;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
 import com.momosoftworks.coldsweat.util.serialization.NBTHelper;
 import com.momosoftworks.coldsweat.util.math.CSMath;
@@ -166,11 +166,9 @@ public class SoulspringLampItem extends Item
     }
 
     public static double getFuelForStack(ItemStack item)
-    {   return ConfigSettings.SOULSPRING_LAMP_FUEL.get().get(item.getItem())
-               .stream()
-               .filter(it -> it.test(item))
-               .findFirst()
-               .map(it -> it.value).orElse(0d).intValue();
+    {
+        return ConfigHelper.findFirstFuelMatching(ConfigSettings.SOULSPRING_LAMP_FUEL, item)
+                .map(fuelData -> fuelData.fuel).orElse(0d).intValue();
     }
 
     // Restore fuel if player hits an enemy
@@ -248,8 +246,8 @@ public class SoulspringLampItem extends Item
         ItemStack fuelStack = event.getHeldItem();
         PlayerEntity player = event.getPlayer();
         ClickAction action = event.getClickAction();
+        FuelData fuel = ConfigHelper.findFirstFuelMatching(ConfigSettings.SOULSPRING_LAMP_FUEL, fuelStack).orElse(null);
 
-        PredicateItem fuel = ConfigHelper.findFirstItemMatching(ConfigSettings.SOULSPRING_LAMP_FUEL, fuelStack).orElse(null);
         if (fuel != null && fuel.test(fuelStack) && getFuel(thisStack) < 64)
         {
             double currentFuel = getFuel(thisStack);

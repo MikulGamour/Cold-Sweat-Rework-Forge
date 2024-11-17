@@ -3,7 +3,7 @@ package com.momosoftworks.coldsweat.client.gui.tooltip;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.momosoftworks.coldsweat.client.event.TooltipHandler;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
-import com.momosoftworks.coldsweat.config.type.PredicateItem;
+import com.momosoftworks.coldsweat.data.codec.configuration.FuelData;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.AbstractGui;
@@ -60,10 +60,10 @@ public class ClientSoulspringTooltip extends Tooltip
             int i = 0;
             for (Item item : ConfigSettings.SOULSPRING_LAMP_FUEL.get().keySet())
             {
-                for (PredicateItem it : ConfigSettings.SOULSPRING_LAMP_FUEL.get().get(item))
+                for (FuelData fuelData : ConfigSettings.SOULSPRING_LAMP_FUEL.get().get(item))
                 {
                     ItemStack stack = new ItemStack(item, 1);
-                    stack.setTag(it.data.nbt.tag);
+                    stack.setTag(fuelData.data.nbt.tag);
                     itemRenderer.renderGuiItem(stack,
                                                x + ((i * 16) % 96),
                                                y + 12 + CSMath.floor(i / 6d) * 16);

@@ -18,7 +18,7 @@ public class EntitySettingsConfig
     private static final ForgeConfigSpec SPEC;
     private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
 
-    public static final ForgeConfigSpec.ConfigValue<List<? extends List<?>>> INSULATED_ENTITIES;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends List<?>>> INSULATED_MOUNTS;
     public static final ForgeConfigSpec.ConfigValue<List<?>> GOAT_FUR_GROWTH_STATS;
     public static final ForgeConfigSpec.ConfigValue<List<?>> CHAMELEON_SHED_STATS;
     public static final ForgeConfigSpec.ConfigValue<List<? extends List<?>>> CHAMELEON_SPAWN_BIOMES;
@@ -33,7 +33,7 @@ public class EntitySettingsConfig
          Insulated Entities
          */
         BUILDER.push("Entity Temperature");
-        INSULATED_ENTITIES = BUILDER
+        INSULATED_MOUNTS = BUILDER
                 .comment("List of entities that will insulate the player when riding them",
                          "A value of 0 provides no insulation; 1 provides full insulation",
                          "Format: [[\"entity_id\", coldResistance, hotResistance], [\"entity_id\", coldResistance, hotResistance], etc...]")
@@ -201,7 +201,7 @@ public class EntitySettingsConfig
     /* Getters */
 
     public List<? extends List<?>> getInsulatedEntities()
-    {   return INSULATED_ENTITIES.get();
+    {   return INSULATED_MOUNTS.get();
     }
 
     public List<?> getGoatFurStats()

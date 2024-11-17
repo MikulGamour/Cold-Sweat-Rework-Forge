@@ -20,11 +20,11 @@ public class WorldSettingsConfig
     private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
 
     public static final ForgeConfigSpec.ConfigValue<List<? extends List<?>>> BIOME_TEMP_OFFSETS;
-    public static final ForgeConfigSpec.ConfigValue<List<? extends List<?>>> BIOME_TEMP_OVERRIDES;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends List<?>>> BIOME_TEMPERATURES;
     public static final ForgeConfigSpec.ConfigValue<List<? extends List<?>>> DIMENSION_TEMP_OFFSETS;
-    public static final ForgeConfigSpec.ConfigValue<List<? extends List<?>>> DIMENSION_TEMP_OVERRIDES;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends List<?>>> DIMENSION_TEMPERATURES;
     public static final ForgeConfigSpec.ConfigValue<List<? extends List<?>>> STRUCTURE_TEMP_OFFSETS;
-    public static final ForgeConfigSpec.ConfigValue<List<? extends List<?>>> STRUCTURE_TEMP_OVERRIDES;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends List<?>>> STRUCTURE_TEMPERATURES;
 
     public static final ForgeConfigSpec.ConfigValue<List<? extends List<?>>> BLOCK_TEMPERATURES;
     public static final ForgeConfigSpec.IntValue MAX_BLOCK_TEMP_RANGE;
@@ -72,7 +72,7 @@ public class WorldSettingsConfig
                     && (list.size() < 3 || list.get(2) instanceof String);
             });
 
-        DIMENSION_TEMP_OVERRIDES = BUILDER
+        DIMENSION_TEMPERATURES = BUILDER
             .comment("Defines the temperature of a dimension, overriding all other biome and dimension temperatures/settings")
             .defineListAllowEmpty(Arrays.asList("Dimension Temperatures"), () -> Arrays.asList(
                     // No default values
@@ -110,7 +110,7 @@ public class WorldSettingsConfig
                 });
 
 
-        BIOME_TEMP_OVERRIDES = BUILDER
+        BIOME_TEMPERATURES = BUILDER
             .comment("Defines the temperature of a biome, overriding the biome's default temperature")
             .defineListAllowEmpty(Arrays.asList("Biome Temperatures"), () -> ListBuilder.begin(
                             Arrays.asList("minecraft:soul_sand_valley", 53, 53, "F"),
@@ -283,7 +283,7 @@ public class WorldSettingsConfig
 
         BUILDER.push("Misc");
 
-        STRUCTURE_TEMP_OVERRIDES = BUILDER
+        STRUCTURE_TEMPERATURES = BUILDER
                 .comment("Overrides the world temperature when the player is within this structure",
                          "Format: [[\"structure_1\", temperature1, *units], [\"structure_2\", temperature2, *units]... etc]",
                          "(* = optional)")
@@ -428,21 +428,21 @@ public class WorldSettingsConfig
     {   return BIOME_TEMP_OFFSETS.get();
     }
     public List<? extends List<?>> getBiomeTemperatures()
-    {   return BIOME_TEMP_OVERRIDES.get();
+    {   return BIOME_TEMPERATURES.get();
     }
 
     public List<? extends List<?>> getDimensionTempOffsets()
     {   return DIMENSION_TEMP_OFFSETS.get();
     }
     public List<? extends List<?>> getDimensionTemperatures()
-    {   return DIMENSION_TEMP_OVERRIDES.get();
+    {   return DIMENSION_TEMPERATURES.get();
     }
 
     public List<? extends List<?>> getStructureTempOffsets()
     {   return STRUCTURE_TEMP_OFFSETS.get();
     }
     public List<? extends List<?>> getStructureTemperatures()
-    {   return STRUCTURE_TEMP_OVERRIDES.get();
+    {   return STRUCTURE_TEMPERATURES.get();
     }
 
     public List<? extends List<?>> getBlockTemps()
@@ -465,16 +465,16 @@ public class WorldSettingsConfig
     {   return (List<String>) HEARTH_SPREAD_BLACKLIST.get();
     }
 
-    public Double[] getSummerTemps()
+    public static Double[] getSummerTemps()
     {   return SUMMER_TEMPERATURES.get().stream().map(Number::doubleValue).toArray(Double[]::new);
     }
-    public Double[] getAutumnTemps()
+    public static Double[] getAutumnTemps()
     {   return AUTUMN_TEMPERATURES.get().stream().map(Number::doubleValue).toArray(Double[]::new);
     }
-    public Double[] getWinterTemps()
+    public static Double[] getWinterTemps()
     {   return WINTER_TEMPERATURES.get().stream().map(Number::doubleValue).toArray(Double[]::new);
     }
-    public Double[] getSpringTemps()
+    public static Double[] getSpringTemps()
     {   return SPRING_TEMPERATURES.get().stream().map(Number::doubleValue).toArray(Double[]::new);
     }
 
@@ -492,61 +492,61 @@ public class WorldSettingsConfig
 
     /* Setters */
 
-    public synchronized void setBiomeTemperatures(List<? extends List<?>> temps)
-    {   synchronized (BIOME_TEMP_OVERRIDES)
-        {   BIOME_TEMP_OVERRIDES.set(temps);
+    public static synchronized void setBiomeTemperatures(List<? extends List<?>> temps)
+    {   synchronized (BIOME_TEMPERATURES)
+        {   BIOME_TEMPERATURES.set(temps);
         }
     }
 
-    public synchronized void setBiomeTempOffsets(List<? extends List<?>> offsets)
+    public static synchronized void setBiomeTempOffsets(List<? extends List<?>> offsets)
     {   synchronized (BIOME_TEMP_OFFSETS)
         {   BIOME_TEMP_OFFSETS.set(offsets);
         }
     }
 
-    public synchronized void setDimensionTemperatures(List<? extends List<?>> temps)
-    {   synchronized (DIMENSION_TEMP_OVERRIDES)
-        {   DIMENSION_TEMP_OVERRIDES.set(temps);
+    public static synchronized void setDimensionTemperatures(List<? extends List<?>> temps)
+    {   synchronized (DIMENSION_TEMPERATURES)
+        {   DIMENSION_TEMPERATURES.set(temps);
         }
     }
 
-    public synchronized void setDimensionTempOffsets(List<? extends List<?>> offsets)
+    public static synchronized void setDimensionTempOffsets(List<? extends List<?>> offsets)
     {   synchronized (DIMENSION_TEMP_OFFSETS)
         {   DIMENSION_TEMP_OFFSETS.set(offsets);
         }
     }
 
-    public synchronized void setStructureTemperatures(List<? extends List<?>> temps)
-    {   synchronized (STRUCTURE_TEMP_OVERRIDES)
-        {   STRUCTURE_TEMP_OVERRIDES.set(temps);
+    public static synchronized void setStructureTemperatures(List<? extends List<?>> temps)
+    {   synchronized (STRUCTURE_TEMPERATURES)
+        {   STRUCTURE_TEMPERATURES.set(temps);
         }
     }
 
-    public synchronized void setStructureTempOffsets(List<? extends List<?>> offsets)
+    public static synchronized void setStructureTempOffsets(List<? extends List<?>> offsets)
     {   synchronized (STRUCTURE_TEMP_OFFSETS)
         {   STRUCTURE_TEMP_OFFSETS.set(offsets);
         }
     }
 
-    public synchronized void setBlockTemps(List<? extends List<?>> temps)
+    public static synchronized void setBlockTemps(List<? extends List<?>> temps)
     {   synchronized (BLOCK_TEMPERATURES)
         {   BLOCK_TEMPERATURES.set(temps);
         }
     }
 
-    public synchronized void setBlockRange(int range)
+    public static synchronized void setBlockRange(int range)
     {   synchronized (MAX_BLOCK_TEMP_RANGE)
         {   MAX_BLOCK_TEMP_RANGE.set(range);
         }
     }
 
-    public synchronized void setHearthSpreadWhitelist(List<ResourceLocation> whitelist)
+    public static synchronized void setHearthSpreadWhitelist(List<ResourceLocation> whitelist)
     {   synchronized (HEARTH_SPREAD_WHITELIST)
         {   HEARTH_SPREAD_WHITELIST.set(whitelist.stream().map(ResourceLocation::toString).collect(Collectors.toList()));
         }
     }
 
-    public synchronized void setHearthSpreadBlacklist(List<ResourceLocation> blacklist)
+    public static synchronized void setHearthSpreadBlacklist(List<ResourceLocation> blacklist)
     {   synchronized (HEARTH_SPREAD_BLACKLIST)
         {   HEARTH_SPREAD_BLACKLIST.set(blacklist.stream().map(ResourceLocation::toString).collect(Collectors.toList()));
         }

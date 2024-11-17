@@ -3,7 +3,7 @@ package com.momosoftworks.coldsweat.compat.kubejs.event.builder;
 import com.google.common.collect.ImmutableList;
 import com.mojang.datafixers.util.Either;
 import com.momosoftworks.coldsweat.api.util.Temperature;
-import com.momosoftworks.coldsweat.config.type.CarriedItemTemperature;
+import com.momosoftworks.coldsweat.data.codec.configuration.ItemCarryTempData;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
 import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
 import com.momosoftworks.coldsweat.data.codec.util.IntegerBounds;
@@ -98,9 +98,9 @@ public class CarriedItemBuilderJS
         return this;
     }
 
-    public CarriedItemTemperature build()
+    public ItemCarryTempData build()
     {
-        return new CarriedItemTemperature(new ItemRequirement(this.itemPredicate), ImmutableList.copyOf(this.slots),
+        return new ItemCarryTempData(new ItemRequirement(this.itemPredicate), ImmutableList.copyOf(this.slots),
                                           this.temperature, this.trait, maxEffect, new EntityRequirement(this.entityPredicate));
     }
 }

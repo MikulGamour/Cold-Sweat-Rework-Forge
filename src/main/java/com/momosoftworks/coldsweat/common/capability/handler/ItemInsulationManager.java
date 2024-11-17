@@ -8,9 +8,8 @@ import com.momosoftworks.coldsweat.common.capability.ModCapabilities;
 import com.momosoftworks.coldsweat.common.capability.insulation.IInsulatableCap;
 import com.momosoftworks.coldsweat.common.capability.insulation.ItemInsulationCap;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
+import com.momosoftworks.coldsweat.data.codec.configuration.InsulatorData;
 import com.momosoftworks.coldsweat.util.TypedField;
-import com.momosoftworks.coldsweat.config.type.Insulator;
-import com.momosoftworks.coldsweat.compat.CompatManager;
 import com.momosoftworks.coldsweat.util.math.FastMultiMap;
 import com.momosoftworks.coldsweat.util.serialization.NBTHelper;
 import net.minecraft.enchantment.IArmorVanishable;
@@ -175,23 +174,21 @@ public class ItemInsulationManager
             && !ConfigSettings.INSULATION_ITEMS.get().containsKey(stack.getItem());
     }
 
-    public static List<Insulator> getInsulatorsForStack(ItemStack stack)
+    public static List<InsulatorData> getInsulatorsForStack(ItemStack stack)
     {
-        List<Insulator> insulators = new ArrayList<>();
+        List<InsulatorData> insulators = new ArrayList<>();
         if (isInsulatable(stack))
         {
             getInsulationCap(stack).ifPresent(cap ->
             {
-                for (Pair<ItemStack, Multimap<Insulator, Insulation>> pair : cap.getInsulation())
+                for (Pair<ItemStack, Multimap<InsulatorData, Insulation>> pair : cap.getInsulation())
                 {   insulators.addAll(ConfigSettings.INSULATION_ITEMS.get().get(pair.getFirst().getItem()));
                 }
             });
         }
-
+        insulators.addAll(ConfigSettings.INSULATION_ITEMS.get().get(stack.getItem()));
         insulators.addAll(ConfigSettings.INSULATING_ARMORS.get().get(stack.getItem()));
-        if (CompatManager.isCuriosLoaded())
-        {   insulators.addAll(ConfigSettings.INSULATING_CURIOS.get().get(stack.getItem()));
-        }
+        insulators.addAll(ConfigSettings.INSULATING_CURIOS.get().get(stack.getItem()));
 
         return insulators;
     }
@@ -209,7 +206,7 @@ public class ItemInsulationManager
     public static List<AttributeModifier> getInsulationAttributeModifiers(ItemStack stack, Attribute attribute, @Nullable AttributeModifier.Operation operation, @Nullable Entity owner)
     {
         List<AttributeModifier> modifiers = new ArrayList<>();
-        for (Insulator insulator : getInsulatorsForStack(stack))
+        for (InsulatorData insulator : getInsulatorsForStack(stack))
         {
             if (insulator.test(owner, stack))
             {

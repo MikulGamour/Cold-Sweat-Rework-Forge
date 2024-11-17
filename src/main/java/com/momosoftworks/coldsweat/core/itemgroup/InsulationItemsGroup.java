@@ -1,7 +1,7 @@
 package com.momosoftworks.coldsweat.core.itemgroup;
 
 import com.momosoftworks.coldsweat.config.ConfigSettings;
-import com.momosoftworks.coldsweat.config.type.Insulator;
+import com.momosoftworks.coldsweat.data.codec.configuration.InsulatorData;
 import com.momosoftworks.coldsweat.util.registries.ModItems;
 import net.minecraft.entity.MobEntity;
 import net.minecraft.item.ArmorItem;
@@ -56,8 +56,8 @@ public class InsulationItemsGroup extends ItemGroup
         }
     }
 
-    private static List<ItemStack> sort(Collection<Map.Entry<Item, Insulator>> items)
-    {   List<Map.Entry<Item, Insulator>> list = new ArrayList<>(items);
+    private static List<ItemStack> sort(Collection<Map.Entry<Item, InsulatorData>> items)
+    {   List<Map.Entry<Item, InsulatorData>> list = new ArrayList<>(items);
         // Sort by name first
         list.sort(Comparator.comparing(item -> item.getKey().getDefaultInstance().getDisplayName().getString()));
         // Sort by tags the items are in

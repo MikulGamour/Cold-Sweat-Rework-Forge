@@ -4,10 +4,8 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.data.codec.util.IntegerBounds;
-import com.momosoftworks.coldsweat.data.codec.util.ResourceKey;
+import com.momosoftworks.coldsweat.data.codec.util.ExtraCodecs;
 import com.momosoftworks.coldsweat.util.world.WorldHelper;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.NBTDynamicOps;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.vector.Vector3d;
@@ -50,9 +48,9 @@ public class LocationRequirement
             Codec.INT.optionalFieldOf("x").forGetter(location -> location.x),
             Codec.INT.optionalFieldOf("y").forGetter(location -> location.y),
             Codec.INT.optionalFieldOf("z").forGetter(location -> location.z),
-            ResourceKey.codec(Registry.BIOME_REGISTRY).optionalFieldOf("biome").forGetter(location -> location.biome),
-            ResourceKey.codec(Registry.STRUCTURE_FEATURE_REGISTRY).optionalFieldOf("structure").forGetter(location -> location.structure),
-            ResourceKey.codec(Registry.DIMENSION_REGISTRY).optionalFieldOf("dimension").forGetter(location -> location.dimension),
+            ExtraCodecs.codec(Registry.BIOME_REGISTRY).optionalFieldOf("biome").forGetter(location -> location.biome),
+            ExtraCodecs.codec(Registry.STRUCTURE_FEATURE_REGISTRY).optionalFieldOf("structure").forGetter(location -> location.structure),
+            ExtraCodecs.codec(Registry.DIMENSION_REGISTRY).optionalFieldOf("dimension").forGetter(location -> location.dimension),
             IntegerBounds.CODEC.optionalFieldOf("light").forGetter(location -> location.light),
             BlockRequirement.CODEC.optionalFieldOf("block").forGetter(location -> location.block),
             FluidRequirement.CODEC.optionalFieldOf("fluid").forGetter(location -> location.fluid)

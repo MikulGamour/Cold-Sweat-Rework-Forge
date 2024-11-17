@@ -4,6 +4,7 @@ import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.momosoftworks.coldsweat.data.codec.configuration.RequirementHolder;
 import com.momosoftworks.coldsweat.data.codec.util.IntegerBounds;
 import com.momosoftworks.coldsweat.util.entity.EntityHelper;
 import net.minecraft.advancements.AdvancementProgress;
@@ -28,7 +29,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import java.util.Map;
 import java.util.Optional;
 
-public class PlayerDataRequirement
+public class PlayerDataRequirement implements RequirementHolder
 {
     public final Optional<GameType> gameType;
     public final Optional<Map<StatRequirement, IntegerBounds>> stats;
@@ -66,6 +67,7 @@ public class PlayerDataRequirement
         ).apply(instance, PlayerDataRequirement::new));
     }
 
+    @Override
     public boolean test(Entity entity)
     {
         if (!(entity instanceof PlayerEntity)) return false;

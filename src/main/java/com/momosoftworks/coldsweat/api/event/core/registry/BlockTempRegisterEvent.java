@@ -2,6 +2,9 @@ package com.momosoftworks.coldsweat.api.event.core.registry;
 
 import com.momosoftworks.coldsweat.api.registry.BlockTempRegistry;
 import com.momosoftworks.coldsweat.api.temperature.block_temp.BlockTemp;
+import com.momosoftworks.coldsweat.config.ConfigLoadingHandler;
+import com.momosoftworks.coldsweat.data.ModRegistries;
+import com.momosoftworks.coldsweat.data.codec.configuration.BlockTempData;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.Event;
 
@@ -24,10 +27,18 @@ public class BlockTempRegisterEvent extends Event
      * @param blockTemp The BlockTemp to add.
      */
     public void register(BlockTemp blockTemp)
-    {   BlockTempRegistry.register(blockTemp);
+    {
+        if (ConfigLoadingHandler.isRemoved(new BlockTempData(blockTemp), ModRegistries.BLOCK_TEMP_DATA))
+        {   return;
+        }
+        BlockTempRegistry.register(blockTemp);
     }
 
     public void registerFirst(BlockTemp blockTemp)
-    {   BlockTempRegistry.registerFirst(blockTemp);
+    {
+        if (ConfigLoadingHandler.isRemoved(new BlockTempData(blockTemp), ModRegistries.BLOCK_TEMP_DATA))
+        {   return;
+        }
+        BlockTempRegistry.registerFirst(blockTemp);
     }
 }

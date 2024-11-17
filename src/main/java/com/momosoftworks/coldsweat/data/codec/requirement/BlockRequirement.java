@@ -4,9 +4,9 @@ import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import com.momosoftworks.coldsweat.data.codec.util.ExtraCodecs;
 import com.momosoftworks.coldsweat.data.codec.util.IntegerBounds;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
+import com.momosoftworks.coldsweat.data.codec.util.ExtraCodecs;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.fluid.FluidState;
@@ -23,6 +23,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -169,6 +170,33 @@ public class BlockRequirement
                 }
             }
             return true;
+        }
+
+        public static StateRequirement fromToml(List<String> entry, Block block)
+        {
+            Map<String, Object> blockPredicates = new HashMap<>();
+
+            // Iterate predicates
+            for (String predicate : entry)
+            {
+                // Split predicate into key-value pairs separated by "="
+                String[] pair = predicate.split("=");
+                String key = pair[0];
+                String value = pair[1];
+
+                // Get the property with the given name
+                Property<?> property = block.getStateDefinition().getProperty(key);
+                if (property != null)
+                {
+                    // Parse the desired value for this property
+                    property.getValue(value).ifPresent(propertyValue ->
+                                                       {
+                                                           // Add a new predicate to the list
+                                                           blockPredicates.put(key, propertyValue);
+                                                       });
+                }
+            }
+            return new StateRequirement(blockPredicates);
         }
 
         @Override

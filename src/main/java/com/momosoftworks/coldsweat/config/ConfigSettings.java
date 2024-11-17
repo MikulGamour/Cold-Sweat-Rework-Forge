@@ -4,36 +4,23 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
-import com.mojang.datafixers.util.Either;
-
-import com.mojang.datafixers.util.Pair;
 import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.api.insulation.Insulation;
 import com.momosoftworks.coldsweat.api.insulation.slot.ScalingFormula;
 import com.momosoftworks.coldsweat.api.util.Temperature;
+import com.momosoftworks.coldsweat.compat.CompatManager;
 import com.momosoftworks.coldsweat.config.spec.*;
-import com.momosoftworks.coldsweat.config.type.CarriedItemTemperature;
-import com.momosoftworks.coldsweat.config.type.InsulatingMount;
-import com.momosoftworks.coldsweat.config.type.Insulator;
-import com.momosoftworks.coldsweat.config.type.PredicateItem;
-import com.momosoftworks.coldsweat.data.codec.configuration.DepthTempData;
-import com.momosoftworks.coldsweat.data.codec.configuration.EntityTempData;
+import com.momosoftworks.coldsweat.data.ModRegistries;
+import com.momosoftworks.coldsweat.data.codec.configuration.*;
 import com.momosoftworks.coldsweat.data.codec.requirement.NbtRequirement;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.data.codec.util.IntegerBounds;
 import com.momosoftworks.coldsweat.util.math.FastMultiMap;
 import com.momosoftworks.coldsweat.util.math.FastMap;
-import com.momosoftworks.coldsweat.util.serialization.*;
-import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
-import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
-import com.momosoftworks.coldsweat.data.codec.configuration.SpawnBiomeData;
-import com.momosoftworks.coldsweat.compat.CompatManager;
+import com.momosoftworks.coldsweat.util.math.FastMultiMap;
 import com.momosoftworks.coldsweat.util.math.Vec2i;
 import com.momosoftworks.coldsweat.util.registries.ModEntities;
-import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
-import com.momosoftworks.coldsweat.util.serialization.NBTHelper;
-import com.momosoftworks.coldsweat.util.serialization.RegistryHelper;
-import com.momosoftworks.coldsweat.util.serialization.Triplet;
+import com.momosoftworks.coldsweat.util.serialization.*;
 import net.minecraft.block.Block;
 import net.minecraft.entity.EntityClassification;
 import net.minecraft.entity.EntityType;
@@ -52,11 +39,16 @@ import net.minecraft.world.DimensionType;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.feature.structure.Structure;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.loading.FMLEnvironment;
 import net.minecraftforge.registries.ForgeRegistries;
+import org.apache.logging.log4j.util.TriConsumer;
 
 import java.util.*;
-import java.util.function.*;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -91,12 +83,12 @@ public class ConfigSettings
     public static final DynamicHolder<Double> HEATSTROKE_FOG_DISTANCE;
 
     // World Settings
-    public static final DynamicHolder<Map<Biome, Triplet<Double, Double, Temperature.Units>>> BIOME_TEMPS;
-    public static final DynamicHolder<Map<Biome, Triplet<Double, Double, Temperature.Units>>> BIOME_OFFSETS;
-    public static final DynamicHolder<Map<DimensionType, Pair<Double, Temperature.Units>>> DIMENSION_TEMPS;
-    public static final DynamicHolder<Map<DimensionType, Pair<Double, Temperature.Units>>> DIMENSION_OFFSETS;
-    public static final DynamicHolder<Map<Structure<?>, Pair<Double, Temperature.Units>>> STRUCTURE_TEMPS;
-    public static final DynamicHolder<Map<Structure<?>, Pair<Double, Temperature.Units>>> STRUCTURE_OFFSETS;
+    public static final DynamicHolder<Map<Biome, BiomeTempData>> BIOME_TEMPS;
+    public static final DynamicHolder<Map<Biome, BiomeTempData>> BIOME_OFFSETS;
+    public static final DynamicHolder<Map<DimensionType, DimensionTempData>> DIMENSION_TEMPS;
+    public static final DynamicHolder<Map<DimensionType, DimensionTempData>> DIMENSION_OFFSETS;
+    public static final DynamicHolder<Map<Structure<?>, StructureTempData>> STRUCTURE_TEMPS;
+    public static final DynamicHolder<Map<Structure<?>, StructureTempData>> STRUCTURE_OFFSETS;
     public static final DynamicHolder<List<DepthTempData>> DEPTH_REGIONS;
     public static final DynamicHolder<Boolean> CHECK_SLEEP_CONDITIONS;
     public static final DynamicHolder<Double[]> SUMMER_TEMPS;
@@ -116,25 +108,25 @@ public class ConfigSettings
     public static final DynamicHolder<Boolean> USE_CUSTOM_ICE_DROPS;
 
     // Item settings
-    public static final DynamicHolder<Multimap<Item, Insulator>> INSULATION_ITEMS;
-    public static final DynamicHolder<Multimap<Item, Insulator>> INSULATING_ARMORS;
-    public static final DynamicHolder<Multimap<Item, Insulator>> INSULATING_CURIOS;
+    public static final DynamicHolder<Multimap<Item, InsulatorData>> INSULATION_ITEMS;
+    public static final DynamicHolder<Multimap<Item, InsulatorData>> INSULATING_ARMORS;
+    public static final DynamicHolder<Multimap<Item, InsulatorData>> INSULATING_CURIOS;
     public static final DynamicHolder<ScalingFormula> INSULATION_SLOTS;
     public static final DynamicHolder<List<Item>> INSULATION_BLACKLIST;
 
-    public static final DynamicHolder<Multimap<Item, PredicateItem>> FOOD_TEMPERATURES;
+    public static final DynamicHolder<Multimap<Item, FoodData>> FOOD_TEMPERATURES;
 
-    public static final DynamicHolder<Multimap<Item, CarriedItemTemperature>> CARRIED_ITEM_TEMPERATURES;
+    public static final DynamicHolder<Multimap<Item, ItemCarryTempData>> CARRIED_ITEM_TEMPERATURES;
 
     public static final DynamicHolder<Integer> WATERSKIN_STRENGTH;
     public static final DynamicHolder<Double> SOULSPRING_LAMP_STRENGTH;
 
     public static final DynamicHolder<List<DimensionType>> LAMP_DIMENSIONS;
 
-    public static final DynamicHolder<Multimap<Item, PredicateItem>> BOILER_FUEL;
-    public static final DynamicHolder<Multimap<Item, PredicateItem>> ICEBOX_FUEL;
-    public static final DynamicHolder<Multimap<Item, PredicateItem>> HEARTH_FUEL;
-    public static final DynamicHolder<Multimap<Item, PredicateItem>> SOULSPRING_LAMP_FUEL;
+    public static final DynamicHolder<Multimap<Item, FuelData>> BOILER_FUEL;
+    public static final DynamicHolder<Multimap<Item, FuelData>> ICEBOX_FUEL;
+    public static final DynamicHolder<Multimap<Item, FuelData>> HEARTH_FUEL;
+    public static final DynamicHolder<Multimap<Item, FuelData>> SOULSPRING_LAMP_FUEL;
 
     public static final DynamicHolder<Boolean> HEARTH_POTIONS_ENABLED;
     public static final DynamicHolder<List<Effect>> HEARTH_POTION_BLACKLIST;
@@ -143,7 +135,7 @@ public class ConfigSettings
     public static final DynamicHolder<Triplet<Integer, Integer, Double>> FUR_TIMINGS;
     public static final DynamicHolder<Triplet<Integer, Integer, Double>> SHED_TIMINGS;
     public static final DynamicHolder<Multimap<Biome, SpawnBiomeData>> ENTITY_SPAWN_BIOMES;
-    public static final DynamicHolder<Multimap<EntityType<?>, InsulatingMount>> INSULATED_ENTITIES;
+    public static final DynamicHolder<Multimap<EntityType<?>, MountData>> INSULATED_MOUNTS;
     public static final DynamicHolder<Multimap<EntityType<?>, EntityTempData>> ENTITY_TEMPERATURES;
 
     // Misc Settings
@@ -269,104 +261,159 @@ public class ConfigSettings
         (saver) -> MainSettingsConfig.getInstance().setHeatstrokeFogDistance(saver));
 
 
-        BIOME_TEMPS = addSyncedSettingWithRegistries("biome_temps", FastMap::new, (holder, registryAccess) -> holder.get(registryAccess).putAll(ConfigHelper.getBiomesWithValues(WorldSettingsConfig.getInstance().getBiomeTemperatures(), true, registryAccess)),
-        (encoder, registryAccess) -> ConfigHelper.serializeBiomeTemps(encoder, "BiomeTemps", registryAccess),
-        (decoder, registryAccess) -> ConfigHelper.deserializeBiomeTemps(decoder, "BiomeTemps", registryAccess),
-        (saver, registryAccess) -> WorldSettingsConfig.getInstance().setBiomeTemperatures(saver.entrySet().stream()
+        BIOME_TEMPS = addSyncedSettingWithRegistries("biome_temps", FastMap::new, (holder, registryAccess) ->
+        {
+            Map<Biome, BiomeTempData> dataMap = ConfigHelper.getRegistryMap(WorldSettingsConfig.BIOME_TEMPERATURES.get(), Registry.BIOME_REGISTRY,
+                                                                            toml -> BiomeTempData.fromToml(toml, true, registryAccess), data -> data.biomes);
+            ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.BIOME_TEMP_DATA);
+
+            for (Map.Entry<Biome, BiomeTempData> entry : dataMap.entrySet())
+            {   holder.get(registryAccess).put(entry.getKey(), entry.getValue());
+            }
+        },
+        (encoder, registryAccess) -> ConfigHelper.serializeRegistry(encoder, "BiomeTemps", Registry.BIOME_REGISTRY, ModRegistries.BIOME_TEMP_DATA, registryAccess),
+        (decoder, registryAccess) -> ConfigHelper.deserializeRegistry(decoder, "BiomeTemps", Registry.BIOME_REGISTRY, ModRegistries.BIOME_TEMP_DATA, registryAccess),
+        (saver, registryAccess) -> WorldSettingsConfig.setBiomeTemperatures(saver.entrySet().stream()
                                                             .map(entry ->
                                                             {
                                                                 ResourceLocation biome = RegistryHelper.getBiomeId(entry.getKey(), registryAccess);
                                                                 if (biome == null) return null;
 
-                                                                Temperature.Units units = entry.getValue().getC();
-                                                                double min = Temperature.convert(entry.getValue().getA(), Temperature.Units.MC, units, true);
-                                                                double max = Temperature.convert(entry.getValue().getB(), Temperature.Units.MC, units, true);
+                                                                Temperature.Units units = entry.getValue().units;
+                                                                double min = Temperature.convert(entry.getValue().min, Temperature.Units.MC, units, true);
+                                                                double max = Temperature.convert(entry.getValue().max, Temperature.Units.MC, units, true);
 
                                                                 return Arrays.asList(biome.toString(), min, max, units.toString());
                                                             })
                                                             .filter(Objects::nonNull)
                                                             .collect(Collectors.toList())));
 
-        BIOME_OFFSETS = addSyncedSettingWithRegistries("biome_offsets", FastMap::new, (holder, registryAccess) -> holder.get(registryAccess).putAll(ConfigHelper.getBiomesWithValues(WorldSettingsConfig.getInstance().getBiomeTempOffsets(), false, registryAccess)),
-        (encoder, registryAccess) -> ConfigHelper.serializeBiomeTemps(encoder, "BiomeOffsets", registryAccess),
-        (decoder, registryAccess) -> ConfigHelper.deserializeBiomeTemps(decoder, "BiomeOffsets", registryAccess),
-        (saver, registryAccess) -> WorldSettingsConfig.getInstance().setBiomeTempOffsets(saver.entrySet().stream()
+        BIOME_OFFSETS = addSyncedSettingWithRegistries("biome_offsets", FastMap::new, (holder, registryAccess) ->
+        {
+            Map<Biome, BiomeTempData> dataMap = ConfigHelper.getRegistryMap(WorldSettingsConfig.BIOME_TEMP_OFFSETS.get(), Registry.BIOME_REGISTRY,
+                                                                            toml -> BiomeTempData.fromToml(toml, false, registryAccess), data -> data.biomes);
+            ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.BIOME_TEMP_DATA);
+
+            for (Map.Entry<Biome, BiomeTempData> entry : dataMap.entrySet())
+            {   holder.get(registryAccess).put(entry.getKey(), entry.getValue());
+            }
+        },
+        (encoder, registryAccess) -> ConfigHelper.serializeRegistry(encoder, "BiomeOffsets", Registry.BIOME_REGISTRY, ModRegistries.BIOME_TEMP_DATA, registryAccess),
+        (decoder, registryAccess) -> ConfigHelper.deserializeRegistry(decoder, "BiomeOffsets", Registry.BIOME_REGISTRY, ModRegistries.BIOME_TEMP_DATA, registryAccess),
+        (saver, registryAccess) -> WorldSettingsConfig.setBiomeTempOffsets(saver.entrySet().stream()
                                                             .map(entry ->
                                                             {
+                                                                BiomeTempData data = entry.getValue();
                                                                 ResourceLocation biome = RegistryHelper.getBiomeId(entry.getKey(), registryAccess);
                                                                 if (biome == null) return null;
 
-                                                                Temperature.Units units = entry.getValue().getC();
-                                                                double min = Temperature.convert(entry.getValue().getA(), Temperature.Units.MC, units, false);
-                                                                double max = Temperature.convert(entry.getValue().getB(), Temperature.Units.MC, units, false);
+                                                                Temperature.Units units = data.units;
+                                                                double min = Temperature.convert(data.min, Temperature.Units.MC, units, false);
+                                                                double max = Temperature.convert(data.max, Temperature.Units.MC, units, false);
 
                                                                 return Arrays.asList(biome.toString(), min, max, units.toString());
                                                             })
                                                             .filter(Objects::nonNull)
                                                             .collect(Collectors.toList())));
 
-        DIMENSION_TEMPS = addSyncedSettingWithRegistries("dimension_temps", FastMap::new, (holder, registryAccess) -> holder.get(registryAccess).putAll(ConfigHelper.getDimensionsWithValues(WorldSettingsConfig.getInstance().getDimensionTemperatures(), true, registryAccess)),
-        (encoder, registryAccess) -> ConfigHelper.serializeDimensionTemps(encoder, "DimensionTemps", registryAccess),
-        (decoder, registryAccess) -> ConfigHelper.deserializeDimensionTemps(decoder, "DimensionTemps", registryAccess),
-        (saver, registryAccess) -> WorldSettingsConfig.getInstance().setDimensionTemperatures(saver.entrySet().stream()
+        DIMENSION_TEMPS = addSyncedSettingWithRegistries("dimension_temps", FastMap::new, (holder, registryAccess) ->
+        {
+            Map<DimensionType, DimensionTempData> dataMap = ConfigHelper.getRegistryMap(WorldSettingsConfig.DIMENSION_TEMPERATURES.get(), Registry.DIMENSION_TYPE_REGISTRY,
+                                                                                       toml -> DimensionTempData.fromToml(toml, true, registryAccess), data -> data.dimensions);
+            ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.DIMENSION_TEMP_DATA);
+
+            for (Map.Entry<DimensionType, DimensionTempData> entry : dataMap.entrySet())
+            {   holder.get(registryAccess).put(entry.getKey(), entry.getValue());
+            }
+        },
+        (encoder, registryAccess) -> ConfigHelper.serializeRegistry(encoder, "DimensionTemps", Registry.DIMENSION_TYPE_REGISTRY, ModRegistries.DIMENSION_TEMP_DATA, registryAccess),
+        (decoder, registryAccess) -> ConfigHelper.deserializeRegistry(decoder, "DimensionTemps", Registry.DIMENSION_TYPE_REGISTRY, ModRegistries.DIMENSION_TEMP_DATA, registryAccess),
+        (saver, registryAccess) -> WorldSettingsConfig.setDimensionTemperatures(saver.entrySet().stream()
                                                      .map(entry ->
                                                      {
                                                          ResourceLocation dim = RegistryHelper.getDimensionId(entry.getKey(), registryAccess);
                                                          if (dim == null) return null;
 
-                                                         Temperature.Units units = entry.getValue().getSecond();
-                                                         double temp = Temperature.convert(entry.getValue().getFirst(), Temperature.Units.MC, units, true);
+                                                         Temperature.Units units = entry.getValue().units;
+                                                         double temp = Temperature.convert(entry.getValue().temperature, Temperature.Units.MC, units, true);
 
                                                          return Arrays.asList(dim.toString(), temp, units.toString());
                                                      })
                                                      .filter(Objects::nonNull)
                                                      .collect(Collectors.toList())));
 
-        DIMENSION_OFFSETS = addSyncedSettingWithRegistries("dimension_offsets", FastMap::new, (holder, registryAccess) -> holder.get(registryAccess).putAll(ConfigHelper.getDimensionsWithValues(WorldSettingsConfig.getInstance().getDimensionTempOffsets(), false, registryAccess)),
-        (encoder, registryAccess) -> ConfigHelper.serializeDimensionTemps(encoder, "DimensionOffsets", registryAccess),
-        (decoder, registryAccess) -> ConfigHelper.deserializeDimensionTemps(decoder, "DimensionOffsets", registryAccess),
-        (saver, registryAccess) -> WorldSettingsConfig.getInstance().setDimensionTempOffsets(saver.entrySet().stream()
+        DIMENSION_OFFSETS = addSyncedSettingWithRegistries("dimension_offsets", FastMap::new, (holder, registryAccess) ->
+        {
+            Map<DimensionType, DimensionTempData> dataMap = ConfigHelper.getRegistryMap(WorldSettingsConfig.DIMENSION_TEMP_OFFSETS.get(), Registry.DIMENSION_TYPE_REGISTRY,
+                                                                                       toml -> DimensionTempData.fromToml(toml, false, registryAccess), data -> data.dimensions);
+            ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.DIMENSION_TEMP_DATA);
+
+            for (Map.Entry<DimensionType, DimensionTempData> entry : dataMap.entrySet())
+            {   holder.get(registryAccess).put(entry.getKey(), entry.getValue());
+            }
+        },
+        (encoder, registryAccess) -> ConfigHelper.serializeRegistry(encoder, "DimensionOffsets", Registry.DIMENSION_TYPE_REGISTRY, ModRegistries.DIMENSION_TEMP_DATA, registryAccess),
+        (decoder, registryAccess) -> ConfigHelper.deserializeRegistry(decoder, "DimensionOffsets", Registry.DIMENSION_TYPE_REGISTRY, ModRegistries.DIMENSION_TEMP_DATA, registryAccess),
+        (saver, registryAccess) -> WorldSettingsConfig.setDimensionTempOffsets(saver.entrySet().stream()
                                                      .map(entry ->
                                                      {
                                                          ResourceLocation dim = RegistryHelper.getDimensionId(entry.getKey(), registryAccess);
                                                          if (dim == null) return null;
 
-                                                         Temperature.Units units = entry.getValue().getSecond();
-                                                         double temp = Temperature.convert(entry.getValue().getFirst(), Temperature.Units.MC, units, false);
+                                                         Temperature.Units units = entry.getValue().units;
+                                                         double temp = Temperature.convert(entry.getValue().temperature, Temperature.Units.MC, units, false);
 
                                                          return Arrays.asList(dim.toString(), temp, units.toString());
                                                      })
                                                      .filter(Objects::nonNull)
                                                      .collect(Collectors.toList())));
 
-        STRUCTURE_TEMPS = addSyncedSettingWithRegistries("structure_temperatures", FastMap::new, (holder, registryAccess) -> holder.get(registryAccess).putAll(ConfigHelper.getStructuresWithValues(WorldSettingsConfig.getInstance().getStructureTemperatures(), true, registryAccess)),
-        (encoder, registryAccess) -> ConfigHelper.serializeStructureTemps(encoder, "StructureTemperatures", registryAccess),
-        (decoder, registryAccess) -> ConfigHelper.deserializeStructureTemps(decoder, "StructureTemperatures", registryAccess),
-        (saver, registryAccess) -> WorldSettingsConfig.getInstance().setStructureTemperatures(saver.entrySet().stream()
+        STRUCTURE_TEMPS = addSyncedSettingWithRegistries("structure_temperatures", FastMap::new, (holder, registryAccess) ->
+        {
+            Map<Structure<?>, StructureTempData> dataMap = ConfigHelper.getRegistryMap(WorldSettingsConfig.STRUCTURE_TEMPERATURES.get(), Registry.STRUCTURE_FEATURE_REGISTRY,
+                                                                                   toml -> StructureTempData.fromToml(toml, true, registryAccess), data -> data.structures);
+            ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.STRUCTURE_TEMP_DATA);
+
+            for (Map.Entry<Structure<?>, StructureTempData> entry : dataMap.entrySet())
+            {   holder.get(registryAccess).put(entry.getKey(), entry.getValue());
+            }
+        },
+        (encoder, registryAccess) -> ConfigHelper.serializeRegistry(encoder, "StructureTemperatures", Registry.STRUCTURE_FEATURE_REGISTRY, ModRegistries.STRUCTURE_TEMP_DATA, registryAccess),
+        (decoder, registryAccess) -> ConfigHelper.deserializeRegistry(decoder, "StructureTemperatures", Registry.STRUCTURE_FEATURE_REGISTRY, ModRegistries.STRUCTURE_TEMP_DATA, registryAccess),
+        (saver, registryAccess) -> WorldSettingsConfig.setStructureTemperatures(saver.entrySet().stream()
                                                      .map(entry ->
                                                      {
                                                          ResourceLocation struct = RegistryHelper.getStructureId(entry.getKey(), registryAccess);
                                                          if (struct == null) return null;
 
-                                                         Temperature.Units units = entry.getValue().getSecond();
-                                                         double temp = Temperature.convert(entry.getValue().getFirst(), Temperature.Units.MC, units, true);
+                                                         Temperature.Units units = entry.getValue().units;
+                                                         double temp = Temperature.convert(entry.getValue().temperature, Temperature.Units.MC, units, true);
 
                                                          return Arrays.asList(struct.toString(), temp, units.toString());
                                                      })
                                                      .filter(Objects::nonNull)
                                                      .collect(Collectors.toList())));
 
-        STRUCTURE_OFFSETS = addSyncedSettingWithRegistries("structure_offsets", FastMap::new, (holder, registryAccess) -> holder.get(registryAccess).putAll(ConfigHelper.getStructuresWithValues(WorldSettingsConfig.getInstance().getStructureTempOffsets(), false, registryAccess)),
-        (encoder, registryAccess) -> ConfigHelper.serializeStructureTemps(encoder, "StructureOffsets", registryAccess),
-        (decoder, registryAccess) -> ConfigHelper.deserializeStructureTemps(decoder, "StructureOffsets", registryAccess),
-        (saver, registryAccess) -> WorldSettingsConfig.getInstance().setStructureTempOffsets(saver.entrySet().stream()
+        STRUCTURE_OFFSETS = addSyncedSettingWithRegistries("structure_offsets", FastMap::new, (holder, registryAccess) ->
+        {
+            Map<Structure<?>, StructureTempData> dataMap = ConfigHelper.getRegistryMap(WorldSettingsConfig.STRUCTURE_TEMP_OFFSETS.get(), Registry.STRUCTURE_FEATURE_REGISTRY,
+                                                                                   toml -> StructureTempData.fromToml(toml, false, registryAccess), data -> data.structures);
+            ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.STRUCTURE_TEMP_DATA);
+
+            for (Map.Entry<Structure<?>, StructureTempData> entry : dataMap.entrySet())
+            {   holder.get(registryAccess).put(entry.getKey(), entry.getValue());
+            }
+        },
+        (encoder, registryAccess) -> ConfigHelper.serializeRegistry(encoder, "StructureOffsets", Registry.STRUCTURE_FEATURE_REGISTRY, ModRegistries.STRUCTURE_TEMP_DATA, registryAccess),
+        (decoder, registryAccess) -> ConfigHelper.deserializeRegistry(decoder, "StructureOffsets", Registry.STRUCTURE_FEATURE_REGISTRY, ModRegistries.STRUCTURE_TEMP_DATA, registryAccess),
+        (saver, registryAccess) -> WorldSettingsConfig.setStructureTempOffsets(saver.entrySet().stream()
                                                      .map(entry ->
                                                      {
                                                          ResourceLocation struct = RegistryHelper.getStructureId(entry.getKey(), registryAccess);
                                                          if (struct == null) return null;
 
-                                                         Temperature.Units units = entry.getValue().getSecond();
-                                                         double temp = Temperature.convert(entry.getValue().getFirst(), Temperature.Units.MC, units, false);
+                                                         Temperature.Units units = entry.getValue().units;
+                                                         double temp = Temperature.convert(entry.getValue().temperature, Temperature.Units.MC, units, false);
 
                                                          return Arrays.asList(struct.toString(), temp, units.toString());
                                                      })
@@ -375,31 +422,34 @@ public class ConfigSettings
 
         DEPTH_REGIONS = addSetting("depth_regions", ArrayList::new, holder -> {});
 
-        BiFunction<Item, List<?>, PredicateItem> fuelMapper = (item, args) ->
+        TriConsumer<FuelData.FuelType, ForgeConfigSpec.ConfigValue<List<? extends List<?>>>, DynamicHolder<Multimap<Item, FuelData>>> fuelAdder =
+        (fuelType, configValue, holder) ->
         {
-            double fuel = ((Number) args.get(0)).doubleValue();
-            NbtRequirement nbtRequirement;
-            if (args.size() > 2)
-            {   nbtRequirement = new NbtRequirement(NBTHelper.parseCompoundNbt((String) args.get(2)));
-            }
-            else nbtRequirement = new NbtRequirement(new CompoundNBT());
-            return new PredicateItem(fuel, new ItemRequirement(Optional.of(Arrays.asList(Either.right(item))),
-                                                               Optional.empty(), Optional.empty(),
-                                                               Optional.empty(), Optional.empty(),
-                                                               Optional.empty(), Optional.empty(),
-                                                               nbtRequirement),
-                                     EntityRequirement.NONE);
-        };
-        BOILER_FUEL = addSetting("boiler_fuel_items", FastMultiMap::new, holder -> holder.get().putAll(ConfigHelper.readItemMultimap(ItemSettingsConfig.getInstance().getBoilerFuelItems(), fuelMapper)));
-        ICEBOX_FUEL = addSetting("icebox_fuel_items", FastMultiMap::new, holder -> holder.get().putAll(ConfigHelper.readItemMultimap(ItemSettingsConfig.getInstance().getIceboxFuelItems(), fuelMapper)));
-        HEARTH_FUEL = addSetting("hearth_fuel_items", FastMultiMap::new, holder -> holder.get().putAll(ConfigHelper.readItemMultimap(ItemSettingsConfig.getInstance().getHearthFuelItems(), fuelMapper)));
+            Multimap<Item, FuelData> dataMap = new FastMultiMap<>();
+            for (List<?> list : configValue.get())
+            {
+                FuelData data = FuelData.fromToml(list, fuelType);
+                if (data == null) continue;
 
-        SOULSPRING_LAMP_FUEL = addSyncedSetting("lamp_fuel_items", FastMultiMap::new, holder -> holder.get().putAll(ConfigHelper.readItemMultimap(ItemSettingsConfig.getInstance().getSoulLampFuelItems(), fuelMapper)),
-        (encoder) -> ConfigHelper.serializeItemMultimap(encoder, "LampFuelItems", fuel -> fuel.serialize()),
-        (decoder) -> ConfigHelper.deserializeItemMultimap(decoder, "LampFuelItems", nbt -> PredicateItem.deserialize(nbt)),
+                for (Item item : RegistryHelper.mapTaggableList(data.data.items.get()))
+                {   dataMap.put(item, data);
+                }
+            }
+            ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.FUEL_DATA);
+            for (Map.Entry<Item, FuelData> entry : dataMap.entries())
+            {   holder.get().put(entry.getKey(), entry.getValue());
+            }
+        };
+        BOILER_FUEL = addSetting("boiler_fuel_items", FastMultiMap::new, holder -> fuelAdder.accept(FuelData.FuelType.BOILER, ItemSettingsConfig.BOILER_FUELS, holder));
+        ICEBOX_FUEL = addSetting("icebox_fuel_items", FastMultiMap::new, holder -> fuelAdder.accept(FuelData.FuelType.ICEBOX, ItemSettingsConfig.ICEBOX_FUELS, holder));
+        HEARTH_FUEL = addSetting("hearth_fuel_items", FastMultiMap::new, holder -> fuelAdder.accept(FuelData.FuelType.HEARTH, ItemSettingsConfig.HEARTH_FUELS, holder));
+
+        SOULSPRING_LAMP_FUEL = addSyncedSetting("lamp_fuel_items", FastMultiMap::new, holder -> fuelAdder.accept(FuelData.FuelType.SOUL_LAMP, ItemSettingsConfig.SOULSPRING_LAMP_FUELS, holder),
+        (encoder) -> ConfigHelper.serializeItemMultimap(encoder, "LampFuelItems", FuelData::serialize),
+        (decoder) -> ConfigHelper.deserializeItemMultimap(decoder, "LampFuelItems", FuelData::deserialize),
         (saver) -> ConfigHelper.writeItemMultimap(saver,
                                              list -> ItemSettingsConfig.getInstance().setSoulLampFuelItems(list),
-                                             fuel -> Arrays.asList(fuel.value, fuel.data.nbt.tag.toString())));
+                                             fuel -> Arrays.asList(fuel.fuel, fuel.data.nbt.tag.toString())));
 
         HEARTH_POTIONS_ENABLED = addSetting("hearth_potions_enabled", () -> true, holder -> holder.set(ItemSettingsConfig.getInstance().arePotionsEnabled()));
         HEARTH_POTION_BLACKLIST = addSetting("hearth_potion_blacklist", ArrayList::new,
@@ -408,24 +458,47 @@ public class ConfigSettings
                                                        .map(entry -> ForgeRegistries.POTIONS.getValue(new ResourceLocation(entry)))
                                                        .collect(ArrayList::new, List::add, List::addAll)));
 
-        INSULATION_ITEMS = addSyncedSetting("insulation_items", FastMultiMap::new, holder -> holder.get().putAll(ConfigHelper.readItemInsulations(ItemSettingsConfig.getInstance().getInsulationItems(), Insulation.Slot.ITEM)),
-        (encoder) -> ConfigHelper.serializeItemInsulations(encoder, "InsulationItems"),
-        (decoder) -> ConfigHelper.deserializeItemInsulations(decoder, "InsulationItems"),
+        TriConsumer<ForgeConfigSpec.ConfigValue<List<? extends List<?>>>, DynamicHolder<Multimap<Item, InsulatorData>>, Insulation.Slot> insulatorAdder =
+        (configValue, holder, slot) ->
+        {
+            // Read the insulation items from the config
+            Multimap<Item, InsulatorData> dataMap = new FastMultiMap<>();
+            for (List<?> list : configValue.get())
+            {
+                InsulatorData data = InsulatorData.fromToml(list, slot);
+                if (data == null) continue;
+
+                for (Item item : RegistryHelper.mapTaggableList(data.data.items.get()))
+                {   dataMap.put(item, data);
+                }
+            }
+            // Handle registry removals
+            ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.INSULATOR_DATA);
+            // Add entries
+            holder.get().putAll(dataMap);
+        };
+        INSULATION_ITEMS = addSyncedSetting("insulation_items", FastMultiMap::new, holder ->
+        {   insulatorAdder.accept(ItemSettingsConfig.INSULATION_ITEMS, holder, Insulation.Slot.ITEM);
+        },
+        (encoder) -> ConfigHelper.serializeItemMultimap(encoder, "InsulationItems", InsulatorData::serialize),
+        (decoder) -> ConfigHelper.deserializeItemMultimap(decoder, "InsulationItems", InsulatorData::deserialize),
         (saver) -> ConfigHelper.writeItemInsulations(saver, list -> ItemSettingsConfig.getInstance().setInsulationItems(list)));
 
-        INSULATING_ARMORS = addSyncedSetting("insulating_armors", FastMultiMap::new, holder -> holder.get().putAll(ConfigHelper.readItemInsulations(ItemSettingsConfig.getInstance().getInsulatingArmorItems(), Insulation.Slot.ARMOR)),
-        (encoder) -> ConfigHelper.serializeItemInsulations(encoder, "InsulatingArmors"),
-        (decoder) -> ConfigHelper.deserializeItemInsulations(decoder, "InsulatingArmors"),
+        INSULATING_ARMORS = addSyncedSetting("insulating_armors", FastMultiMap::new, holder ->
+        {   insulatorAdder.accept(ItemSettingsConfig.INSULATING_ARMOR, holder, Insulation.Slot.ARMOR);
+        },
+        (encoder) -> ConfigHelper.serializeItemMultimap(encoder, "InsulatingArmors", InsulatorData::serialize),
+        (decoder) -> ConfigHelper.deserializeItemMultimap(decoder, "InsulatingArmors", InsulatorData::deserialize),
         (saver) -> ConfigHelper.writeItemInsulations(saver, list -> ItemSettingsConfig.getInstance().setInsulatingArmorItems(list)));
 
         INSULATING_CURIOS = addSyncedSetting("insulating_curios", FastMultiMap::new, holder ->
         {
             if (CompatManager.isCuriosLoaded())
-            {   holder.get().putAll(ConfigHelper.readItemInsulations(ItemSettingsConfig.getInstance().getInsulatingCurios(), Insulation.Slot.CURIO));
+            {   insulatorAdder.accept(ItemSettingsConfig.INSULATING_CURIOS, holder, Insulation.Slot.CURIO);
             }
         },
-        (encoder) -> ConfigHelper.serializeItemInsulations(encoder, "InsulatingCurios"),
-        (decoder) -> ConfigHelper.deserializeItemInsulations(decoder, "InsulatingCurios"),
+        (encoder) -> ConfigHelper.serializeItemMultimap(encoder, "InsulatingCurios", InsulatorData::serialize),
+        (decoder) -> ConfigHelper.deserializeItemMultimap(decoder, "InsulatingCurios", InsulatorData::deserialize),
         (saver) ->
         {   if (CompatManager.isCuriosLoaded())
             {   ConfigHelper.writeItemInsulations(saver, list -> ItemSettingsConfig.getInstance().setInsulatingCurios(list));
@@ -453,38 +526,13 @@ public class ConfigSettings
                                                                    values.get(0).doubleValue(),
                                                                    values.size() > 2 ? values.get(2).doubleValue() : Double.MAX_VALUE));
         },
-        (encoder) ->
-        {
-            CompoundNBT tag = new CompoundNBT();
-            tag.putString("Mode", encoder.getType().getSerializedName());
-
-            ListNBT values = new ListNBT();
-            encoder.getValues().forEach(value -> values.add(DoubleNBT.valueOf(value.doubleValue())));
-            tag.put("Values", values);
-
-            return tag;
-        },
-        (decoder) ->
-        {
-            ScalingFormula.Type scalingType = ScalingFormula.Type.byName(decoder.getString("Mode"));
-            List<? extends Number> values = decoder.getList("Values", 6)
-                    .stream()
-                    .map(tag -> ((DoubleNBT) tag).getAsNumber()).collect(Collectors.toList());
-
-            return scalingType == ScalingFormula.Type.STATIC
-                                  ? new ScalingFormula.Static(values.get(0).intValue(),
-                                                              values.get(1).intValue(),
-                                                              values.get(2).intValue(),
-                                                              values.get(3).intValue())
-                                  : new ScalingFormula.Dynamic(scalingType,
-                                                               values.get(0).doubleValue(),
-                                                               values.size() > 2 ? values.get(2).doubleValue() : Double.MAX_VALUE);
-        },
+        (encoder) -> encoder.serialize(),
+        (decoder) -> ScalingFormula.deserialize(decoder),
         (saver) ->
         {
-            List list = new ArrayList<>();
-            list.add(saver.getType().getSerializedName());
-            list.addAll(saver.getValues());
+            List<?> list = ListBuilder.begin(saver.getType().getSerializedName())
+                                      .addAll(saver.getValues())
+                                      .build();
             ItemSettingsConfig.getInstance().setArmorInsulationSlots(list);
         });
 
@@ -502,90 +550,51 @@ public class ConfigSettings
 
         USE_CUSTOM_ICE_DROPS = addSetting("custom_ice_drops", () -> true, holder -> holder.set(WorldSettingsConfig.CUSTOM_ICE_DROPS.get()));
 
-        FOOD_TEMPERATURES = addSyncedSetting("food_temperatures", FastMultiMap::new, holder -> holder.get().putAll(ConfigHelper.readItemMultimap(ItemSettingsConfig.getInstance().getFoodTemperatures(), (item, args) ->
+        FOOD_TEMPERATURES = addSyncedSetting("food_temperatures", FastMultiMap::new, holder ->
         {
-            double value = ((Number) args.get(0)).doubleValue();
-            NbtRequirement nbtRequirement = args.size() > 1
-                                            ? new NbtRequirement(NBTHelper.parseCompoundNbt((String) args.get(1)))
-                                            : new NbtRequirement(new CompoundNBT());
-            Integer duration = args.size() > 2 ? ((Number) args.get(2)).intValue() : null;
-            ItemRequirement itemRequirement = new ItemRequirement(Optional.of(Arrays.asList(Either.right(item))),
-                                                                  Optional.empty(), Optional.empty(),
-                                                                  Optional.empty(), Optional.empty(),
-                                                                  Optional.empty(), Optional.empty(),
-                                                                  nbtRequirement);
-            CompoundNBT tag = new CompoundNBT();
-            if (duration != null)
-            {   tag.putInt("duration", duration);
+            // Read the food temperatures from the config
+            Multimap<Item, FoodData> dataMap = new FastMultiMap<>();
+            for (List<?> list : ItemSettingsConfig.FOOD_TEMPERATURES.get())
+            {
+                FoodData data = FoodData.fromToml(list);
+                if (data == null) continue;
+
+                for (Item item : RegistryHelper.mapTaggableList(data.data.items.get()))
+                {   dataMap.put(item, data);
+                }
             }
-            return new PredicateItem(value, itemRequirement, EntityRequirement.NONE, tag);
-        })),
-        (encoder) -> ConfigHelper.serializeItemMultimap(encoder, "FoodTemperatures", PredicateItem::serialize),
-        (decoder) -> ConfigHelper.deserializeItemMultimap(decoder, "FoodTemperatures", PredicateItem::deserialize),
+            // Handle registry removals
+            ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.FOOD_DATA);
+            // Add entries
+            holder.get().putAll(dataMap);
+        },
+        (encoder) -> ConfigHelper.serializeItemMultimap(encoder, "FoodTemperatures", FoodData::serialize),
+        (decoder) -> ConfigHelper.deserializeItemMultimap(decoder, "FoodTemperatures", FoodData::deserialize),
         (saver) -> ConfigHelper.writeItemMultimap(saver,
-                                             list -> ItemSettingsConfig.getInstance().setFoodTemperatures(list),
-                                             food ->
-                                             {
-                                                 List<Object> foodData = new ArrayList<>(Arrays.asList(food.value, food.data.nbt.tag.toString()));
-                                                 if (food.extraData.contains("duration"))
-                                                 {   foodData.add(food.extraData.getInt("duration"));
-                                                 }
-                                                 return foodData;
-                                             }));
+                                                  list -> ItemSettingsConfig.getInstance().setFoodTemperatures(list),
+                                                  food -> ListBuilder.begin(food.temperature, food.data.nbt.tag.toString())
+                                                                     .addIf(food.duration > 0, () -> food.duration).build()));
 
         CARRIED_ITEM_TEMPERATURES = addSyncedSetting("carried_item_temps", FastMultiMap::new, holder ->
         {
-            List<?> list = ItemSettingsConfig.getInstance().getCarriedTemps();
-            Multimap<Item, CarriedItemTemperature> map = new FastMultiMap<>();
-
-            for (Object entry : list)
+            // Read the insulation items from the config
+            Multimap<Item, ItemCarryTempData> dataMap = new FastMultiMap<>();
+            for (List<?> list : ItemSettingsConfig.CARRIED_ITEM_TEMPERATURE.get())
             {
-                List<?> entryList = (List<?>) entry;
-                // item ID
-                String itemID = (String) entryList.get(0);
-                Either<ITag<Item>, Item> item = itemID.startsWith("#")
-                                                  ? Either.left(ItemTags.getAllTags().getTag(new ResourceLocation(itemID.substring(1))))
-                                                  : Either.right(ForgeRegistries.ITEMS.getValue(new ResourceLocation(itemID)));
-                //temp
-                double temp = ((Number) entryList.get(1)).doubleValue();
-                // slots
-                List<Either<IntegerBounds, EquipmentSlotType>> slots;
-                switch ((String) entryList.get(2))
-                {
-                    case "inventory" : slots = Arrays.asList(Either.left(IntegerBounds.NONE)); break;
-                    case "hotbar"    : slots = Arrays.asList(Either.left(new IntegerBounds(36, 44))); break;
-                    case "hand" : slots = Arrays.asList(Either.right(EquipmentSlotType.MAINHAND), Either.right(EquipmentSlotType.OFFHAND)); break;
-                    default : slots = Arrays.asList(Either.left(new IntegerBounds(-1, -1))); break;
-                };
-                // trait
-                Temperature.Trait trait = Temperature.Trait.fromID((String) entryList.get(3));
-                // nbt
-                NbtRequirement nbtRequirement = entryList.size() > 4
-                                                ? new NbtRequirement(NBTHelper.parseCompoundNbt((String) entryList.get(4)))
-                                                : new NbtRequirement(new CompoundNBT());
-                // max effect
-                double maxEffect = entryList.size() > 5 ? ((Number) entryList.get(5)).doubleValue() : Double.MAX_VALUE;
-                // compile item requirement
-                ItemRequirement itemRequirement = new ItemRequirement(Optional.of(Arrays.asList(item)),
-                                                                      Optional.empty(), Optional.empty(),
-                                                                      Optional.empty(), Optional.empty(),
-                                                                      Optional.empty(), Optional.empty(),
-                                                                      nbtRequirement);
-                // final carried temp
-                CarriedItemTemperature carriedTemp = new CarriedItemTemperature(itemRequirement, slots, temp, trait, maxEffect, EntityRequirement.NONE);
+                ItemCarryTempData data = ItemCarryTempData.fromToml(list);
+                if (data == null) continue;
 
-                // add carried temp to map
-                if (item.left().isPresent())
-                {   item.left().get().getValues().forEach(i -> map.put(i, carriedTemp));
-                }
-                else
-                {   map.put(item.right().get(), carriedTemp);
+                for (Item item : RegistryHelper.mapTaggableList(data.data.items.get()))
+                {   dataMap.put(item, data);
                 }
             }
-            holder.get().putAll(map);
+            // Handle registry removals
+            ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.CARRY_TEMP_DATA);
+            // Add entries
+            holder.get().putAll(dataMap);
         },
-        (encoder) -> ConfigHelper.serializeItemMultimap(encoder, "CarriedItemTemps", CarriedItemTemperature::serialize),
-        (decoder) -> ConfigHelper.deserializeItemMultimap(decoder, "CarriedItemTemps", CarriedItemTemperature::deserialize),
+        (encoder) -> ConfigHelper.serializeItemMultimap(encoder, "CarriedItemTemps", ItemCarryTempData::serialize),
+        (decoder) -> ConfigHelper.deserializeItemMultimap(decoder, "CarriedItemTemps", ItemCarryTempData::deserialize),
         (saver) ->
         {
             ConfigHelper.writeItemMultimap(saver,
@@ -602,8 +611,8 @@ public class ConfigSettings
                 // Trait
                 entry.add(temp.trait.getSerializedName());
                 // NBT data
-                if (!temp.item.nbt.tag.isEmpty())
-                {   entry.add(temp.item.nbt.tag.toString());
+                if (!temp.data.nbt.tag.isEmpty())
+                {   entry.add(temp.data.nbt.tag.toString());
                 }
                 return entry;
             });
@@ -672,81 +681,67 @@ public class ConfigSettings
 
         ENTITY_SPAWN_BIOMES = addSettingWithRegistries("entity_spawn_biomes", FastMultiMap::new, (holder, registryAccess) ->
         {
-            Multimap<Biome, SpawnBiomeData> map = HashMultimap.create();
             // Function to read biomes from configs and put them in the config settings
             BiConsumer<EntityType<?>, List<? extends List<?>>> configReader = (entityType, configBiomes) ->
             {
-                for (List<?> entry : configBiomes)
+                Multimap<Biome, SpawnBiomeData> dataMap = HashMultimap.create();
+                for (List<?> list : configBiomes)
                 {
-                    String biomeId = ((String) entry.get(0));
-                    List<Biome> biomes = ConfigHelper.parseRegistryItems(Registry.BIOME_REGISTRY, registryAccess, biomeId);
-                    for (Biome biome : biomes)
-                    {
-                        SpawnBiomeData spawnData = new SpawnBiomeData(biomes, EntityClassification.CREATURE, ((Number) entry.get(1)).intValue(),
-                                                                      Arrays.asList(Either.right(entityType)),
-                                                                      Optional.empty());
-                        map.put(biome, spawnData);
+                    SpawnBiomeData data = SpawnBiomeData.fromToml(list, entityType, registryAccess);
+                    if (data == null) continue;
+
+                    for (Biome biome : data.biomes)
+                    {   dataMap.put(biome, data);
                     }
                 }
+                holder.get(registryAccess).putAll(dataMap);
             };
 
             // Parse goat and chameleon biomes
             configReader.accept(ModEntities.CHAMELEON, EntitySettingsConfig.getInstance().getChameleonSpawnBiomes());
             configReader.accept(ModEntities.GOAT, EntitySettingsConfig.getInstance().getGoatSpawnBiomes());
-
-            holder.get(registryAccess).putAll(map);
         });
 
-        INSULATED_ENTITIES = addSetting("insulated_entities", FastMultiMap::new, holder -> holder.get().putAll(
-        EntitySettingsConfig.getInstance().getInsulatedEntities().stream().map(entry ->
+        INSULATED_MOUNTS = addSetting("insulated_entities", FastMultiMap::new, holder ->
         {
-            List<Map.Entry<EntityType<?>, InsulatingMount>> entries = new ArrayList<>();
-            String entityID = (String) entry.get(0);
-            double coldInsul = ((Number) entry.get(1)).doubleValue();
-            double hotInsul = entry.size() < 3
-                              ? coldInsul
-                              : ((Number) entry.get(2)).doubleValue();
-
-            for (EntityType<?> entityType : ConfigHelper.getEntityTypes(entityID))
-            {   entries.add(new AbstractMap.SimpleEntry<>(entityType, new InsulatingMount(entityType, coldInsul, hotInsul, EntityRequirement.NONE)));
+            // Read the insulation items from the config
+            Multimap<EntityType<?>, MountData> dataMap = new FastMultiMap<>();
+            for (List<?> list : EntitySettingsConfig.INSULATED_MOUNTS.get())
+            {
+                MountData data = MountData.fromToml(list);
+                for (EntityType<?> entityType : RegistryHelper.mapTaggableList(data.entities))
+                {   dataMap.put(entityType, MountData.fromToml(list));
+                }
             }
-
-            return entries;
-        })
-        .flatMap(List::stream)
-        .distinct()
-        .filter(entry -> entry.getKey() != null)
-        .collect(FastMultiMap::new, (map, entry) -> map.put(entry.getKey(), entry.getValue()), FastMultiMap::putAll)));
+            // Handle registry removals
+            ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.MOUNT_DATA);
+            // Add entries
+            holder.get().putAll(dataMap);
+        });
 
         ENTITY_TEMPERATURES = addSetting("entity_temperatures", FastMultiMap::new, holder ->
         {
-            List<?> list = EntitySettingsConfig.ENTITY_TEMPERATURES.get();
-            Multimap<EntityType<?>, EntityTempData> map = new FastMultiMap<>();
-            for (Object entry : list)
+            // Read the insulation items from the config
+            Multimap<EntityType<?>, EntityTempData> dataMap = new FastMultiMap<>();
+            for (List<?> list : EntitySettingsConfig.ENTITY_TEMPERATURES.get())
             {
-                List<?> entryList = (List<?>) entry;
-                String entityID = (String) entryList.get(0);
-                double temp = ((Number) entryList.get(1)).doubleValue();
-                double range = ((Number) entryList.get(2)).doubleValue();
-                Temperature.Units units = entryList.size() > 3
-                                          ? Temperature.Units.fromID((String) entryList.get(3))
-                                          : Temperature.Units.MC;
+                EntityTempData data = EntityTempData.fromToml(list);
+                if (data == null) continue;
 
-                for (EntityType<?> entityType : ConfigHelper.getEntityTypes(entityID))
-                {
-                    EntityRequirement requirement = new EntityRequirement(Optional.of(entityType), Optional.empty(), Optional.empty(), Optional.empty(),
-                                                                          Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
-                                                                          Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
-                    map.put(entityType, new EntityTempData(requirement, temp, range, units, Optional.empty(), Optional.empty()));
+                for (EntityType<?> entityType : RegistryHelper.mapTaggableList(data.entity.entities.get()))
+                {   dataMap.put(entityType, data);
                 }
             }
-            holder.get().putAll(map);
+            // Handle registry removals
+            ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.ENTITY_TEMP_DATA);
+            // Add entries
+            holder.get().putAll(dataMap);
         });
 
-        BLOCK_RANGE = addSyncedSetting("block_range", () -> 7, holder -> holder.set(WorldSettingsConfig.getInstance().getBlockRange()),
+        BLOCK_RANGE = addSyncedSetting("block_range", () -> 7, holder -> holder.set(WorldSettingsConfig.MAX_BLOCK_TEMP_RANGE.get()),
         (encoder) -> ConfigHelper.serializeNbtInt(encoder, "BlockRange"),
         (decoder) -> decoder.getInt("BlockRange"),
-        (saver) -> WorldSettingsConfig.getInstance().setBlockRange(saver));
+        (saver) -> WorldSettingsConfig.MAX_BLOCK_TEMP_RANGE.set(saver));
 
         COLD_SOUL_FIRE = addSetting("cold_soul_fire", () -> true, holder -> holder.set(WorldSettingsConfig.getInstance().isSoulFireCold()));
 
@@ -769,9 +764,9 @@ public class ConfigSettings
             }
             return list;
         },
-        saver -> WorldSettingsConfig.getInstance().setHearthSpreadWhitelist(saver.stream().map(ForgeRegistries.BLOCKS::getKey).collect(Collectors.toList())));
+        saver -> WorldSettingsConfig.setHearthSpreadWhitelist(saver.stream().map(ForgeRegistries.BLOCKS::getKey).collect(Collectors.toList())));
 
-        HEARTH_SPREAD_BLACKLIST = addSyncedSetting("hearth_spread_blacklist", ArrayList::new, holder -> holder.get().addAll(ConfigHelper.getBlocks(WorldSettingsConfig.getInstance().getHearthSpreadBlacklist().toArray(new String[0]))),
+        HEARTH_SPREAD_BLACKLIST = addSyncedSetting("hearth_spread_blacklist", ArrayList::new, holder -> holder.get().addAll(ConfigHelper.getBlocks(WorldSettingsConfig.HEARTH_SPREAD_BLACKLIST.get().toArray(new String[0]))),
         (encoder) ->
         {
             CompoundNBT tag = new CompoundNBT();
@@ -790,63 +785,63 @@ public class ConfigSettings
             }
             return list;
         },
-        saver -> WorldSettingsConfig.getInstance().setHearthSpreadBlacklist(saver.stream().map(ForgeRegistries.BLOCKS::getKey).collect(Collectors.toList())));
+        saver -> WorldSettingsConfig.setHearthSpreadBlacklist(saver.stream().map(ForgeRegistries.BLOCKS::getKey).collect(Collectors.toList())));
 
-        HEARTH_STRENGTH = addSetting("hearth_effect", () -> 0.75, holder -> holder.set(WorldSettingsConfig.getInstance().getHearthStrength()));
+        HEARTH_STRENGTH = addSetting("hearth_effect", () -> 0.75, holder -> holder.set(WorldSettingsConfig.HEARTH_INSULATION_STRENGTH.get()));
 
-        SMART_HEARTH = addSetting("smart_hearth", () -> false, holder -> holder.set(WorldSettingsConfig.getInstance().isSmartHearth()));
+        SMART_HEARTH = addSetting("smart_hearth", () -> false, holder -> holder.set(WorldSettingsConfig.ENABLE_SMART_HEARTH.get()));
 
-        INSULATION_STRENGTH = addSetting("insulation_strength", () -> 1d, holder -> holder.set(ItemSettingsConfig.getInstance().getInsulationStrength()));
+        INSULATION_STRENGTH = addSetting("insulation_strength", () -> 1d, holder -> holder.set(ItemSettingsConfig.INSULATION_STRENGTH.get()));
 
         DISABLED_MODIFIERS = addSetting("disabled_modifiers", ArrayList::new, holder -> holder.get().addAll(MainSettingsConfig.DISABLED_TEMP_MODIFIERS.get().stream().map(ResourceLocation::new).collect(Collectors.toList())));
 
         // Client
 
-        CELSIUS = addClientSetting("celsius", () -> false, holder -> holder.set(ClientSettingsConfig.getInstance().isCelsius()));
+        CELSIUS = addClientSetting("celsius", () -> false, holder -> holder.set(ClientSettingsConfig.USE_CELSIUS.get()));
 
-        TEMP_OFFSET = addClientSetting("temp_offset", () -> 0, holder -> holder.set(ClientSettingsConfig.getInstance().getTempOffset()));
+        TEMP_OFFSET = addClientSetting("temp_offset", () -> 0, holder -> holder.set(ClientSettingsConfig.TEMPERATURE_OFFSET.get()));
 
-        TEMP_SMOOTHING = addClientSetting("temp_smoothing", () -> 10d, holder -> holder.set(ClientSettingsConfig.getInstance().getTempSmoothing()));
+        TEMP_SMOOTHING = addClientSetting("temp_smoothing", () -> 10d, holder -> holder.set(ClientSettingsConfig.TEMPERATURE_SMOOTHING.get()));
 
-        BODY_ICON_POS = addClientSetting("body_icon_pos", Vec2i::new, holder -> holder.set(new Vec2i(ClientSettingsConfig.getInstance().getBodyIconX(),
-                                                                  ClientSettingsConfig.getInstance().getBodyIconY())));
-        BODY_ICON_ENABLED = addClientSetting("body_icon_enabled", () -> true, holder -> holder.set(ClientSettingsConfig.getInstance().isBodyIconEnabled()));
+        BODY_ICON_POS = addClientSetting("body_icon_pos", Vec2i::new, holder -> holder.set(new Vec2i(ClientSettingsConfig.getBodyIconX(),
+                                                                  ClientSettingsConfig.getBodyIconY())));
+        BODY_ICON_ENABLED = addClientSetting("body_icon_enabled", () -> true, holder -> holder.set(ClientSettingsConfig.SHOW_BODY_TEMP_ICON.get()));
 
-        MOVE_BODY_ICON_WHEN_ADVANCED = addClientSetting("move_body_icon_for_advanced", () -> true, holder -> holder.set(ClientSettingsConfig.getInstance().moveBodyIconWhenAdvanced()));
+        MOVE_BODY_ICON_WHEN_ADVANCED = addClientSetting("move_body_icon_for_advanced", () -> true, holder -> holder.set(ClientSettingsConfig.MOVE_BODY_TEMP_ICON_ADVANCED.get()));
 
-        BODY_READOUT_POS = addClientSetting("body_readout_pos", Vec2i::new, holder -> holder.set(new Vec2i(ClientSettingsConfig.getInstance().getBodyReadoutX(),
-                                                                                ClientSettingsConfig.getInstance().getBodyReadoutY())));
-        BODY_READOUT_ENABLED = addClientSetting("body_readout_enabled", () -> true, holder -> holder.set(ClientSettingsConfig.getInstance().isBodyReadoutEnabled()));
+        BODY_READOUT_POS = addClientSetting("body_readout_pos", Vec2i::new, holder -> holder.set(new Vec2i(ClientSettingsConfig.getBodyReadoutX(),
+                                                                                ClientSettingsConfig.getBodyReadoutY())));
+        BODY_READOUT_ENABLED = addClientSetting("body_readout_enabled", () -> true, holder -> holder.set(ClientSettingsConfig.SHOW_BODY_TEMP_READOUT.get()));
 
-        WORLD_GAUGE_POS = addClientSetting("world_gauge_pos", Vec2i::new, holder -> holder.set(new Vec2i(ClientSettingsConfig.getInstance().getWorldGaugeX(),
-                                                                    ClientSettingsConfig.getInstance().getWorldGaugeY())));
-        WORLD_GAUGE_ENABLED = addClientSetting("world_gauge_enabled", () -> true, holder -> holder.set(ClientSettingsConfig.getInstance().isWorldGaugeEnabled()));
+        WORLD_GAUGE_POS = addClientSetting("world_gauge_pos", Vec2i::new, holder -> holder.set(new Vec2i(ClientSettingsConfig.getWorldGaugeX(),
+                                                                    ClientSettingsConfig.getWorldGaugeY())));
+        WORLD_GAUGE_ENABLED = addClientSetting("world_gauge_enabled", () -> true, holder -> holder.set(ClientSettingsConfig.SHOW_WORLD_TEMP_GAUGE.get()));
 
-        CUSTOM_HOTBAR_LAYOUT = addClientSetting("custom_hotbar_layout", () -> true, holder -> holder.set(ClientSettingsConfig.getInstance().customHotbarEnabled()));
-        ICON_BOBBING = addClientSetting("icon_bobbing", () -> true, holder -> holder.set(ClientSettingsConfig.getInstance().isIconBobbingEnabled()));
+        CUSTOM_HOTBAR_LAYOUT = addClientSetting("custom_hotbar_layout", () -> true, holder -> holder.set(ClientSettingsConfig.USE_CUSTOM_HOTBAR_LAYOUT.get()));
+        ICON_BOBBING = addClientSetting("icon_bobbing", () -> true, holder -> holder.set(ClientSettingsConfig.ENABLE_ICON_BOBBING.get()));
 
-        HEARTH_DEBUG = addClientSetting("hearth_debug", () -> true, holder -> holder.set(ClientSettingsConfig.getInstance().isHearthDebugEnabled()));
+        HEARTH_DEBUG = addClientSetting("hearth_debug", () -> true, holder -> holder.set(ClientSettingsConfig.SHOW_HEARTH_DEBUG_VISUALS.get()));
 
-        SHOW_CONFIG_BUTTON = addClientSetting("show_config_button", () -> true, holder -> holder.set(ClientSettingsConfig.getInstance().isConfigButtonEnabled()));
-        CONFIG_BUTTON_POS = addClientSetting("config_button_pos", Vec2i::new, holder -> holder.set(new Vec2i(ClientSettingsConfig.getInstance().getConfigButtonPos().get(0),
-                                                                          ClientSettingsConfig.getInstance().getConfigButtonPos().get(1))));
+        SHOW_CONFIG_BUTTON = addClientSetting("show_config_button", () -> true, holder -> holder.set(ClientSettingsConfig.SHOW_CONFIG_BUTTON.get()));
+        CONFIG_BUTTON_POS = addClientSetting("config_button_pos", Vec2i::new, holder -> holder.set(new Vec2i(ClientSettingsConfig.getConfigButtonX(),
+                                                                          ClientSettingsConfig.getConfigButtonY())));
 
-        DISTORTION_EFFECTS = addClientSetting("distortion_effects", () -> true, holder -> holder.set(ClientSettingsConfig.getInstance().areDistortionsEnabled()));
+        DISTORTION_EFFECTS = addClientSetting("distortion_effects", () -> true, holder -> holder.set(ClientSettingsConfig.SHOW_SCREEN_DISTORTIONS.get()));
 
-        HIGH_CONTRAST = addClientSetting("high_contrast", () -> false, holder -> holder.set(ClientSettingsConfig.getInstance().isHighContrast()));
+        HIGH_CONTRAST = addClientSetting("high_contrast", () -> false, holder -> holder.set(ClientSettingsConfig.HIGH_CONTRAST_MODE.get()));
 
-        SHOW_CREATIVE_WARNING = addClientSetting("show_creative_warning", () -> true, holder -> holder.set(ClientSettingsConfig.getInstance().isCreativeWarningEnabled()));
+        SHOW_CREATIVE_WARNING = addClientSetting("show_creative_warning", () -> true, holder -> holder.set(ClientSettingsConfig.ENABLE_CREATIVE_WARNING.get()));
 
-        HIDE_TOOLTIPS = addClientSetting("hide_tooltips", () -> false, holder -> holder.set(ClientSettingsConfig.getInstance().hideTooltips()));
+        HIDE_TOOLTIPS = addClientSetting("hide_tooltips", () -> false, holder -> holder.set(ClientSettingsConfig.HIDE_INSULATION_TOOLTIPS.get()));
         EXPAND_TOOLTIPS = addClientSetting("expand_tooltips", () -> true, holder -> holder.set(ClientSettingsConfig.EXPAND_TOOLTIPS.get()));
 
-        SHOW_WATER_EFFECT = addClientSetting("show_water_effect", () -> true, holder -> holder.set(ClientSettingsConfig.getInstance().isWaterEffectEnabled()));
+        SHOW_WATER_EFFECT = addClientSetting("show_water_effect", () -> true, holder -> holder.set(ClientSettingsConfig.SHOW_WATER_EFFECT.get()));
 
         boolean ssLoaded = CompatManager.isSereneSeasonsLoaded();
-        SUMMER_TEMPS = addSetting("summer_temps", () -> new Double[]{0d, 0d, 0d}, holder -> holder.set(ssLoaded ? WorldSettingsConfig.getInstance().getSummerTemps() : new Double[3]));
-        AUTUMN_TEMPS = addSetting("autumn_temps", () -> new Double[]{0d, 0d, 0d}, holder -> holder.set(ssLoaded ? WorldSettingsConfig.getInstance().getAutumnTemps() : new Double[3]));
-        WINTER_TEMPS = addSetting("winter_temps", () -> new Double[]{0d, 0d, 0d}, holder -> holder.set(ssLoaded ? WorldSettingsConfig.getInstance().getWinterTemps() : new Double[3]));
-        SPRING_TEMPS = addSetting("spring_temps", () -> new Double[]{0d, 0d, 0d}, holder -> holder.set(ssLoaded ? WorldSettingsConfig.getInstance().getSpringTemps() : new Double[3]));
+        SUMMER_TEMPS = addSetting("summer_temps", () -> new Double[]{0d, 0d, 0d}, holder -> holder.set(ssLoaded ? WorldSettingsConfig.getSummerTemps() : new Double[3]));
+        AUTUMN_TEMPS = addSetting("autumn_temps", () -> new Double[]{0d, 0d, 0d}, holder -> holder.set(ssLoaded ? WorldSettingsConfig.getAutumnTemps() : new Double[3]));
+        WINTER_TEMPS = addSetting("winter_temps", () -> new Double[]{0d, 0d, 0d}, holder -> holder.set(ssLoaded ? WorldSettingsConfig.getWinterTemps() : new Double[3]));
+        SPRING_TEMPS = addSetting("spring_temps", () -> new Double[]{0d, 0d, 0d}, holder -> holder.set(ssLoaded ? WorldSettingsConfig.getSpringTemps() : new Double[3]));
     }
 
     public static String getKey(DynamicHolder<?> setting)

@@ -13,8 +13,8 @@ import com.momosoftworks.coldsweat.common.capability.insulation.IInsulatableCap;
 import com.momosoftworks.coldsweat.common.capability.insulation.ItemInsulationCap;
 import com.momosoftworks.coldsweat.common.capability.handler.ItemInsulationManager;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
-import com.momosoftworks.coldsweat.config.type.Insulator;
 import com.momosoftworks.coldsweat.compat.CompatManager;
+import com.momosoftworks.coldsweat.data.codec.configuration.InsulatorData;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.math.FastMap;
 import com.momosoftworks.coldsweat.util.registries.ModItems;
@@ -67,10 +67,10 @@ public class ProcessEquipmentInsulation
                 {
                     // Add the armor's intrinsic insulation value (defined in configs)
                     // Mutually exclusive with Sewing Table insulation
-                    Collection<Insulator> armorInsulators = ConfigSettings.INSULATING_ARMORS.get().get(armorStack.getItem());
+                    Collection<InsulatorData> armorInsulators = ConfigSettings.INSULATING_ARMORS.get().get(armorStack.getItem());
                     if (!armorInsulators.isEmpty())
                     {
-                        for (Insulator armorInsulator : armorInsulators)
+                        for (InsulatorData armorInsulator : armorInsulators)
                         {
                             // Check if the player meets the predicate for the insulation
                             if (!armorInsulator.test(player, armorStack))
@@ -112,7 +112,7 @@ public class ProcessEquipmentInsulation
                             cap.calcAdaptiveInsulation(worldTemp, minTemp, maxTemp);
 
                             // Remove insulation items if the player has too many
-                            List<Pair<ItemStack, Multimap<Insulator, Insulation>>> totalInsulation = cap.getInsulation();
+                            List<Pair<ItemStack, Multimap<InsulatorData, Insulation>>> totalInsulation = cap.getInsulation();
                             int filledInsulationSlots = (int) totalInsulation.stream().map(Pair::getSecond).flatMap(map -> map.values().stream()).map(Insulation::split).flatMap(List::stream).count();
                             if (filledInsulationSlots > ItemInsulationManager.getInsulationSlots(armorStack))
                             {   WorldHelper.playEntitySound(SoundEvents.ITEM_FRAME_REMOVE_ITEM, player, SoundCategory.PLAYERS, 1.0F, 1.0F);
@@ -146,7 +146,7 @@ public class ProcessEquipmentInsulation
 
             for (ItemStack curio : CompatManager.getCurios(player))
             {
-                for (Insulator insulator : ConfigSettings.INSULATING_CURIOS.get().get(curio.getItem()))
+                for (InsulatorData insulator : ConfigSettings.INSULATING_CURIOS.get().get(curio.getItem()))
                 {
                     if (insulator.test(player, curio))
                     {

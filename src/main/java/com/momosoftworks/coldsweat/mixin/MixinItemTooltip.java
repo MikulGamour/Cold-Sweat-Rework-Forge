@@ -7,11 +7,10 @@ import com.momosoftworks.coldsweat.client.event.TooltipHandler;
 import com.momosoftworks.coldsweat.common.capability.handler.EntityTempManager;
 import com.momosoftworks.coldsweat.common.capability.handler.ItemInsulationManager;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
-import com.momosoftworks.coldsweat.config.type.Insulator;
+import com.momosoftworks.coldsweat.data.codec.configuration.InsulatorData;
 import com.momosoftworks.coldsweat.data.codec.util.AttributeModifierMap;
 import com.momosoftworks.coldsweat.util.math.FastMultiMap;
 import net.minecraft.client.util.ITooltipFlag;
-import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.ai.attributes.Attribute;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
@@ -42,9 +41,9 @@ public class MixinItemTooltip
         // Add insulation attributes to tooltip
         AttributeModifierMap insulatorAttributes = new AttributeModifierMap();
         AttributeModifierMap unmetInsulatorAttributes = new AttributeModifierMap();
-        for (Insulator insulator : ConfigSettings.INSULATION_ITEMS.get().get(stack.getItem()))
+        for (InsulatorData insulator : ConfigSettings.INSULATION_ITEMS.get().get(stack.getItem()))
         {
-            if (insulator.test(player, stack))
+            if (TooltipHandler.passesRequirement(ConfigSettings.INSULATION_ITEMS, insulator))
             {   insulatorAttributes.putAll(insulator.attributes);
             }
             else unmetInsulatorAttributes.putAll(insulator.attributes);
@@ -60,9 +59,9 @@ public class MixinItemTooltip
         // Add curio attributes to tooltip
         AttributeModifierMap curioAttributes = new AttributeModifierMap();
         AttributeModifierMap unmetCurioAttributes = new AttributeModifierMap();
-        for (Insulator insulator : ConfigSettings.INSULATING_CURIOS.get().get(stack.getItem()))
+        for (InsulatorData insulator : ConfigSettings.INSULATING_CURIOS.get().get(stack.getItem()))
         {
-            if (insulator.test(player, stack))
+            if (TooltipHandler.passesRequirement(ConfigSettings.INSULATING_CURIOS, insulator))
             {   curioAttributes.putAll(insulator.attributes);
             }
             else unmetCurioAttributes.putAll(insulator.attributes);
@@ -96,21 +95,23 @@ public class MixinItemTooltip
         Multimap<Attribute, AttributeModifier> unmetModifiers = new FastMultiMap<>();
         if (player != null && MobEntity.getEquipmentSlotForItem(stack) == CURRENT_SLOT_QUERY)
         {
-            for (Insulator insulator : ConfigSettings.INSULATING_ARMORS.get().get(stack.getItem()))
+            for (InsulatorData insulator : ConfigSettings.INSULATING_ARMORS.get().get(stack.getItem()))
             {
                 modifiers.putAll(insulator.attributes.getMap());
-                if (!insulator.test(player, stack))
-                    unmetModifiers.putAll(insulator.attributes.getMap());
+                if (!TooltipHandler.passesRequirement(ConfigSettings.INSULATING_ARMORS, insulator))
+                {   unmetModifiers.putAll(insulator.attributes.getMap());
+                }
             }
             ItemInsulationManager.getInsulationCap(stack).ifPresent(cap ->
             {
                 cap.getInsulation().stream().map(Pair::getFirst).forEach(item ->
                 {
-                    for (Insulator insulator : ConfigSettings.INSULATION_ITEMS.get().get(item.getItem()))
+                    for (InsulatorData insulator : ConfigSettings.INSULATION_ITEMS.get().get(item.getItem()))
                     {
                         modifiers.putAll(insulator.attributes.getMap());
-                        if (!insulator.test(player, item))
-                            unmetModifiers.putAll(insulator.attributes.getMap());
+                        if (!TooltipHandler.passesRequirement(ConfigSettings.INSULATION_ITEMS, insulator))
+                        {   unmetModifiers.putAll(insulator.attributes.getMap());
+                        }
                     }
                 });
             });

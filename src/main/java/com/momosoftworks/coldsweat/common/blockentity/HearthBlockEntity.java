@@ -17,6 +17,7 @@ import com.momosoftworks.coldsweat.core.init.BlockEntityInit;
 import com.momosoftworks.coldsweat.core.init.ParticleTypesInit;
 import com.momosoftworks.coldsweat.core.network.ColdSweatPacketHandler;
 import com.momosoftworks.coldsweat.core.network.message.HearthResetMessage;
+import com.momosoftworks.coldsweat.data.codec.configuration.FuelData;
 import com.momosoftworks.coldsweat.data.tag.ModFluidTags;
 import com.momosoftworks.coldsweat.util.ClientOnlyHelper;
 import com.momosoftworks.coldsweat.compat.CompatManager;
@@ -790,8 +791,8 @@ public class HearthBlockEntity extends LockableLootTileEntity implements ITickab
     }
 
     public int getItemFuel(ItemStack item)
-    {   return ConfigHelper.findFirstItemMatching(ConfigSettings.HEARTH_FUEL, item)
-               .map(it -> it.value).orElse(0d).intValue();
+    {   return ConfigHelper.findFirstFuelMatching(ConfigSettings.HEARTH_FUEL, item)
+               .map(fuelData -> fuelData.fuel).orElse(0d).intValue();
     }
 
     public int getHotFuel()

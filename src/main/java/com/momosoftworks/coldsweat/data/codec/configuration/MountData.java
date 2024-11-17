@@ -6,14 +6,20 @@ import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
+import com.momosoftworks.coldsweat.util.serialization.NbtSerializable;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.NBTDynamicOps;
 import net.minecraft.tags.ITag;
 import net.minecraft.util.registry.Registry;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
-public class MountData
+public class MountData implements NbtSerializable, RequirementHolder
 {
     public List<Either<ITag<EntityType<?>>, EntityType<?>>> entities;
     public double coldInsulation;
@@ -29,6 +35,13 @@ public class MountData
         this.requirement = requirement;
         this.requiredMods = requiredMods;
     }
+    
+    public MountData(List<EntityType<?>> entities, double coldInsulation, double heatInsulation, EntityRequirement requirement)
+    {
+        this(entities.stream().map(Either::<ITag<EntityType<?>>, EntityType<?>>right).collect(Collectors.toList()), 
+             coldInsulation, heatInsulation, requirement, Optional.empty());
+    }
+
     public static Codec<MountData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             ConfigHelper.tagOrBuiltinCodec(Registry.ENTITY_TYPE_REGISTRY, Registry.ENTITY_TYPE).listOf().fieldOf("entities").forGetter(data -> data.entities),
             Codec.DOUBLE.fieldOf("cold_insulation").forGetter(data -> data.coldInsulation),
@@ -36,6 +49,38 @@ public class MountData
             EntityRequirement.getCodec().fieldOf("entity").forGetter(data -> data.requirement),
             Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(data -> data.requiredMods)
     ).apply(instance, MountData::new));
+
+    @Nullable
+    public static MountData fromToml(List<?> entry)
+    {
+        if (entry.size() < 2)
+        {   return null;
+        }
+        String entityID = (String) entry.get(0);
+        double coldInsul = ((Number) entry.get(1)).doubleValue();
+        double hotInsul = entry.size() < 3
+                          ? coldInsul
+                          : ((Number) entry.get(2)).doubleValue();
+        List<EntityType<?>> entities = ConfigHelper.getEntityTypes(entityID);
+        if (entities.isEmpty())
+        {   return null;
+        }
+        return new MountData(entities, coldInsul, hotInsul, EntityRequirement.NONE);
+    }
+
+    @Override
+    public boolean test(Entity entity)
+    {   return requirement.test(entity);
+    }
+
+    @Override
+    public CompoundNBT serialize()
+    {   return (CompoundNBT) CODEC.encodeStart(NBTDynamicOps.INSTANCE, this).result().orElseGet(CompoundNBT::new);
+    }
+
+    public static MountData deserialize(CompoundNBT tag)
+    {   return CODEC.decode(NBTDynamicOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalStateException("Failed to deserialize MountData")).getFirst();
+    }
 
     @Override
     public String toString()

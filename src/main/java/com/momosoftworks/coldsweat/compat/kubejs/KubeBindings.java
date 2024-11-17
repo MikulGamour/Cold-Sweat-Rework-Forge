@@ -5,7 +5,7 @@ import com.momosoftworks.coldsweat.api.temperature.modifier.TempModifier;
 import com.momosoftworks.coldsweat.api.util.Placement;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.common.capability.handler.EntityTempManager;
-import com.momosoftworks.coldsweat.config.type.Insulator;
+import com.momosoftworks.coldsweat.data.codec.configuration.InsulatorData;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.ResourceLocation;
@@ -48,7 +48,7 @@ public class KubeBindings
         {   return 0;
         }
         double coldInsulation = 0;
-        for (Insulator insulator : EntityTempManager.getInsulatorsOnEntity(((LivingEntity) entity)).values())
+        for (InsulatorData insulator : EntityTempManager.getInsulatorsOnEntity(((LivingEntity) entity)).values())
         {   coldInsulation += insulator.insulation.getCold();
         }
         return coldInsulation;
@@ -60,7 +60,7 @@ public class KubeBindings
         {   return 0;
         }
         double heatInsulation = 0;
-        for (Insulator insulator : EntityTempManager.getInsulatorsOnEntity(((LivingEntity) entity)).values())
+        for (InsulatorData insulator : EntityTempManager.getInsulatorsOnEntity(((LivingEntity) entity)).values())
         {   heatInsulation += insulator.insulation.getHeat();
         }
         return heatInsulation;

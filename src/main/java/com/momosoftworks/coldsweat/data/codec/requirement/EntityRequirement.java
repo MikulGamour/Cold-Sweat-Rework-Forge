@@ -1,8 +1,10 @@
 package com.momosoftworks.coldsweat.data.codec.requirement;
 
+import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.monster.MonsterEntity;
@@ -10,15 +12,16 @@ import net.minecraft.tags.EntityTypeTags;
 import net.minecraft.tags.ITag;
 import net.minecraft.util.registry.Registry;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class EntityRequirement
 {
-    public final Optional<EntityType<?>> type;
-    public final Optional<ITag<EntityType<?>>> tag;
+    public final Optional<List<Either<ITag<EntityType<?>>, EntityType<?>>>> entities;
     public final Optional<LocationRequirement> location;
     public final Optional<LocationRequirement> steppingOn;
     public final Optional<EffectsRequirement> effects;
@@ -31,15 +34,14 @@ public class EntityRequirement
     public final Optional<EntityRequirement> target;
     public final Optional<Predicate<Entity>> predicate;
 
-    public EntityRequirement(Optional<EntityType<?>> type, Optional<ITag<EntityType<?>>> tag,
-                                Optional<LocationRequirement> location, Optional<LocationRequirement> steppingOn,
+    public EntityRequirement(Optional<List<Either<ITag<EntityType<?>>, EntityType<?>>>> entities,
+                             Optional<LocationRequirement> location, Optional<LocationRequirement> steppingOn,
                              Optional<EffectsRequirement> effects, Optional<NbtRequirement> nbt, Optional<EntityFlagsRequirement> flags,
                              Optional<EquipmentRequirement> equipment, Optional<PlayerDataRequirement> playerData,
                              Optional<EntityRequirement> vehicle, Optional<EntityRequirement> passenger, Optional<EntityRequirement> target,
                              Optional<Predicate<Entity>> predicate)
     {
-        this.type = type;
-        this.tag = tag;
+        this.entities = entities;
         this.location = location;
         this.steppingOn = steppingOn;
         this.effects = effects;
@@ -52,23 +54,51 @@ public class EntityRequirement
         this.target = target;
         this.predicate = predicate;
     }
-    public static EntityRequirement NONE = new EntityRequirement(Optional.empty(), Optional.empty(), Optional.empty(),
+    public EntityRequirement(Optional<List<Either<ITag<EntityType<?>>, EntityType<?>>>> type, Optional<LocationRequirement> location,
+                             Optional<LocationRequirement> steppingOn, Optional<EffectsRequirement> effects, Optional<NbtRequirement> nbt,
+                             Optional<EntityFlagsRequirement> flags, Optional<EquipmentRequirement> equipment, Optional<PlayerDataRequirement> playerData,
+                             Optional<EntityRequirement> vehicle, Optional<EntityRequirement> passenger, Optional<EntityRequirement> target)
+    {
+        this(type, location, steppingOn, effects, nbt, flags, equipment, playerData, vehicle, passenger, target, Optional.empty());
+    }
+
+    public EntityRequirement(List<EntityType<?>> entities)
+    {
+        this(Optional.of(entities.stream().map(Either::<ITag<EntityType<?>>, EntityType<?>>right).collect(Collectors.toList())),
+             Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
+             Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
+    }
+
+    public EntityRequirement(Predicate<Entity> predicate)
+    {
+        this(Optional.empty(), Optional.empty(), Optional.empty(),
+             Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
+             Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
+             Optional.of(predicate));
+    }
+
+    public static final EntityRequirement NONE = new EntityRequirement(Optional.empty(), Optional.empty(), Optional.empty(),
                                                                 Optional.empty(), Optional.empty(), Optional.empty(),
                                                                 Optional.empty(), Optional.empty(), Optional.empty(),
                                                                 Optional.empty(), Optional.empty(), Optional.empty());
 
-    public static Codec<EntityRequirement> SIMPLE_CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            Registry.ENTITY_TYPE.optionalFieldOf("type").forGetter(requirement -> requirement.type),
-            ITag.codec(EntityTypeTags::getAllTags).optionalFieldOf("tag").forGetter(requirement -> requirement.tag),
+    private static final Codec<List<Either<ITag<EntityType<?>>, EntityType<?>>>> ENTITY_TYPE_LIST_CODEC =
+            Codec.either(ConfigHelper.tagOrBuiltinCodec(Registry.ENTITY_TYPE_REGISTRY, Registry.ENTITY_TYPE).listOf(),
+                         Registry.ENTITY_TYPE)
+                 .xmap(either -> either.map(list -> list, type -> Arrays.asList(Either.right(type))),
+                       Either::left);
+
+    public static final Codec<EntityRequirement> SIMPLE_CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            ENTITY_TYPE_LIST_CODEC.optionalFieldOf("entity").forGetter(requirement -> requirement.entities),
             LocationRequirement.CODEC.optionalFieldOf("location").forGetter(requirement -> requirement.location),
             LocationRequirement.CODEC.optionalFieldOf("stepping_on").forGetter(requirement -> requirement.steppingOn),
             EffectsRequirement.CODEC.optionalFieldOf("effects").forGetter(requirement -> requirement.effects),
             NbtRequirement.CODEC.optionalFieldOf("nbt").forGetter(requirement -> requirement.nbt),
             EntityFlagsRequirement.CODEC.optionalFieldOf("flags").forGetter(requirement -> requirement.flags),
             EquipmentRequirement.CODEC.optionalFieldOf("equipment").forGetter(requirement -> requirement.equipment)
-    ).apply(instance, (type, tag, location, standingOn, effects, nbt, flags, equipment) -> new EntityRequirement(type, tag, location, standingOn, effects, nbt, flags, equipment,
-                                                                                                                 Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
-                                                                                                                 Optional.empty())));
+    ).apply(instance, (type, location, standingOn, effects, nbt, flags, equipment) -> new EntityRequirement(type, location, standingOn, effects, nbt, flags, equipment,
+                                                                                                            Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
+                                                                                                            Optional.empty())));
 
     private static final List<Codec<EntityRequirement>> REQUIREMENT_CODEC_STACK = new ArrayList<>(Arrays.asList(SIMPLE_CODEC));
     // Allow for up to 16 layers of inner codecs
@@ -76,22 +106,6 @@ public class EntityRequirement
     {   for (int i = 0; i < 16; i++)
         {   addCodecStack();
         }
-    }
-
-    public EntityRequirement(Predicate<Entity> predicate)
-    {
-        this(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
-             Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
-             Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
-             Optional.of(predicate));
-    }
-
-    public EntityRequirement(Optional<EntityType<?>> type, Optional<ITag<EntityType<?>>> tag, Optional<LocationRequirement> location,
-                             Optional<LocationRequirement> steppingOn, Optional<EffectsRequirement> effects, Optional<NbtRequirement> nbt,
-                             Optional<EntityFlagsRequirement> flags, Optional<EquipmentRequirement> equipment, Optional<PlayerDataRequirement> playerData,
-                             Optional<EntityRequirement> vehicle, Optional<EntityRequirement> passenger, Optional<EntityRequirement> target)
-    {
-        this(type, tag, location, steppingOn, effects, nbt, flags, equipment, playerData, vehicle, passenger, target, Optional.empty());
     }
 
     public static Codec<EntityRequirement> getCodec()
@@ -102,8 +116,7 @@ public class EntityRequirement
     {
         Codec<EntityRequirement> latestCodec = REQUIREMENT_CODEC_STACK.get(REQUIREMENT_CODEC_STACK.size() - 1);
         Codec<EntityRequirement> codec = RecordCodecBuilder.create(instance -> instance.group(
-                net.minecraft.util.registry.Registry.ENTITY_TYPE.optionalFieldOf("type").forGetter(requirement -> requirement.type),
-                ITag.codec(EntityTypeTags::getAllTags).optionalFieldOf("tag").forGetter(requirement -> requirement.tag),
+                ENTITY_TYPE_LIST_CODEC.optionalFieldOf("entities").forGetter(requirement -> requirement.entities),
                 LocationRequirement.CODEC.optionalFieldOf("location").forGetter(requirement -> requirement.location),
                 LocationRequirement.CODEC.optionalFieldOf("stepping_on").forGetter(requirement -> requirement.steppingOn),
                 EffectsRequirement.CODEC.optionalFieldOf("effects").forGetter(requirement -> requirement.effects),
@@ -130,11 +143,19 @@ public class EntityRequirement
         if (Objects.equals(this, NONE))
         {   return true;
         }
-        if (type.isPresent() && !type.get().equals(entity.getType()))
-        {   return false;
-        }
-        if (tag.isPresent() && !entity.getType().is(tag.get()))
-        {   return false;
+        if (entities.isPresent())
+        {
+            checkEntityType:
+            {
+                for (int i = 0; i < entities.get().size(); i++)
+                {
+                    Either<ITag<EntityType<?>>, EntityType<?>> either = entities.get().get(i);
+                    if (either.map(entity.getType()::is, entity.getType()::equals))
+                    {   break checkEntityType;
+                    }
+                }
+                return false;
+            }
         }
         if (location.isPresent() && !location.get().test(entity.level, entity.position()))
         {   return false;
@@ -188,8 +209,7 @@ public class EntityRequirement
         if (obj == null || getClass() != obj.getClass()) return false;
 
         EntityRequirement that = (EntityRequirement) obj;
-        return type.equals(that.type)
-            && tag.equals(that.tag)
+        return entities.equals(that.entities)
             && location.equals(that.location)
             && steppingOn.equals(that.steppingOn)
             && effects.equals(that.effects)

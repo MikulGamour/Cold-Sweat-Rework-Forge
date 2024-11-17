@@ -1,7 +1,9 @@
 package com.momosoftworks.coldsweat.client.event;
 
+import com.google.common.collect.Multimap;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.datafixers.util.Pair;
 import com.momosoftworks.coldsweat.api.insulation.Insulation;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.client.gui.tooltip.ClientInsulationAttributeTooltip;
@@ -12,14 +14,20 @@ import com.momosoftworks.coldsweat.common.capability.handler.ItemInsulationManag
 import com.momosoftworks.coldsweat.common.item.SoulspringLampItem;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.data.codec.util.AttributeModifierMap;
-import com.momosoftworks.coldsweat.config.type.Insulator;
-import com.momosoftworks.coldsweat.config.type.PredicateItem;
+import com.momosoftworks.coldsweat.core.network.ColdSweatPacketHandler;
+import com.momosoftworks.coldsweat.core.network.message.SyncItemPredicatesMessage;
+import com.momosoftworks.coldsweat.data.codec.configuration.FoodData;
+import com.momosoftworks.coldsweat.data.codec.configuration.FuelData;
+import com.momosoftworks.coldsweat.data.codec.configuration.InsulatorData;
+import com.momosoftworks.coldsweat.data.codec.util.AttributeModifierMap;
 import com.momosoftworks.coldsweat.compat.CompatManager;
+import com.momosoftworks.coldsweat.util.entity.EntityHelper;
 import com.momosoftworks.coldsweat.util.exceptions.RegistryFailureException;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.math.FastMap;
 import com.momosoftworks.coldsweat.util.registries.ModAttributes;
 import com.momosoftworks.coldsweat.util.registries.ModItems;
+import com.momosoftworks.coldsweat.util.serialization.DynamicHolder;
 import com.momosoftworks.coldsweat.util.serialization.ListBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.AbstractGui;
@@ -28,6 +36,8 @@ import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.entity.ai.attributes.Attribute;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.inventory.EquipmentSlotType;
+import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.UseAction;
@@ -54,6 +64,17 @@ public class TooltipHandler
                                            .append(new StringTextComponent(" 'Shift'").withStyle(Style.EMPTY.withColor(TextFormatting.GRAY).withUnderlined(false)));
 
     private static int TOOLTIP_BACKGROUND_COLOR = 0;
+
+    private static int HOVERED_ITEM_UPDATE_COOLDOWN = 0;
+    private static ItemStack HOVERED_STACK = ItemStack.EMPTY;
+    public static Map<String, Object> HOVERED_STACK_PREDICATES = new FastMap<>();
+
+    private static <T> Map<T, Boolean> getPropertyMap(DynamicHolder<Multimap<Item, T>> config)
+    {   return (Map<T, Boolean>) HOVERED_STACK_PREDICATES.getOrDefault(ConfigSettings.getKey(config), new FastMap<>());
+    }
+    public static <T> boolean passesRequirement(DynamicHolder<Multimap<Item, T>> config, T element)
+    {   return getPropertyMap(config).getOrDefault(element, true);
+    }
 
     public static boolean isShiftDown()
     {   return Screen.hasShiftDown() || ConfigSettings.EXPAND_TOOLTIPS.get();
@@ -180,6 +201,40 @@ public class TooltipHandler
         elements.set(index, getTooltipCode(tooltip.getClass()));
     }
 
+    @SubscribeEvent(priority = EventPriority.HIGHEST)
+    public static void updateHoveredItem(GuiScreenEvent.DrawScreenEvent.Post event)
+    {
+        if (event.getGui() instanceof ContainerScreen<?>)
+        {
+            ContainerScreen menu = (ContainerScreen<?>) event.getGui();
+            Slot hoveredSlot = menu.getSlotUnderMouse();
+            if (hoveredSlot == null) return;
+
+            ItemStack stack = hoveredSlot.getItem();
+            if (stack.isEmpty()) return;
+
+            EquipmentSlotType equipmentSlot = EntityHelper.getEquipmentSlot(hoveredSlot.index);
+            if (!HOVERED_STACK.equals(stack))
+            {
+                HOVERED_STACK_PREDICATES.clear();
+                if (HOVERED_ITEM_UPDATE_COOLDOWN <= 0)
+                {
+                    ColdSweatPacketHandler.INSTANCE.sendToServer(SyncItemPredicatesMessage.fromClient(stack, hoveredSlot.index, equipmentSlot));
+                    HOVERED_STACK = stack;
+                    HOVERED_ITEM_UPDATE_COOLDOWN = 5;
+                }
+            }
+        }
+    }
+
+    @SubscribeEvent
+    public static void tickHoverCooldown(TickEvent.ClientTickEvent event)
+    {
+        if (event.phase == TickEvent.Phase.END && HOVERED_ITEM_UPDATE_COOLDOWN > 0)
+        {   HOVERED_ITEM_UPDATE_COOLDOWN--;
+        }
+    }
+
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void addSimpleTooltips(ItemTooltipEvent event)
     {
@@ -225,15 +280,10 @@ public class TooltipHandler
                         : tooltipEndIndex;
 
             Map<Integer, Double> foodTemps = new FastMap<>();
-            for (PredicateItem predicateItem : ConfigSettings.FOOD_TEMPERATURES.get().get(item))
+            for (FoodData foodData : ConfigSettings.FOOD_TEMPERATURES.get().get(item))
             {
-                if (predicateItem.test(player, stack))
-                {
-                    double temp = predicateItem.value;
-                    int duration = predicateItem.extraData.contains("duration")
-                                   ? predicateItem.extraData.getInt("duration")
-                                   : 0;
-                    foodTemps.merge(duration, temp, Double::sum);
+                if (passesRequirement(ConfigSettings.FOOD_TEMPERATURES, foodData))
+                {   foodTemps.merge(foodData.duration, foodData.temperature, Double::sum);
                 }
             }
 
@@ -268,17 +318,17 @@ public class TooltipHandler
          */
         if (!hideTooltips && !stack.isEmpty())
         {
-            List<Insulator> validInsulations = new ArrayList<>();
+            List<InsulatorData> validInsulations = new ArrayList<>();
 
             // Insulation ingredient
             {
                 List<Insulation> insulation = new ArrayList<>();
                 List<Insulation> unmetInsulation = new ArrayList<>();
-                for (Insulator insulator : ConfigSettings.INSULATION_ITEMS.get().get(item))
+                for (InsulatorData insulator : ConfigSettings.INSULATION_ITEMS.get().get(item))
                 {
                     if (!insulator.insulation.isEmpty())
                     {
-                        if (insulator.test(player, stack))
+                        if (passesRequirement(ConfigSettings.INSULATION_ITEMS, insulator))
                         {   insulation.addAll(insulator.insulation.split());
                         }
                         else unmetInsulation.addAll(insulator.insulation.split());
@@ -298,11 +348,11 @@ public class TooltipHandler
             {
                 List<Insulation> insulation = new ArrayList<>();
                 List<Insulation> unmetInsulation = new ArrayList<>();
-                for (Insulator insulator : ConfigSettings.INSULATING_CURIOS.get().get(item))
+                for (InsulatorData insulator : ConfigSettings.INSULATING_CURIOS.get().get(item))
                 {
                     if (!insulator.insulation.isEmpty())
                     {
-                        if (insulator.test(player, stack))
+                        if (passesRequirement(ConfigSettings.INSULATING_CURIOS, insulator))
                         {   insulation.addAll(insulator.insulation.split());
                         }
                         else unmetInsulation.addAll(insulator.insulation.split());
@@ -321,17 +371,15 @@ public class TooltipHandler
             List<Insulation> unmetInsulation = new ArrayList<>();
 
             // Insulating armor
-            if (ItemInsulationManager.isInsulatable(stack))
+            for (InsulatorData insulator : ConfigSettings.INSULATING_ARMORS.get().get(item))
             {
-                for (Insulator insulator : ConfigSettings.INSULATING_ARMORS.get().get(item))
+                if (!insulator.insulation.isEmpty())
                 {
-                    if (!validInsulations.contains(insulator))
-                    {
-                        if (insulator.test(player, stack))
-                        {   insulation.addAll(insulator.insulation.split());
-                        }
-                        else unmetInsulation.addAll(insulator.insulation.split());
+                    if (passesRequirement(ConfigSettings.INSULATING_ARMORS, insulator))
+                    {   insulation.addAll(insulator.insulation.split());
                     }
+                    else unmetInsulation.addAll(insulator.insulation.split());
+                    validInsulations.add(insulator);
                 }
             }
 
@@ -339,16 +387,39 @@ public class TooltipHandler
             {
                 cap.deserializeNBT(stack.getOrCreateTag());
 
-                // Create the list of insulation pairs from NBT
-                insulation.addAll(ItemInsulationManager.getAllEffectiveInsulation(stack, player));
-            });
+                // Iterate over both the insulation items and the checks for each item
+                List<Pair<ItemStack, Multimap<InsulatorData, Insulation>>> insulators = cap.getInsulation();
+                List<Pair<ItemStack, Map<InsulatorData, Boolean>>> insulatorChecks = ((List) HOVERED_STACK_PREDICATES.get("armor_insulation"));
 
-            if (!insulation.isEmpty())
-            {   addTooltip(tooltipStartIndex, new ClientInsulationTooltip(insulation, Insulation.Slot.ARMOR, stack, false), elements);
-            }
-            if (!unmetInsulation.isEmpty())
-            {   addTooltip(tooltipStartIndex, new ClientInsulationTooltip(unmetInsulation, Insulation.Slot.ARMOR, stack, true), elements);
-            }
+                for (int i = 0; i < insulators.size(); i++)
+                {
+                    // Get the next insulator item
+                    Pair<ItemStack, Multimap<InsulatorData, Insulation>> pair = insulators.get(i);
+                    // Get the next insulator check, or create an empty one
+                    Pair<ItemStack, Map<InsulatorData, Boolean>> checkPair = insulatorChecks.size() > i
+                                                                             ? insulatorChecks.get(i)
+                                                                             : Pair.of(pair.getFirst(), new FastMap<>());
+
+                    // Iterate over the insulators for this insulation item
+                    for (Map.Entry<InsulatorData, Insulation> entry : pair.getSecond().entries())
+                    {
+                        // If the insulator has passed, or the check isn't present, the insulation is valid
+                        boolean passes = checkPair.getSecond().getOrDefault(entry.getKey(), true);
+                        if (passes)
+                        {   insulation.add(entry.getValue());
+                        }
+                        // If the insulator check says the insulation isn't valid, it is "unmet"
+                        else unmetInsulation.add(entry.getValue());
+                    }
+                }
+
+                if (!insulation.isEmpty())
+                {   addTooltip(tooltipStartIndex, new ClientInsulationTooltip(insulation, Insulation.Slot.ARMOR, stack, false), elements);
+                }
+                if (!unmetInsulation.isEmpty())
+                {   addTooltip(tooltipStartIndex, new ClientInsulationTooltip(unmetInsulation, Insulation.Slot.ARMOR, stack, true), elements);
+                }
+            });
         }
 
         /*
@@ -418,14 +489,14 @@ public class TooltipHandler
                 double fuel = inventoryScreen.getSlotUnderMouse().getItem().getOrCreateTag().getDouble("Fuel");
                 ItemStack carriedStack = player.inventory.getCarried();
 
-                PredicateItem itemFuel = ConfigSettings.SOULSPRING_LAMP_FUEL.get().get(carriedStack.getItem())
+                FuelData itemFuel = ConfigSettings.SOULSPRING_LAMP_FUEL.get().get(carriedStack.getItem())
                                          .stream()
-                                         .filter(predicate -> predicate.test(Minecraft.getInstance().player, carriedStack))
+                                         .filter(predicate -> predicate.test(carriedStack))
                                          .findFirst().orElse(null);
                 if (!carriedStack.isEmpty()
                 && itemFuel != null)
                 {
-                    double fuelValue = carriedStack.getCount() * itemFuel.value;
+                    double fuelValue = carriedStack.getCount() * itemFuel.fuel;
                     int slotX = inventoryScreen.getSlotUnderMouse().x + ((ContainerScreen<?>) event.getGui()).getGuiLeft();
                     int slotY = inventoryScreen.getSlotUnderMouse().y + ((ContainerScreen<?>) event.getGui()).getGuiTop();
 

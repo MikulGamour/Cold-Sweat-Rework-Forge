@@ -3,6 +3,7 @@ package com.momosoftworks.coldsweat.compat.kubejs;
 import com.momosoftworks.coldsweat.api.event.common.insulation.InsulateItemEvent;
 import com.momosoftworks.coldsweat.api.event.common.temperautre.TempModifierEvent;
 import com.momosoftworks.coldsweat.api.event.common.temperautre.TemperatureChangedEvent;
+import com.momosoftworks.coldsweat.api.event.core.registry.CreateRegistriesEvent;
 import dev.latvian.kubejs.KubeJSPlugin;
 import dev.latvian.kubejs.script.BindingsEvent;
 import me.shedaniel.architectury.event.EventResult;
@@ -25,7 +26,7 @@ public class KubePlugin extends KubeJSPlugin
     }
 
     @SubscribeEvent
-    public static void fireRegistries(FMLServerAboutToStartEvent event)
+    public static void fireRegistries(CreateRegistriesEvent event)
     {
         KubeEventSignatures.REGISTRIES.invoker().buildRegistries();
     }
