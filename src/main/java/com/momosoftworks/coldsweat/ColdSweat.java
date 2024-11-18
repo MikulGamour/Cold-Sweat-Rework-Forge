@@ -76,6 +76,8 @@ public class ColdSweat
         SensorTypeInit.SENSORS.register(bus);
         MemoryInit.MEMORIES.register(bus);
 
+        ConfigUpdater.updateFileNames();
+
         // Setup configs
         WorldSettingsConfig.setup();
         ItemSettingsConfig.setup();
