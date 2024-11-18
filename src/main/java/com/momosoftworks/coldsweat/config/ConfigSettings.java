@@ -97,10 +97,31 @@ public class ConfigSettings
     // Block settings
     public static final DynamicHolder<Integer> BLOCK_RANGE;
     public static final DynamicHolder<Boolean> COLD_SOUL_FIRE;
-    public static final DynamicHolder<List<Block>> HEARTH_SPREAD_WHITELIST;
-    public static final DynamicHolder<List<Block>> HEARTH_SPREAD_BLACKLIST;
-    public static final DynamicHolder<Double> HEARTH_STRENGTH;
+    public static final DynamicHolder<List<Block>> THERMAL_SOURCE_SPREAD_WHITELIST;
+    public static final DynamicHolder<List<Block>> THERMAL_SOURCE_SPREAD_BLACKLIST;
+    public static final DynamicHolder<Double> THERMAL_SOURCE_STRENGTH;
+
     public static final DynamicHolder<Boolean> SMART_HEARTH;
+    public static final DynamicHolder<Integer> HEARTH_MAX_RANGE;
+    public static final DynamicHolder<Integer> HEARTH_RANGE;
+    public static final DynamicHolder<Integer> HEARTH_MAX_VOLUME;
+    public static final DynamicHolder<Integer> HEARTH_WARM_UP_TIME;
+    public static final DynamicHolder<Integer> HEARTH_MAX_INSULATION;
+
+    public static final DynamicHolder<Boolean> SMART_BOILER;
+    public static final DynamicHolder<Integer> BOILER_MAX_RANGE;
+    public static final DynamicHolder<Integer> BOILER_RANGE;
+    public static final DynamicHolder<Integer> BOILER_MAX_VOLUME;
+    public static final DynamicHolder<Integer> BOILER_WARM_UP_TIME;
+    public static final DynamicHolder<Integer> BOILER_MAX_INSULATION;
+
+    public static final DynamicHolder<Boolean> SMART_ICEBOX;
+    public static final DynamicHolder<Integer> ICEBOX_MAX_RANGE;
+    public static final DynamicHolder<Integer> ICEBOX_RANGE;
+    public static final DynamicHolder<Integer> ICEBOX_MAX_VOLUME;
+    public static final DynamicHolder<Integer> ICEBOX_WARM_UP_TIME;
+    public static final DynamicHolder<Integer> ICEBOX_MAX_INSULATION;
+
     public static final DynamicHolder<List<Block>> SLEEP_CHECK_IGNORE_BLOCKS;
     public static final DynamicHolder<Boolean> USE_CUSTOM_WATER_FREEZE_BEHAVIOR;
     public static final DynamicHolder<Boolean> USE_CUSTOM_ICE_DROPS;
@@ -726,8 +747,8 @@ public class ConfigSettings
 
         COLD_SOUL_FIRE = addSetting("cold_soul_fire", () -> true, holder -> holder.set(WorldSettingsConfig.getInstance().isSoulFireCold()));
 
-        HEARTH_SPREAD_WHITELIST = addSyncedSetting("hearth_spread_whitelist", ArrayList::new, holder -> holder.get().addAll(ConfigHelper.getBlocks(WorldSettingsConfig.getInstance().getHearthSpreadWhitelist().toArray(new String[0]))),
-        (encoder) ->
+        THERMAL_SOURCE_SPREAD_WHITELIST = addSyncedSetting("hearth_spread_whitelist", ArrayList::new, holder -> holder.get().addAll(ConfigHelper.getBlocks(WorldSettingsConfig.getInstance().getHearthSpreadWhitelist().toArray(new String[0]))),
+                                                           (encoder) ->
         {
             CompoundTag tag = new CompoundTag();
             ListTag list = new ListTag();
@@ -737,7 +758,7 @@ public class ConfigSettings
             tag.put("HearthWhitelist", list);
             return tag;
         },
-        (decoder) ->
+                                                           (decoder) ->
         {
             List<Block> list = new ArrayList<>();
             for (Tag entry : decoder.getList("HearthWhitelist", 8))
@@ -745,10 +766,10 @@ public class ConfigSettings
             }
             return list;
         },
-        saver -> WorldSettingsConfig.setHearthSpreadWhitelist(saver.stream().map(ForgeRegistries.BLOCKS::getKey).toList()));
+                                                           saver -> WorldSettingsConfig.setSourceSpreadWhitelist(saver.stream().map(ForgeRegistries.BLOCKS::getKey).toList()));
 
-        HEARTH_SPREAD_BLACKLIST = addSyncedSetting("hearth_spread_blacklist", ArrayList::new, holder -> holder.get().addAll(ConfigHelper.getBlocks(WorldSettingsConfig.HEARTH_SPREAD_BLACKLIST.get().toArray(new String[0]))),
-        (encoder) ->
+        THERMAL_SOURCE_SPREAD_BLACKLIST = addSyncedSetting("hearth_spread_blacklist", ArrayList::new, holder -> holder.get().addAll(ConfigHelper.getBlocks(WorldSettingsConfig.SOURCE_SPREAD_BLACKLIST.get().toArray(new String[0]))),
+                                                           (encoder) ->
         {
             CompoundTag tag = new CompoundTag();
             ListTag list = new ListTag();
@@ -758,7 +779,7 @@ public class ConfigSettings
             tag.put("HearthBlacklist", list);
             return tag;
         },
-        (decoder) ->
+                                                           (decoder) ->
         {
             List<Block> list = new ArrayList<>();
             for (Tag entry : decoder.getList("HearthBlacklist", 8))
@@ -766,11 +787,99 @@ public class ConfigSettings
             }
             return list;
         },
-        saver -> WorldSettingsConfig.setHearthSpreadBlacklist(saver.stream().map(ForgeRegistries.BLOCKS::getKey).toList()));
+                                                           saver -> WorldSettingsConfig.setSourceSpreadBlacklist(saver.stream().map(ForgeRegistries.BLOCKS::getKey).toList()));
 
-        HEARTH_STRENGTH = addSetting("hearth_effect", () -> 0.75, holder -> holder.set(WorldSettingsConfig.HEARTH_INSULATION_STRENGTH.get()));
+        THERMAL_SOURCE_STRENGTH = addSetting("hearth_effect", () -> 0.75, holder -> holder.set(WorldSettingsConfig.SOURCE_EFFECT_STRENGTH.get()));
 
-        SMART_HEARTH = addSetting("smart_hearth", () -> false, holder -> holder.set(WorldSettingsConfig.ENABLE_SMART_HEARTH.get()));
+        SMART_HEARTH = addSyncedSetting("smart_hearth", () -> false, holder -> holder.set(WorldSettingsConfig.ENABLE_SMART_HEARTH.get()),
+        (encoder) -> ConfigHelper.serializeNbtBool(encoder, "SmartHearth"),
+        (decoder) -> decoder.getBoolean("SmartHearth"),
+        (saver) -> WorldSettingsConfig.ENABLE_SMART_HEARTH.set(saver));
+
+        SMART_BOILER = addSyncedSetting("smart_boiler", () -> false, holder -> holder.set(WorldSettingsConfig.ENABLE_SMART_BOILER.get()),
+        (encoder) -> ConfigHelper.serializeNbtBool(encoder, "SmartBoiler"),
+        (decoder) -> decoder.getBoolean("SmartBoiler"),
+        (saver) -> WorldSettingsConfig.ENABLE_SMART_BOILER.set(saver));
+
+        SMART_ICEBOX = addSyncedSetting("smart_icebox", () -> false, holder -> holder.set(WorldSettingsConfig.ENABLE_SMART_ICEBOX.get()),
+        (encoder) -> ConfigHelper.serializeNbtBool(encoder, "SmartIcebox"),
+        (decoder) -> decoder.getBoolean("SmartIcebox"),
+        (saver) -> WorldSettingsConfig.ENABLE_SMART_ICEBOX.set(saver));
+
+        HEARTH_MAX_RANGE = addSyncedSetting("hearth_max_range", () -> 16, holder -> holder.set(WorldSettingsConfig.HEARTH_MAX_RANGE.get()),
+        (encoder) -> ConfigHelper.serializeNbtInt(encoder, "HearthMaxRange"),
+        (decoder) -> decoder.getInt("HearthMaxRange"),
+        (saver) -> WorldSettingsConfig.HEARTH_MAX_RANGE.set(saver));
+
+        HEARTH_RANGE = addSyncedSetting("hearth_range", () -> 8, holder -> holder.set(WorldSettingsConfig.HEARTH_RANGE.get()),
+        (encoder) -> ConfigHelper.serializeNbtInt(encoder, "HearthRange"),
+        (decoder) -> decoder.getInt("HearthRange"),
+        (saver) -> WorldSettingsConfig.HEARTH_RANGE.set(saver));
+
+        HEARTH_MAX_VOLUME = addSyncedSetting("hearth_max_volume", () -> 1000, holder -> holder.set(WorldSettingsConfig.HEARTH_MAX_VOLUME.get()),
+        (encoder) -> ConfigHelper.serializeNbtInt(encoder, "HearthMaxVolume"),
+        (decoder) -> decoder.getInt("HearthMaxVolume"),
+        (saver) -> WorldSettingsConfig.HEARTH_MAX_VOLUME.set(saver));
+
+        HEARTH_WARM_UP_TIME = addSyncedSetting("hearth_warm_up_time", () -> 20, holder -> holder.set(WorldSettingsConfig.HEARTH_WARM_UP_TIME.get()),
+        (encoder) -> ConfigHelper.serializeNbtInt(encoder, "HearthWarmUpTime"),
+        (decoder) -> decoder.getInt("HearthWarmUpTime"),
+        (saver) -> WorldSettingsConfig.HEARTH_WARM_UP_TIME.set(saver));
+
+        HEARTH_MAX_INSULATION = addSyncedSetting("hearth_max_insulation", () -> 1, holder -> holder.set(WorldSettingsConfig.HEARTH_MAX_INSULATION.get()),
+        (encoder) -> ConfigHelper.serializeNbtInt(encoder, "HearthMaxInsulation"),
+        (decoder) -> decoder.getInt("HearthMaxInsulation"),
+        (saver) -> WorldSettingsConfig.HEARTH_MAX_INSULATION.set(saver));
+
+        BOILER_MAX_RANGE = addSyncedSetting("boiler_max_range", () -> 16, holder -> holder.set(WorldSettingsConfig.BOILER_MAX_RANGE.get()),
+        (encoder) -> ConfigHelper.serializeNbtInt(encoder, "BoilerMaxRange"),
+        (decoder) -> decoder.getInt("BoilerMaxRange"),
+        (saver) -> WorldSettingsConfig.BOILER_MAX_RANGE.set(saver));
+
+        BOILER_RANGE = addSyncedSetting("boiler_range", () -> 8, holder -> holder.set(WorldSettingsConfig.BOILER_RANGE.get()),
+        (encoder) -> ConfigHelper.serializeNbtInt(encoder, "BoilerRange"),
+        (decoder) -> decoder.getInt("BoilerRange"),
+        (saver) -> WorldSettingsConfig.BOILER_RANGE.set(saver));
+
+        BOILER_MAX_VOLUME = addSyncedSetting("boiler_max_volume", () -> 1000, holder -> holder.set(WorldSettingsConfig.BOILER_MAX_VOLUME.get()),
+        (encoder) -> ConfigHelper.serializeNbtInt(encoder, "BoilerMaxVolume"),
+        (decoder) -> decoder.getInt("BoilerMaxVolume"),
+        (saver) -> WorldSettingsConfig.BOILER_MAX_VOLUME.set(saver));
+
+        BOILER_WARM_UP_TIME = addSyncedSetting("boiler_warm_up_time", () -> 20, holder -> holder.set(WorldSettingsConfig.BOILER_WARM_UP_TIME.get()),
+        (encoder) -> ConfigHelper.serializeNbtInt(encoder, "BoilerWarmUpTime"),
+        (decoder) -> decoder.getInt("BoilerWarmUpTime"),
+        (saver) -> WorldSettingsConfig.BOILER_WARM_UP_TIME.set(saver));
+
+        BOILER_MAX_INSULATION = addSyncedSetting("boiler_max_insulation", () -> 1, holder -> holder.set(WorldSettingsConfig.BOILER_MAX_INSULATION.get()),
+        (encoder) -> ConfigHelper.serializeNbtInt(encoder, "BoilerMaxInsulation"),
+        (decoder) -> decoder.getInt("BoilerMaxInsulation"),
+        (saver) -> WorldSettingsConfig.BOILER_MAX_INSULATION.set(saver));
+
+        ICEBOX_MAX_RANGE = addSyncedSetting("icebox_max_range", () -> 16, holder -> holder.set(WorldSettingsConfig.ICEBOX_MAX_RANGE.get()),
+        (encoder) -> ConfigHelper.serializeNbtInt(encoder, "IceboxMaxRange"),
+        (decoder) -> decoder.getInt("IceboxMaxRange"),
+        (saver) -> WorldSettingsConfig.ICEBOX_MAX_RANGE.set(saver));
+
+        ICEBOX_RANGE = addSyncedSetting("icebox_range", () -> 8, holder -> holder.set(WorldSettingsConfig.ICEBOX_RANGE.get()),
+        (encoder) -> ConfigHelper.serializeNbtInt(encoder, "IceboxRange"),
+        (decoder) -> decoder.getInt("IceboxRange"),
+        (saver) -> WorldSettingsConfig.ICEBOX_RANGE.set(saver));
+
+        ICEBOX_MAX_VOLUME = addSyncedSetting("icebox_max_volume", () -> 1000, holder -> holder.set(WorldSettingsConfig.ICEBOX_MAX_VOLUME.get()),
+        (encoder) -> ConfigHelper.serializeNbtInt(encoder, "IceboxMaxVolume"),
+        (decoder) -> decoder.getInt("IceboxMaxVolume"),
+        (saver) -> WorldSettingsConfig.ICEBOX_MAX_VOLUME.set(saver));
+
+        ICEBOX_WARM_UP_TIME = addSyncedSetting("icebox_warm_up_time", () -> 20, holder -> holder.set(WorldSettingsConfig.ICEBOX_WARM_UP_TIME.get()),
+        (encoder) -> ConfigHelper.serializeNbtInt(encoder, "IceboxWarmUpTime"),
+        (decoder) -> decoder.getInt("IceboxWarmUpTime"),
+        (saver) -> WorldSettingsConfig.ICEBOX_WARM_UP_TIME.set(saver));
+
+        ICEBOX_MAX_INSULATION = addSyncedSetting("icebox_max_insulation", () -> 1, holder -> holder.set(WorldSettingsConfig.ICEBOX_MAX_INSULATION.get()),
+        (encoder) -> ConfigHelper.serializeNbtInt(encoder, "IceboxMaxInsulation"),
+        (decoder) -> decoder.getInt("IceboxMaxInsulation"),
+        (saver) -> WorldSettingsConfig.ICEBOX_MAX_INSULATION.set(saver));
 
         INSULATION_STRENGTH = addSetting("insulation_strength", () -> 1d, holder -> holder.set(ItemSettingsConfig.INSULATION_STRENGTH.get()));
 

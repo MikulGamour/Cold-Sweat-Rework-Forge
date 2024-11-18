@@ -57,7 +57,6 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.server.ServerLifecycleHooks;
-import oshi.util.tuples.Triplet;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Field;
@@ -167,11 +166,11 @@ public abstract class WorldHelper
     public static boolean isSpreadBlocked(LevelAccessor level, BlockState state, BlockPos pos, Direction toDir, Direction fromDir)
     {
         Block block = state.getBlock();
-        if (state.isAir() || ConfigSettings.HEARTH_SPREAD_WHITELIST.get().contains(block)
+        if (state.isAir() || ConfigSettings.THERMAL_SOURCE_SPREAD_WHITELIST.get().contains(block)
         || block == ModBlocks.HEARTH_BOTTOM || block == ModBlocks.HEARTH_TOP)
         {   return false;
         }
-        if (ConfigSettings.HEARTH_SPREAD_BLACKLIST.get().contains(block)) return true;
+        if (ConfigSettings.THERMAL_SOURCE_SPREAD_BLACKLIST.get().contains(block)) return true;
 
         VoxelShape shape = state.getShape(level, pos, CollisionContext.empty());
         if (shape.equals(Shapes.block())) return true;

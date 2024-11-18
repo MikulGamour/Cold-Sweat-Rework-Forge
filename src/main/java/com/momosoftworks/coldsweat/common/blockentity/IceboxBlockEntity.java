@@ -199,18 +199,28 @@ public class IceboxBlockEntity extends HearthBlockEntity implements LidBlockEnti
     }
 
     @Override
-    public int getMaxPaths()
-    {   return 2000;
+    public int getSpreadRange()
+    {   return ConfigSettings.ICEBOX_RANGE.get();
     }
 
     @Override
-    public int getSpreadRange()
-    {   return 16;
+    public int getMaxRange()
+    {   return ConfigSettings.ICEBOX_MAX_RANGE.get();
+    }
+
+    @Override
+    public int getMaxPaths()
+    {   return ConfigSettings.ICEBOX_MAX_VOLUME.get();
+    }
+
+    @Override
+    public int getInsulationTime()
+    {   return ConfigSettings.ICEBOX_WARM_UP_TIME.get();
     }
 
     @Override
     public int getMaxInsulationLevel()
-    {   return 5;
+    {   return ConfigSettings.ICEBOX_MAX_INSULATION.get();
     }
 
     @Override

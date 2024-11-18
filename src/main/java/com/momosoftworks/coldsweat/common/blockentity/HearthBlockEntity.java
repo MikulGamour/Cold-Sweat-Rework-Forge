@@ -189,36 +189,51 @@ public class HearthBlockEntity extends RandomizableContainerBlockEntity implemen
      * Range of the Hearth starting from an exit point
      */
     public int getSpreadRange()
-    {   return 20;
+    {   return ConfigSettings.HEARTH_RANGE.get();
     }
 
     /**
      * Range of the Hearth starting from the Hearth's position
      */
     public int getMaxRange()
-    {   return 96;
+    {   return ConfigSettings.HEARTH_MAX_RANGE.get();
     }
 
+    /**
+     * The maximum volume of blocks the Hearth can spread to
+     */
     public int getMaxPaths()
-    {   return 12000;
+    {   return ConfigSettings.HEARTH_MAX_VOLUME.get();
     }
 
+    /**
+     * The maximum fuel the Hearth can hold
+     */
     public int getMaxFuel()
     {   return 1000;
     }
 
+    /**
+     * The "warm-up" time for the Hearth to reach maximum insulation
+     */
     public int getInsulationTime()
-    {   return 1200;
+    {   return ConfigSettings.HEARTH_WARM_UP_TIME.get();
     }
 
     public int getInsulationLevel()
     {   return insulationLevel;
     }
 
+    /**
+     * The maximum strength of the Warmth or Chill effect that the hearth can give
+     */
     public int getMaxInsulationLevel()
-    {   return 10;
+    {   return ConfigSettings.HEARTH_MAX_INSULATION.get();
     }
 
+    /**
+     * This must be true for the hearth to calculate spreading
+     */
     public boolean hasSmokeStack()
     {   return true;
     }

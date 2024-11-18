@@ -25,7 +25,7 @@ public class BlockInsulationTempModifier extends TempModifier
         double min = ConfigSettings.MIN_TEMP.get();
         double max = ConfigSettings.MAX_TEMP.get();
         double mid = (min + max) / 2;
-        double hearthStrength = ConfigSettings.HEARTH_STRENGTH.get();
+        double hearthStrength = ConfigSettings.THERMAL_SOURCE_STRENGTH.get();
 
         double cooling = this.getNBT().getInt("Cooling") * hearthStrength;
         double warming = this.getNBT().getInt("Warming") * hearthStrength;
