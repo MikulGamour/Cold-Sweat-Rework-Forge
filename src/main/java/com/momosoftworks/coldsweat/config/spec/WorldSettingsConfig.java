@@ -67,8 +67,6 @@ public class WorldSettingsConfig
     public static final ForgeConfigSpec.ConfigValue<Boolean> CUSTOM_WATER_FREEZE_BEHAVIOR;
     public static final ForgeConfigSpec.ConfigValue<Boolean> CUSTOM_ICE_DROPS;
 
-    public static final WorldSettingsConfig INSTANCE = new WorldSettingsConfig();
-
     static
     {
         /*
@@ -501,55 +499,8 @@ public class WorldSettingsConfig
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, SPEC, "coldsweat/world.toml");
     }
 
-    public static WorldSettingsConfig getInstance()
-    {   return INSTANCE;
-    }
-
-    public void save()
+    public static void save()
     {   SPEC.save();
-    }
-
-    /* Getters */
-
-    public List<? extends List<?>> getBiomeTempOffsets()
-    {   return BIOME_TEMP_OFFSETS.get();
-    }
-    public List<? extends List<?>> getBiomeTemperatures()
-    {   return BIOME_TEMPERATURES.get();
-    }
-
-    public List<? extends List<?>> getDimensionTempOffsets()
-    {   return DIMENSION_TEMP_OFFSETS.get();
-    }
-    public List<? extends List<?>> getDimensionTemperatures()
-    {   return DIMENSION_TEMPERATURES.get();
-    }
-
-    public List<? extends List<?>> getStructureTempOffsets()
-    {   return STRUCTURE_TEMP_OFFSETS.get();
-    }
-    public List<? extends List<?>> getStructureTemperatures()
-    {   return STRUCTURE_TEMPERATURES.get();
-    }
-
-    public List<? extends List<?>> getBlockTemps()
-    {   return BLOCK_TEMPERATURES.get();
-    }
-    public int getBlockRange()
-    {   return MAX_BLOCK_TEMP_RANGE.get();
-    }
-
-    public double getHearthStrength()
-    {   return SOURCE_EFFECT_STRENGTH.get();
-    }
-    public boolean isSmartHearth()
-    {   return ENABLE_SMART_HEARTH.get();
-    }
-    public List<String> getHearthSpreadWhitelist()
-    {   return (List<String>) SOURCE_SPREAD_WHITELIST.get();
-    }
-    public List<String> getHearthSpreadBlacklist()
-    {   return (List<String>) SOURCE_SPREAD_BLACKLIST.get();
     }
 
     public static Double[] getSummerTemps()
@@ -563,68 +514,6 @@ public class WorldSettingsConfig
     }
     public static Double[] getSpringTemps()
     {   return SPRING_TEMPERATURES.get().stream().map(Number::doubleValue).toArray(Double[]::new);
-    }
-
-    public boolean isSoulFireCold()
-    {   return IS_SOUL_FIRE_COLD.get();
-    }
-
-    public boolean isSleepChecked()
-    {   return SHOULD_CHECK_SLEEP.get();
-    }
-
-    public synchronized List<? extends String> getSleepOverrideBlocks()
-    {   return SLEEPING_OVERRIDE_BLOCKS.get();
-    }
-
-    /* Setters */
-
-    public static synchronized void setBiomeTemperatures(List<? extends List<?>> temps)
-    {   synchronized (BIOME_TEMPERATURES)
-        {   BIOME_TEMPERATURES.set(temps);
-        }
-    }
-
-    public static synchronized void setBiomeTempOffsets(List<? extends List<?>> offsets)
-    {   synchronized (BIOME_TEMP_OFFSETS)
-        {   BIOME_TEMP_OFFSETS.set(offsets);
-        }
-    }
-
-    public static synchronized void setDimensionTemperatures(List<? extends List<?>> temps)
-    {   synchronized (DIMENSION_TEMPERATURES)
-        {   DIMENSION_TEMPERATURES.set(temps);
-        }
-    }
-
-    public static synchronized void setDimensionTempOffsets(List<? extends List<?>> offsets)
-    {   synchronized (DIMENSION_TEMP_OFFSETS)
-        {   DIMENSION_TEMP_OFFSETS.set(offsets);
-        }
-    }
-
-    public static synchronized void setStructureTemperatures(List<? extends List<?>> temps)
-    {   synchronized (STRUCTURE_TEMPERATURES)
-        {   STRUCTURE_TEMPERATURES.set(temps);
-        }
-    }
-
-    public static synchronized void setStructureTempOffsets(List<? extends List<?>> offsets)
-    {   synchronized (STRUCTURE_TEMP_OFFSETS)
-        {   STRUCTURE_TEMP_OFFSETS.set(offsets);
-        }
-    }
-
-    public static synchronized void setBlockTemps(List<? extends List<?>> temps)
-    {   synchronized (BLOCK_TEMPERATURES)
-        {   BLOCK_TEMPERATURES.set(temps);
-        }
-    }
-
-    public static synchronized void setBlockRange(int range)
-    {   synchronized (MAX_BLOCK_TEMP_RANGE)
-        {   MAX_BLOCK_TEMP_RANGE.set(range);
-        }
     }
 
     public static synchronized void setSourceSpreadWhitelist(List<ResourceLocation> whitelist)

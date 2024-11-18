@@ -23,9 +23,7 @@ public class ConfigUpdater
         String version = getVersionString(ModList.get().getModContainerById(ColdSweat.MOD_ID).get().getModInfo().getVersion());
         if (version.equals("0.0-NONE")) return;
 
-        String configVersion = MainSettingsConfig.getInstance().getVersion();
-        ItemSettingsConfig itemSettings = ItemSettingsConfig.getInstance();
-        WorldSettingsConfig worldSettings = WorldSettingsConfig.getInstance();
+        String configVersion = MainSettingsConfig.VERSION.get();
 
         /*
          2.3-b01a
@@ -171,11 +169,11 @@ public class ConfigUpdater
         }
 
         // Update config version
-        MainSettingsConfig.getInstance().setVersion(version);
+        MainSettingsConfig.VERSION.set(version);
 
-        MainSettingsConfig.getInstance().save();
-        itemSettings.save();
-        worldSettings.save();
+        MainSettingsConfig.save();
+        ItemSettingsConfig.save();
+        WorldSettingsConfig.save();
     }
 
     public static void updateFileNames()

@@ -1,5 +1,6 @@
 package com.momosoftworks.coldsweat.core.network.message;
 
+import com.momosoftworks.coldsweat.config.spec.EntitySettingsConfig;
 import com.momosoftworks.coldsweat.config.spec.ItemSettingsConfig;
 import com.momosoftworks.coldsweat.config.spec.MainSettingsConfig;
 import com.momosoftworks.coldsweat.config.spec.WorldSettingsConfig;
@@ -61,9 +62,10 @@ public class SyncConfigSettingsMessage
                 {
                     ConfigSettings.decode(message.configValues, registryAccess);
                     ConfigSettings.saveValues(registryAccess);
-                    MainSettingsConfig.getInstance().save();
-                    WorldSettingsConfig.getInstance().save();
-                    ItemSettingsConfig.getInstance().save();
+                    MainSettingsConfig.save();
+                    WorldSettingsConfig.save();
+                    ItemSettingsConfig.save();
+                    EntitySettingsConfig.save();
                 }
 
                 ColdSweatPacketHandler.INSTANCE.send(PacketDistributor.ALL.noArg(), new SyncConfigSettingsMessage(EMPTY_UUID, registryAccess));
