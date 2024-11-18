@@ -166,11 +166,11 @@ public abstract class WorldHelper
     public static boolean isSpreadBlocked(IWorld world, BlockState state, BlockPos pos, Direction toDir, Direction fromDir)
     {
         Block block = state.getBlock();
-        if (state.isAir() || ConfigSettings.HEARTH_SPREAD_WHITELIST.get().contains(block)
+        if (state.isAir() || ConfigSettings.THERMAL_SOURCE_SPREAD_WHITELIST.get().contains(block)
         || block == ModBlocks.HEARTH_BOTTOM || block == ModBlocks.HEARTH_TOP)
         {   return false;
         }
-        if (ConfigSettings.HEARTH_SPREAD_BLACKLIST.get().contains(block)) return true;
+        if (ConfigSettings.THERMAL_SOURCE_SPREAD_BLACKLIST.get().contains(block)) return true;
 
         VoxelShape shape = state.getShape(world, pos, ISelectionContext.empty());
         if (shape.equals(VoxelShapes.block())) return true;

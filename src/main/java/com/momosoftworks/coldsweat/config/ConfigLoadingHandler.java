@@ -107,10 +107,10 @@ public class ConfigLoadingHandler
         /*
          Add blocks from tags to configs
          */
-        ConfigSettings.HEARTH_SPREAD_WHITELIST.get().addAll(ModBlockTags.HEARTH_SPREAD_WHITELIST.getValues().stream().peek(holder ->
+        ConfigSettings.THERMAL_SOURCE_SPREAD_WHITELIST.get().addAll(ModBlockTags.HEARTH_SPREAD_WHITELIST.getValues().stream().peek(holder ->
                                                            {   ColdSweat.LOGGER.info("Adding block {} to hearth spread whitelist", holder);
                                                            }).collect(Collectors.toSet()));
-        ConfigSettings.HEARTH_SPREAD_BLACKLIST.get().addAll(ModBlockTags.HEARTH_SPREAD_BLACKLIST.getValues().stream().peek(holder ->
+        ConfigSettings.THERMAL_SOURCE_SPREAD_BLACKLIST.get().addAll(ModBlockTags.HEARTH_SPREAD_BLACKLIST.getValues().stream().peek(holder ->
                                                            {   ColdSweat.LOGGER.info("Adding block {} to hearth spread blacklist", holder);
                                                            }).collect(Collectors.toSet()));
         ConfigSettings.SLEEP_CHECK_IGNORE_BLOCKS.get().addAll(ModBlockTags.IGNORE_SLEEP_CHECK.getValues().stream().peek(holder ->
@@ -632,7 +632,7 @@ public class ConfigLoadingHandler
         return output;
     }
 
-    private static List<File> findFilesRecursive(File directory)
+    public static List<File> findFilesRecursive(File directory)
     {
         List<File> files = new ArrayList<>();
         File[] filesInDirectory = directory.listFiles();

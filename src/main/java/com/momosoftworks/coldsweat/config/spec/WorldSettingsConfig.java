@@ -37,9 +37,29 @@ public class WorldSettingsConfig
     public static ForgeConfigSpec.ConfigValue<List<? extends Number>> SPRING_TEMPERATURES;
 
     public static final ForgeConfigSpec.ConfigValue<Boolean> ENABLE_SMART_HEARTH;
-    public static final ForgeConfigSpec.ConfigValue<Double> HEARTH_INSULATION_STRENGTH;
-    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> HEARTH_SPREAD_WHITELIST;
-    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> HEARTH_SPREAD_BLACKLIST;
+    public static final ForgeConfigSpec.ConfigValue<Boolean> ENABLE_SMART_BOILER;
+    public static final ForgeConfigSpec.ConfigValue<Boolean> ENABLE_SMART_ICEBOX;
+    public static final ForgeConfigSpec.ConfigValue<Double> SOURCE_EFFECT_STRENGTH;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> SOURCE_SPREAD_WHITELIST;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> SOURCE_SPREAD_BLACKLIST;
+
+    public static final ForgeConfigSpec.ConfigValue<Integer> HEARTH_RANGE;
+    public static final ForgeConfigSpec.ConfigValue<Integer> HEARTH_MAX_RANGE;
+    public static final ForgeConfigSpec.ConfigValue<Integer> HEARTH_MAX_VOLUME;
+    public static final ForgeConfigSpec.ConfigValue<Integer> HEARTH_WARM_UP_TIME;
+    public static final ForgeConfigSpec.ConfigValue<Integer> HEARTH_MAX_INSULATION;
+
+    public static final ForgeConfigSpec.ConfigValue<Integer> BOILER_RANGE;
+    public static final ForgeConfigSpec.ConfigValue<Integer> BOILER_MAX_RANGE;
+    public static final ForgeConfigSpec.ConfigValue<Integer> BOILER_MAX_VOLUME;
+    public static final ForgeConfigSpec.ConfigValue<Integer> BOILER_WARM_UP_TIME;
+    public static final ForgeConfigSpec.ConfigValue<Integer> BOILER_MAX_INSULATION;
+
+    public static final ForgeConfigSpec.ConfigValue<Integer> ICEBOX_RANGE;
+    public static final ForgeConfigSpec.ConfigValue<Integer> ICEBOX_MAX_RANGE;
+    public static final ForgeConfigSpec.ConfigValue<Integer> ICEBOX_MAX_VOLUME;
+    public static final ForgeConfigSpec.ConfigValue<Integer> ICEBOX_WARM_UP_TIME;
+    public static final ForgeConfigSpec.ConfigValue<Integer> ICEBOX_MAX_INSULATION;
 
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> SLEEPING_OVERRIDE_BLOCKS;
     public static final ForgeConfigSpec.ConfigValue<Boolean> SHOULD_CHECK_SLEEP;
@@ -335,21 +355,16 @@ public class WorldSettingsConfig
         BUILDER.pop();
 
 
-        BUILDER.push("Hearth");
+        BUILDER.push("Thermal Sources");
 
-        ENABLE_SMART_HEARTH = BUILDER
-                .comment("Allows the hearth to automatically turn on/off based on nearby players' temperature",
-                         "If false, the hearth turns on/off by redstone signal")
-                .define("Automatic Hearth", false);
+        SOURCE_EFFECT_STRENGTH = BUILDER
+                .comment("How effective thermal sources are at normalizing temperature")
+                .defineInRange("Thermal Source Strength", 0.75, 0, 1.0);
 
-        HEARTH_INSULATION_STRENGTH = BUILDER
-                .comment("How effective the hearth is at normalizing temperature")
-                .defineInRange("Hearth Strength", 0.75, 0, 1.0);
-
-        HEARTH_SPREAD_WHITELIST = BUILDER
-                .comment("List of additional blocks that the hearth can spread through",
-                         "Use this list if the hearth isn't spreading through particular blocks that it should")
-                .defineListAllowEmpty(Arrays.asList("Hearth Spread Whitelist"), () -> ListBuilder.begin(
+        SOURCE_SPREAD_WHITELIST = BUILDER
+                .comment("List of additional blocks that thermal sources can spread through",
+                         "Use this list if thermal sources aren't spreading through particular blocks that they should")
+                .defineListAllowEmpty(Arrays.asList("Thermal Source Spread Whitelist"), () -> ListBuilder.begin(
                                               "minecraft:iron_bars",
                                               "#minecraft:leaves")
                                           .addIf(CompatManager.isCreateLoaded(),
@@ -357,12 +372,84 @@ public class WorldSettingsConfig
                                           .build(),
                                       o -> o instanceof String);
 
-        HEARTH_SPREAD_BLACKLIST = BUILDER
-                .comment("List of additional blocks that the hearth cannot spread through",
-                         "Use this list if the hearth is spreading through particular blocks that it shouldn't")
-                .defineListAllowEmpty(Arrays.asList("Hearth Spread Blacklist"), () -> Arrays.asList(
+        SOURCE_SPREAD_BLACKLIST = BUILDER
+                .comment("List of additional blocks that thermal sources spread through",
+                         "Use this list if thermal sources are spreading through particular blocks that they shouldn't")
+                .defineListAllowEmpty(Arrays.asList("Thermal Source Spread Blacklist"), () -> Arrays.asList(
                             ),
                             o -> o instanceof String);
+
+        BUILDER.push("Hearth");
+
+        ENABLE_SMART_HEARTH = BUILDER
+                .comment("Allows the hearth to automatically turn on/off based on nearby players' temperature",
+                         "If false, it turns on/off by redstone signal instead")
+                .define("Automatic Hearth", false);
+        HEARTH_RANGE = BUILDER
+                .comment("The distance the hearth's air will travel from a source, like the hearth itself or the end of a pipe")
+                .defineInRange("Hearth Range", 20, 0, Integer.MAX_VALUE);
+        HEARTH_MAX_RANGE = BUILDER
+                .comment("The maximum distance that air can be piped away from the hearth")
+                .defineInRange("Max Hearth Range", 96, 0, Integer.MAX_VALUE);
+        HEARTH_MAX_VOLUME = BUILDER
+                .comment("The maximum volume of the hearth's area of effect")
+                .defineInRange("Hearth Volume", 12000, 1, Integer.MAX_VALUE);
+        HEARTH_WARM_UP_TIME = BUILDER
+                .comment("The time it takes for the hearth to be fully functional after being placed")
+                .defineInRange("Hearth Warm-Up Time", 1200, 0, Integer.MAX_VALUE);
+        HEARTH_MAX_INSULATION = BUILDER
+                .comment("The maximum amount of insulation that the hearth can provide")
+                .defineInRange("Hearth Chill/Warmth Strength", 10, 0, 10);
+
+        BUILDER.pop();
+
+        BUILDER.push("Boiler");
+
+        ENABLE_SMART_BOILER = BUILDER
+                .comment("Allows the boiler to automatically turn on/off based on nearby players' temperature",
+                         "If false, it turns on/off by redstone signal instead")
+                .define("Automatic Boiler", false);
+        BOILER_RANGE = BUILDER
+                .comment("The distance the boiler's air will travel from a source, like the boiler itself or the end of a pipe")
+                .defineInRange("Boiler Range", 16, 0, Integer.MAX_VALUE);
+        BOILER_MAX_RANGE = BUILDER
+                .comment("The maximum distance that air can be piped away from the boiler")
+                .defineInRange("Max Boiler Range", 96, 0, Integer.MAX_VALUE);
+        BOILER_MAX_VOLUME = BUILDER
+                .comment("The maximum volume of the boiler's area of effect")
+                .defineInRange("Boiler Volume", 2000, 1, Integer.MAX_VALUE);
+        BOILER_WARM_UP_TIME = BUILDER
+                .comment("The time it takes for the boiler to be fully functional after being placed")
+                .defineInRange("Boiler Warm-Up Time", 1200, 0, Integer.MAX_VALUE);
+        BOILER_MAX_INSULATION = BUILDER
+                .comment("The maximum amount of insulation that the boiler can provide")
+                .defineInRange("Boiler Warmth Strength", 5, 0, 10);
+
+        BUILDER.pop();
+
+        BUILDER.push("Icebox");
+
+        ENABLE_SMART_ICEBOX = BUILDER
+                .comment("Allows the icebox to automatically turn on/off based on nearby players' temperature",
+                         "If false, it turns on/off by redstone signal instead")
+                .define("Automatic Icebox", false);
+        ICEBOX_RANGE = BUILDER
+                .comment("The distance the icebox's air will travel from a source, like the icebox itself or the end of a pipe")
+                .defineInRange("Icebox Range", 16, 0, Integer.MAX_VALUE);
+        ICEBOX_MAX_RANGE = BUILDER
+                .comment("The maximum distance that air can be piped away from the icebox")
+                .defineInRange("Max Icebox Range", 96, 0, Integer.MAX_VALUE);
+        ICEBOX_MAX_VOLUME = BUILDER
+                .comment("The maximum volume of the icebox's area of effect")
+                .defineInRange("Icebox Volume", 2000, 1, Integer.MAX_VALUE);
+        ICEBOX_WARM_UP_TIME = BUILDER
+                .comment("The time it takes for the icebox to be fully functional after being placed")
+                .defineInRange("Icebox Warm-Up Time", 1200, 0, Integer.MAX_VALUE);
+        ICEBOX_MAX_INSULATION = BUILDER
+                .comment("The maximum amount of insulation that the icebox can provide")
+                .defineInRange("Icebox Chill Strength", 5, 0, 10);
+
+        BUILDER.pop();
 
         BUILDER.pop();
 
@@ -453,16 +540,16 @@ public class WorldSettingsConfig
     }
 
     public double getHearthStrength()
-    {   return HEARTH_INSULATION_STRENGTH.get();
+    {   return SOURCE_EFFECT_STRENGTH.get();
     }
     public boolean isSmartHearth()
     {   return ENABLE_SMART_HEARTH.get();
     }
     public List<String> getHearthSpreadWhitelist()
-    {   return (List<String>) HEARTH_SPREAD_WHITELIST.get();
+    {   return (List<String>) SOURCE_SPREAD_WHITELIST.get();
     }
     public List<String> getHearthSpreadBlacklist()
-    {   return (List<String>) HEARTH_SPREAD_BLACKLIST.get();
+    {   return (List<String>) SOURCE_SPREAD_BLACKLIST.get();
     }
 
     public static Double[] getSummerTemps()
@@ -540,15 +627,15 @@ public class WorldSettingsConfig
         }
     }
 
-    public static synchronized void setHearthSpreadWhitelist(List<ResourceLocation> whitelist)
-    {   synchronized (HEARTH_SPREAD_WHITELIST)
-        {   HEARTH_SPREAD_WHITELIST.set(whitelist.stream().map(ResourceLocation::toString).collect(Collectors.toList()));
+    public static synchronized void setSourceSpreadWhitelist(List<ResourceLocation> whitelist)
+    {   synchronized (SOURCE_SPREAD_WHITELIST)
+        {   SOURCE_SPREAD_WHITELIST.set(whitelist.stream().map(ResourceLocation::toString).collect(Collectors.toList()));
         }
     }
 
-    public static synchronized void setHearthSpreadBlacklist(List<ResourceLocation> blacklist)
-    {   synchronized (HEARTH_SPREAD_BLACKLIST)
-        {   HEARTH_SPREAD_BLACKLIST.set(blacklist.stream().map(ResourceLocation::toString).collect(Collectors.toList()));
+    public static synchronized void setSourceSpreadBlacklist(List<ResourceLocation> blacklist)
+    {   synchronized (SOURCE_SPREAD_BLACKLIST)
+        {   SOURCE_SPREAD_BLACKLIST.set(blacklist.stream().map(ResourceLocation::toString).collect(Collectors.toList()));
         }
     }
 }
