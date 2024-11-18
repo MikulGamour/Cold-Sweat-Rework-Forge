@@ -25,8 +25,6 @@ public class EntitySettingsConfig
     public static final ForgeConfigSpec.ConfigValue<List<? extends List<?>>> GOAT_SPAWN_BIOMES;
     public static final ForgeConfigSpec.ConfigValue<List<? extends List<?>>> ENTITY_TEMPERATURES;
 
-    private static final EntitySettingsConfig INSTANCE = new EntitySettingsConfig();
-
     static
     {
         /*
@@ -183,39 +181,7 @@ public class EntitySettingsConfig
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, SPEC, "coldsweat/entity.toml");
     }
 
-    public static EntitySettingsConfig getInstance()
-    {   return INSTANCE;
-    }
-
-    /* Getters */
-
-    public List<? extends List<?>> getInsulatedEntities()
-    {   return INSULATED_MOUNTS.get();
-    }
-
-    public List<?> getGoatFurStats()
-    {   return GOAT_FUR_GROWTH_STATS.get();
-    }
-
-    public List<?> getChameleonShedStats()
-    {   return CHAMELEON_SHED_STATS.get();
-    }
-
-    public List<? extends List<?>> getChameleonSpawnBiomes()
-    {   return CHAMELEON_SPAWN_BIOMES.get();
-    }
-
-    public List<? extends List<?>> getGoatSpawnBiomes()
-    {   return GOAT_SPAWN_BIOMES.get();
-    }
-
-    /* Setters */
-
-    public void setGoatFurStats(List<? extends Number> list)
-    {   GOAT_FUR_GROWTH_STATS.set(list);
-    }
-
-    public void setChameleonShedStats(List<? extends Number> list)
-    {   CHAMELEON_SHED_STATS.set(list);
+    public static void save()
+    {   SPEC.save();
     }
 }
