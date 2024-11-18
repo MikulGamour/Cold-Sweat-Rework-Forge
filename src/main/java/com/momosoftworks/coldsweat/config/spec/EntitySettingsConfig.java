@@ -180,7 +180,7 @@ public class EntitySettingsConfig
         }
         catch (Exception ignored) {}
 
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, SPEC, "coldsweat/entity_settings.toml");
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, SPEC, "coldsweat/entity.toml");
     }
 
     public static EntitySettingsConfig getInstance()

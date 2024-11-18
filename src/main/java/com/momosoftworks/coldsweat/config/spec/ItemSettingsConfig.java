@@ -321,7 +321,7 @@ public class ItemSettingsConfig
         }
         catch (Exception ignored) {}
 
-        ModLoadingContext.get().registerConfig(net.minecraftforge.fml.config.ModConfig.Type.COMMON, SPEC, "coldsweat/item_settings.toml");
+        ModLoadingContext.get().registerConfig(net.minecraftforge.fml.config.ModConfig.Type.COMMON, SPEC, "coldsweat/item.toml");
     }
 
     public void save()

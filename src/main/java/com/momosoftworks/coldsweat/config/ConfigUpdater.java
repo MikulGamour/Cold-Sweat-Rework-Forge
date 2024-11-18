@@ -1,12 +1,15 @@
 package com.momosoftworks.coldsweat.config;
 
+import com.google.common.io.Files;
 import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.config.spec.ItemSettingsConfig;
 import com.momosoftworks.coldsweat.config.spec.MainSettingsConfig;
 import com.momosoftworks.coldsweat.config.spec.WorldSettingsConfig;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.ModList;
+import net.minecraftforge.fml.loading.FMLPaths;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -171,6 +174,31 @@ public class ConfigUpdater
         MainSettingsConfig.getInstance().save();
         itemSettings.save();
         worldSettings.save();
+    }
+
+    public static void updateFileNames()
+    {
+        for (File file : ConfigLoadingHandler.findFilesRecursive(FMLPaths.CONFIGDIR.get().resolve("coldsweat").toFile()))
+        {
+            if (!file.isFile()) continue;
+            switch (file.getName())
+            {
+                case "world_settings.toml"  -> renameFile(file, "world.toml");
+                case "entity_settings.toml" -> renameFile(file, "entity.toml");
+                case "item_settings.toml"   -> renameFile(file, "item.toml");
+            }
+        }
+    }
+
+    private static void renameFile(File file, String newName)
+    {
+        File newFile = file.toPath().resolveSibling(newName).toFile();
+        try
+        {   Files.move(file, newFile);
+        }
+        catch (Exception e)
+        {   ColdSweat.LOGGER.error("Failed to rename file {} to {}", file, newFile, e);
+        }
     }
 
     private static boolean isBehind(String version, String comparedTo)
