@@ -2,10 +2,10 @@ package com.momosoftworks.coldsweat.data.codec.configuration;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.api.temperature.block_temp.BlockTemp;
 import com.momosoftworks.coldsweat.api.util.Temperature;
+import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.data.codec.requirement.BlockRequirement;
 import com.momosoftworks.coldsweat.data.codec.requirement.NbtRequirement;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
@@ -14,17 +14,15 @@ import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 
 import javax.annotation.Nullable;
 import java.util.*;
-import java.util.function.Predicate;
 
 public record BlockTempData(List<Either<TagKey<Block>, Block>> blocks, double temperature, double range,
                             double maxEffect, boolean fade, double maxTemp, double minTemp, Temperature.Units units,
-                            List<BlockRequirement> conditions, Optional<List<String>> requiredMods) implements IForgeRegistryEntry<BlockTempData>
+                            List<BlockRequirement> conditions, Optional<List<String>> requiredMods) implements ConfigData<BlockTempData>, IForgeRegistryEntry<BlockTempData>
 {
     public BlockTempData(Collection<Block> blocks, double temperature, double range, double maxEffect, boolean fade, double maxTemp,
                          double minTemp, Temperature.Units units, List<BlockRequirement> conditions)
@@ -116,26 +114,13 @@ public record BlockTempData(List<Either<TagKey<Block>, Block>> blocks, double te
     }
 
     @Override
-    public BlockTempData setRegistryName(ResourceLocation name)
-    {
-        return this;
-    }
-
-    @Override
-    public ResourceLocation getRegistryName()
-    {
-        return null;
-    }
-
-    @Override
-    public Class<BlockTempData> getRegistryType()
-    {
-        return BlockTempData.class;
+    public Codec<BlockTempData> getCodec()
+    {   return CODEC;
     }
 
     @Override
     public String toString()
-    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
+    {   return this.asString();
     }
 
     @Override
@@ -154,5 +139,23 @@ public record BlockTempData(List<Either<TagKey<Block>, Block>> blocks, double te
             && blocks.equals(that.blocks)
             && conditions.equals(that.conditions)
             && requiredMods.equals(that.requiredMods);
+    }
+
+    @Override
+    public BlockTempData setRegistryName(ResourceLocation name)
+    {
+        return this;
+    }
+
+    @Override
+    public ResourceLocation getRegistryName()
+    {
+        return null;
+    }
+
+    @Override
+    public Class<BlockTempData> getRegistryType()
+    {
+        return BlockTempData.class;
     }
 }

@@ -2,10 +2,10 @@ package com.momosoftworks.coldsweat.data.codec.configuration;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.api.util.Temperature;
+import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Optional;
 
 public record StructureTempData(List<Either<TagKey<ConfiguredStructureFeature<?,?>>, ConfiguredStructureFeature<?,?>>> structures, double temperature,
-                                Temperature.Units units, boolean isOffset, Optional<List<String>> requiredMods) implements IForgeRegistryEntry<StructureTempData>
+                                Temperature.Units units, boolean isOffset, Optional<List<String>> requiredMods) implements ConfigData<StructureTempData>, IForgeRegistryEntry<StructureTempData>
 {
     public StructureTempData(ConfiguredStructureFeature<?,?> structure, double temperature, boolean isOffset, Temperature.Units units)
     {   this(List.of(Either.right(structure)), temperature, units, !isOffset, Optional.empty());
@@ -57,6 +57,30 @@ public record StructureTempData(List<Either<TagKey<ConfiguredStructureFeature<?,
     }
 
     @Override
+    public Codec<StructureTempData> getCodec()
+    {   return CODEC;
+    }
+
+    @Override
+    public String toString()
+    {   return this.asString();
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+
+        StructureTempData that = (StructureTempData) obj;
+        return Double.compare(that.temperature, temperature) == 0
+            && isOffset == that.isOffset
+            && structures.equals(that.structures)
+            && units == that.units
+            && requiredMods.equals(that.requiredMods);
+    }
+
+    @Override
     public StructureTempData setRegistryName(ResourceLocation name)
     {
         return null;
@@ -73,24 +97,5 @@ public record StructureTempData(List<Either<TagKey<ConfiguredStructureFeature<?,
     public Class<StructureTempData> getRegistryType()
     {
         return null;
-    }
-
-    @Override
-    public String toString()
-    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
-    }
-
-    @Override
-    public boolean equals(Object obj)
-    {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
-
-        StructureTempData that = (StructureTempData) obj;
-        return Double.compare(that.temperature, temperature) == 0
-            && isOffset == that.isOffset
-            && structures.equals(that.structures)
-            && units == that.units
-            && requiredMods.equals(that.requiredMods);
     }
 }

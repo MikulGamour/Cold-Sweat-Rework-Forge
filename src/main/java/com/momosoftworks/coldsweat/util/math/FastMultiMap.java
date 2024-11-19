@@ -298,6 +298,20 @@ public class FastMultiMap<K, V> implements Multimap<K, V>
     }
 
     @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj)
+        {   return true;
+        }
+        if (obj instanceof Multimap)
+        {
+            Multimap<?, ?> other = (Multimap<?, ?>) obj;
+            return internal.equals(other.asMap());
+        }
+        return false;
+    }
+
+    @Override
     public String toString()
     {   return internal.toString();
     }

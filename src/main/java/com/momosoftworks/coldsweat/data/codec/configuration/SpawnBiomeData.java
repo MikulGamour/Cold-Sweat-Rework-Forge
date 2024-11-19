@@ -2,10 +2,9 @@ package com.momosoftworks.coldsweat.data.codec.configuration;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
-import com.momosoftworks.coldsweat.util.serialization.RegistryHelper;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
@@ -21,7 +20,7 @@ import java.util.List;
 import java.util.Optional;
 
 public record SpawnBiomeData(List<Either<TagKey<Biome>, Biome>> biomes, MobCategory category,
-                             int weight, List<Either<TagKey<EntityType<?>>, EntityType<?>>> entities, Optional<List<String>> requiredMods) implements IForgeRegistryEntry<SpawnBiomeData>
+                             int weight, List<Either<TagKey<EntityType<?>>, EntityType<?>>> entities, Optional<List<String>> requiredMods) implements ConfigData<SpawnBiomeData>, IForgeRegistryEntry<SpawnBiomeData>
 {
     public SpawnBiomeData(List<Biome> biomes, MobCategory category, int weight, List<EntityType<?>> entities)
     {
@@ -55,6 +54,16 @@ public record SpawnBiomeData(List<Either<TagKey<Biome>, Biome>> biomes, MobCateg
     }
 
     @Override
+    public Codec<SpawnBiomeData> getCodec()
+    {   return CODEC;
+    }
+
+    @Override
+    public String toString()
+    {   return this.asString();
+    }
+
+    @Override
     public SpawnBiomeData setRegistryName(ResourceLocation resourceLocation)
     {
         return null;
@@ -71,10 +80,5 @@ public record SpawnBiomeData(List<Either<TagKey<Biome>, Biome>> biomes, MobCateg
     public Class<SpawnBiomeData> getRegistryType()
     {
         return null;
-    }
-
-    @Override
-    public String toString()
-    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
     }
 }

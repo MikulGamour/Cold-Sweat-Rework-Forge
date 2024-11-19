@@ -1,8 +1,9 @@
 package com.momosoftworks.coldsweat.data.codec.configuration;
 
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
+import com.momosoftworks.coldsweat.data.codec.impl.RequirementHolder;
 import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
 import com.momosoftworks.coldsweat.data.codec.requirement.NbtRequirement;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
@@ -17,11 +18,10 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
 import java.util.*;
 
 public record FuelData(FuelType type, Double fuel,
-                       ItemRequirement data, Optional<List<String>> requiredMods) implements NbtSerializable, RequirementHolder, IForgeRegistryEntry<FuelData>
+                       ItemRequirement data, Optional<List<String>> requiredMods) implements NbtSerializable, RequirementHolder, ConfigData<FuelData>, IForgeRegistryEntry<FuelData>
 {
     public FuelData(FuelType type, Double fuel, ItemRequirement data)
     {   this(type, fuel, data, Optional.empty());
@@ -64,6 +64,28 @@ public record FuelData(FuelType type, Double fuel,
     {   return CODEC.decode(NbtOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalStateException("Failed to deserialize FuelData")).getFirst();
     }
 
+    @Override
+    public Codec<FuelData> getCodec()
+    {   return CODEC;
+    }
+
+    @Override
+    public String toString()
+    {   return this.asString();
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+
+        FuelData that = (FuelData) obj;
+        return fuel.equals(that.fuel)
+            && data.equals(that.data)
+            && requiredMods.equals(that.requiredMods);
+    }
+
     public enum FuelType implements StringRepresentable
     {
         BOILER("boiler"),
@@ -86,8 +108,8 @@ public record FuelData(FuelType type, Double fuel,
 
         public static FuelType byName(String name)
         {   for (FuelType type : values())
-            {   if (type.name.equals(name)) return type;
-            }
+        {   if (type.name.equals(name)) return type;
+        }
             return null;
         }
     }
@@ -108,22 +130,5 @@ public record FuelData(FuelType type, Double fuel,
     public Class<FuelData> getRegistryType()
     {
         return FuelData.class;
-    }
-
-    @Override
-    public String toString()
-    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
-    }
-
-    @Override
-    public boolean equals(Object obj)
-    {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
-
-        FuelData that = (FuelData) obj;
-        return fuel.equals(that.fuel)
-            && data.equals(that.data)
-            && requiredMods.equals(that.requiredMods);
     }
 }

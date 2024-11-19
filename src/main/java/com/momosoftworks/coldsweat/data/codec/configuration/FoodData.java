@@ -1,8 +1,9 @@
 package com.momosoftworks.coldsweat.data.codec.configuration;
 
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
+import com.momosoftworks.coldsweat.data.codec.impl.RequirementHolder;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
 import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
 import com.momosoftworks.coldsweat.data.codec.requirement.NbtRequirement;
@@ -22,7 +23,7 @@ import java.util.List;
 import java.util.Optional;
 
 public record FoodData(Double temperature, ItemRequirement data, int duration, EntityRequirement entityRequirement,
-                       Optional<List<String>> requiredMods) implements NbtSerializable, RequirementHolder, IForgeRegistryEntry<FoodData>
+                       Optional<List<String>> requiredMods) implements NbtSerializable, RequirementHolder, ConfigData<FoodData>, IForgeRegistryEntry<FoodData>
 {
     public FoodData(Double temperature, ItemRequirement data, int duration, EntityRequirement entityRequirement)
     {   this(temperature, data, duration, entityRequirement, Optional.empty());
@@ -78,8 +79,13 @@ public record FoodData(Double temperature, ItemRequirement data, int duration, E
     }
 
     @Override
+    public Codec<FoodData> getCodec()
+    {   return CODEC;
+    }
+
+    @Override
     public String toString()
-    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
+    {   return this.asString();
     }
 
     @Override

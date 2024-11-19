@@ -10,12 +10,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.util.AbstractCollection;
-import java.util.AbstractSet;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * <p>
@@ -236,12 +231,11 @@ public class FastMap<K, V> implements Map<K, V>, Cloneable, Serializable
         for (int i = 0; i < _entries.length; i++)
         {
             EntryImpl<K, V> entry = _entries[i];
-            while (entry != null)
-            {
-                if (key.equals(entry._key))
-                {   return entry._value;
-                }
-                entry = entry._next;
+            if (entry == null)
+            {   continue;
+            }
+            if (key.equals(entry._key))
+            {   return entry._value;
             }
         }
         return null;

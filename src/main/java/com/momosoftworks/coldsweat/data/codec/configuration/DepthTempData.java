@@ -6,6 +6,7 @@ import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
+import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
 import com.momosoftworks.coldsweat.util.world.WorldHelper;
@@ -24,7 +25,7 @@ import java.util.List;
 import java.util.Optional;
 
 public record DepthTempData(List<TempRegion> temperatures, List<Either<TagKey<DimensionType>, DimensionType>> dimensions,
-                            Optional<List<String>> requiredMods) implements IForgeRegistryEntry<DepthTempData>
+                            Optional<List<String>> requiredMods) implements ConfigData<DepthTempData>, IForgeRegistryEntry<DepthTempData>
 {
     public static final Codec<DepthTempData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             TempRegion.CODEC.listOf().fieldOf("regions").forGetter(DepthTempData::temperatures),
@@ -60,8 +61,13 @@ public record DepthTempData(List<TempRegion> temperatures, List<Either<TagKey<Di
     }
 
     @Override
+    public Codec<DepthTempData> getCodec()
+    {   return CODEC;
+    }
+
+    @Override
     public String toString()
-    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
+    {   return this.asString();
     }
 
     @Override

@@ -1,9 +1,10 @@
 package com.momosoftworks.coldsweat.data.codec.configuration;
 
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.api.util.Temperature;
+import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
+import com.momosoftworks.coldsweat.data.codec.impl.RequirementHolder;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
 import com.momosoftworks.coldsweat.data.codec.requirement.PlayerDataRequirement;
 import com.momosoftworks.coldsweat.util.math.CSMath;
@@ -20,7 +21,7 @@ import java.util.Optional;
 public record EntityTempData(EntityRequirement entity, double temperature, double range,
                              Temperature.Units units,
                              Optional<PlayerDataRequirement> playerRequirement,
-                             Optional<List<String>> requiredMods) implements RequirementHolder, IForgeRegistryEntry<EntityTempData>
+                             Optional<List<String>> requiredMods) implements RequirementHolder, ConfigData<EntityTempData>, IForgeRegistryEntry<EntityTempData>
 {
     public static final Codec<EntityTempData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             EntityRequirement.getCodec().fieldOf("entity").forGetter(EntityTempData::entity),
@@ -74,8 +75,13 @@ public record EntityTempData(EntityRequirement entity, double temperature, doubl
     }
 
     @Override
+    public Codec<EntityTempData> getCodec()
+    {   return CODEC;
+    }
+
+    @Override
     public String toString()
-    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
+    {   return this.asString();
     }
 
     @Override
