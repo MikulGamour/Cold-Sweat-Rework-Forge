@@ -255,15 +255,11 @@ public class ConfigHelper
             {   ColdSweat.LOGGER.error("Error serializing {}: \"{}\" does not exist", keyRegistry.location(), entry.getKey());
                 continue;
             }
-            Optional<Tag> encoded = codec.encodeStart(NbtOps.INSTANCE, entry.getValue())
-            .resultOrPartial(e ->
-            {   ColdSweat.LOGGER.error("Error serializing {} \"{}\": {}", keyRegistry.location(), elementId, e);
-            });
-            if (encoded.isEmpty())
-            {   continue;
-            }
-            ((CompoundTag) encoded.get()).putUUID("UUID", entry.getValue().getId());
-            mapTag.put(elementId.toString(), encoded.get());
+            codec.encodeStart(NbtOps.INSTANCE, entry.getValue()).result().ifPresentOrElse(encoded ->
+            {
+                ((CompoundTag) encoded).putUUID("UUID", entry.getValue().getId());
+                mapTag.put(elementId.toString(), encoded);
+            }, () -> ColdSweat.LOGGER.error("Error serializing {} \"{}\"", keyRegistry.location(), elementId));
         }
         tag.put(key, mapTag);
         return tag;
@@ -279,17 +275,13 @@ public class ConfigHelper
         for (String entryKey : mapTag.getAllKeys())
         {
             CompoundTag entryData = mapTag.getCompound(entryKey);
-            K dimension = registryAccess.registryOrThrow(keyRegistry).get(new ResourceLocation(entryKey));
-            if (dimension == null)
+            K object = registryAccess.registryOrThrow(keyRegistry).get(new ResourceLocation(entryKey));
+            if (object == null)
             {   ColdSweat.LOGGER.error("Error deserializing {}: \"{}\" does not exist", keyRegistry.location(), entryKey);
                 continue;
             }
-            codec.decode(NbtOps.INSTANCE, entryData).result().ifPresentOrElse(
-                    result ->
-                    {   ConfigData.IDENTIFIABLES.put(entryData.getUUID("UUID"), result.getFirst());
-                        map.put(dimension, result.getFirst());
-                    },
-                    () -> ColdSweat.LOGGER.error("Error deserializing {}: failed to deserialize \"{}\"", keyRegistry.location(), entryKey));
+            codec.decode(NbtOps.INSTANCE, entryData).result().map(Pair::getFirst)
+                 .ifPresent(value -> map.put(object, value));
         }
         return map;
     }

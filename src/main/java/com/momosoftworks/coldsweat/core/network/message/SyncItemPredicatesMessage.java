@@ -86,11 +86,6 @@ public class SyncItemPredicatesMessage
         buffer.writeInt(message.inventorySlot);
         buffer.writeOptional(Optional.ofNullable(message.equipmentSlot), FriendlyByteBuf::writeEnum);
 
-        if (message.predicateMap.isEmpty())
-        {   buffer.writeBoolean(false);
-            return;
-        }
-        else buffer.writeBoolean(true);
         buffer.writeMap(message.predicateMap, FriendlyByteBuf::writeUUID, FriendlyByteBuf::writeBoolean);
     }
 
@@ -99,10 +94,7 @@ public class SyncItemPredicatesMessage
         ItemStack stack = buffer.readItem();
         int inventorySlot = buffer.readInt();
         EquipmentSlot equipmentSlot = buffer.readOptional(buf -> buf.readEnum(EquipmentSlot.class)).orElse(null);
-
-        Map<UUID, Boolean> predicateMap = buffer.readBoolean()
-                                          ? buffer.readMap(FriendlyByteBuf::readUUID, FriendlyByteBuf::readBoolean)
-                                          : new FastMap<>();
+        Map<UUID, Boolean> predicateMap = buffer.readMap(FriendlyByteBuf::readUUID, FriendlyByteBuf::readBoolean);
 
         return new SyncItemPredicatesMessage(stack, inventorySlot, equipmentSlot, predicateMap);
     }

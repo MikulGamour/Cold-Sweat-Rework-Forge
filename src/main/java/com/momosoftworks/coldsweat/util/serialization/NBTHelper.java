@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.function.Predicate;
 
 @Mod.EventBusSubscriber
@@ -39,7 +38,7 @@ public class NBTHelper
             ColdSweat.LOGGER.error("Failed to get key for TempModifier: {}", modifier);
             return modifierTag;
         }
-        modifierTag.putString("Id", TempModifierRegistry.getKey(modifier).toString());
+        modifierTag.putString("Id", modifierId.toString());
 
         // Add the modifier's arguments
         modifierTag.put("ModifierData", modifier.getNBT());
