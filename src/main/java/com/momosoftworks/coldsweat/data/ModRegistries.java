@@ -31,29 +31,29 @@ public class ModRegistries
     }
 
     // Item Registries
-    public static final RegistryKey<Registry<InsulatorData>> INSULATOR_DATA = createRegistry(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "item/insulator")), InsulatorData.CODEC);
-    public static final RegistryKey<Registry<FuelData>> FUEL_DATA = createRegistry(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "item/fuel")), FuelData.CODEC);
-    public static final RegistryKey<Registry<FoodData>> FOOD_DATA = createRegistry(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "item/food")), FoodData.CODEC);
-    public static final RegistryKey<Registry<ItemCarryTempData>> CARRY_TEMP_DATA = createRegistry(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "item/carried_temp")), ItemCarryTempData.CODEC);
+    public static final RegistryKey<Registry<InsulatorData>> INSULATOR_DATA = createRegistry(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "item/insulator")), InsulatorData.CODEC, InsulatorData.class);
+    public static final RegistryKey<Registry<FuelData>> FUEL_DATA = createRegistry(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "item/fuel")), FuelData.CODEC, FuelData.class);
+    public static final RegistryKey<Registry<FoodData>> FOOD_DATA = createRegistry(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "item/food")), FoodData.CODEC, FoodData.class);
+    public static final RegistryKey<Registry<ItemCarryTempData>> CARRY_TEMP_DATA = createRegistry(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "item/carried_temp")), ItemCarryTempData.CODEC, ItemCarryTempData.class);
 
     // World Registries
-    public static final RegistryKey<Registry<BlockTempData>> BLOCK_TEMP_DATA = createRegistry(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "block/block_temp")), BlockTempData.CODEC);
-    public static final RegistryKey<Registry<BiomeTempData>> BIOME_TEMP_DATA = createRegistry(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "world/biome_temp")), BiomeTempData.CODEC);
-    public static final RegistryKey<Registry<DimensionTempData>> DIMENSION_TEMP_DATA = createRegistry(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "world/dimension_temp")), DimensionTempData.CODEC);
-    public static final RegistryKey<Registry<StructureTempData>> STRUCTURE_TEMP_DATA = createRegistry(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "world/structure_temp")), StructureTempData.CODEC);
-    public static final RegistryKey<Registry<DepthTempData>> DEPTH_TEMP_DATA = createRegistry(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "world/temp_region")), DepthTempData.CODEC);
+    public static final RegistryKey<Registry<BlockTempData>> BLOCK_TEMP_DATA = createRegistry(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "block/block_temp")), BlockTempData.CODEC, BlockTempData.class);
+    public static final RegistryKey<Registry<BiomeTempData>> BIOME_TEMP_DATA = createRegistry(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "world/biome_temp")), BiomeTempData.CODEC, BiomeTempData.class);
+    public static final RegistryKey<Registry<DimensionTempData>> DIMENSION_TEMP_DATA = createRegistry(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "world/dimension_temp")), DimensionTempData.CODEC, DimensionTempData.class);
+    public static final RegistryKey<Registry<StructureTempData>> STRUCTURE_TEMP_DATA = createRegistry(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "world/structure_temp")), StructureTempData.CODEC, StructureTempData.class);
+    public static final RegistryKey<Registry<DepthTempData>> DEPTH_TEMP_DATA = createRegistry(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "world/temp_region")), DepthTempData.CODEC, DepthTempData.class);
 
     // Entity Registries
-    public static final RegistryKey<Registry<MountData>> MOUNT_DATA = createRegistry(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "entity/mount")), MountData.CODEC);
-    public static final RegistryKey<Registry<SpawnBiomeData>> ENTITY_SPAWN_BIOME_DATA = createRegistry(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "entity/spawn_biome")), SpawnBiomeData.CODEC);
-    public static final RegistryKey<Registry<EntityTempData>> ENTITY_TEMP_DATA = createRegistry(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "entity/entity_temp")), EntityTempData.CODEC);
+    public static final RegistryKey<Registry<MountData>> MOUNT_DATA = createRegistry(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "entity/mount")), MountData.CODEC, MountData.class);
+    public static final RegistryKey<Registry<SpawnBiomeData>> ENTITY_SPAWN_BIOME_DATA = createRegistry(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "entity/spawn_biome")), SpawnBiomeData.CODEC, SpawnBiomeData.class);
+    public static final RegistryKey<Registry<EntityTempData>> ENTITY_TEMP_DATA = createRegistry(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "entity/entity_temp")), EntityTempData.CODEC, EntityTempData.class);
 
     // Special registries
-    public static final RegistryKey<Registry<RemoveRegistryData<?>>> REMOVE_REGISTRY_DATA = createRegistry(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "remove")), RemoveRegistryData.CODEC);
+    public static final RegistryKey<Registry<RemoveRegistryData<?>>> REMOVE_REGISTRY_DATA = createRegistry(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "remove")), RemoveRegistryData.CODEC, null);
 
-    public static <K, V> RegistryKey<Registry<V>> createRegistry(RegistryKey<Registry<V>> registry, Codec<V> codec)
+    public static <K, V> RegistryKey<Registry<V>> createRegistry(RegistryKey<Registry<V>> registry, Codec<V> codec, Class<V> type)
     {
-        REGISTRIES.put(registry.location().getPath(), new RegistryHolder<>(registry, codec));
+        REGISTRIES.put(registry.location().getPath(), new RegistryHolder<>(registry, codec, type));
         return registry;
     }
 
@@ -64,31 +64,37 @@ public class ModRegistries
     public static RegistryKey<Registry<?>> getRegistry(String name)
     {
         return Optional.ofNullable(REGISTRIES.get(name)).map(holder -> (RegistryKey) holder.registry)
-               .orElseThrow(() ->
-                            {
-                                ColdSweat.LOGGER.error("Unknown Cold Sweat registry: {}", name);
-                                return new IllegalArgumentException("Unknown Cold Sweat registry: " + name);
-                            });
+               .orElseThrow(() -> ColdSweat.LOGGER.throwing(new IllegalArgumentException("Unknown Cold Sweat registry: " + name)));
     }
 
-    public static String getRegistryName(RegistryKey<Registry<?>> key)
+    public static <T> RegistryKey<Registry<T>> getRegistry(T object)
+    {   return (RegistryKey) REGISTRIES.values().stream()
+               .filter(holder -> holder.type.isInstance(object))
+               .findFirst()
+               .map(holder -> holder.registry)
+               .orElse(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "unknown")));
+    }
+
+    public static String getRegistryName(RegistryKey<?> key)
     {   return key.location().getPath();
     }
 
     public static <T> Codec<T> getCodec(RegistryKey<Registry<T>> registry)
     {
-        return (Codec<T>) Optional.of(REGISTRIES.get(getRegistryName((RegistryKey) registry))).map(holder -> holder.codec)
-                .orElseThrow(() -> new IllegalArgumentException("Unknown Cold Sweat registry: " + registry.location().getPath()));
+        return (Codec<T>) Optional.of(REGISTRIES.get(getRegistryName(registry))).map(holder -> holder.codec)
+               .orElseThrow(() -> ColdSweat.LOGGER.throwing(new IllegalArgumentException("Unknown Cold Sweat registry: " + registry.location().getPath())));
     }
 
     public static class RegistryHolder<V>
     {
         public final RegistryKey<Registry<V>> registry;
         public final Codec<V> codec;
+        public final Class<V> type;
 
-        public RegistryHolder(RegistryKey<Registry<V>> registry, Codec<V> codec)
+        public RegistryHolder(RegistryKey<Registry<V>> registry, Codec<V> codec, Class<V> type)
         {   this.registry = registry;
             this.codec = codec;
+            this.type = type;
         }
 
         public RegistryKey<Registry<V>> getRegistry()

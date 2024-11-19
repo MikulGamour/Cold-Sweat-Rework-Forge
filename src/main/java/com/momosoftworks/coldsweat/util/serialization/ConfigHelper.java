@@ -11,17 +11,19 @@ import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.api.insulation.AdaptiveInsulation;
 import com.momosoftworks.coldsweat.api.insulation.StaticInsulation;
 import com.momosoftworks.coldsweat.data.ModRegistries;
-import com.momosoftworks.coldsweat.data.codec.configuration.*;
+import com.momosoftworks.coldsweat.data.codec.configuration.FuelData;
+import com.momosoftworks.coldsweat.data.codec.configuration.InsulatorData;
+import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
 import com.momosoftworks.coldsweat.util.math.CSMath;
+import com.momosoftworks.coldsweat.util.math.FastMultiMap;
 import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import net.minecraft.block.Block;
-import com.momosoftworks.coldsweat.util.math.FastMultiMap;
-import net.minecraft.block.BlockState;
 import net.minecraft.entity.EntityType;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.INBT;
 import net.minecraft.nbt.ListNBT;
 import net.minecraft.nbt.NBTDynamicOps;
 import net.minecraft.resources.IResource;
@@ -34,9 +36,6 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.registry.DynamicRegistries;
 import net.minecraft.util.registry.MutableRegistry;
 import net.minecraft.util.registry.Registry;
-import net.minecraft.world.DimensionType;
-import net.minecraft.world.biome.Biome;
-import net.minecraft.world.gen.feature.structure.Structure;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 
@@ -48,7 +47,6 @@ import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
 
 public class ConfigHelper
 {
@@ -281,7 +279,7 @@ public class ConfigHelper
         return tag;
     }
 
-    public static <K, V> CompoundNBT serializeRegistry(Map<K, V> map, String key, RegistryKey<Registry<K>> keyRegistry, RegistryKey<Registry<V>> modRegistry, DynamicRegistries registryAccess)
+    public static <K, V extends ConfigData<?>> CompoundNBT serializeRegistry(Map<K, V> map, String key, RegistryKey<Registry<K>> keyRegistry, RegistryKey<Registry<V>> modRegistry, DynamicRegistries registryAccess)
     {
         Codec<V> codec = ModRegistries.getCodec(modRegistry);
         CompoundNBT tag = new CompoundNBT();
@@ -291,17 +289,24 @@ public class ConfigHelper
         {
             ResourceLocation elementId = registryAccess.registryOrThrow(keyRegistry).getKey(entry.getKey());
             if (elementId == null)
-            {   ColdSweat.LOGGER.error("Error serializing {}: dimension \"{}\" does not exist", keyRegistry.location(), entry.getKey());
+            {   ColdSweat.LOGGER.error("Error serializing {}: \"{}\" does not exist", keyRegistry.location(), entry.getKey());
                 continue;
             }
-            codec.encodeStart(NBTDynamicOps.INSTANCE, entry.getValue()).result().ifPresent(
-                    result -> mapTag.put(elementId.toString(), result));
+            Optional<INBT> encoded = codec.encodeStart(NBTDynamicOps.INSTANCE, entry.getValue())
+            .resultOrPartial(e ->
+            {   ColdSweat.LOGGER.error("Error serializing {} \"{}\": {}", keyRegistry.location(), elementId, e);
+            });
+            if (!encoded.isPresent())
+            {   continue;
+            }
+            ((CompoundNBT) encoded.get()).putUUID("UUID", entry.getValue().getId());
+            mapTag.put(elementId.toString(), encoded.get());
         }
         tag.put(key, mapTag);
         return tag;
     }
 
-    public static <K, V> Map<K, V> deserializeRegistry(CompoundNBT tag, String key, RegistryKey<Registry<K>> keyRegistry, RegistryKey<Registry<V>> modRegistry, DynamicRegistries registryAccess)
+    public static <K, V extends ConfigData<?>> Map<K, V> deserializeRegistry(CompoundNBT tag, String key, RegistryKey<Registry<K>> keyRegistry, RegistryKey<Registry<V>> modRegistry, DynamicRegistries registryAccess)
     {
         Codec<V> codec = ModRegistries.getCodec(modRegistry);
 
@@ -317,7 +322,10 @@ public class ConfigHelper
                 continue;
             }
             codec.decode(NBTDynamicOps.INSTANCE, entryData).result().ifPresent(
-                    result -> map.put(dimension, result.getFirst()));
+                    result ->
+                    {   ConfigData.IDENTIFIABLES.put(entryData.getUUID("UUID"), result.getFirst());
+                        map.put(dimension, result.getFirst());
+                    });
         }
         return map;
     }

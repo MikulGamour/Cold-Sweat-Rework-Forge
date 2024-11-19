@@ -1,4 +1,4 @@
-package com.momosoftworks.coldsweat.data.codec.configuration;
+package com.momosoftworks.coldsweat.data.codec.impl;
 
 
 import net.minecraft.entity.Entity;

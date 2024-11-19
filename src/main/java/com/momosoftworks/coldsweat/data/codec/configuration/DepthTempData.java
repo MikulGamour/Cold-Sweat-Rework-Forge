@@ -6,23 +6,20 @@ import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
+import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
 import com.momosoftworks.coldsweat.util.serialization.StringRepresentable;
 import com.momosoftworks.coldsweat.util.world.WorldHelper;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.DimensionType;
 import net.minecraft.world.World;
-import net.minecraftforge.registries.IForgeRegistryEntry;
 
-import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 
-public class DepthTempData implements IForgeRegistryEntry<DepthTempData>
+public class DepthTempData implements ConfigData<DepthTempData>
 {
     public static final Codec<DepthTempData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             TempRegion.CODEC.listOf().fieldOf("regions").forGetter(data -> data.temperatures),
@@ -67,8 +64,13 @@ public class DepthTempData implements IForgeRegistryEntry<DepthTempData>
     }
 
     @Override
+    public Codec<DepthTempData> getCodec()
+    {   return CODEC;
+    }
+
+    @Override
     public String toString()
-    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
+    {   return this.asString();
     }
 
     @Override
@@ -383,21 +385,5 @@ public class DepthTempData implements IForgeRegistryEntry<DepthTempData>
             }
             throw new IllegalArgumentException("Unknown vertical anchor: " + name);
         }
-    }
-
-    @Override
-    public DepthTempData setRegistryName(ResourceLocation name)
-    {   return this;
-    }
-
-    @Nullable
-    @Override
-    public ResourceLocation getRegistryName()
-    {   return null;
-    }
-
-    @Override
-    public Class<DepthTempData> getRegistryType()
-    {   return DepthTempData.class;
     }
 }

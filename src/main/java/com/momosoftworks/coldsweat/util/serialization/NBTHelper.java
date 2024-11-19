@@ -2,16 +2,15 @@ package com.momosoftworks.coldsweat.util.serialization;
 
 import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.api.registry.TempModifierRegistry;
+import com.momosoftworks.coldsweat.api.temperature.modifier.TempModifier;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.registries.ModItems;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.*;
-import com.momosoftworks.coldsweat.api.temperature.modifier.TempModifier;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.event.entity.player.PlayerContainerEvent;
@@ -21,7 +20,6 @@ import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -33,6 +31,12 @@ public class NBTHelper
     {
         // Write the modifier's data to a CompoundTag
         CompoundNBT modifierTag = new CompoundNBT();
+        ResourceLocation modifierId = TempModifierRegistry.getKey(modifier);
+        if (modifierId == null)
+        {
+            ColdSweat.LOGGER.error("Failed to get key for TempModifier: {}", modifier);
+            return modifierTag;
+        }
         modifierTag.putString("Id", TempModifierRegistry.getKey(modifier).toString());
 
         // Add the modifier's arguments

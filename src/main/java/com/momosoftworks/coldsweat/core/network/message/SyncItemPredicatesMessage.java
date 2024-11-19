@@ -2,12 +2,17 @@ package com.momosoftworks.coldsweat.core.network.message;
 
 import com.google.common.collect.Multimap;
 import com.mojang.datafixers.util.Pair;
+import com.momosoftworks.coldsweat.ColdSweat;
+import com.momosoftworks.coldsweat.api.insulation.Insulation;
 import com.momosoftworks.coldsweat.client.event.TooltipHandler;
 import com.momosoftworks.coldsweat.common.capability.handler.ItemInsulationManager;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.core.network.BufferHelper;
 import com.momosoftworks.coldsweat.core.network.ColdSweatPacketHandler;
+import com.momosoftworks.coldsweat.data.ModRegistries;
 import com.momosoftworks.coldsweat.data.codec.configuration.*;
+import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
+import com.momosoftworks.coldsweat.data.codec.impl.RequirementHolder;
 import com.momosoftworks.coldsweat.util.math.FastMap;
 import com.momosoftworks.coldsweat.util.serialization.DynamicHolder;
 import com.momosoftworks.coldsweat.util.serialization.NbtSerializable;
@@ -30,7 +35,7 @@ import java.util.stream.Collectors;
 
 public class SyncItemPredicatesMessage
 {
-    private final Map<String, Object> predicateMap = new FastMap<>();
+    private final Map<UUID, Boolean> predicateMap = new FastMap<>();
     ItemStack stack = ItemStack.EMPTY;
     int inventorySlot = 0;
     @Nullable
@@ -69,7 +74,7 @@ public class SyncItemPredicatesMessage
         this.checkCarriedTemps(stack, inventorySlot, equipmentSlot, entity);
     }
 
-    public SyncItemPredicatesMessage(ItemStack stack, int inventorySlot, @Nullable EquipmentSlotType equipmentSlot, Map<String, Object> predicateMap)
+    public SyncItemPredicatesMessage(ItemStack stack, int inventorySlot, @Nullable EquipmentSlotType equipmentSlot, Map<UUID, Boolean> predicateMap)
     {
         this.stack = stack;
         this.inventorySlot = inventorySlot;
@@ -88,66 +93,7 @@ public class SyncItemPredicatesMessage
             return;
         }
         else buffer.writeBoolean(true);
-
-        BufferHelper.writeMap(buffer, message.predicateMap,
-        PacketBuffer::writeUtf,
-        (buf, value) ->
-        {
-            if (value instanceof Map)
-            {
-                buf.writeUtf("Map");
-                BufferHelper.writeMap(buf, (Map<?, ?>) value,
-                (buf1, key) ->
-                {
-                    if (key instanceof NbtSerializable)
-                    {
-                        buf1.writeUtf(key.getClass().getSimpleName());
-                        buf1.writeNbt(((NbtSerializable) key).serialize());
-                    }
-                    else throw new IllegalStateException("Invalid key type: " + key.getClass());
-                },
-                (buf1, value1) ->
-                {
-                    if (value1 instanceof Boolean)
-                        buf1.writeBoolean((Boolean) value1);
-                    else throw new IllegalStateException("Invalid value type: " + value1.getClass());
-                });
-            }
-            else if (value instanceof List)
-            {
-                buf.writeUtf("List");
-                List<?> list = (List<?>) value;
-                BufferHelper.writeCollection(buf, list, (buf1, element) ->
-                {
-                    if (element instanceof Pair<?,?>)
-                    {
-                        Pair<?,?> pair = (Pair<?,?>) element;
-                        if (pair.getFirst() instanceof ItemStack)
-                        {
-                            buf1.writeItem((ItemStack) pair.getFirst());
-                            BufferHelper.writeMap(buf1, (Map<?, ?>) pair.getSecond(),
-                            (buf2, key) ->
-                            {
-                                if (key instanceof NbtSerializable)
-                                {
-                                    buf2.writeUtf(key.getClass().getSimpleName());
-                                    buf2.writeNbt(((NbtSerializable) key).serialize());
-                                }
-                                else throw new IllegalStateException("Invalid key type: " + key.getClass());
-                            },
-                            (buf2, value1) ->
-                            {
-                                if (value1 instanceof Boolean)
-                                    buf2.writeBoolean((Boolean) value1);
-                                else throw new IllegalStateException("Invalid value type: " + value1.getClass());
-                            });
-                        }
-                        else throw new IllegalStateException("Invalid pair first type: " + pair.getFirst().getClass());
-                    }
-                    else throw new IllegalStateException("Invalid element type: " + element.getClass());
-                });
-            }
-        });
+        BufferHelper.writeMap(buffer, message.predicateMap, PacketBuffer::writeUUID, PacketBuffer::writeBoolean);
     }
 
     public static SyncItemPredicatesMessage decode(PacketBuffer buffer)
@@ -156,45 +102,9 @@ public class SyncItemPredicatesMessage
         int inventorySlot = buffer.readInt();
         EquipmentSlotType equipmentSlot = BufferHelper.readOptional(buffer, buf -> buf.readEnum(EquipmentSlotType.class)).orElse(null);
 
-        Map<String, Object> predicateMap;
-        if (!buffer.readBoolean())
-        {   predicateMap = new FastMap<>();
-        }
-        else predicateMap = BufferHelper.readMap(buffer, PacketBuffer::readUtf,
-        buf ->
-        {
-            String type = buf.readUtf();
-            if (type.equals("Map"))
-            {
-                return BufferHelper.readMap(buf,
-                FastMap::new,
-                buf1 ->
-                {
-                    String className = buf1.readUtf();
-                    return getDeserializer(className).apply(buf1.readNbt());
-                },
-                PacketBuffer::readBoolean);
-            }
-            else if (type.equals("List"))
-            {
-                return BufferHelper.readCollection(buffer,
-                ArrayList::new,
-                buf1 ->
-                {
-                    ItemStack itemStack = buf1.readItem();
-                    Map<Object, Boolean> map = BufferHelper.readMap(buf1,
-                    FastMap::new,
-                    buf2 ->
-                    {
-                        String className = buf2.readUtf();
-                        return getDeserializer(className).apply(buf2.readNbt());
-                    },
-                    PacketBuffer::readBoolean);
-                    return Pair.of(itemStack, map);
-                });
-            }
-            else throw new IllegalStateException("Invalid type: " + type);
-        });
+        Map<UUID, Boolean> predicateMap = buffer.readBoolean()
+                                          ? BufferHelper.readMap(buffer, PacketBuffer::readUUID, PacketBuffer::readBoolean)
+                                          : new FastMap<>();
 
         return new SyncItemPredicatesMessage(stack, inventorySlot, equipmentSlot, predicateMap);
     }
@@ -208,7 +118,8 @@ public class SyncItemPredicatesMessage
         if (receivingSide.isClient())
         {
             context.enqueueWork(() ->
-            {   TooltipHandler.HOVERED_STACK_PREDICATES = message.predicateMap;
+            {   TooltipHandler.HOVERED_STACK_PREDICATES.clear();
+                TooltipHandler.HOVERED_STACK_PREDICATES.putAll(message.predicateMap);
             });
         }
         // Client is asking server for insulator predicates
@@ -246,15 +157,12 @@ public class SyncItemPredicatesMessage
         {
             ItemInsulationManager.getInsulationCap(stack).ifPresent(cap ->
             {
-                List<Pair<ItemStack, Map<InsulatorData, Boolean>>> insulatorMap =
-                cap.getInsulation().stream()
-                   .map(pair -> Pair.of(pair.getFirst(),
-                                        pair.getSecond().entries().stream()
-                                            .map(entry -> new AbstractMap.SimpleEntry<>(entry.getKey(), entry.getKey().test(entity, pair.getFirst())))
-                                            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))))
-                   .collect(Collectors.toList());
-
-                this.predicateMap.put("armor_insulation", insulatorMap);
+                for (Pair<ItemStack, Multimap<InsulatorData, Insulation>> pair : cap.getInsulation())
+                {
+                    for (InsulatorData insulatorData : pair.getSecond().keySet())
+                    {   this.predicateMap.put(insulatorData.getId(), insulatorData.test(entity, stack));
+                    }
+                }
             });
         }
     }
@@ -283,36 +191,27 @@ public class SyncItemPredicatesMessage
     {
         if (ConfigSettings.CARRIED_ITEM_TEMPERATURES.get().containsKey(stack.getItem()))
         {
-            Map<ItemCarryTempData, Boolean> insulatorMap = ConfigSettings.CARRIED_ITEM_TEMPERATURES.get().get(stack.getItem()).stream()
-                    .map(data -> new AbstractMap.SimpleEntry<>(data, data.test(entity, stack, invSlot, equipmentSlot)))
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            Map<UUID, Boolean> insulatorMap = ConfigSettings.CARRIED_ITEM_TEMPERATURES.get().get(stack.getItem())
+                                              .stream()
+                                              .map(data ->
+                                              {   boolean test = data.test(entity, stack, invSlot, equipmentSlot);
+                                                  return new AbstractMap.SimpleEntry<>(data.getId(), test);
+                                              })
+                                              .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-            String configId = ConfigSettings.CONFIG_SETTINGS.inverse().get(ConfigSettings.CARRIED_ITEM_TEMPERATURES);
-            this.predicateMap.put(configId, insulatorMap);
+            this.predicateMap.putAll(insulatorMap);
         }
     }
 
-    private void checkItemRequirement(ItemStack stack, Entity entity, DynamicHolder<Multimap<Item, ? extends RequirementHolder>> configSetting)
+    private void checkItemRequirement(ItemStack stack, Entity entity, DynamicHolder<Multimap<Item, RequirementHolder>> configSetting)
     {
-        if (configSetting.get().containsKey(stack.getItem()))
-        {
-            Map<? extends RequirementHolder, Boolean> configMap = configSetting.get().get(stack.getItem()).stream()
-                    .map(data -> new AbstractMap.SimpleEntry<>(data, data.test(entity, stack)))
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
-            String configId = ConfigSettings.CONFIG_SETTINGS.inverse().get(configSetting);
-            this.predicateMap.put(configId, configMap);
-        }
-    }
-
-    private static Function<CompoundNBT, Object> getDeserializer(String className)
-    {
-        switch (className)
-        {
-            case "ItemCarryTempData" : return ItemCarryTempData::deserialize;
-            case "InsulatorData" : return InsulatorData::deserialize;
-            case "FuelData" : return FuelData::deserialize;
-            default : throw new IllegalStateException("Invalid class name: " + className);
-        }
+        Map<UUID, Boolean> configMap = configSetting.get().get(stack.getItem())
+                                       .stream()
+                                       .map(data ->
+                                       {   UUID id = ((ConfigData<?>) data).getId();
+                                           return new AbstractMap.SimpleEntry<>(id, data.test(entity, stack));
+                                       })
+                                       .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        this.predicateMap.putAll(configMap);
     }
 }

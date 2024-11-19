@@ -1,8 +1,9 @@
 package com.momosoftworks.coldsweat.data.codec.configuration;
 
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
+import com.momosoftworks.coldsweat.data.codec.impl.RequirementHolder;
 import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
 import com.momosoftworks.coldsweat.data.codec.requirement.NbtRequirement;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
@@ -19,7 +20,7 @@ import java.util.Optional;
 
 import javax.annotation.Nullable;
 
-public class FuelData implements NbtSerializable, RequirementHolder
+public class FuelData implements NbtSerializable, RequirementHolder, ConfigData<FuelData>
 {
     public final FuelType type;
     public final Double fuel;
@@ -37,7 +38,7 @@ public class FuelData implements NbtSerializable, RequirementHolder
     public FuelData(FuelType type, Double fuel, ItemRequirement data)
     {   this(type, fuel, data, Optional.empty());
     }
-    
+
     public static final Codec<FuelData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             FuelType.CODEC.fieldOf("type").forGetter(data -> data.type),
             Codec.DOUBLE.fieldOf("fuel").forGetter(data -> data.fuel),
@@ -75,6 +76,28 @@ public class FuelData implements NbtSerializable, RequirementHolder
     {   return CODEC.decode(NBTDynamicOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalStateException("Failed to deserialize FuelData")).getFirst();
     }
 
+    @Override
+    public Codec<FuelData> getCodec()
+    {   return CODEC;
+    }
+
+    @Override
+    public String toString()
+    {   return this.asString();
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj) return true;
+        if (obj == null || getClass() != obj.getClass()) return false;
+
+        FuelData that = (FuelData) obj;
+        return fuel.equals(that.fuel)
+            && data.equals(that.data)
+            && requiredMods.equals(that.requiredMods);
+    }
+
     public enum FuelType implements StringRepresentable
     {
         BOILER("boiler"),
@@ -97,26 +120,9 @@ public class FuelData implements NbtSerializable, RequirementHolder
 
         public static FuelType byName(String name)
         {   for (FuelType type : values())
-            {   if (type.name.equals(name)) return type;
-            }
+        {   if (type.name.equals(name)) return type;
+        }
             return null;
         }
-    }
-
-    @Override
-    public String toString()
-    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
-    }
-
-    @Override
-    public boolean equals(Object obj)
-    {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
-
-        FuelData that = (FuelData) obj;
-        return fuel.equals(that.fuel)
-            && data.equals(that.data)
-            && requiredMods.equals(that.requiredMods);
     }
 }

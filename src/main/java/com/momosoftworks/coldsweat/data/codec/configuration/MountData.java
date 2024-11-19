@@ -2,8 +2,9 @@ package com.momosoftworks.coldsweat.data.codec.configuration;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
+import com.momosoftworks.coldsweat.data.codec.impl.RequirementHolder;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
 import com.momosoftworks.coldsweat.util.serialization.NbtSerializable;
@@ -19,7 +20,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class MountData implements NbtSerializable, RequirementHolder
+public class MountData implements NbtSerializable, RequirementHolder, ConfigData<MountData>
 {
     public List<Either<ITag<EntityType<?>>, EntityType<?>>> entities;
     public double coldInsulation;
@@ -35,10 +36,10 @@ public class MountData implements NbtSerializable, RequirementHolder
         this.requirement = requirement;
         this.requiredMods = requiredMods;
     }
-    
+
     public MountData(List<EntityType<?>> entities, double coldInsulation, double heatInsulation, EntityRequirement requirement)
     {
-        this(entities.stream().map(Either::<ITag<EntityType<?>>, EntityType<?>>right).collect(Collectors.toList()), 
+        this(entities.stream().map(Either::<ITag<EntityType<?>>, EntityType<?>>right).collect(Collectors.toList()),
              coldInsulation, heatInsulation, requirement, Optional.empty());
     }
 
@@ -83,8 +84,13 @@ public class MountData implements NbtSerializable, RequirementHolder
     }
 
     @Override
+    public Codec<MountData> getCodec()
+    {   return CODEC;
+    }
+
+    @Override
     public String toString()
-    {   return CODEC.encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("serialize_failed");
+    {   return this.asString();
     }
 
     @Override
