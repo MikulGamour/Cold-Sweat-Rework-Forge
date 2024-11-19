@@ -292,15 +292,11 @@ public class ConfigHelper
             {   ColdSweat.LOGGER.error("Error serializing {}: \"{}\" does not exist", keyRegistry.location(), entry.getKey());
                 continue;
             }
-            Optional<INBT> encoded = codec.encodeStart(NBTDynamicOps.INSTANCE, entry.getValue())
-            .resultOrPartial(e ->
-            {   ColdSweat.LOGGER.error("Error serializing {} \"{}\": {}", keyRegistry.location(), elementId, e);
+            codec.encodeStart(NBTDynamicOps.INSTANCE, entry.getValue()).result().ifPresent(encoded ->
+            {
+                ((CompoundNBT) encoded).putUUID("UUID", entry.getValue().getId());
+                mapTag.put(elementId.toString(), encoded);
             });
-            if (!encoded.isPresent())
-            {   continue;
-            }
-            ((CompoundNBT) encoded.get()).putUUID("UUID", entry.getValue().getId());
-            mapTag.put(elementId.toString(), encoded.get());
         }
         tag.put(key, mapTag);
         return tag;
@@ -316,16 +312,13 @@ public class ConfigHelper
         for (String entryKey : mapTag.getAllKeys())
         {
             CompoundNBT entryData = mapTag.getCompound(entryKey);
-            K dimension = registryAccess.registryOrThrow(keyRegistry).get(new ResourceLocation(entryKey));
-            if (dimension == null)
+            K object = registryAccess.registryOrThrow(keyRegistry).get(new ResourceLocation(entryKey));
+            if (object == null)
             {   ColdSweat.LOGGER.error("Error deserializing {}: \"{}\" does not exist", keyRegistry.location(), entryKey);
                 continue;
             }
-            codec.decode(NBTDynamicOps.INSTANCE, entryData).result().ifPresent(
-                    result ->
-                    {   ConfigData.IDENTIFIABLES.put(entryData.getUUID("UUID"), result.getFirst());
-                        map.put(dimension, result.getFirst());
-                    });
+            codec.decode(NBTDynamicOps.INSTANCE, entryData).result().map(Pair::getFirst)
+                 .ifPresent(value -> map.put(object, value));
         }
         return map;
     }
