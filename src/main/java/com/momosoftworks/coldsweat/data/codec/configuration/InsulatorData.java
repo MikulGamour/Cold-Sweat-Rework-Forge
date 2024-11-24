@@ -74,7 +74,7 @@ public record InsulatorData(Insulation.Slot slot,
             return null;
         }
 
-        boolean adaptive = entry.size() < 4 || entry.get(3).equals("adaptive");
+        boolean adaptive = entry.size() > 3 && entry.get(3).equals("adaptive");
         CompoundTag tag = entry.size() > 4 ? NBTHelper.parseCompoundNbt((String) entry.get(4)) : new CompoundTag();
         double insulVal1 = ((Number) entry.get(1)).doubleValue();
         double insulVal2 = ((Number) entry.get(2)).doubleValue();
