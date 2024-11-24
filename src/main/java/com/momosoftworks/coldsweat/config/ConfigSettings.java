@@ -12,26 +12,18 @@ import com.momosoftworks.coldsweat.compat.CompatManager;
 import com.momosoftworks.coldsweat.config.spec.*;
 import com.momosoftworks.coldsweat.data.ModRegistries;
 import com.momosoftworks.coldsweat.data.codec.configuration.*;
-import com.momosoftworks.coldsweat.data.codec.requirement.NbtRequirement;
-import com.momosoftworks.coldsweat.util.math.CSMath;
-import com.momosoftworks.coldsweat.data.codec.util.IntegerBounds;
-import com.momosoftworks.coldsweat.util.math.FastMultiMap;
 import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
-import com.momosoftworks.coldsweat.util.math.FastMultiMap;
+import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.math.FastMap;
 import com.momosoftworks.coldsweat.util.math.FastMultiMap;
 import com.momosoftworks.coldsweat.util.math.Vec2i;
 import com.momosoftworks.coldsweat.util.registries.ModEntities;
 import com.momosoftworks.coldsweat.util.serialization.*;
 import net.minecraft.block.Block;
-import net.minecraft.entity.EntityClassification;
 import net.minecraft.entity.EntityType;
-import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.Item;
 import net.minecraft.nbt.*;
 import net.minecraft.potion.Effect;
-import net.minecraft.tags.ITag;
-import net.minecraft.tags.ItemTags;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.registry.DynamicRegistries;
 import net.minecraft.util.registry.Registry;
@@ -273,8 +265,8 @@ public class ConfigSettings
             {   holder.get(registryAccess).put(entry.getKey(), entry.getValue());
             }
         },
-        (encoder, registryAccess) -> ConfigHelper.serializeRegistry(encoder, "BiomeTemps", Registry.BIOME_REGISTRY, ModRegistries.BIOME_TEMP_DATA, registryAccess),
-        (decoder, registryAccess) -> ConfigHelper.deserializeRegistry(decoder, "BiomeTemps", Registry.BIOME_REGISTRY, ModRegistries.BIOME_TEMP_DATA, registryAccess),
+        (encoder, registryAccess) -> ConfigHelper.serializeRegistry(encoder, "BiomeTemps", Registry.BIOME_REGISTRY, ModRegistries.BIOME_TEMP_DATA, registryAccess.registryOrThrow(Registry.BIOME_REGISTRY)::getKey),
+        (decoder, registryAccess) -> ConfigHelper.deserializeRegistry(decoder, "BiomeTemps", Registry.BIOME_REGISTRY, ModRegistries.BIOME_TEMP_DATA, registryAccess.registryOrThrow(Registry.BIOME_REGISTRY)::get),
         (saver, registryAccess) -> WorldSettingsConfig.setBiomeTemperatures(saver.entrySet().stream()
                                                             .map(entry ->
                                                             {
@@ -300,8 +292,8 @@ public class ConfigSettings
             {   holder.get(registryAccess).put(entry.getKey(), entry.getValue());
             }
         },
-        (encoder, registryAccess) -> ConfigHelper.serializeRegistry(encoder, "BiomeOffsets", Registry.BIOME_REGISTRY, ModRegistries.BIOME_TEMP_DATA, registryAccess),
-        (decoder, registryAccess) -> ConfigHelper.deserializeRegistry(decoder, "BiomeOffsets", Registry.BIOME_REGISTRY, ModRegistries.BIOME_TEMP_DATA, registryAccess),
+        (encoder, registryAccess) -> ConfigHelper.serializeRegistry(encoder, "BiomeOffsets", Registry.BIOME_REGISTRY, ModRegistries.BIOME_TEMP_DATA, registryAccess.registryOrThrow(Registry.BIOME_REGISTRY)::getKey),
+        (decoder, registryAccess) -> ConfigHelper.deserializeRegistry(decoder, "BiomeOffsets", Registry.BIOME_REGISTRY, ModRegistries.BIOME_TEMP_DATA, registryAccess.registryOrThrow(Registry.BIOME_REGISTRY)::get),
         (saver, registryAccess) -> WorldSettingsConfig.setBiomeTempOffsets(saver.entrySet().stream()
                                                             .map(entry ->
                                                             {
@@ -328,8 +320,8 @@ public class ConfigSettings
             {   holder.get(registryAccess).put(entry.getKey(), entry.getValue());
             }
         },
-        (encoder, registryAccess) -> ConfigHelper.serializeRegistry(encoder, "DimensionTemps", Registry.DIMENSION_TYPE_REGISTRY, ModRegistries.DIMENSION_TEMP_DATA, registryAccess),
-        (decoder, registryAccess) -> ConfigHelper.deserializeRegistry(decoder, "DimensionTemps", Registry.DIMENSION_TYPE_REGISTRY, ModRegistries.DIMENSION_TEMP_DATA, registryAccess),
+        (encoder, registryAccess) -> ConfigHelper.serializeRegistry(encoder, "DimensionTemps", Registry.DIMENSION_TYPE_REGISTRY, ModRegistries.DIMENSION_TEMP_DATA, registryAccess.registryOrThrow(Registry.DIMENSION_TYPE_REGISTRY)::getKey),
+        (decoder, registryAccess) -> ConfigHelper.deserializeRegistry(decoder, "DimensionTemps", Registry.DIMENSION_TYPE_REGISTRY, ModRegistries.DIMENSION_TEMP_DATA, registryAccess.registryOrThrow(Registry.DIMENSION_TYPE_REGISTRY)::get),
         (saver, registryAccess) -> WorldSettingsConfig.setDimensionTemperatures(saver.entrySet().stream()
                                                      .map(entry ->
                                                      {
@@ -354,8 +346,8 @@ public class ConfigSettings
             {   holder.get(registryAccess).put(entry.getKey(), entry.getValue());
             }
         },
-        (encoder, registryAccess) -> ConfigHelper.serializeRegistry(encoder, "DimensionOffsets", Registry.DIMENSION_TYPE_REGISTRY, ModRegistries.DIMENSION_TEMP_DATA, registryAccess),
-        (decoder, registryAccess) -> ConfigHelper.deserializeRegistry(decoder, "DimensionOffsets", Registry.DIMENSION_TYPE_REGISTRY, ModRegistries.DIMENSION_TEMP_DATA, registryAccess),
+        (encoder, registryAccess) -> ConfigHelper.serializeRegistry(encoder, "DimensionOffsets", Registry.DIMENSION_TYPE_REGISTRY, ModRegistries.DIMENSION_TEMP_DATA, registryAccess.registryOrThrow(Registry.DIMENSION_TYPE_REGISTRY)::getKey),
+        (decoder, registryAccess) -> ConfigHelper.deserializeRegistry(decoder, "DimensionOffsets", Registry.DIMENSION_TYPE_REGISTRY, ModRegistries.DIMENSION_TEMP_DATA, registryAccess.registryOrThrow(Registry.DIMENSION_TYPE_REGISTRY)::get),
         (saver, registryAccess) -> WorldSettingsConfig.setDimensionTempOffsets(saver.entrySet().stream()
                                                      .map(entry ->
                                                      {
@@ -380,8 +372,8 @@ public class ConfigSettings
             {   holder.get(registryAccess).put(entry.getKey(), entry.getValue());
             }
         },
-        (encoder, registryAccess) -> ConfigHelper.serializeRegistry(encoder, "StructureTemperatures", Registry.STRUCTURE_FEATURE_REGISTRY, ModRegistries.STRUCTURE_TEMP_DATA, registryAccess),
-        (decoder, registryAccess) -> ConfigHelper.deserializeRegistry(decoder, "StructureTemperatures", Registry.STRUCTURE_FEATURE_REGISTRY, ModRegistries.STRUCTURE_TEMP_DATA, registryAccess),
+        (encoder, registryAccess) -> ConfigHelper.serializeRegistry(encoder, "StructureTemperatures", Registry.STRUCTURE_FEATURE_REGISTRY, ModRegistries.STRUCTURE_TEMP_DATA, registryAccess.registryOrThrow(Registry.STRUCTURE_FEATURE_REGISTRY)::getKey),
+        (decoder, registryAccess) -> ConfigHelper.deserializeRegistry(decoder, "StructureTemperatures", Registry.STRUCTURE_FEATURE_REGISTRY, ModRegistries.STRUCTURE_TEMP_DATA, registryAccess.registryOrThrow(Registry.STRUCTURE_FEATURE_REGISTRY)::get),
         (saver, registryAccess) -> WorldSettingsConfig.setStructureTemperatures(saver.entrySet().stream()
                                                      .map(entry ->
                                                      {
@@ -406,8 +398,8 @@ public class ConfigSettings
             {   holder.get(registryAccess).put(entry.getKey(), entry.getValue());
             }
         },
-        (encoder, registryAccess) -> ConfigHelper.serializeRegistry(encoder, "StructureOffsets", Registry.STRUCTURE_FEATURE_REGISTRY, ModRegistries.STRUCTURE_TEMP_DATA, registryAccess),
-        (decoder, registryAccess) -> ConfigHelper.deserializeRegistry(decoder, "StructureOffsets", Registry.STRUCTURE_FEATURE_REGISTRY, ModRegistries.STRUCTURE_TEMP_DATA, registryAccess),
+        (encoder, registryAccess) -> ConfigHelper.serializeRegistry(encoder, "StructureOffsets", Registry.STRUCTURE_FEATURE_REGISTRY, ModRegistries.STRUCTURE_TEMP_DATA, registryAccess.registryOrThrow(Registry.STRUCTURE_FEATURE_REGISTRY)::getKey),
+        (decoder, registryAccess) -> ConfigHelper.deserializeRegistry(decoder, "StructureOffsets", Registry.STRUCTURE_FEATURE_REGISTRY, ModRegistries.STRUCTURE_TEMP_DATA, registryAccess.registryOrThrow(Registry.STRUCTURE_FEATURE_REGISTRY)::get),
         (saver, registryAccess) -> WorldSettingsConfig.setStructureTempOffsets(saver.entrySet().stream()
                                                      .map(entry ->
                                                      {
@@ -447,11 +439,12 @@ public class ConfigSettings
         HEARTH_FUEL = addSetting("hearth_fuel_items", FastMultiMap::new, holder -> fuelAdder.accept(FuelData.FuelType.HEARTH, ItemSettingsConfig.HEARTH_FUELS, holder));
 
         SOULSPRING_LAMP_FUEL = addSyncedSetting("lamp_fuel_items", FastMultiMap::new, holder -> fuelAdder.accept(FuelData.FuelType.SOUL_LAMP, ItemSettingsConfig.SOULSPRING_LAMP_FUELS, holder),
-        (encoder) -> ConfigHelper.serializeItemMultimap(encoder, "LampFuelItems", FuelData::serialize),
-        (decoder) -> ConfigHelper.deserializeItemMultimap(decoder, "LampFuelItems", FuelData::deserialize),
-        (saver) -> ConfigHelper.writeItemMultimap(saver,
-                                             list -> ItemSettingsConfig.getInstance().setSoulLampFuelItems(list),
-                                             fuel -> Arrays.asList(fuel.fuel, fuel.data.nbt.tag.toString())));
+        (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "LampFuelItems", ModRegistries.FUEL_DATA, ForgeRegistries.ITEMS::getKey),
+        (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "LampFuelItems", ModRegistries.FUEL_DATA, ForgeRegistries.ITEMS::getValue),
+        (saver) -> ConfigHelper.writeRegistryMultimap(saver,
+                                                      fuel -> ConfigHelper.getTaggableListStrings(fuel.data.items.get(), Registry.ITEM_REGISTRY),
+                                                      fuel -> Arrays.asList(fuel.fuel, fuel.data.nbt.tag.toString()),
+                                                      list -> ItemSettingsConfig.SOULSPRING_LAMP_FUELS.set(list)));
 
         HEARTH_POTIONS_ENABLED = addSetting("hearth_potions_enabled", () -> true, holder -> holder.set(ItemSettingsConfig.getInstance().arePotionsEnabled()));
         HEARTH_POTION_BLACKLIST = addSetting("hearth_potion_blacklist", ArrayList::new,
@@ -482,15 +475,15 @@ public class ConfigSettings
         INSULATION_ITEMS = addSyncedSetting("insulation_items", FastMultiMap::new, holder ->
         {   insulatorAdder.accept(ItemSettingsConfig.INSULATION_ITEMS, holder, Insulation.Slot.ITEM);
         },
-        (encoder) -> ConfigHelper.serializeItemMultimap(encoder, "InsulationItems", InsulatorData::serialize),
-        (decoder) -> ConfigHelper.deserializeItemMultimap(decoder, "InsulationItems", InsulatorData::deserialize),
+        (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "InsulationItems", ModRegistries.INSULATOR_DATA, ForgeRegistries.ITEMS::getKey),
+        (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "InsulationItems", ModRegistries.INSULATOR_DATA, ForgeRegistries.ITEMS::getValue),
         (saver) -> ConfigHelper.writeItemInsulations(saver, list -> ItemSettingsConfig.getInstance().setInsulationItems(list)));
 
         INSULATING_ARMORS = addSyncedSetting("insulating_armors", FastMultiMap::new, holder ->
         {   insulatorAdder.accept(ItemSettingsConfig.INSULATING_ARMOR, holder, Insulation.Slot.ARMOR);
         },
-        (encoder) -> ConfigHelper.serializeItemMultimap(encoder, "InsulatingArmors", InsulatorData::serialize),
-        (decoder) -> ConfigHelper.deserializeItemMultimap(decoder, "InsulatingArmors", InsulatorData::deserialize),
+        (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "InsulatingArmors", ModRegistries.INSULATOR_DATA, ForgeRegistries.ITEMS::getKey),
+        (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "InsulatingArmors", ModRegistries.INSULATOR_DATA, ForgeRegistries.ITEMS::getValue),
         (saver) -> ConfigHelper.writeItemInsulations(saver, list -> ItemSettingsConfig.getInstance().setInsulatingArmorItems(list)));
 
         INSULATING_CURIOS = addSyncedSetting("insulating_curios", FastMultiMap::new, holder ->
@@ -499,8 +492,8 @@ public class ConfigSettings
             {   insulatorAdder.accept(ItemSettingsConfig.INSULATING_CURIOS, holder, Insulation.Slot.CURIO);
             }
         },
-        (encoder) -> ConfigHelper.serializeItemMultimap(encoder, "InsulatingCurios", InsulatorData::serialize),
-        (decoder) -> ConfigHelper.deserializeItemMultimap(decoder, "InsulatingCurios", InsulatorData::deserialize),
+        (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "InsulatingCurios", ModRegistries.INSULATOR_DATA, ForgeRegistries.ITEMS::getKey),
+        (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "InsulatingCurios", ModRegistries.INSULATOR_DATA, ForgeRegistries.ITEMS::getValue),
         (saver) ->
         {   if (CompatManager.isCuriosLoaded())
             {   ConfigHelper.writeItemInsulations(saver, list -> ItemSettingsConfig.getInstance().setInsulatingCurios(list));
@@ -570,18 +563,19 @@ public class ConfigSettings
             // Add entries
             holder.get().putAll(dataMap);
         },
-        (encoder) -> ConfigHelper.serializeItemMultimap(encoder, "FoodTemperatures", FoodData::serialize),
-        (decoder) -> ConfigHelper.deserializeItemMultimap(decoder, "FoodTemperatures", FoodData::deserialize),
-        (saver) -> ConfigHelper.writeItemMultimap(saver,
-                                                  list -> ItemSettingsConfig.getInstance().setFoodTemperatures(list),
-                                                  food -> ListBuilder.begin(food.temperature, food.data.nbt.tag.toString())
-                                                                     .addIf(food.duration > 0, () -> food.duration).build()));
+        (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "FoodTemperatures", ModRegistries.FOOD_DATA, ForgeRegistries.ITEMS::getKey),
+        (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "FoodTemperatures", ModRegistries.FOOD_DATA, ForgeRegistries.ITEMS::getValue),
+        (saver) -> ConfigHelper.writeRegistryMultimap(saver,
+                                                      food -> ConfigHelper.getTaggableListStrings(food.data.items.get(), Registry.ITEM_REGISTRY),
+                                                      food -> ListBuilder.begin(food.temperature, food.data.nbt.tag.toString())
+                                                              .addIf(food.duration > 0, () -> food.duration).build(),
+                                                      list -> ItemSettingsConfig.FOOD_TEMPERATURES.set(list)));
 
         CARRIED_ITEM_TEMPERATURES = addSyncedSetting("carried_item_temps", FastMultiMap::new, holder ->
         {
             // Read the insulation items from the config
             Multimap<Item, ItemCarryTempData> dataMap = new FastMultiMap<>();
-            for (List<?> list : ItemSettingsConfig.CARRIED_ITEM_TEMPERATURE.get())
+            for (List<?> list : ItemSettingsConfig.CARRIED_ITEM_TEMPERATURES.get())
             {
                 ItemCarryTempData data = ItemCarryTempData.fromToml(list);
                 if (data == null) continue;
@@ -595,12 +589,12 @@ public class ConfigSettings
             // Add entries
             holder.get().putAll(dataMap);
         },
-        (encoder) -> ConfigHelper.serializeItemMultimap(encoder, "CarriedItemTemps", ItemCarryTempData::serialize),
-        (decoder) -> ConfigHelper.deserializeItemMultimap(decoder, "CarriedItemTemps", ItemCarryTempData::deserialize),
+        (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "CarriedItemTemps", ModRegistries.CARRY_TEMP_DATA, ForgeRegistries.ITEMS::getKey),
+        (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "CarriedItemTemps", ModRegistries.CARRY_TEMP_DATA, ForgeRegistries.ITEMS::getValue),
         (saver) ->
         {
-            ConfigHelper.writeItemMultimap(saver,
-            list -> ItemSettingsConfig.getInstance().setCarriedTemps(list),
+            ConfigHelper.writeRegistryMultimap(saver,
+            temp -> ConfigHelper.getTaggableListStrings(temp.data.items.get(), Registry.ITEM_REGISTRY),
             temp ->
             {
                 List<Object> entry = new ArrayList<>();
@@ -617,7 +611,8 @@ public class ConfigSettings
                 {   entry.add(temp.data.nbt.tag.toString());
                 }
                 return entry;
-            });
+            },
+            list -> ItemSettingsConfig.CARRIED_ITEM_TEMPERATURES.set(list));
         });
 
         WATERSKIN_STRENGTH = addSetting("waterskin_strength", () -> 50, holder -> holder.set(ItemSettingsConfig.getInstance().getWaterskinStrength()));

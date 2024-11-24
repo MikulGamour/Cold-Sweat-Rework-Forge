@@ -27,7 +27,7 @@ public class ItemSettingsConfig
     public static final ForgeConfigSpec.ConfigValue<List<? extends List<?>>> SOULSPRING_LAMP_FUELS;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> SOULSPRING_LAMP_DIMENSIONS;
     public static final ForgeConfigSpec.ConfigValue<List<? extends List<?>>> FOOD_TEMPERATURES;
-    public static final ForgeConfigSpec.ConfigValue<List<? extends List<?>>> CARRIED_ITEM_TEMPERATURE;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends List<?>>> CARRIED_ITEM_TEMPERATURES;
 
     public static final ForgeConfigSpec.ConfigValue<List<? extends List<?>>> INSULATION_ITEMS;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> INSULATION_BLACKLIST;
@@ -346,7 +346,7 @@ public class ItemSettingsConfig
          */
         BUILDER.push("Misc");
 
-        CARRIED_ITEM_TEMPERATURE = BUILDER
+        CARRIED_ITEM_TEMPERATURES = BUILDER
                 .comment("Defines items that affect the player's temperature when in the inventory",
                          "Format: [[\"item_id\", temperature, strict_type, trait, *nbt, *max_effect], [\"item_id\", temperature, strict_type, trait, *nbt, *max_effect], ...etc]",
                          "temperature: The temperature change the item will apply to the entity. For core temperature, this is applied every tick",
@@ -461,7 +461,7 @@ public class ItemSettingsConfig
     }
 
     public List<? extends List<?>> getCarriedTemps()
-    {   return CARRIED_ITEM_TEMPERATURE.get();
+    {   return CARRIED_ITEM_TEMPERATURES.get();
     }
 
     /* Setters */
@@ -559,8 +559,8 @@ public class ItemSettingsConfig
     }
 
     public synchronized void setCarriedTemps(List<? extends List<?>> items)
-    {   synchronized (CARRIED_ITEM_TEMPERATURE)
-        {   CARRIED_ITEM_TEMPERATURE.set(items);
+    {   synchronized (CARRIED_ITEM_TEMPERATURES)
+        {   CARRIED_ITEM_TEMPERATURES.set(items);
         }
     }
 }

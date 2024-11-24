@@ -71,7 +71,7 @@ public class TooltipHandler
     public static FastMap<UUID, Boolean> HOVERED_STACK_PREDICATES = new FastMap<>();
 
     public static <T extends ConfigData<?>> boolean passesRequirement(T element)
-    {   return HOVERED_STACK_PREDICATES.getOrDefault(element.getId(), false);
+    {   return HOVERED_STACK_PREDICATES.getOrDefault(element.getId(), true);
     }
 
     public static boolean isShiftDown()
@@ -214,7 +214,6 @@ public class TooltipHandler
             EquipmentSlotType equipmentSlot = EntityHelper.getEquipmentSlot(hoveredSlot.index);
             if (!HOVERED_STACK.equals(stack))
             {
-                HOVERED_STACK_PREDICATES.clear();
                 if (HOVERED_ITEM_UPDATE_COOLDOWN <= 0)
                 {
                     ColdSweatPacketHandler.INSTANCE.sendToServer(SyncItemPredicatesMessage.fromClient(stack, hoveredSlot.index, equipmentSlot));

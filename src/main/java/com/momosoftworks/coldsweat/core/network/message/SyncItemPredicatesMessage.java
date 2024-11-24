@@ -110,8 +110,7 @@ public class SyncItemPredicatesMessage
         if (receivingSide.isClient())
         {
             context.enqueueWork(() ->
-            {   TooltipHandler.HOVERED_STACK_PREDICATES.clear();
-                TooltipHandler.HOVERED_STACK_PREDICATES.putAll(message.predicateMap);
+            {   TooltipHandler.HOVERED_STACK_PREDICATES.putAll(message.predicateMap);
             });
         }
         // Client is asking server for insulator predicates

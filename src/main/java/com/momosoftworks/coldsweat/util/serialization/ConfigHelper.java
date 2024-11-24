@@ -20,6 +20,7 @@ import com.momosoftworks.coldsweat.util.math.FastMultiMap;
 import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import net.minecraft.block.Block;
 import net.minecraft.entity.EntityType;
+import net.minecraft.fluid.Fluid;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
@@ -37,6 +38,7 @@ import net.minecraft.util.registry.DynamicRegistries;
 import net.minecraft.util.registry.MutableRegistry;
 import net.minecraft.util.registry.Registry;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.IForgeRegistry;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 
 import java.io.IOException;
@@ -44,9 +46,7 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
+import java.util.function.*;
 
 public class ConfigHelper
 {
@@ -88,7 +88,7 @@ public class ConfigHelper
         return parsedObjects;
     }
 
-    private static <T>ITagCollection<T> getTagsForRegistry(RegistryKey<Registry<T>> registry)
+    public static <T> ITagCollection<T> getTagsForRegistry(RegistryKey<Registry<T>> registry)
     {
         if (registry.equals(Registry.ITEM_REGISTRY))
         {   return ((ITagCollection<T>) ItemTags.getAllTags());
@@ -100,6 +100,23 @@ public class ConfigHelper
         {   return ((ITagCollection<T>) FluidTags.getAllTags());
         }
         else if (registry.equals(Registry.ENTITY_TYPE_REGISTRY))
+        {   return ((ITagCollection<T>) EntityTypeTags.getAllTags());
+        }
+        return null;
+    }
+
+    public static <T> ITagCollection<T> getTagsForObject(T object)
+    {
+        if (object instanceof Item)
+        {   return ((ITagCollection<T>) ItemTags.getAllTags());
+        }
+        else if (object instanceof Block)
+        {   return ((ITagCollection<T>) BlockTags.getAllTags());
+        }
+        else if (object instanceof Fluid)
+        {   return ((ITagCollection<T>) FluidTags.getAllTags());
+        }
+        else if (object instanceof EntityType)
         {   return ((ITagCollection<T>) EntityTypeTags.getAllTags());
         }
         return null;
@@ -279,7 +296,9 @@ public class ConfigHelper
         return tag;
     }
 
-    public static <K, V extends ConfigData<?>> CompoundNBT serializeRegistry(Map<K, V> map, String key, RegistryKey<Registry<K>> keyRegistry, RegistryKey<Registry<V>> modRegistry, DynamicRegistries registryAccess)
+    public static <K, V extends ConfigData<?>> CompoundNBT serializeRegistry(Map<K, V> map, String key,
+                                                                             RegistryKey<Registry<K>> keyRegistry, RegistryKey<Registry<V>> modRegistry,
+                                                                             Function<K, ResourceLocation> registryGetter)
     {
         Codec<V> codec = ModRegistries.getCodec(modRegistry);
         CompoundNBT tag = new CompoundNBT();
@@ -287,12 +306,14 @@ public class ConfigHelper
 
         for (Map.Entry<K, V> entry : map.entrySet())
         {
-            ResourceLocation elementId = registryAccess.registryOrThrow(keyRegistry).getKey(entry.getKey());
+            ResourceLocation elementId = registryGetter.apply(entry.getKey());
             if (elementId == null)
             {   ColdSweat.LOGGER.error("Error serializing {}: \"{}\" does not exist", keyRegistry.location(), entry.getKey());
                 continue;
             }
-            codec.encodeStart(NBTDynamicOps.INSTANCE, entry.getValue()).result().ifPresent(encoded ->
+            codec.encodeStart(NBTDynamicOps.INSTANCE, entry.getValue())
+            .resultOrPartial(e -> ColdSweat.LOGGER.error("Error serializing {} \"{}\": {}", keyRegistry.location(), elementId, e))
+            .ifPresent(encoded ->
             {
                 ((CompoundNBT) encoded).putUUID("UUID", entry.getValue().getId());
                 mapTag.put(elementId.toString(), encoded);
@@ -302,7 +323,9 @@ public class ConfigHelper
         return tag;
     }
 
-    public static <K, V extends ConfigData<?>> Map<K, V> deserializeRegistry(CompoundNBT tag, String key, RegistryKey<Registry<K>> keyRegistry, RegistryKey<Registry<V>> modRegistry, DynamicRegistries registryAccess)
+    public static <K, V extends ConfigData<?>> Map<K, V> deserializeRegistry(CompoundNBT tag, String key,
+                                                                             RegistryKey<Registry<K>> keyRegistry, RegistryKey<Registry<V>> modRegistry,
+                                                                             Function<ResourceLocation, K> registryGetter)
     {
         Codec<V> codec = ModRegistries.getCodec(modRegistry);
 
@@ -312,132 +335,106 @@ public class ConfigHelper
         for (String entryKey : mapTag.getAllKeys())
         {
             CompoundNBT entryData = mapTag.getCompound(entryKey);
-            K object = registryAccess.registryOrThrow(keyRegistry).get(new ResourceLocation(entryKey));
+            K object = registryGetter.apply(new ResourceLocation(entryKey));
             if (object == null)
             {   ColdSweat.LOGGER.error("Error deserializing {}: \"{}\" does not exist", keyRegistry.location(), entryKey);
                 continue;
             }
             codec.decode(NBTDynamicOps.INSTANCE, entryData).result().map(Pair::getFirst)
-                 .ifPresent(value -> map.put(object, value));
+            .ifPresent(value ->
+            {
+                ConfigData.IDENTIFIABLES.put(entryData.getUUID("UUID"), value);
+                map.put(object, value);
+            });
         }
         return map;
     }
 
-    public static <T> CompoundNBT serializeItemMap(Map<Item, T> map, String key, Function<T, CompoundNBT> serializer)
+    public static <K, V extends ConfigData<?>> CompoundNBT serializeMultimapRegistry(Multimap<K, V> map, String key,
+                                                                                     RegistryKey<Registry<V>> modRegistry,
+                                                                                     Function<K, ResourceLocation> keyGetter)
     {
+        Codec<V> codec = ModRegistries.getCodec(modRegistry);
         CompoundNBT tag = new CompoundNBT();
         CompoundNBT mapTag = new CompoundNBT();
-        for (Map.Entry<Item, T> entry : map.entrySet())
-        {
-            ResourceLocation itemId = ForgeRegistries.ITEMS.getKey(entry.getKey());
-            if (itemId == null) continue;
-            mapTag.put(itemId.toString(), serializer.apply(entry.getValue()));
-        }
-        tag.put(key, mapTag);
 
-        return tag;
-    }
-
-    public static <T> CompoundNBT serializeItemMultimap(Multimap<Item, T> map, String key, Function<T, CompoundNBT> serializer)
-    {
-        CompoundNBT tag = new CompoundNBT();
-        ListNBT mapTag = new ListNBT();
-        for (Map.Entry<Item, T> entry : map.entries())
+        for (Map.Entry<K, Collection<V>> entry : map.asMap().entrySet())
         {
-            CompoundNBT entryTag = new CompoundNBT();
-            ResourceLocation itemId = ForgeRegistries.ITEMS.getKey(entry.getKey());
-            if (itemId == null)
-            {
-                ColdSweat.LOGGER.error("Error serializing item map: item \"{}\" does not exist", entry.getKey());
+            ResourceLocation elementId = keyGetter.apply(entry.getKey());
+            if (elementId == null)
+            {   ColdSweat.LOGGER.error("Error serializing: \"{}\" does not exist in registry", entry.getKey());
                 continue;
             }
-            entryTag.putString("Item", itemId.toString());
-            entryTag.put("Value", serializer.apply(entry.getValue()));
-            mapTag.add(entryTag);
+            ListNBT valuesTag = new ListNBT();
+            for (V value : entry.getValue())
+            {
+                codec.encodeStart(NBTDynamicOps.INSTANCE, value)
+                .resultOrPartial(e -> ColdSweat.LOGGER.error("Error serializing {} \"{}\": {}", modRegistry.location(), elementId, e))
+                .ifPresent(encoded ->
+                {
+                    ((CompoundNBT) encoded).putUUID("UUID", value.getId());
+                    valuesTag.add(encoded);
+                });
+            }
+            mapTag.put(elementId.toString(), valuesTag);
         }
         tag.put(key, mapTag);
-
         return tag;
     }
 
-    public static <T> Map<Item, T> deserializeItemMap(CompoundNBT tag, String key, Function<CompoundNBT, T> deserializer)
+    public static <K, V extends ConfigData<?>> Multimap<K, V> deserializeMultimapRegistry(CompoundNBT tag, String key,
+                                                                                          RegistryKey<Registry<V>> modRegistry,
+                                                                                          Function<ResourceLocation, K> keyGetter)
     {
-        Map<Item, T> map = new HashMap<>();
+        Codec<V> codec = ModRegistries.getCodec(modRegistry);
+
+        Multimap<K, V> map = new FastMultiMap<>();
         CompoundNBT mapTag = tag.getCompound(key);
-        for (String itemID : mapTag.getAllKeys())
+
+        for (String entryKey : mapTag.getAllKeys())
         {
-            Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(itemID));
-            T value = deserializer.apply(mapTag.getCompound(itemID));
-            if (value != null)
-            {   map.put(item, value);
+            ListNBT entryData = mapTag.getList(entryKey, 10);
+            K object = keyGetter.apply(new ResourceLocation(entryKey));
+            if (object == null)
+            {   ColdSweat.LOGGER.error("Error deserializing: \"{}\" does not exist in registry", entryKey);
+                continue;
             }
-        }
-        return map;
-    }
-
-    public static <T> Multimap<Item, T> deserializeItemMultimap(CompoundNBT tag, String key, Function<CompoundNBT, T> deserializer)
-    {
-        Multimap<Item, T> map = new FastMultiMap<>();
-        ListNBT mapTag = tag.getList(key, 10);
-        for (int i = 0; i < mapTag.size(); i++)
-        {
-            CompoundNBT entryTag = mapTag.getCompound(i);
-            Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation(entryTag.getString("Item")));
-            T value = deserializer.apply(entryTag.getCompound("Value"));
-            if (value != null)
-            {   map.put(item, value);
-            }
-        }
-        return map;
-    }
-
-    public static <T> Map<Item, T> readItemMap(List<? extends List<?>> source, BiFunction<Item, List<?>, T> valueParser)
-    {   return readItemMapLike(source, valueParser).getFirst();
-    }
-
-    public static <T> Multimap<Item, T> readItemMultimap(List<? extends List<?>> source, BiFunction<Item, List<?>, T> valueParser)
-    {   return readItemMapLike(source, valueParser).getSecond();
-    }
-
-    private static <T> Pair<Map<Item, T>, Multimap<Item, T>> readItemMapLike(List<? extends List<?>> source, BiFunction<Item, List<?>, T> valueParser)
-    {
-        Map<Item, T> map = new HashMap<>();
-        Multimap<Item, T> multimap = new FastMultiMap<>();
-        for (List<?> entry : source)
-        {
-            String itemId = (String) entry.get(0);
-            for (Item item : getItems(itemId.split(",")))
+            for (INBT valueTag : entryData)
             {
-                T value = valueParser.apply(item, entry.subList(1, entry.size()));
-                if (value != null)
-                {   map.put(item, value);
-                    multimap.put(item, value);
-                }
+                CompoundNBT valueData = (CompoundNBT) valueTag;
+                codec.decode(NBTDynamicOps.INSTANCE, valueData).result().map(Pair::getFirst)
+                .ifPresent(value ->
+                {
+                    ConfigData.IDENTIFIABLES.put(valueData.getUUID("UUID"), value);
+                    map.put(object, value);
+                });
             }
         }
-        return Pair.of(map, multimap);
+        return map;
     }
 
-    public static <T> void writeItemMap(Map<Item, T> map, Consumer<List<? extends List<?>>> saver, Function<T, List<?>> valueWriter)
-    {   writeItemMapLike(Either.left(map), saver, valueWriter);
+    public static <T> void writeRegistryMap(Map<Item, T> map, Function<T, List<String>> keyWriter,
+                                            Function<T, List<?>> valueWriter, Consumer<List<? extends List<?>>> saver)
+    {   writeRegistryMapLike(Either.left(map), keyWriter, valueWriter, saver);
     }
 
-    public static <T> void writeItemMultimap(Multimap<Item, T> map, Consumer<List<? extends List<?>>> saver, Function<T, List<?>> valueWriter)
-    {   writeItemMapLike(Either.right(map), saver, valueWriter);
+    public static <K, V> void writeRegistryMultimap(Multimap<K, V> map, Function<V, List<String>> keyWriter,
+                                                    Function<V, List<?>> valueWriter, Consumer<List<? extends List<?>>> saver)
+    {   writeRegistryMapLike(Either.right(map), keyWriter, valueWriter, saver);
     }
 
-    private static <T> void writeItemMapLike(Either<Map<Item, T>, Multimap<Item, T>> map, Consumer<List<? extends List<?>>> saver, Function<T, List<?>> valueWriter)
+    private static <K, V> void writeRegistryMapLike(Either<Map<K, V>, Multimap<K, V>> map, Function<V, List<String>> keyWriter,
+                                                    Function<V, List<?>> valueWriter, Consumer<List<? extends List<?>>> saver)
     {
         List<List<?>> list = new ArrayList<>();
-        for (Map.Entry<Item, T> entry : map.map(Map::entrySet, Multimap::entries))
+        for (Map.Entry<K, V> entry : map.map(Map::entrySet, Multimap::entries))
         {
-            Item item = entry.getKey();
-            T value = entry.getValue();
+            V value = entry.getValue();
 
             List<Object> itemData = new ArrayList<>();
-            ResourceLocation itemID = ForgeRegistries.ITEMS.getKey(item);
+            List<String> keySet = keyWriter.apply(value);
 
-            itemData.add(itemID.toString());
+            itemData.add(concatStringList(keySet));
 
             List<?> args = valueWriter.apply(value);
             if (args == null) continue;
@@ -450,7 +447,7 @@ public class ConfigHelper
 
     public static void writeItemInsulations(Multimap<Item, InsulatorData> items, Consumer<List<? extends List<?>>> saver)
     {
-        writeItemMultimap(items, saver, insulator ->
+        writeRegistryMultimap(items, insulator -> getTaggableListStrings(insulator.data.items.orElse(Arrays.asList()), Registry.ITEM_REGISTRY), insulator ->
         {
             if (insulator == null)
             {   ColdSweat.LOGGER.error("Error writing item insulations: insulator value is null");
@@ -472,7 +469,7 @@ public class ConfigHelper
             itemData.add(insulator.data.nbt.tag.toString());
 
             return itemData;
-        });
+        }, saver);
     }
 
     public static <T extends IForgeRegistryEntry<T>> Codec<Either<ITag<T>, T>> tagOrBuiltinCodec(RegistryKey<Registry<T>> vanillaRegistry, Registry<T> forgeRegistry)
@@ -496,6 +493,58 @@ public class ConfigHelper
         Registry<T> registry = registryAccess.registry(vanillaRegistry).get();
         return Codec.STRING.xmap(str -> registry.get(new ResourceLocation(str)),
                                  item -> registry.getKey(item).toString());
+    }
+
+    public static <T> String serializeTagOrRegistryKey(Either<ITag<T>, RegistryKey<T>> obj)
+    {
+        return obj.map(tag -> "#" + ConfigHelper.getTagsForObject(obj).getId((ITag) tag),
+                       key -> key.location().toString());
+    }
+
+    public static <T extends IForgeRegistryEntry<T>> String serializeTagOrBuiltinObject(IForgeRegistry<T> forgeRegistry, Either<ITag<T>, T> obj)
+    {
+        return obj.map(tag -> "#" + ConfigHelper.getTagsForObject(obj).getId((ITag) tag),
+                       regObj -> Optional.ofNullable(forgeRegistry.getKey(regObj)).map(ResourceLocation::toString).orElse(""));
+    }
+
+    public static <T> String serializeTagOrRegistryObject(RegistryKey<Registry<T>> registry, Either<ITag<T>, T> obj, DynamicRegistries registryAccess)
+    {
+        Registry<T> reg = registryAccess.registryOrThrow(registry);
+        return obj.map(tag -> "#" + ConfigHelper.getTagsForObject(obj).getId((ITag) tag),
+                       regObj -> Optional.ofNullable(reg.getKey(regObj)).map(ResourceLocation::toString).orElse(""));
+    }
+
+    public static <T> Either<ITag<T>, RegistryKey<T>> deserializeTagOrRegistryKey(RegistryKey<Registry<T>> registry, String key)
+    {
+        if (key.startsWith("#"))
+        {
+            ResourceLocation tagID = new ResourceLocation(key.replace("#", ""));
+            return Either.left(ConfigHelper.getTagsForRegistry(registry).getTag(tagID));
+        }
+        else
+        {
+            RegistryKey<T> biomeKey = RegistryKey.create(registry, new ResourceLocation(key));
+            return Either.right(biomeKey);
+        }
+    }
+
+    public static <T extends IForgeRegistryEntry<T>> Either<ITag<T>, T> deserializeTagOrRegistryObject(String tagOrRegistryObject, RegistryKey<Registry<T>> vanillaRegistry, IForgeRegistry<T> forgeRegistry)
+    {
+        if (tagOrRegistryObject.startsWith("#"))
+        {
+            ResourceLocation tagID = new ResourceLocation(tagOrRegistryObject.replace("#", ""));
+            return Either.left(ConfigHelper.getTagsForRegistry(vanillaRegistry).getTag(tagID));
+        }
+        else
+        {
+            ResourceLocation id = new ResourceLocation(tagOrRegistryObject);
+            T obj = forgeRegistry.getValue(id);
+            if (obj == null)
+            {   ColdSweat.LOGGER.error("Error deserializing config: object \"{}\" does not exist", tagOrRegistryObject);
+                return null;
+            }
+            return Either.right(obj);
+        }
     }
 
     public static Optional<FuelData> findFirstFuelMatching(DynamicHolder<Multimap<Item, FuelData>> predicates, ItemStack stack)
@@ -529,5 +578,31 @@ public class ConfigHelper
         {
             throw new RuntimeException("Failed to load JSON file: " + location, e);
         }
+    }
+
+    public static String concatStringList(List<String> list)
+    {
+        StringBuilder builder = new StringBuilder();
+        Iterator<String> iter = list.iterator();
+        while (iter.hasNext())
+        {
+            builder.append(iter.next());
+            if (iter.hasNext())
+            {   builder.append(",");
+            }
+        }
+        return builder.toString();
+    }
+
+    public static <T> List<String> getTaggableListStrings(List<Either<ITag<T>, T>> list, RegistryKey<Registry<T>> registry)
+    {
+        DynamicRegistries registryAccess = RegistryHelper.getDynamicRegistries();
+        if (registryAccess == null) return Arrays.asList();
+        List<String> strings = new ArrayList<>();
+
+        for (Either<ITag<T>, T> entry : list)
+        {   strings.add(serializeTagOrRegistryObject(registry, entry, registryAccess));
+        }
+        return strings;
     }
 }
