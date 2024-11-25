@@ -59,7 +59,7 @@ public class BoilerScreen extends AbstractHearthScreen<BoilerContainer>
 
             blit(matrixStack, leftPos + 117, topPos + 78, 176, powered ? 14 : 22, 14, 8, 256, 256);
 
-            if (CSMath.betweenInclusive(mouseX, leftPos + 117, leftPos + 131) && CSMath.betweenInclusive(mouseY, topPos + 78, topPos + 86))
+            if (CSMath.betweenInclusive(mouseX, leftPos + 114, leftPos + 132) && CSMath.betweenInclusive(mouseY, topPos + 78, topPos + 86))
             {   this.renderComponentTooltip(matrixStack, Arrays.asList(new TranslationTextComponent(powered ? "gui.cold_sweat.hearth.powered" : "gui.cold_sweat.hearth.unpowered")), mouseX, mouseY);
             }
         }
