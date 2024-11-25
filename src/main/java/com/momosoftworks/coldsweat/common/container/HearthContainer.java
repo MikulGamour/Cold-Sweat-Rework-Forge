@@ -1,7 +1,6 @@
 package com.momosoftworks.coldsweat.common.container;
 
 import com.momosoftworks.coldsweat.config.ConfigSettings;
-import com.momosoftworks.coldsweat.core.event.TaskScheduler;
 import com.momosoftworks.coldsweat.core.init.MenuInit;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import net.minecraft.network.FriendlyByteBuf;
@@ -39,12 +38,6 @@ public class HearthContainer extends AbstractContainerMenu
                 Collection< MobEffectInstance> effects = PotionUtils.getMobEffects(stack);
                 return !effects.isEmpty()
                     && effects.stream().noneMatch(eff -> ConfigSettings.HEARTH_POTION_BLACKLIST.get().contains(eff.getEffect()));
-            }
-
-            @Override
-            public void setChanged()
-            {   TaskScheduler.scheduleServer(() -> ((HearthBlockEntity) this.container).checkConsumeFuel(), 0);
-                super.setChanged();
             }
         });
 
