@@ -982,8 +982,12 @@ public class ConfigSettings
 
     public static void decode(CompoundNBT tag, DynamicRegistries registryAccess)
     {
+        ConfigData.IDENTIFIABLES.clear();
         for (DynamicHolder<?> config : CONFIG_SETTINGS.values())
-        {   config.decode(tag, registryAccess);
+        {
+            if (config.isSynced())
+            {   config.decode(tag, registryAccess);
+            }
         }
     }
 
