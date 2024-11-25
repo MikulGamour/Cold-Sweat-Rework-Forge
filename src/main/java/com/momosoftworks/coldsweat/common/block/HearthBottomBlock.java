@@ -15,6 +15,7 @@ import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -58,7 +59,8 @@ public class HearthBottomBlock extends Block implements EntityBlock
                 .sound(SoundType.STONE)
                 .destroyTime(2.0F)
                 .explosionResistance(10.0F)
-                .requiresCorrectToolForDrops();
+                .requiresCorrectToolForDrops()
+                .isRedstoneConductor((state, level, pos) -> false);
     }
 
     public static Item.Properties getItemProperties()
@@ -71,12 +73,6 @@ public class HearthBottomBlock extends Block implements EntityBlock
         this.registerDefaultState(this.defaultBlockState().setValue(FACING, Direction.NORTH)
                                                           .setValue(SIDE_POWERED, false)
                                                           .setValue(BACK_POWERED, false));
-    }
-
-    @Override
-    public boolean propagatesSkylightDown(BlockState state, BlockGetter level, BlockPos pos)
-    {
-        return true;
     }
 
     @Nullable
@@ -248,7 +244,12 @@ public class HearthBottomBlock extends Block implements EntityBlock
     }
 
     @Override
-    public boolean shouldCheckWeakPower(BlockState state, LevelReader level, BlockPos pos, Direction side)
+    public boolean hasAnalogOutputSignal(BlockState pState)
     {   return true;
+    }
+
+    @Override
+    public int getAnalogOutputSignal(BlockState pState, Level level, BlockPos pos)
+    {   return AbstractContainerMenu.getRedstoneSignalFromBlockEntity(level.getBlockEntity(pos));
     }
 }

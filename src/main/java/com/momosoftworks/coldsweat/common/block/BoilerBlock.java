@@ -55,17 +55,27 @@ public class BoilerBlock extends Block implements EntityBlock
                 .destroyTime(2f)
                 .explosionResistance(10f)
                 .lightLevel(getLightValueLit(13))
+                .isRedstoneConductor(BoilerBlock::conductsRedstone)
                 .requiresCorrectToolForDrops();
-    }
-
-    private static ToIntFunction<BlockState> getLightValueLit(int lightValue)
-    {
-        return (state) -> state.getValue(BlockStateProperties.LIT) ? lightValue : 0;
     }
 
     public static Item.Properties getItemProperties()
     {
         return new Item.Properties().tab(ColdSweatGroup.COLD_SWEAT);
+    }
+
+    private static boolean conductsRedstone(BlockState state, BlockGetter level, BlockPos pos)
+    {
+        BlockEntity be = level.getBlockEntity(pos);
+        if (be instanceof HearthBlockEntity hearthLike)
+        {   return !hearthLike.hasSmokeStack();
+        }
+        return false;
+    }
+
+    private static ToIntFunction<BlockState> getLightValueLit(int lightValue)
+    {
+        return (state) -> state.getValue(BlockStateProperties.LIT) ? lightValue : 0;
     }
 
     public BoilerBlock(Block.Properties properties)
@@ -126,7 +136,12 @@ public class BoilerBlock extends Block implements EntityBlock
     public BlockState updateShape(BlockState state, Direction direction, BlockState neighborState, LevelAccessor level, BlockPos pos, BlockPos neighborPos)
     {
         if (neighborPos.equals(pos.above()) && level.getBlockEntity(pos) instanceof BoilerBlockEntity boiler)
-        {   boiler.checkForSmokestack();
+        {
+            boolean hasSmokestack = boiler.hasSmokeStack();
+            boiler.checkForSmokestack();
+            if (hasSmokestack != boiler.hasSmokeStack())
+            {   level.blockUpdated(pos, this);
+            }
         }
         return super.updateShape(state, direction, neighborState, level, pos, neighborPos);
     }
@@ -207,11 +222,6 @@ public class BoilerBlock extends Block implements EntityBlock
             && direction.getAxis() != Direction.Axis.Y
             && direction != state.getValue(FACING).getOpposite()
             && level.getBlockState(pos.above()).is(ModBlocks.SMOKESTACK);
-    }
-
-    @Override
-    public boolean shouldCheckWeakPower(BlockState state, LevelReader level, BlockPos pos, Direction side)
-    {   return true;
     }
 
     @Override
