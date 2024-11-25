@@ -281,11 +281,6 @@ public class HearthBlockEntity extends LockableLootTileEntity implements ITickab
             this.resetPaths();
         }
 
-        // Clear paths every 5 minutes to account for calculation errors
-        if (this.ticksExisted % 6000 == 0)
-        {   this.replacePaths(new ArrayList<>(Collections.singletonList(new SpreadPath(pos).setOrigin(pos))));
-        }
-
         // Reset if a nearby block has been updated
         if (forceRebuild || (rebuildCooldown <= 0 && !this.queuedUpdates.isEmpty()))
         {   this.resetPaths();
@@ -1078,10 +1073,17 @@ public class HearthBlockEntity extends LockableLootTileEntity implements ITickab
     }
 
     public void replacePaths(ArrayList<SpreadPath> newPaths)
-    {   this.frozenPaths = 0;
-        this.paths = newPaths;
-        this.pathLookup = newPaths.stream().map(path -> path.pos).collect(HashSet::new, HashSet::add, HashSet::addAll);
+    {
+        this.frozenPaths = 0;
+
+        this.paths.clear();
+        this.paths.addAll(newPaths);
+
+        this.pathLookup.clear();
+        this.pathLookup.addAll(newPaths.stream().map(path -> path.pos).collect(Collectors.toSet()));
+
         this.spreading = true;
+
         if (this.level.isClientSide)
         {   ClientOnlyHelper.addHearthPosition(this.getBlockPos());
         }
