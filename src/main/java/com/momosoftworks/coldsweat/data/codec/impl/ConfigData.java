@@ -14,9 +14,14 @@ public interface ConfigData<T>
 
     Codec<T> getCodec();
 
-
     default UUID getId()
-    {   return IDENTIFIABLES.inverse().computeIfAbsent(this, key -> UUID.randomUUID());
+    {
+        UUID id = IDENTIFIABLES.inverse().get(this);
+        if (id == null)
+        {   id = UUID.randomUUID();
+            setId(id);
+        }
+        return id;
     }
 
     default void setId(UUID id)
