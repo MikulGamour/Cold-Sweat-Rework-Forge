@@ -21,12 +21,6 @@ import java.util.Optional;
 
 public class DepthTempData implements ConfigData<DepthTempData>
 {
-    public static final Codec<DepthTempData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            TempRegion.CODEC.listOf().fieldOf("regions").forGetter(data -> data.temperatures),
-            ConfigHelper.dynamicCodec(Registry.DIMENSION_TYPE_REGISTRY).listOf().fieldOf("dimensions").forGetter(data -> data.dimensions),
-            Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(data -> data.requiredMods)
-    ).apply(instance, DepthTempData::new));
-
     public final List<TempRegion> temperatures;
     public final List<DimensionType> dimensions;
     public final Optional<List<String>> requiredMods;
@@ -36,6 +30,12 @@ public class DepthTempData implements ConfigData<DepthTempData>
         this.dimensions = dimensions;
         this.requiredMods = requiredMods;
     }
+
+    public static final Codec<DepthTempData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            TempRegion.CODEC.listOf().fieldOf("regions").forGetter(data -> data.temperatures),
+            ConfigHelper.dynamicCodec(Registry.DIMENSION_TYPE_REGISTRY).listOf().fieldOf("dimensions").forGetter(data -> data.dimensions),
+            Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(data -> data.requiredMods)
+    ).apply(instance, DepthTempData::new));
 
     public boolean withinBounds(World level, BlockPos pos)
     {

@@ -22,6 +22,7 @@ import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.feature.StructureFeature;
 import net.minecraft.world.gen.feature.structure.Structure;
 
+import javax.xml.ws.Holder;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -143,7 +144,7 @@ public class ModRegistriesEventJS extends StartupEventJS
         {   ColdSweat.LOGGER.error("Failed to find biome with ID: {}", biomeId);
             return;
         }
-        ConfigSettings.BIOME_TEMPS.get().put(biome, new BiomeTempData(biome, minTemp, maxTemp, Temperature.Units.fromID(units)));
+        ConfigSettings.BIOME_TEMPS.get().put(biome, new BiomeTempData(biome, minTemp, maxTemp, Temperature.Units.fromID(units), true));
     }
 
     public void addBiomeTemperature(String biomeId, double minTemp, double maxTemp)
@@ -158,7 +159,7 @@ public class ModRegistriesEventJS extends StartupEventJS
         {   ColdSweat.LOGGER.error("Failed to find biome with ID: {}", biomeId);
             return;
         }
-        ConfigSettings.BIOME_OFFSETS.get().put(biome, new BiomeTempData(biome, minTemp, maxTemp, Temperature.Units.fromID(units)));
+        ConfigSettings.BIOME_OFFSETS.get().put(biome, new BiomeTempData(biome, minTemp, maxTemp, Temperature.Units.fromID(units), false));
     }
 
     public void addBiomeOffset(String biomeId, double minTemp, double maxTemp)
@@ -177,7 +178,7 @@ public class ModRegistriesEventJS extends StartupEventJS
         {   ColdSweat.LOGGER.error("Failed to find dimension with ID: {}", dimensionId);
             return;
         }
-        ConfigSettings.DIMENSION_TEMPS.get().put(dimension, new DimensionTempData(dimension, temperature, Temperature.Units.fromID(units)));
+        ConfigSettings.DIMENSION_TEMPS.get().put(dimension, new DimensionTempData(dimension, temperature, Temperature.Units.fromID(units), false));
     }
 
     public void addDimensionTemperature(String dimensionId, double temperature)
@@ -192,7 +193,7 @@ public class ModRegistriesEventJS extends StartupEventJS
         {   ColdSweat.LOGGER.error("Failed to find dimension with ID: {}", dimensionId);
             return;
         }
-        ConfigSettings.DIMENSION_OFFSETS.get().put(dimension, new DimensionTempData(dimension, temperature, Temperature.Units.fromID(units)));
+        ConfigSettings.DIMENSION_OFFSETS.get().put(dimension, new DimensionTempData(dimension, temperature, Temperature.Units.fromID(units), true));
     }
 
     public void addDimensionOffset(String dimensionId, double temperature)

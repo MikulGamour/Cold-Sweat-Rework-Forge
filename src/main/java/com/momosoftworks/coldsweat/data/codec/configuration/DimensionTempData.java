@@ -6,12 +6,12 @@ import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.registry.DynamicRegistries;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.DimensionType;
 
 import javax.annotation.Nullable;
+import javax.xml.ws.Holder;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -34,12 +34,12 @@ public class DimensionTempData implements ConfigData<DimensionTempData>
         this.requiredMods = requiredMods;
     }
 
-    public DimensionTempData(DimensionType dimension, double temperature, Temperature.Units units)
-    {   this(Arrays.asList(dimension), temperature, units, false, Optional.empty());
+    public DimensionTempData(List<DimensionType> dimensions, double temperature, Temperature.Units units, boolean isOffset)
+    {   this(dimensions, temperature, units, isOffset, Optional.empty());
     }
 
-    public DimensionTempData(List<DimensionType> dimensions, double temperature, Temperature.Units units)
-    {   this(dimensions, temperature, units, false, Optional.empty());
+    public DimensionTempData(DimensionType dimension, double temperature, Temperature.Units units, boolean isOffset)
+    {   this(Arrays.asList(dimension), temperature, units, isOffset);
     }
 
     public static final Codec<DimensionTempData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -55,7 +55,7 @@ public class DimensionTempData implements ConfigData<DimensionTempData>
     }));
 
     @Nullable
-    public static DimensionTempData fromToml(List<?> entry, boolean absolute, DynamicRegistries registryAccess)
+    public static DimensionTempData fromToml(List<?> entry, boolean isOffset, DynamicRegistries registryAccess)
     {
         String dimensionIdString = (String) entry.get(0);
         List<DimensionType> dimensions = ConfigHelper.parseRegistryItems(Registry.DIMENSION_TYPE_REGISTRY, registryAccess, dimensionIdString);
@@ -70,7 +70,7 @@ public class DimensionTempData implements ConfigData<DimensionTempData>
         }
         double temp = ((Number) entry.get(1)).doubleValue();
         Temperature.Units units = entry.size() == 3 ? Temperature.Units.valueOf(((String) entry.get(2)).toUpperCase()) : Temperature.Units.MC;
-        return new DimensionTempData(dimensions, Temperature.convert(temp, units, Temperature.Units.MC, absolute), units);
+        return new DimensionTempData(dimensions, temp, units, isOffset);
     }
 
     @Override

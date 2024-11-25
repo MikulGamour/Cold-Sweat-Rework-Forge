@@ -13,6 +13,7 @@ import net.minecraft.util.registry.Registry;
 import net.minecraft.world.biome.Biome;
 
 import javax.annotation.Nullable;
+import javax.xml.ws.Holder;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -35,44 +36,41 @@ public class BiomeTempData implements ConfigData<BiomeTempData>
         this.requiredMods = requiredMods;
     }
 
-    public BiomeTempData(Biome biome, double min, double max, Temperature.Units units)
-    {   this(Arrays.asList(biome), min, max, units, false, Optional.empty());
+    public BiomeTempData(List<Biome> biomes, double min, double max,
+                         Temperature.Units units, boolean isOffset)
+    {
+        this(biomes, min, max, units, isOffset, Optional.empty());
     }
 
-    public BiomeTempData(List<Biome> biomes, double min, double max, Temperature.Units units)
-    {   this(biomes, min, max, units, false, Optional.empty());
+    public BiomeTempData(Biome biome, double min, double max, Temperature.Units units, boolean isOffset)
+    {   this(Arrays.asList(biome), min, max, units, isOffset);
     }
 
     public static final Codec<BiomeTempData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             ConfigHelper.dynamicCodec(Registry.BIOME_REGISTRY).listOf().fieldOf("biomes").forGetter(data -> data.biomes),
             Codec.mapEither(Codec.DOUBLE.fieldOf("temperature"), Codec.DOUBLE.fieldOf("min_temp")).xmap(
                     either ->
-                    {
-                        if (either.left().isPresent()) return either.left().get();
-                        if (either.right().isPresent()) return either.right().get();
-                        throw new IllegalArgumentException("Biome temperature min is not defined!");
-                    },
+                    either.map(left -> left, right -> right),
                     Either::right).forGetter(data -> data.min),
             Codec.mapEither(Codec.DOUBLE.fieldOf("temperature"), Codec.DOUBLE.fieldOf("max_temp")).xmap(
                     either ->
-                    {
-                        if (either.left().isPresent()) return either.left().get();
-                        if (either.right().isPresent()) return either.right().get();
-                        throw new IllegalArgumentException("Biome temperature min is not defined!");
-                    },
+                    either.map(left -> left, right -> right),
                     Either::right).forGetter(data -> data.max),
             Temperature.Units.CODEC.optionalFieldOf("units", Temperature.Units.MC).forGetter(data -> data.units),
             Codec.BOOL.optionalFieldOf("is_offset", false).forGetter(data -> data.isOffset),
             Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(data -> data.requiredMods)
-    ).apply(instance, (biomes, min, max, units, isOffset, requiredMods) ->
-    {
-        double cMin = Temperature.convert(min, units, Temperature.Units.MC, !isOffset);
-        double cMax = Temperature.convert(max, units, Temperature.Units.MC, !isOffset);
-        return new BiomeTempData(biomes, cMin, cMax, units, isOffset, requiredMods);
-    }));
+    ).apply(instance, BiomeTempData::new));
+
+    public double minTemp()
+    {   return Temperature.convert(min, units, Temperature.Units.MC, !this.isOffset);
+    }
+
+    public double maxTemp()
+    {   return Temperature.convert(max, units, Temperature.Units.MC, !this.isOffset);
+    }
 
     @Nullable
-    public static BiomeTempData fromToml(List<?> data, boolean absolute, DynamicRegistries registryAccess)
+    public static BiomeTempData fromToml(List<?> data, boolean isOffset, DynamicRegistries registryAccess)
     {
         String biomeIdString = (String) data.get(0);
         List<Biome> biomes = ConfigHelper.parseRegistryItems(Registry.BIOME_REGISTRY, registryAccess, biomeIdString);
@@ -88,11 +86,11 @@ public class BiomeTempData implements ConfigData<BiomeTempData>
 
         // The config defines a min and max value, with optional unit conversion
         Temperature.Units units = data.size() == 4 ? Temperature.Units.valueOf(((String) data.get(3)).toUpperCase()) : Temperature.Units.MC;
-        double min = Temperature.convert(((Number) data.get(1)).doubleValue(), units, Temperature.Units.MC, absolute);
-        double max = Temperature.convert(((Number) data.get(2)).doubleValue(), units, Temperature.Units.MC, absolute);
+        double min = ((Number) data.get(1)).doubleValue();
+        double max = ((Number) data.get(2)).doubleValue();
 
         // Maps the biome ID to the temperature (and variance if present)
-        return new BiomeTempData(biomes, min, max, units);
+        return new BiomeTempData(biomes, min, max, units, isOffset);
     }
 
     @Override

@@ -86,9 +86,23 @@ public class RegistryHelper
         }
     }
 
+    public static ResourceLocation getKey(Object object, DynamicRegistries registryAccess)
+    {
+        if (object instanceof Biome)
+        {   return getBiomeId((Biome) object, registryAccess);
+        }
+        if (object instanceof DimensionType)
+        {   return getDimensionId((DimensionType) object, registryAccess);
+        }
+        if (object instanceof Structure)
+        {   return getStructureId((Structure<?>) object, registryAccess);
+        }
+        return null;
+    }
+
     @Nullable
     public static Biome getBiome(ResourceLocation biomeId, DynamicRegistries registryAccess)
-    {   return registryAccess.registryOrThrow(Registry.BIOME_REGISTRY).get(biomeId);
+    {   return registryAccess.registryOrThrow(Registry.BIOME_REGISTRY).getOptional(RegistryKey.create(Registry.BIOME_REGISTRY, biomeId)).orElse(null);
     }
 
     @Nullable
@@ -98,7 +112,7 @@ public class RegistryHelper
 
     @Nullable
     public static DimensionType getDimension(ResourceLocation dimensionId, DynamicRegistries registryAccess)
-    {   return registryAccess.registryOrThrow(Registry.DIMENSION_TYPE_REGISTRY).get(dimensionId);
+    {   return registryAccess.registryOrThrow(Registry.DIMENSION_TYPE_REGISTRY).getOptional(RegistryKey.create(Registry.DIMENSION_TYPE_REGISTRY, dimensionId)).orElse(null);
     }
 
     @Nullable

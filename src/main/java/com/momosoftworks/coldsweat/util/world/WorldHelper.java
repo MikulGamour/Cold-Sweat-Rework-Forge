@@ -533,7 +533,7 @@ public abstract class WorldHelper
      * Gets the min and max temperature of the biome.
      * @return A pair of the min and max temperature of the biome
      */
-    public static Pair<Double, Double> getBiomeTemperatureRange(World level, Biome biome)
+    public static Pair<Double, Double> getBiomeTemperatureRange(IWorld level, Biome biome)
     {   return getBiomeTemperatureRange(level.registryAccess(), biome);
     }
 
@@ -547,34 +547,34 @@ public abstract class WorldHelper
         double baseTemp = biome.getBaseTemperature();
 
         BiomeTempData biomeTemp = ConfigSettings.BIOME_TEMPS.get(registryAccess)
-                                  .getOrDefault(biome, new BiomeTempData(biome, baseTemp - variance, baseTemp + variance, Temperature.Units.MC));
+                                  .getOrDefault(biome, new BiomeTempData(biome, baseTemp - variance, baseTemp + variance, Temperature.Units.MC, true));
         BiomeTempData configOffset = ConfigSettings.BIOME_OFFSETS.get(registryAccess)
-                                     .getOrDefault(biome, new BiomeTempData(biome, 0d, 0d, Temperature.Units.MC));
-        return CSMath.addPairs(Pair.of(biomeTemp.min, biomeTemp.max),
-                               Pair.of(configOffset.min, configOffset.max));
+                                     .getOrDefault(biome, new BiomeTempData(biome, 0d, 0d, Temperature.Units.MC, false));
+        return CSMath.addPairs(Pair.of(biomeTemp.minTemp(), biomeTemp.maxTemp()),
+                               Pair.of(configOffset.minTemp(), configOffset.maxTemp()));
     }
 
     /**
      * Gets the temperature of the biome at the specified position, including biome temperature and time of day.
      * @return The temperature of the biome at the specified position
      */
-    public static double getBiomeTemperature(World level, Biome biome)
+    public static double getBiomeTemperature(IWorld level, Biome biome)
     {
         Pair<Double, Double> temps = getBiomeTemperatureRange(level, biome);
-        return CSMath.blend(temps.getFirst(), temps.getSecond(), Math.sin(level.getDayTime() / (12000 / Math.PI)), -1, 1);
+        return CSMath.blend(temps.getFirst(), temps.getSecond(), Math.sin(level.dayTime() / (12000 / Math.PI)), -1, 1);
     }
 
     /**
      * Gets the temperature of the biome at the specified position; including biome temperature, time of day, and the altitude of the given BlockPos.
      * @return The temperature of the biome at the specified position
      */
-    public static double getBiomeTemperatureAt(World level, Biome biome, BlockPos pos)
+    public static double getBiomeTemperatureAt(IWorld level, Biome biome, BlockPos pos)
     {
         Pair<Double, Double> temps = getBiomeTemperatureRange(level, biome);
         double min = temps.getFirst();
         double max = temps.getSecond();
         double mid = (min + max) / 2;
-        return CSMath.blend(min, max, Math.sin(level.getDayTime() / (12000 / Math.PI)), -1, 1)
+        return CSMath.blend(min, max, Math.sin(level.dayTime() / (12000 / Math.PI)), -1, 1)
              + CSMath.blend(0, Math.min(-0.6, (min - mid) * 2), pos.getY(), level.getSeaLevel(), level.getMaxBuildHeight());
     }
 
@@ -583,7 +583,7 @@ public abstract class WorldHelper
      * Does not include block temperature!
      * @return The temperature at the specified position
      */
-    public static double getWorldTemperatureAt(World level, BlockPos pos)
+    public static double getWorldTemperatureAt(IWorld level, BlockPos pos)
     {
         Biome biome = level.getBiome(pos); // Can't use getNoiseBiomeAtPosition because it's client-only for some reason
         // Get biome temperature

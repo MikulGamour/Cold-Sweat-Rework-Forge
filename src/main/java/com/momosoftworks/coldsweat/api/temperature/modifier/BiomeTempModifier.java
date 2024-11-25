@@ -101,7 +101,7 @@ public class BiomeTempModifier extends TempModifier
         }
     }
 
-    public Pair<Double, Double> getStructureTemp(World level, BlockPos pos)
+    public static Pair<Double, Double> getStructureTemp(World level, BlockPos pos)
     {
         Structure<?> structure = WorldHelper.getStructureAt(level, pos);
         if (structure == null) return Pair.of(null, 0d);
