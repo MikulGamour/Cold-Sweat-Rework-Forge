@@ -5,8 +5,6 @@ import com.google.common.collect.HashBiMap;
 import com.google.gson.JsonElement;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.util.UUID;
@@ -17,9 +15,14 @@ public interface ConfigData<T>
 
     Codec<T> getCodec();
 
-
     default UUID getId()
-    {   return IDENTIFIABLES.inverse().computeIfAbsent(this, key -> UUID.randomUUID());
+    {
+        UUID id = IDENTIFIABLES.inverse().get(this);
+        if (id == null)
+        {   id = UUID.randomUUID();
+            setId(id);
+        }
+        return id;
     }
 
     @ApiStatus.Internal
