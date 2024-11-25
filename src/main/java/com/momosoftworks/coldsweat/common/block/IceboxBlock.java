@@ -53,12 +53,22 @@ public class IceboxBlock extends Block
                 .of(Material.WOOD)
                 .sound(SoundType.WOOD)
                 .strength(2f, 5f)
+                .isRedstoneConductor(IceboxBlock::conductsRedstone)
                 .noOcclusion();
     }
 
     public static Item.Properties getItemProperties()
     {
         return new Item.Properties().tab(ColdSweatGroup.COLD_SWEAT);
+    }
+
+    private static boolean conductsRedstone(BlockState state, IBlockReader level, BlockPos pos)
+    {
+        TileEntity be = level.getBlockEntity(pos);
+        if (be instanceof HearthBlockEntity)
+        {   return !((HearthBlockEntity) be).hasSmokeStack();
+        }
+        return false;
     }
 
     public IceboxBlock(Block.Properties properties)
@@ -148,11 +158,13 @@ public class IceboxBlock extends Block
         if (neighborPos.equals(pos.above()) && te instanceof IceboxBlockEntity)
         {
             IceboxBlockEntity icebox = ((IceboxBlockEntity) te);
-            boolean hasSmokestack = icebox.checkForSmokestack();
-            if (hasSmokestack != state.getValue(SMOKESTACK))
+            boolean hasSmokestack = icebox.hasSmokeStack();
+            icebox.checkForSmokestack();
+            if (hasSmokestack != icebox.hasSmokeStack())
             {
-                state = state.setValue(SMOKESTACK, hasSmokestack);
+                state = state.setValue(SMOKESTACK, icebox.hasSmokeStack());
                 level.setBlock(pos, state, 3);
+                level.blockUpdated(pos, this);
             }
         }
         return super.updateShape(state, direction, neighborState, level, pos, neighborPos);
@@ -222,11 +234,6 @@ public class IceboxBlock extends Block
         return direction != null
             && direction.getAxis() != Direction.Axis.Y
             && level.getBlockState(pos.above()).is(ModBlocks.SMOKESTACK);
-    }
-
-    @Override
-    public boolean shouldCheckWeakPower(BlockState state, IWorldReader level, BlockPos pos, Direction side)
-    {   return true;
     }
 
     @Override

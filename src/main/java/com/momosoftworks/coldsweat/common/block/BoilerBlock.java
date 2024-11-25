@@ -52,17 +52,27 @@ public class BoilerBlock extends Block
                 .sound(SoundType.STONE)
                 .strength(2, 10)
                 .lightLevel(getLightValueLit(13))
+                .isRedstoneConductor(BoilerBlock::conductsRedstone)
                 .requiresCorrectToolForDrops();
-    }
-
-    private static ToIntFunction<BlockState> getLightValueLit(int lightValue)
-    {
-        return (state) -> state.getValue(BlockStateProperties.LIT) ? lightValue : 0;
     }
 
     public static Item.Properties getItemProperties()
     {
         return new Item.Properties().tab(ColdSweatGroup.COLD_SWEAT);
+    }
+
+    private static boolean conductsRedstone(BlockState state, IBlockReader level, BlockPos pos)
+    {
+        TileEntity be = level.getBlockEntity(pos);
+        if (be instanceof HearthBlockEntity)
+        {   return !((HearthBlockEntity) be).hasSmokeStack();
+        }
+        return false;
+    }
+
+    private static ToIntFunction<BlockState> getLightValueLit(int lightValue)
+    {
+        return (state) -> state.getValue(BlockStateProperties.LIT) ? lightValue : 0;
     }
 
     public BoilerBlock(Block.Properties properties)
@@ -117,9 +127,15 @@ public class BoilerBlock extends Block
     @Override
     public BlockState updateShape(BlockState state, Direction direction, BlockState neighborState, IWorld level, BlockPos pos, BlockPos neighborPos)
     {
-        TileEntity te = level.getBlockEntity(pos);
-        if (neighborPos.equals(pos.above()) && te instanceof BoilerBlockEntity)
-        {   ((BoilerBlockEntity) te).checkForSmokestack();
+        TileEntity be = level.getBlockEntity(pos);
+        if (neighborPos.equals(pos.above()) && be instanceof BoilerBlockEntity)
+        {
+            BoilerBlockEntity boiler = (BoilerBlockEntity) be;
+            boolean hasSmokestack = boiler.hasSmokeStack();
+            boiler.checkForSmokestack();
+            if (hasSmokestack != boiler.hasSmokeStack())
+            {   level.blockUpdated(pos, this);
+            }
         }
         return super.updateShape(state, direction, neighborState, level, pos, neighborPos);
     }
@@ -205,11 +221,6 @@ public class BoilerBlock extends Block
             && direction.getAxis() != Direction.Axis.Y
             && direction != state.getValue(FACING).getOpposite()
             && level.getBlockState(pos.above()).is(ModBlocks.SMOKESTACK);
-    }
-
-    @Override
-    public boolean shouldCheckWeakPower(BlockState state, IWorldReader level, BlockPos pos, Direction side)
-    {   return true;
     }
 
     @Override

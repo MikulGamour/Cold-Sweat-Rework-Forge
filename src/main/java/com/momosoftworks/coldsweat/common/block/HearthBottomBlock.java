@@ -12,6 +12,7 @@ import net.minecraft.block.material.Material;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.inventory.InventoryHelper;
+import net.minecraft.inventory.container.AbstractFurnaceContainer;
 import net.minecraft.item.*;
 import net.minecraft.state.BooleanProperty;
 import net.minecraft.state.DirectionProperty;
@@ -43,7 +44,8 @@ public class HearthBottomBlock extends Block
                 .of(Material.STONE)
                 .sound(SoundType.STONE)
                 .strength(2.0F, 10)
-                .requiresCorrectToolForDrops();
+                .requiresCorrectToolForDrops()
+                .isRedstoneConductor((state, level, pos) -> false);
     }
 
     public static Item.Properties getItemProperties()
@@ -56,12 +58,6 @@ public class HearthBottomBlock extends Block
         this.registerDefaultState(this.defaultBlockState().setValue(FACING, Direction.NORTH)
                                                           .setValue(SIDE_POWERED, false)
                                                           .setValue(BACK_POWERED, false));
-    }
-
-    @Override
-    public boolean propagatesSkylightDown(BlockState state, IBlockReader level, BlockPos pos)
-    {
-        return true;
     }
 
     @Nullable
@@ -234,7 +230,12 @@ public class HearthBottomBlock extends Block
     }
 
     @Override
-    public boolean shouldCheckWeakPower(BlockState state, IWorldReader level, BlockPos pos, Direction side)
+    public boolean hasAnalogOutputSignal(BlockState pState)
     {   return true;
+    }
+
+    @Override
+    public int getAnalogOutputSignal(BlockState pState, World level, BlockPos pos)
+    {   return AbstractFurnaceContainer.getRedstoneSignalFromBlockEntity(level.getBlockEntity(pos));
     }
 }

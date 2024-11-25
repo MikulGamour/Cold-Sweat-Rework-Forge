@@ -9,7 +9,6 @@ import net.minecraft.block.material.Material;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.ItemStack;
-import net.minecraft.loot.LootContext;
 import net.minecraft.state.DirectionProperty;
 import net.minecraft.state.StateContainer;
 import net.minecraft.state.properties.BlockStateProperties;
@@ -21,8 +20,6 @@ import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 
-import java.util.List;
-
 public class HearthTopBlock extends Block
 {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
@@ -33,9 +30,7 @@ public class HearthTopBlock extends Block
                 .of(Material.STONE)
                 .sound(SoundType.STONE)
                 .strength(2, 10)
-                .requiresCorrectToolForDrops()
-                .noOcclusion()
-                .dynamicShape();
+                .requiresCorrectToolForDrops();
     }
 
     public HearthTopBlock(Block.Properties properties)
