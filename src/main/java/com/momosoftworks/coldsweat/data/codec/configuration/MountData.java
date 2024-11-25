@@ -33,7 +33,7 @@ public record MountData(List<Either<TagKey<EntityType<?>>, EntityType<?>>> entit
     }
 
     public static Codec<MountData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            ConfigHelper.tagOrForgeRegistryCodec(Registry.ENTITY_TYPE_REGISTRY, ForgeRegistries.ENTITIES).listOf().fieldOf("entities").forGetter(MountData::entities),
+            ConfigHelper.tagOrBuiltinCodec(Registry.ENTITY_TYPE_REGISTRY, ForgeRegistries.ENTITIES).listOf().fieldOf("entities").forGetter(MountData::entities),
             Codec.DOUBLE.fieldOf("cold_insulation").forGetter(MountData::coldInsulation),
             Codec.DOUBLE.fieldOf("heat_insulation").forGetter(MountData::heatInsulation),
             EntityRequirement.getCodec().fieldOf("entity").forGetter(MountData::requirement),

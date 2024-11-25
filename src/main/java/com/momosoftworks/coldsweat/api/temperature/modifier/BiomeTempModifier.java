@@ -65,7 +65,7 @@ public class BiomeTempModifier extends TempModifier
                 biomeCount++;
 
                 // Get min/max temperature of the biome
-                Pair<Double, Double> configTemp = WorldHelper.getBiomeTemperatureRange(level, holder.value());
+                Pair<Double, Double> configTemp = WorldHelper.getBiomeTemperatureRange(level, holder);
 
                 // Biome temp at midnight (bottom of the sine wave)
                 double min = configTemp.getFirst();
@@ -76,7 +76,7 @@ public class BiomeTempModifier extends TempModifier
                 if (!dimension.hasCeiling())
                 {
                     // Biome temp with time of day
-                    double biomeTemp = WorldHelper.getBiomeTemperatureAt(level, holder.value(), entity.blockPosition());
+                    double biomeTemp = WorldHelper.getBiomeTemperatureAt(level, holder, entity.blockPosition());
                     if (CompatManager.isPrimalWinterLoaded() && holder.is(Tags.Biomes.IS_OVERWORLD))
                     {   biomeTemp = Math.min(biomeTemp, biomeTemp / 2) - Math.max(biomeTemp / 2, 0);
                     }
@@ -105,7 +105,7 @@ public class BiomeTempModifier extends TempModifier
         }
     }
 
-    public Pair<Double, Double> getStructureTemp(Level level, BlockPos pos)
+    public static Pair<Double, Double> getStructureTemp(Level level, BlockPos pos)
     {
         ConfiguredStructureFeature<?, ?> structure = WorldHelper.getStructureAt(level, pos);
         if (structure == null) return Pair.of(null, 0d);

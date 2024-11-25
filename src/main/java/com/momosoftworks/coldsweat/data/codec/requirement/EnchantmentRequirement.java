@@ -17,7 +17,7 @@ import java.util.Optional;
 public record EnchantmentRequirement(Either<TagKey<Enchantment>, Enchantment> enchantment, Optional<IntegerBounds> level)
 {
     public static final Codec<EnchantmentRequirement> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            ConfigHelper.tagOrForgeRegistryCodec(Registry.ENCHANTMENT_REGISTRY, ForgeRegistries.ENCHANTMENTS).fieldOf("enchantment").forGetter(requirement -> requirement.enchantment),
+            ConfigHelper.tagOrBuiltinCodec(Registry.ENCHANTMENT_REGISTRY, ForgeRegistries.ENCHANTMENTS).fieldOf("enchantment").forGetter(requirement -> requirement.enchantment),
             IntegerBounds.CODEC.optionalFieldOf("levels").forGetter(requirement -> requirement.level)
     ).apply(instance, EnchantmentRequirement::new));
 

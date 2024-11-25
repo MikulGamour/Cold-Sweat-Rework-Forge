@@ -12,6 +12,7 @@ import com.momosoftworks.coldsweat.data.codec.configuration.*;
 import com.momosoftworks.coldsweat.util.serialization.DynamicHolder;
 import com.momosoftworks.coldsweat.util.serialization.RegistryHelper;
 import dev.latvian.mods.kubejs.event.StartupEventJS;
+import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
@@ -135,12 +136,12 @@ public class ModRegistriesEventJS extends StartupEventJS
     public void addBiomeTemperature(String biomeId, double minTemp, double maxTemp, String units)
     {
         RegistryAccess registryAccess = RegistryHelper.getRegistryAccess();
-        Biome biome = RegistryHelper.getBiome(new ResourceLocation(biomeId), registryAccess);
+        Holder<Biome> biome = RegistryHelper.getBiome(new ResourceLocation(biomeId), registryAccess);
         if (biome == null)
         {   ColdSweat.LOGGER.error("Failed to find biome with ID: {}", biomeId);
             return;
         }
-        ConfigSettings.BIOME_TEMPS.get().put(biome, new BiomeTempData(biome, minTemp, maxTemp, Temperature.Units.fromID(units)));
+        ConfigSettings.BIOME_TEMPS.get().put(biome, new BiomeTempData(biome, minTemp, maxTemp, Temperature.Units.fromID(units), true));
     }
 
     public void addBiomeTemperature(String biomeId, double minTemp, double maxTemp)
@@ -150,12 +151,12 @@ public class ModRegistriesEventJS extends StartupEventJS
     public void addBiomeOffset(String biomeId, double minTemp, double maxTemp, String units)
     {
         RegistryAccess registryAccess = RegistryHelper.getRegistryAccess();
-        Biome biome = RegistryHelper.getBiome(new ResourceLocation(biomeId), registryAccess);
+        Holder<Biome> biome = RegistryHelper.getBiome(new ResourceLocation(biomeId), registryAccess);
         if (biome == null)
         {   ColdSweat.LOGGER.error("Failed to find biome with ID: {}", biomeId);
             return;
         }
-        ConfigSettings.BIOME_OFFSETS.get().put(biome, new BiomeTempData(biome, minTemp, maxTemp, Temperature.Units.fromID(units)));
+        ConfigSettings.BIOME_OFFSETS.get().put(biome, new BiomeTempData(biome, minTemp, maxTemp, Temperature.Units.fromID(units), false));
     }
 
     public void addBiomeOffset(String biomeId, double minTemp, double maxTemp)
@@ -169,7 +170,7 @@ public class ModRegistriesEventJS extends StartupEventJS
     public void addDimensionTemperature(String dimensionId, double temperature, String units)
     {
         RegistryAccess registryAccess = RegistryHelper.getRegistryAccess();
-        DimensionType dimension = RegistryHelper.getDimension(new ResourceLocation(dimensionId), registryAccess);
+        Holder<DimensionType> dimension = RegistryHelper.getDimension(new ResourceLocation(dimensionId), registryAccess);
         if (dimension == null)
         {   ColdSweat.LOGGER.error("Failed to find dimension with ID: {}", dimensionId);
             return;
@@ -184,7 +185,7 @@ public class ModRegistriesEventJS extends StartupEventJS
     public void addDimensionOffset(String dimensionId, double temperature, String units)
     {
         RegistryAccess registryAccess = RegistryHelper.getRegistryAccess();
-        DimensionType dimension = RegistryHelper.getDimension(new ResourceLocation(dimensionId), registryAccess);
+        Holder<DimensionType> dimension = RegistryHelper.getDimension(new ResourceLocation(dimensionId), registryAccess);
         if (dimension == null)
         {   ColdSweat.LOGGER.error("Failed to find dimension with ID: {}", dimensionId);
             return;
@@ -203,7 +204,7 @@ public class ModRegistriesEventJS extends StartupEventJS
     public void addStructureTemperature(String structureId, double temperature, String units)
     {
         RegistryAccess registryAccess = RegistryHelper.getRegistryAccess();
-        ConfiguredStructureFeature<?,?> structure = RegistryHelper.getStructure(new ResourceLocation(structureId), registryAccess);
+        Holder<ConfiguredStructureFeature<?, ?>> structure = RegistryHelper.getStructure(new ResourceLocation(structureId), registryAccess);
         if (structure == null)
         {   ColdSweat.LOGGER.error("Failed to find structure with ID: {}", structure);
             return;
@@ -218,7 +219,7 @@ public class ModRegistriesEventJS extends StartupEventJS
     public void addStructureOffset(String structureId, double temperature, String units)
     {
         RegistryAccess registryAccess = RegistryHelper.getRegistryAccess();
-        ConfiguredStructureFeature<?,?> structure = RegistryHelper.getStructure(new ResourceLocation(structureId), registryAccess);
+        Holder<ConfiguredStructureFeature<?, ?>> structure = RegistryHelper.getStructure(new ResourceLocation(structureId), registryAccess);
         if (structure == null)
         {   ColdSweat.LOGGER.error("Failed to find structure with ID: {}", structure);
             return;

@@ -57,20 +57,10 @@ public class UndergroundTempModifier extends TempModifier
             if (WorldHelper.getHeight(pos, level) <= entity.getY()) continue;
 
             // Get temperature of underground biomes
-            Holder<Biome> holder = level.getBiomeManager().getBiome(pos);
-            if (holder.is(Tags.Biomes.IS_UNDERGROUND))
+            Holder<Biome> biome = level.getBiomeManager().getBiome(pos);
+            if (biome.is(Tags.Biomes.IS_UNDERGROUND))
             {
-                if (holder.unwrapKey().isEmpty()) continue;
-                Biome biome = holder.value();
-                double baseTemp = biome.getBaseTemperature();
-
-                BiomeTempData configTemp = ConfigSettings.BIOME_TEMPS.get(entity.level.registryAccess())
-                                      .getOrDefault(biome, new BiomeTempData(biome, baseTemp, baseTemp, Temperature.Units.MC));
-                BiomeTempData configOffset = ConfigSettings.BIOME_OFFSETS.get(entity.level.registryAccess())
-                                        .getOrDefault(biome, new BiomeTempData(biome, 0d, 0d, Temperature.Units.MC));
-
-                double biomeTemp = CSMath.averagePair(Pair.of(configTemp.min(), configTemp.max()))
-                                 + CSMath.averagePair(Pair.of(configOffset.min(), configOffset.max()));
+                double biomeTemp = CSMath.averagePair(WorldHelper.getBiomeTemperatureRange(level, biome));
 
                 biomeTempTotal += biomeTemp;
                 caveBiomeCount++;
