@@ -142,11 +142,6 @@ public class IceboxBlockEntity extends HearthBlockEntity implements ITickableTil
     }
 
     @Override
-    public ITextComponent getDisplayName()
-    {   return this.getCustomName() != null ? this.getCustomName() : this.getDefaultName();
-    }
-
-    @Override
     public void tick()
     {
         super.tick();
@@ -353,8 +348,8 @@ public class IceboxBlockEntity extends HearthBlockEntity implements ITickableTil
     }
 
     @Override
-    public int[] getSlotsForFace(Direction dir)
-    {   return dir.getAxis() == Direction.Axis.Y ? WATERSKIN_SLOTS : FUEL_SLOT;
+    public int[] getSlotsForFace(Direction side)
+    {   return side.getAxis() == Direction.Axis.Y ? WATERSKIN_SLOTS : FUEL_SLOT;
     }
 
     @Override
@@ -363,11 +358,6 @@ public class IceboxBlockEntity extends HearthBlockEntity implements ITickableTil
         if (slot == 0)
             return this.getItemFuel(stack) != 0;
         else return ModItemTags.ICEBOX_VALID.contains(stack.getItem()) || stack.isEdible();
-    }
-
-    @Override
-    public boolean canTakeItemThroughFace(int slot, ItemStack stack, Direction direction)
-    {   return true;
     }
 
     @Override

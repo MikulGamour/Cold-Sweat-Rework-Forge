@@ -2,7 +2,6 @@ package com.momosoftworks.coldsweat.common.container;
 
 import com.momosoftworks.coldsweat.common.blockentity.HearthBlockEntity;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
-import com.momosoftworks.coldsweat.core.event.TaskScheduler;
 import com.momosoftworks.coldsweat.core.init.ContainerInit;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import net.minecraft.entity.player.PlayerEntity;
@@ -40,12 +39,6 @@ public class HearthContainer extends Container
                 Collection< EffectInstance> effects = PotionUtils.getMobEffects(stack);
                 return !effects.isEmpty()
                     && effects.stream().noneMatch(eff -> ConfigSettings.HEARTH_POTION_BLACKLIST.get().contains(eff.getEffect()));
-            }
-
-            @Override
-            public void setChanged()
-            {   TaskScheduler.scheduleServer(() -> ((HearthBlockEntity) this.container).checkConsumeFuel(), 0);
-                super.setChanged();
             }
         });
 

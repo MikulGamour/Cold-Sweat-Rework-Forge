@@ -8,7 +8,6 @@ import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.core.init.BlockEntityInit;
 import com.momosoftworks.coldsweat.core.network.ColdSweatPacketHandler;
 import com.momosoftworks.coldsweat.core.network.message.BlockDataUpdateMessage;
-import com.momosoftworks.coldsweat.data.codec.configuration.FuelData;
 import com.momosoftworks.coldsweat.data.tag.ModItemTags;
 import com.momosoftworks.coldsweat.util.registries.ModItems;
 import com.momosoftworks.coldsweat.util.registries.ModSounds;
@@ -78,11 +77,6 @@ public class BoilerBlockEntity extends HearthBlockEntity implements ITickableTil
     @Override
     protected ITextComponent getDefaultName()
     {   return new TranslationTextComponent("container." + ColdSweat.MOD_ID + ".boiler");
-    }
-
-    @Override
-    public ITextComponent getDisplayName()
-    {   return this.getCustomName() != null ? this.getCustomName() : this.getDefaultName();
     }
 
     @Override
@@ -243,8 +237,8 @@ public class BoilerBlockEntity extends HearthBlockEntity implements ITickableTil
     }
 
     @Override
-    public int[] getSlotsForFace(Direction dir)
-    {   return dir.getAxis() == Direction.Axis.Y ? WATERSKIN_SLOTS : FUEL_SLOT;
+    public int[] getSlotsForFace(Direction side)
+    {   return side.getAxis() == Direction.Axis.Y ? WATERSKIN_SLOTS : FUEL_SLOT;
     }
 
     @Override
@@ -253,11 +247,6 @@ public class BoilerBlockEntity extends HearthBlockEntity implements ITickableTil
         if (slot == 0)
             return this.getItemFuel(stack) != 0;
         else return ModItemTags.BOILER_VALID.contains(stack.getItem());
-    }
-
-    @Override
-    public boolean canTakeItemThroughFace(int slot, ItemStack stack, Direction direction)
-    {   return true;
     }
 
     @Override

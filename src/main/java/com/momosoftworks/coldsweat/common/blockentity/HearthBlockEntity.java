@@ -41,6 +41,7 @@ import net.minecraft.client.settings.ParticleStatus;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.fluid.Fluids;
+import net.minecraft.inventory.ISidedInventory;
 import net.minecraft.inventory.ItemStackHelper;
 import net.minecraft.inventory.container.Container;
 import net.minecraft.item.ItemStack;
@@ -87,8 +88,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 @Mod.EventBusSubscriber
-public class HearthBlockEntity extends LockableLootTileEntity implements ITickableTileEntity
-{
+public class HearthBlockEntity extends LockableLootTileEntity implements ITickableTileEntity, ISidedInventory
+                                                                         {
     // List of SpreadPaths, which determine where the Hearth is affecting and how it spreads through/around blocks
     List<SpreadPath> paths = new ArrayList<>(this.getMaxPaths());
     // Used as a lookup table for detecting duplicate paths (faster than ArrayList#contains())
@@ -358,11 +359,6 @@ public class HearthBlockEntity extends LockableLootTileEntity implements ITickab
             }
         }
 
-        // Input fuel
-        if (this.ticksExisted % 20 == 0)
-        {   this.checkConsumeFuel();
-        }
-
         // Update fuel
         if (!this.level.isClientSide && this.isFuelChanged()
         || (wasUsingColdFuel != this.shouldUseColdFuel || wasUsingHotFuel != this.shouldUseHotFuel))
@@ -542,7 +538,14 @@ public class HearthBlockEntity extends LockableLootTileEntity implements ITickab
         }
     }
 
-    public void checkConsumeFuel()
+    @Override
+    public void setChanged()
+    {
+        super.setChanged();
+        this.checkForFuel();
+    }
+
+    public void checkForFuel()
     {
         BlockPos pos = this.getBlockPos();
         ItemStack fuelStack = this.getItems().get(0);
@@ -1064,10 +1067,11 @@ public class HearthBlockEntity extends LockableLootTileEntity implements ITickab
 
     public <T> LazyOptional<T> getCapability(Capability<T> capability, @Nullable Direction facing)
     {
+        Direction facingDir = this.getBlockState().getValue(HearthBottomBlock.FACING);
         return capability == CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY && facing != null
-             ? facing == Direction.DOWN
+             ? facing == Direction.DOWN || facing == facingDir.getOpposite()
                        ? bottomFuelHolder.cast()
-             : facing != Direction.UP && facing != this.getBlockState().getValue(HearthBottomBlock.FACING)
+             : facing != Direction.UP && facing != facingDir
                        ? sidesFuelHolder.cast()
              : super.getCapability(capability, facing) : super.getCapability(capability, facing);
     }
@@ -1149,6 +1153,21 @@ public class HearthBlockEntity extends LockableLootTileEntity implements ITickab
 
     public void setBackPowered(boolean isPowered)
     {   this.isBackPowered = isPowered;
+    }
+
+    @Override
+    public int[] getSlotsForFace(Direction side)
+    {   return new int[0];
+    }
+
+    @Override
+    public boolean canPlaceItemThroughFace(int slot, ItemStack stack, @Nullable Direction pDirection)
+    {   return getItemFuel(stack) != 0;
+    }
+
+    @Override
+    public boolean canTakeItemThroughFace(int slot, ItemStack stack, Direction direction)
+    {   return true;
     }
 
     public abstract class FluidHandler implements IFluidHandler
