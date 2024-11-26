@@ -284,7 +284,7 @@ public class ConfigHelper
                 continue;
             }
             codec.encode(entry.getValue(), encoderOps, encoderOps.empty())
-            .resultOrPartial(e -> ColdSweat.LOGGER.error("Error serializing {} \"{}\": {}", gameRegistry.location(), elementId, e))
+            .resultOrPartial(e -> ColdSweat.LOGGER.error("Error serializing {} {}: {}", modRegistry.location(), entry.getValue(), e))
             .ifPresent(encoded ->
             {
                 ((CompoundTag) encoded).putUUID("UUID", entry.getValue().getId());
@@ -342,23 +342,30 @@ public class ConfigHelper
     }
 
     public static <K, V extends ConfigData<?>> CompoundTag serializeMultimapRegistry(Multimap<K, V> map, String key,
+                                                                                    ResourceKey<Registry<K>> gameRegistry,
                                                                                     ResourceKey<Registry<V>> modRegistry,
                                                                                     Function<K, ResourceLocation> keyGetter)
     {
-        return serializeEitherMultimapRegistry(map, key, modRegistry, keyGetter);
+        return serializeEitherMultimapRegistry(map, key, gameRegistry, modRegistry, null, keyGetter);
     }
 
     public static <K, V extends ConfigData<?>> CompoundTag serializeHolderMultimapRegistry(Multimap<Holder<K>, V> map, String key,
-                                                                                          ResourceKey<Registry<V>> modRegistry)
+                                                                                           ResourceKey<Registry<K>> gameRegistry,
+                                                                                           ResourceKey<Registry<V>> modRegistry,
+                                                                                           RegistryAccess registryAccess)
     {
-        return serializeEitherMultimapRegistry(map, key, modRegistry, RegistryHelper::getKey);
+        return serializeEitherMultimapRegistry(map, key, gameRegistry, modRegistry, registryAccess, RegistryHelper::getKey);
     }
 
     private static <K, V extends ConfigData<?>> CompoundTag serializeEitherMultimapRegistry(Multimap<K, V> map, String key,
-                                                                                           ResourceKey<Registry<V>> modRegistry,
-                                                                                           Function<K, ResourceLocation> keyGetter)
+                                                                                            ResourceKey<?> gameRegistry, ResourceKey<Registry<V>> modRegistry,
+                                                                                            RegistryAccess registryAccess, Function<K, ResourceLocation> keyGetter)
     {
         Codec<V> codec = ModRegistries.getCodec(modRegistry);
+        DynamicOps<Tag> encoderOps = registryAccess != null
+                                     ? RegistryOps.create(NbtOps.INSTANCE, registryAccess)
+                                     : NbtOps.INSTANCE;
+
         CompoundTag tag = new CompoundTag();
         CompoundTag mapTag = new CompoundTag();
 
@@ -366,14 +373,14 @@ public class ConfigHelper
         {
             ResourceLocation elementId = keyGetter.apply(entry.getKey());
             if (elementId == null)
-            {   ColdSweat.LOGGER.error("Error serializing: \"{}\" does not exist in registry", entry.getKey());
+            {   ColdSweat.LOGGER.error("Error serializing {}: \"{}\" does not exist", gameRegistry.location(), entry.getKey());
                 continue;
             }
             ListTag valuesTag = new ListTag();
             for (V value : entry.getValue())
             {
-                codec.encodeStart(NbtOps.INSTANCE, value)
-                .resultOrPartial(e -> ColdSweat.LOGGER.error("Error serializing {} \"{}\": {}", modRegistry.location(), elementId, e))
+                codec.encode(value, encoderOps, encoderOps.empty())
+                .resultOrPartial(e -> ColdSweat.LOGGER.error("Error serializing {} {}: {}", modRegistry.location(), entry.getValue(), e))
                 .ifPresent(encoded ->
                 {
                     ((CompoundTag) encoded).putUUID("UUID", value.getId());
@@ -390,22 +397,27 @@ public class ConfigHelper
                                                                                           ResourceKey<Registry<V>> modRegistry,
                                                                                           Function<ResourceLocation, K> keyGetter)
     {
-        return deserializeEitherMultimapRegistry(tag, key, modRegistry, keyGetter);
+        return deserializeEitherMultimapRegistry(tag, key, modRegistry, keyGetter, null);
     }
 
     public static <K, V extends ConfigData<?>> Multimap<Holder<K>, V> deserializeHolderMultimapRegistry(CompoundTag tag, String key,
-                                                                                                        ResourceKey<Registry<K>> gameRegistry, ResourceKey<Registry<V>> modRegistry,
+                                                                                                        ResourceKey<Registry<K>> gameRegistry,
+                                                                                                        ResourceKey<Registry<V>> modRegistry,
                                                                                                         RegistryAccess registryAccess)
     {
         Registry<K> registry = registryAccess.registryOrThrow(gameRegistry);
-        return deserializeEitherMultimapRegistry(tag, key, modRegistry, k -> registry.getHolder(ResourceKey.create(gameRegistry, k)).orElse(null));
+        return deserializeEitherMultimapRegistry(tag, key, modRegistry, k -> registry.getHolder(ResourceKey.create(gameRegistry, k)).orElse(null), registryAccess);
     }
 
     private static <K, V extends ConfigData<?>> Multimap<K, V> deserializeEitherMultimapRegistry(CompoundTag tag, String key,
-                                                                                                ResourceKey<Registry<V>> modRegistry,
-                                                                                                Function<ResourceLocation, K> keyGetter)
+                                                                                                 ResourceKey<Registry<V>> modRegistry,
+                                                                                                 Function<ResourceLocation, K> keyGetter,
+                                                                                                 RegistryAccess registryAccess)
     {
         Codec<V> codec = ModRegistries.getCodec(modRegistry);
+        DynamicOps<Tag> decoderOps = registryAccess != null
+                                     ? RegistryOps.create(NbtOps.INSTANCE, registryAccess)
+                                     : NbtOps.INSTANCE;
 
         Multimap<K, V> map = new FastMultiMap<>();
         CompoundTag mapTag = tag.getCompound(key);
@@ -421,7 +433,7 @@ public class ConfigHelper
             for (Tag valueTag : entryData)
             {
                 CompoundTag valueData = (CompoundTag) valueTag;
-                codec.decode(NbtOps.INSTANCE, valueData).result().map(Pair::getFirst)
+                codec.decode(decoderOps, valueData).result().map(Pair::getFirst)
                 .ifPresent(value ->
                 {
                     ConfigData.IDENTIFIABLES.put(valueData.getUUID("UUID"), value);

@@ -35,9 +35,8 @@ import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.dimension.DimensionType;
 import net.minecraft.world.level.levelgen.feature.ConfiguredStructureFeature;
-import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.fml.loading.FMLEnvironment;
+import net.minecraftforge.fml.util.thread.EffectiveSide;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.util.TriConsumer;
 import oshi.util.tuples.Triplet;
@@ -48,6 +47,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
+import static com.momosoftworks.coldsweat.util.serialization.DynamicHolder.SyncType;
 
 /**
  * Holds almost all configs for Cold Sweat in memory for easy access.
@@ -201,83 +202,99 @@ public class ConfigSettings
         DIFFICULTY = addSyncedSetting("difficulty", () -> Difficulty.NORMAL, holder -> holder.set(Difficulty.byId(MainSettingsConfig.DIFFICULTY.get())),
         (encoder) -> ConfigHelper.serializeNbtInt(encoder.getId(), "Difficulty"),
         (decoder) -> Difficulty.byId(decoder.getInt("Difficulty")),
-        (saver) -> MainSettingsConfig.DIFFICULTY.set(saver.getId()));
+        (saver) -> MainSettingsConfig.DIFFICULTY.set(saver.getId()),
+        SyncType.BOTH_WAYS);
 
         MAX_TEMP = addSyncedSetting("max_temp", () -> 1.7, holder -> holder.set(MainSettingsConfig.MAX_HABITABLE_TEMPERATURE.get()),
         (encoder) -> ConfigHelper.serializeNbtDouble(encoder, "MaxTemp"),
         (decoder) -> decoder.getDouble("MaxTemp"),
-        (saver) -> MainSettingsConfig.MAX_HABITABLE_TEMPERATURE.set(saver));
+        (saver) -> MainSettingsConfig.MAX_HABITABLE_TEMPERATURE.set(saver),
+        SyncType.BOTH_WAYS);
 
         MIN_TEMP = addSyncedSetting("min_temp", () -> 0.5, holder -> holder.set(MainSettingsConfig.MIN_HABITABLE_TEMPERATURE.get()),
         (encoder) -> ConfigHelper.serializeNbtDouble(encoder, "MinTemp"),
         (decoder) -> decoder.getDouble("MinTemp"),
-        (saver) -> MainSettingsConfig.MIN_HABITABLE_TEMPERATURE.set(saver));
+        (saver) -> MainSettingsConfig.MIN_HABITABLE_TEMPERATURE.set(saver),
+        SyncType.BOTH_WAYS);
 
         TEMP_RATE = addSyncedSetting("temp_rate", () -> 1d, holder -> holder.set(MainSettingsConfig.TEMP_RATE_MULTIPLIER.get()),
         (encoder) -> ConfigHelper.serializeNbtDouble(encoder, "TempRate"),
         (decoder) -> decoder.getDouble("TempRate"),
-        (saver) -> MainSettingsConfig.TEMP_RATE_MULTIPLIER.set(saver));
+        (saver) -> MainSettingsConfig.TEMP_RATE_MULTIPLIER.set(saver),
+        SyncType.BOTH_WAYS);
 
         TEMP_DAMAGE = addSyncedSetting("temp_damage", () -> 2d, holder -> holder.set(MainSettingsConfig.TEMP_DAMAGE.get()),
         (encoder) -> ConfigHelper.serializeNbtDouble(encoder, "TempDamage"),
         (decoder) -> decoder.getDouble("TempDamage"),
-        (saver) -> MainSettingsConfig.TEMP_DAMAGE.set(saver));
+        (saver) -> MainSettingsConfig.TEMP_DAMAGE.set(saver),
+        SyncType.BOTH_WAYS);
 
         FIRE_RESISTANCE_ENABLED = addSyncedSetting("fire_resistance_enabled", () -> true, holder -> holder.set(MainSettingsConfig.FIRE_RESISTANCE_BLOCKS_OVERHEATING.get()),
         (encoder) -> ConfigHelper.serializeNbtBool(encoder, "FireResistanceEnabled"),
         (decoder) -> decoder.getBoolean("FireResistanceEnabled"),
-        (saver) -> MainSettingsConfig.FIRE_RESISTANCE_BLOCKS_OVERHEATING.set(saver));
+        (saver) -> MainSettingsConfig.FIRE_RESISTANCE_BLOCKS_OVERHEATING.set(saver),
+        SyncType.BOTH_WAYS);
 
         ICE_RESISTANCE_ENABLED = addSyncedSetting("ice_resistance_enabled", () -> true, holder -> holder.set(MainSettingsConfig.ICE_RESISTANCE_BLOCKS_FREEZING.get()),
         (encoder) -> ConfigHelper.serializeNbtBool(encoder, "IceResistanceEnabled"),
         (decoder) -> decoder.getBoolean("IceResistanceEnabled"),
-        (saver) -> MainSettingsConfig.ICE_RESISTANCE_BLOCKS_FREEZING.set(saver));
+        (saver) -> MainSettingsConfig.ICE_RESISTANCE_BLOCKS_FREEZING.set(saver),
+        SyncType.BOTH_WAYS);
 
         USE_PEACEFUL_MODE = addSyncedSetting("use_peaceful", () -> true, holder -> holder.set(MainSettingsConfig.NULLIFY_IN_PEACEFUL.get()),
         (encoder) -> ConfigHelper.serializeNbtBool(encoder, "UsePeaceful"),
         (decoder) -> decoder.getBoolean("UsePeaceful"),
-        (saver) -> MainSettingsConfig.NULLIFY_IN_PEACEFUL.set(saver));
+        (saver) -> MainSettingsConfig.NULLIFY_IN_PEACEFUL.set(saver),
+        SyncType.BOTH_WAYS);
 
         REQUIRE_THERMOMETER = addSyncedSetting("require_thermometer", () -> true, holder -> holder.set(MainSettingsConfig.REQUIRE_THERMOMETER.get()),
         (encoder) -> ConfigHelper.serializeNbtBool(encoder, "RequireThermometer"),
         (decoder) -> decoder.getBoolean("RequireThermometer"),
-        (saver) -> MainSettingsConfig.REQUIRE_THERMOMETER.set(saver));
+        (saver) -> MainSettingsConfig.REQUIRE_THERMOMETER.set(saver),
+        SyncType.BOTH_WAYS);
 
         GRACE_LENGTH = addSyncedSetting("grace_length", () -> 6000, holder -> holder.set(MainSettingsConfig.GRACE_PERIOD_LENGTH.get()),
         (encoder) -> ConfigHelper.serializeNbtInt(encoder, "GraceLength"),
         (decoder) -> decoder.getInt("GraceLength"),
-        (saver) -> MainSettingsConfig.GRACE_PERIOD_LENGTH.set(saver));
+        (saver) -> MainSettingsConfig.GRACE_PERIOD_LENGTH.set(saver),
+        SyncType.BOTH_WAYS);
 
         GRACE_ENABLED = addSyncedSetting("grace_enabled", () -> true, holder -> holder.set(MainSettingsConfig.ENABLE_GRACE_PERIOD.get()),
         (encoder) -> ConfigHelper.serializeNbtBool(encoder, "GraceEnabled"),
         (decoder) -> decoder.getBoolean("GraceEnabled"),
-        (saver) -> MainSettingsConfig.ENABLE_GRACE_PERIOD.set(saver));
+        (saver) -> MainSettingsConfig.ENABLE_GRACE_PERIOD.set(saver),
+        SyncType.BOTH_WAYS);
 
 
         HEARTS_FREEZING_PERCENTAGE = addSyncedSetting("hearts_freezing_percentage", () -> 0.5, holder -> holder.set(MainSettingsConfig.FREEZING_HEARTS.get()),
         (encoder) -> ConfigHelper.serializeNbtDouble(encoder, "HeartsFreezingPercentage"),
         (decoder) -> decoder.getDouble("HeartsFreezingPercentage"),
-        (saver) -> MainSettingsConfig.FREEZING_HEARTS.set(saver));
+        (saver) -> MainSettingsConfig.FREEZING_HEARTS.set(saver),
+        SyncType.BOTH_WAYS);
 
         COLD_MINING_IMPAIRMENT = addSyncedSetting("cold_mining_slowdown", () -> 0.5, holder -> holder.set(MainSettingsConfig.COLD_MINING.get()),
         (encoder) -> ConfigHelper.serializeNbtDouble(encoder, "ColdMiningImpairment"),
         (decoder) -> decoder.getDouble("ColdMiningImpairment"),
-        (saver) -> MainSettingsConfig.COLD_MINING.set(saver));
+        (saver) -> MainSettingsConfig.COLD_MINING.set(saver),
+        SyncType.BOTH_WAYS);
 
         COLD_MOVEMENT_SLOWDOWN = addSyncedSetting("cold_movement_slowdown", () -> 0.5, holder -> holder.set(MainSettingsConfig.COLD_MOVEMENT.get()),
         (encoder) -> ConfigHelper.serializeNbtDouble(encoder, "ColdMovementSlowdown"),
         (decoder) -> decoder.getDouble("ColdMovementSlowdown"),
-        (saver) -> MainSettingsConfig.COLD_MOVEMENT.set(saver));
+        (saver) -> MainSettingsConfig.COLD_MOVEMENT.set(saver),
+        SyncType.BOTH_WAYS);
 
         COLD_KNOCKBACK_REDUCTION = addSyncedSetting("cold_knockback_reduction", () -> 0.5, holder -> holder.set(MainSettingsConfig.COLD_KNOCKBACK.get()),
         (encoder) -> ConfigHelper.serializeNbtDouble(encoder, "ColdKnockbackReduction"),
         (decoder) -> decoder.getDouble("ColdKnockbackReduction"),
-        (saver) -> MainSettingsConfig.COLD_KNOCKBACK.set(saver));
+        (saver) -> MainSettingsConfig.COLD_KNOCKBACK.set(saver),
+        SyncType.BOTH_WAYS);
 
         HEATSTROKE_FOG_DISTANCE = addSyncedSetting("heatstroke_fog_distance", () -> 6d, holder -> holder.set(MainSettingsConfig.HEATSTROKE_FOG.get()),
         (encoder) -> ConfigHelper.serializeNbtDouble(encoder, "HeatstrokeFogDistance"),
         (decoder) -> decoder.getDouble("HeatstrokeFogDistance"),
-        (saver) -> MainSettingsConfig.HEATSTROKE_FOG.set(saver));
+        (saver) -> MainSettingsConfig.HEATSTROKE_FOG.set(saver),
+        SyncType.BOTH_WAYS);
 
 
         BIOME_TEMPS = addSyncedSettingWithRegistries("biome_temps", FastMap::new, (holder, registryAccess) ->
@@ -303,7 +320,8 @@ public class ConfigSettings
                                                                 return Arrays.asList(biome.toString(), min, max, units.toString());
                                                             })
                                                             .filter(Objects::nonNull)
-                                                            .collect(Collectors.toList())));
+                                                            .collect(Collectors.toList())),
+        SyncType.ONE_WAY);
 
         BIOME_OFFSETS = addSyncedSettingWithRegistries("biome_offsets", FastMap::new, (holder, registryAccess) ->
         {
@@ -329,7 +347,8 @@ public class ConfigSettings
                                                                 return Arrays.asList(biome.toString(), min, max, units.toString());
                                                             })
                                                             .filter(Objects::nonNull)
-                                                            .collect(Collectors.toList())));
+                                                            .collect(Collectors.toList())),
+        SyncType.ONE_WAY);
 
         DIMENSION_TEMPS = addSyncedSettingWithRegistries("dimension_temps", FastMap::new, (holder, registryAccess) ->
         {
@@ -353,7 +372,8 @@ public class ConfigSettings
                                                          return Arrays.asList(dim.toString(), temp, units.toString());
                                                      })
                                                      .filter(Objects::nonNull)
-                                                     .collect(Collectors.toList())));
+                                                     .collect(Collectors.toList())),
+        SyncType.ONE_WAY);
 
         DIMENSION_OFFSETS = addSyncedSettingWithRegistries("dimension_offsets", FastMap::new, (holder, registryAccess) ->
         {
@@ -377,7 +397,8 @@ public class ConfigSettings
                                                          return Arrays.asList(dim.toString(), temp, units.toString());
                                                      })
                                                      .filter(Objects::nonNull)
-                                                     .collect(Collectors.toList())));
+                                                     .collect(Collectors.toList())),
+        SyncType.ONE_WAY);
 
         STRUCTURE_TEMPS = addSyncedSettingWithRegistries("structure_temperatures", FastMap::new, (holder, registryAccess) ->
         {
@@ -401,7 +422,8 @@ public class ConfigSettings
                                                          return Arrays.asList(struct.toString(), temp, units.toString());
                                                      })
                                                      .filter(Objects::nonNull)
-                                                     .collect(Collectors.toList())));
+                                                     .collect(Collectors.toList())),
+        SyncType.ONE_WAY);
 
         STRUCTURE_OFFSETS = addSyncedSettingWithRegistries("structure_offsets", FastMap::new, (holder, registryAccess) ->
         {
@@ -425,7 +447,8 @@ public class ConfigSettings
                                                          return Arrays.asList(struct.toString(), temp, units.toString());
                                                      })
                                                      .filter(Objects::nonNull)
-                                                     .collect(Collectors.toList())));
+                                                     .collect(Collectors.toList())),
+        SyncType.ONE_WAY);
 
         DEPTH_REGIONS = addSetting("depth_regions", ArrayList::new, holder -> {});
 
@@ -450,12 +473,13 @@ public class ConfigSettings
         HEARTH_FUEL = addSetting("hearth_fuel_items", FastMultiMap::new, holder -> fuelAdder.accept(FuelData.FuelType.HEARTH, ItemSettingsConfig.HEARTH_FUELS, holder));
 
         SOULSPRING_LAMP_FUEL = addSyncedSetting("lamp_fuel_items", FastMultiMap::new, holder -> fuelAdder.accept(FuelData.FuelType.SOUL_LAMP, ItemSettingsConfig.SOULSPRING_LAMP_FUELS, holder),
-        (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "LampFuelItems", ModRegistries.FUEL_DATA, ForgeRegistries.ITEMS::getKey),
+        (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "LampFuelItems", Registry.ITEM_REGISTRY, ModRegistries.FUEL_DATA, ForgeRegistries.ITEMS::getKey),
         (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "LampFuelItems", ModRegistries.FUEL_DATA, ForgeRegistries.ITEMS::getValue),
         (saver) -> ConfigHelper.writeRegistryMultimap(saver,
                                                       fuel -> ConfigHelper.getTaggableListStrings(fuel.data().items().get(), Registry.ITEM_REGISTRY),
                                                       fuel -> List.of(fuel.fuel(), fuel.data().nbt().tag().toString()),
-                                                      list -> ItemSettingsConfig.SOULSPRING_LAMP_FUELS.set(list)));
+                                                      list -> ItemSettingsConfig.SOULSPRING_LAMP_FUELS.set(list)),
+        SyncType.ONE_WAY);
 
         HEARTH_POTIONS_ENABLED = addSetting("hearth_potions_enabled", () -> true, holder -> holder.set(ItemSettingsConfig.ALLOW_POTIONS_IN_HEARTH.get()));
         HEARTH_POTION_BLACKLIST = addSetting("hearth_potion_blacklist", ArrayList::new,
@@ -486,16 +510,18 @@ public class ConfigSettings
         INSULATION_ITEMS = addSyncedSetting("insulation_items", FastMultiMap::new, holder ->
         {   insulatorAdder.accept(ItemSettingsConfig.INSULATION_ITEMS, holder, Insulation.Slot.ITEM);
         },
-        (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "InsulationItems", ModRegistries.INSULATOR_DATA, item -> ForgeRegistries.ITEMS.getKey(item)),
+        (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "InsulationItems", Registry.ITEM_REGISTRY, ModRegistries.INSULATOR_DATA, item -> ForgeRegistries.ITEMS.getKey(item)),
         (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "InsulationItems", ModRegistries.INSULATOR_DATA, rl -> ForgeRegistries.ITEMS.getValue(rl)),
-        (saver) -> ConfigHelper.writeItemInsulations(saver, list -> ItemSettingsConfig.INSULATION_ITEMS.set(list)));
+        (saver) -> ConfigHelper.writeItemInsulations(saver, list -> ItemSettingsConfig.INSULATION_ITEMS.set(list)),
+        SyncType.ONE_WAY);
 
         INSULATING_ARMORS = addSyncedSetting("insulating_armors", FastMultiMap::new, holder ->
         {   insulatorAdder.accept(ItemSettingsConfig.INSULATING_ARMOR, holder, Insulation.Slot.ARMOR);
         },
-        (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "InsulatingArmors", ModRegistries.INSULATOR_DATA, item -> ForgeRegistries.ITEMS.getKey(item)),
+        (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "InsulatingArmors", Registry.ITEM_REGISTRY, ModRegistries.INSULATOR_DATA, item -> ForgeRegistries.ITEMS.getKey(item)),
         (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "InsulatingArmors", ModRegistries.INSULATOR_DATA, rl -> ForgeRegistries.ITEMS.getValue(rl)),
-        (saver) -> ConfigHelper.writeItemInsulations(saver, list -> ItemSettingsConfig.INSULATING_ARMOR.set(list)));
+        (saver) -> ConfigHelper.writeItemInsulations(saver, list -> ItemSettingsConfig.INSULATING_ARMOR.set(list)),
+        SyncType.ONE_WAY);
 
         INSULATING_CURIOS = addSyncedSetting("insulating_curios", FastMultiMap::new, holder ->
         {
@@ -503,13 +529,14 @@ public class ConfigSettings
             {   insulatorAdder.accept(ItemSettingsConfig.INSULATING_CURIOS, holder, Insulation.Slot.CURIO);
             }
         },
-        (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "InsulatingCurios", ModRegistries.INSULATOR_DATA, item -> ForgeRegistries.ITEMS.getKey(item)),
+        (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "InsulatingCurios", Registry.ITEM_REGISTRY, ModRegistries.INSULATOR_DATA, item -> ForgeRegistries.ITEMS.getKey(item)),
         (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "InsulatingCurios", ModRegistries.INSULATOR_DATA, rl -> ForgeRegistries.ITEMS.getValue(rl)),
         (saver) ->
         {   if (CompatManager.isCuriosLoaded())
             {   ConfigHelper.writeItemInsulations(saver, list -> ItemSettingsConfig.INSULATING_CURIOS.set(list));
             }
-        });
+        },
+        SyncType.ONE_WAY);
 
         INSULATION_SLOTS = addSyncedSetting("insulation_slots", () -> new ScalingFormula.Static(0, 0, 0, 0), holder ->
         {
@@ -540,7 +567,8 @@ public class ConfigSettings
                                       .addAll(saver.getValues())
                                       .build();
             ItemSettingsConfig.INSULATION_SLOTS.set(list);
-        });
+        },
+        SyncType.BOTH_WAYS);
 
         INSULATION_BLACKLIST = addSetting("insulation_blacklist", ArrayList::new,
                                           holder -> holder.get().addAll(ItemSettingsConfig.INSULATION_BLACKLIST.get()
@@ -574,13 +602,14 @@ public class ConfigSettings
             // Add entries
             holder.get().putAll(dataMap);
         },
-        (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "FoodTemperatures", ModRegistries.FOOD_DATA, item -> ForgeRegistries.ITEMS.getKey(item)),
+        (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "FoodTemperatures", Registry.ITEM_REGISTRY, ModRegistries.FOOD_DATA, item -> ForgeRegistries.ITEMS.getKey(item)),
         (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "FoodTemperatures", ModRegistries.FOOD_DATA, rl -> ForgeRegistries.ITEMS.getValue(rl)),
         (saver) -> ConfigHelper.writeRegistryMultimap(saver,
                                                       food -> ConfigHelper.getTaggableListStrings(food.data().items().get(), Registry.ITEM_REGISTRY),
                                                       food -> ListBuilder.begin(food.temperature(), food.data().nbt().tag().toString())
                                                               .addIf(food.duration() > 0, food::duration).build(),
-                                                      list -> ItemSettingsConfig.FOOD_TEMPERATURES.set(list)));
+                                                      list -> ItemSettingsConfig.FOOD_TEMPERATURES.set(list)),
+        SyncType.ONE_WAY);
 
         CARRIED_ITEM_TEMPERATURES = addSyncedSetting("carried_item_temps", FastMultiMap::new, holder ->
         {
@@ -600,7 +629,7 @@ public class ConfigSettings
             // Add entries
             holder.get().putAll(dataMap);
         },
-        (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "CarriedItemTemps", ModRegistries.CARRY_TEMP_DATA, item -> ForgeRegistries.ITEMS.getKey(item)),
+        (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "CarriedItemTemps", Registry.ITEM_REGISTRY, ModRegistries.CARRY_TEMP_DATA, item -> ForgeRegistries.ITEMS.getKey(item)),
         (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "CarriedItemTemps", ModRegistries.CARRY_TEMP_DATA, rl -> ForgeRegistries.ITEMS.getValue(rl)),
         (saver) ->
         {
@@ -624,7 +653,8 @@ public class ConfigSettings
                 return entry;
             },
             list -> ItemSettingsConfig.CARRIED_ITEM_TEMPERATURES.set(list));
-        });
+        },
+        SyncType.ONE_WAY);
 
         WATERSKIN_STRENGTH = addSetting("waterskin_strength", () -> 50, holder -> holder.set(ItemSettingsConfig.WATERSKIN_STRENGTH.get()));
 
@@ -659,7 +689,8 @@ public class ConfigSettings
             list.add(saver.getB());
             list.add(saver.getC());
             EntitySettingsConfig.GOAT_FUR_GROWTH_STATS.set(list);
-        });
+        },
+        SyncType.BOTH_WAYS);
 
         SHED_TIMINGS = addSyncedSetting("shed_timings", () -> new Triplet<>(0, 0, 0d), holder ->
         {
@@ -685,7 +716,8 @@ public class ConfigSettings
             list.add(saver.getB());
             list.add(saver.getC());
             EntitySettingsConfig.CHAMELEON_SHED_STATS.set(list);
-        });
+        },
+        SyncType.BOTH_WAYS);
 
         ENTITY_SPAWN_BIOMES = addSettingWithRegistries("entity_spawn_biomes", FastMultiMap::new, (holder, registryAccess) ->
         {
@@ -743,12 +775,13 @@ public class ConfigSettings
         BLOCK_RANGE = addSyncedSetting("block_range", () -> 7, holder -> holder.set(WorldSettingsConfig.MAX_BLOCK_TEMP_RANGE.get()),
         (encoder) -> ConfigHelper.serializeNbtInt(encoder, "BlockRange"),
         (decoder) -> decoder.getInt("BlockRange"),
-        (saver) -> WorldSettingsConfig.MAX_BLOCK_TEMP_RANGE.set(saver));
+        (saver) -> WorldSettingsConfig.MAX_BLOCK_TEMP_RANGE.set(saver),
+        SyncType.BOTH_WAYS);
 
         COLD_SOUL_FIRE = addSetting("cold_soul_fire", () -> true, holder -> holder.set(WorldSettingsConfig.IS_SOUL_FIRE_COLD.get()));
 
         THERMAL_SOURCE_SPREAD_WHITELIST = addSyncedSetting("hearth_spread_whitelist", ArrayList::new, holder -> holder.get().addAll(ConfigHelper.getBlocks(WorldSettingsConfig.SOURCE_SPREAD_WHITELIST.get().toArray(new String[0]))),
-                                                           (encoder) ->
+        (encoder) ->
         {
             CompoundTag tag = new CompoundTag();
             ListTag list = new ListTag();
@@ -758,7 +791,7 @@ public class ConfigSettings
             tag.put("HearthWhitelist", list);
             return tag;
         },
-                                                           (decoder) ->
+        (decoder) ->
         {
             List<Block> list = new ArrayList<>();
             for (Tag entry : decoder.getList("HearthWhitelist", 8))
@@ -766,10 +799,11 @@ public class ConfigSettings
             }
             return list;
         },
-                                                           saver -> WorldSettingsConfig.setSourceSpreadWhitelist(saver.stream().map(ForgeRegistries.BLOCKS::getKey).toList()));
+        saver -> WorldSettingsConfig.setSourceSpreadWhitelist(saver.stream().map(ForgeRegistries.BLOCKS::getKey).toList()),
+        SyncType.BOTH_WAYS);
 
         THERMAL_SOURCE_SPREAD_BLACKLIST = addSyncedSetting("hearth_spread_blacklist", ArrayList::new, holder -> holder.get().addAll(ConfigHelper.getBlocks(WorldSettingsConfig.SOURCE_SPREAD_BLACKLIST.get().toArray(new String[0]))),
-                                                           (encoder) ->
+        (encoder) ->
         {
             CompoundTag tag = new CompoundTag();
             ListTag list = new ListTag();
@@ -779,7 +813,7 @@ public class ConfigSettings
             tag.put("HearthBlacklist", list);
             return tag;
         },
-                                                           (decoder) ->
+        (decoder) ->
         {
             List<Block> list = new ArrayList<>();
             for (Tag entry : decoder.getList("HearthBlacklist", 8))
@@ -787,101 +821,124 @@ public class ConfigSettings
             }
             return list;
         },
-                                                           saver -> WorldSettingsConfig.setSourceSpreadBlacklist(saver.stream().map(ForgeRegistries.BLOCKS::getKey).toList()));
+        saver -> WorldSettingsConfig.setSourceSpreadBlacklist(saver.stream().map(ForgeRegistries.BLOCKS::getKey).toList()),
+        SyncType.BOTH_WAYS);
 
         THERMAL_SOURCE_STRENGTH = addSetting("hearth_effect", () -> 0.75, holder -> holder.set(WorldSettingsConfig.SOURCE_EFFECT_STRENGTH.get()));
 
         SMART_HEARTH = addSyncedSetting("smart_hearth", () -> false, holder -> holder.set(WorldSettingsConfig.ENABLE_SMART_HEARTH.get()),
         (encoder) -> ConfigHelper.serializeNbtBool(encoder, "SmartHearth"),
         (decoder) -> decoder.getBoolean("SmartHearth"),
-        (saver) -> WorldSettingsConfig.ENABLE_SMART_HEARTH.set(saver));
+        (saver) -> WorldSettingsConfig.ENABLE_SMART_HEARTH.set(saver),
+        SyncType.BOTH_WAYS);
 
         SMART_BOILER = addSyncedSetting("smart_boiler", () -> false, holder -> holder.set(WorldSettingsConfig.ENABLE_SMART_BOILER.get()),
         (encoder) -> ConfigHelper.serializeNbtBool(encoder, "SmartBoiler"),
         (decoder) -> decoder.getBoolean("SmartBoiler"),
-        (saver) -> WorldSettingsConfig.ENABLE_SMART_BOILER.set(saver));
+        (saver) -> WorldSettingsConfig.ENABLE_SMART_BOILER.set(saver),
+        SyncType.BOTH_WAYS);
 
         SMART_ICEBOX = addSyncedSetting("smart_icebox", () -> false, holder -> holder.set(WorldSettingsConfig.ENABLE_SMART_ICEBOX.get()),
         (encoder) -> ConfigHelper.serializeNbtBool(encoder, "SmartIcebox"),
         (decoder) -> decoder.getBoolean("SmartIcebox"),
-        (saver) -> WorldSettingsConfig.ENABLE_SMART_ICEBOX.set(saver));
+        (saver) -> WorldSettingsConfig.ENABLE_SMART_ICEBOX.set(saver),
+        SyncType.BOTH_WAYS);
 
         HEARTH_MAX_RANGE = addSyncedSetting("hearth_max_range", () -> 16, holder -> holder.set(WorldSettingsConfig.HEARTH_MAX_RANGE.get()),
         (encoder) -> ConfigHelper.serializeNbtInt(encoder, "HearthMaxRange"),
         (decoder) -> decoder.getInt("HearthMaxRange"),
-        (saver) -> WorldSettingsConfig.HEARTH_MAX_RANGE.set(saver));
+        (saver) -> WorldSettingsConfig.HEARTH_MAX_RANGE.set(saver),
+        SyncType.BOTH_WAYS);
 
         HEARTH_RANGE = addSyncedSetting("hearth_range", () -> 8, holder -> holder.set(WorldSettingsConfig.HEARTH_RANGE.get()),
         (encoder) -> ConfigHelper.serializeNbtInt(encoder, "HearthRange"),
         (decoder) -> decoder.getInt("HearthRange"),
-        (saver) -> WorldSettingsConfig.HEARTH_RANGE.set(saver));
+        (saver) -> WorldSettingsConfig.HEARTH_RANGE.set(saver),
+        SyncType.BOTH_WAYS);
 
         HEARTH_MAX_VOLUME = addSyncedSetting("hearth_max_volume", () -> 1000, holder -> holder.set(WorldSettingsConfig.HEARTH_MAX_VOLUME.get()),
         (encoder) -> ConfigHelper.serializeNbtInt(encoder, "HearthMaxVolume"),
         (decoder) -> decoder.getInt("HearthMaxVolume"),
-        (saver) -> WorldSettingsConfig.HEARTH_MAX_VOLUME.set(saver));
+        (saver) -> WorldSettingsConfig.HEARTH_MAX_VOLUME.set(saver),
+        SyncType.BOTH_WAYS);
 
         HEARTH_WARM_UP_TIME = addSyncedSetting("hearth_warm_up_time", () -> 20, holder -> holder.set(WorldSettingsConfig.HEARTH_WARM_UP_TIME.get()),
         (encoder) -> ConfigHelper.serializeNbtInt(encoder, "HearthWarmUpTime"),
         (decoder) -> decoder.getInt("HearthWarmUpTime"),
-        (saver) -> WorldSettingsConfig.HEARTH_WARM_UP_TIME.set(saver));
+        (saver) -> WorldSettingsConfig.HEARTH_WARM_UP_TIME.set(saver),
+        SyncType.BOTH_WAYS);
 
         HEARTH_MAX_INSULATION = addSyncedSetting("hearth_max_insulation", () -> 1, holder -> holder.set(WorldSettingsConfig.HEARTH_MAX_INSULATION.get()),
         (encoder) -> ConfigHelper.serializeNbtInt(encoder, "HearthMaxInsulation"),
         (decoder) -> decoder.getInt("HearthMaxInsulation"),
-        (saver) -> WorldSettingsConfig.HEARTH_MAX_INSULATION.set(saver));
+        (saver) -> WorldSettingsConfig.HEARTH_MAX_INSULATION.set(saver),
+        SyncType.BOTH_WAYS);
 
         BOILER_MAX_RANGE = addSyncedSetting("boiler_max_range", () -> 16, holder -> holder.set(WorldSettingsConfig.BOILER_MAX_RANGE.get()),
         (encoder) -> ConfigHelper.serializeNbtInt(encoder, "BoilerMaxRange"),
         (decoder) -> decoder.getInt("BoilerMaxRange"),
-        (saver) -> WorldSettingsConfig.BOILER_MAX_RANGE.set(saver));
+        (saver) -> WorldSettingsConfig.BOILER_MAX_RANGE.set(saver),
+        SyncType.BOTH_WAYS);
 
         BOILER_RANGE = addSyncedSetting("boiler_range", () -> 8, holder -> holder.set(WorldSettingsConfig.BOILER_RANGE.get()),
         (encoder) -> ConfigHelper.serializeNbtInt(encoder, "BoilerRange"),
         (decoder) -> decoder.getInt("BoilerRange"),
-        (saver) -> WorldSettingsConfig.BOILER_RANGE.set(saver));
+        (saver) -> WorldSettingsConfig.BOILER_RANGE.set(saver),
+        SyncType.BOTH_WAYS);
 
         BOILER_MAX_VOLUME = addSyncedSetting("boiler_max_volume", () -> 1000, holder -> holder.set(WorldSettingsConfig.BOILER_MAX_VOLUME.get()),
         (encoder) -> ConfigHelper.serializeNbtInt(encoder, "BoilerMaxVolume"),
         (decoder) -> decoder.getInt("BoilerMaxVolume"),
-        (saver) -> WorldSettingsConfig.BOILER_MAX_VOLUME.set(saver));
+        (saver) -> WorldSettingsConfig.BOILER_MAX_VOLUME.set(saver),
+        SyncType.BOTH_WAYS);
 
         BOILER_WARM_UP_TIME = addSyncedSetting("boiler_warm_up_time", () -> 20, holder -> holder.set(WorldSettingsConfig.BOILER_WARM_UP_TIME.get()),
         (encoder) -> ConfigHelper.serializeNbtInt(encoder, "BoilerWarmUpTime"),
         (decoder) -> decoder.getInt("BoilerWarmUpTime"),
-        (saver) -> WorldSettingsConfig.BOILER_WARM_UP_TIME.set(saver));
+        (saver) -> WorldSettingsConfig.BOILER_WARM_UP_TIME.set(saver),
+        SyncType.BOTH_WAYS);
 
         BOILER_MAX_INSULATION = addSyncedSetting("boiler_max_insulation", () -> 1, holder -> holder.set(WorldSettingsConfig.BOILER_MAX_INSULATION.get()),
         (encoder) -> ConfigHelper.serializeNbtInt(encoder, "BoilerMaxInsulation"),
         (decoder) -> decoder.getInt("BoilerMaxInsulation"),
-        (saver) -> WorldSettingsConfig.BOILER_MAX_INSULATION.set(saver));
+        (saver) -> WorldSettingsConfig.BOILER_MAX_INSULATION.set(saver),
+        SyncType.BOTH_WAYS);
 
         ICEBOX_MAX_RANGE = addSyncedSetting("icebox_max_range", () -> 16, holder -> holder.set(WorldSettingsConfig.ICEBOX_MAX_RANGE.get()),
         (encoder) -> ConfigHelper.serializeNbtInt(encoder, "IceboxMaxRange"),
         (decoder) -> decoder.getInt("IceboxMaxRange"),
-        (saver) -> WorldSettingsConfig.ICEBOX_MAX_RANGE.set(saver));
+        (saver) -> WorldSettingsConfig.ICEBOX_MAX_RANGE.set(saver),
+        SyncType.BOTH_WAYS);
 
         ICEBOX_RANGE = addSyncedSetting("icebox_range", () -> 8, holder -> holder.set(WorldSettingsConfig.ICEBOX_RANGE.get()),
         (encoder) -> ConfigHelper.serializeNbtInt(encoder, "IceboxRange"),
         (decoder) -> decoder.getInt("IceboxRange"),
-        (saver) -> WorldSettingsConfig.ICEBOX_RANGE.set(saver));
+        (saver) -> WorldSettingsConfig.ICEBOX_RANGE.set(saver),
+        SyncType.BOTH_WAYS);
 
         ICEBOX_MAX_VOLUME = addSyncedSetting("icebox_max_volume", () -> 1000, holder -> holder.set(WorldSettingsConfig.ICEBOX_MAX_VOLUME.get()),
         (encoder) -> ConfigHelper.serializeNbtInt(encoder, "IceboxMaxVolume"),
         (decoder) -> decoder.getInt("IceboxMaxVolume"),
-        (saver) -> WorldSettingsConfig.ICEBOX_MAX_VOLUME.set(saver));
+        (saver) -> WorldSettingsConfig.ICEBOX_MAX_VOLUME.set(saver),
+        SyncType.BOTH_WAYS);
 
         ICEBOX_WARM_UP_TIME = addSyncedSetting("icebox_warm_up_time", () -> 20, holder -> holder.set(WorldSettingsConfig.ICEBOX_WARM_UP_TIME.get()),
         (encoder) -> ConfigHelper.serializeNbtInt(encoder, "IceboxWarmUpTime"),
         (decoder) -> decoder.getInt("IceboxWarmUpTime"),
-        (saver) -> WorldSettingsConfig.ICEBOX_WARM_UP_TIME.set(saver));
+        (saver) -> WorldSettingsConfig.ICEBOX_WARM_UP_TIME.set(saver),
+        SyncType.BOTH_WAYS);
 
         ICEBOX_MAX_INSULATION = addSyncedSetting("icebox_max_insulation", () -> 1, holder -> holder.set(WorldSettingsConfig.ICEBOX_MAX_INSULATION.get()),
         (encoder) -> ConfigHelper.serializeNbtInt(encoder, "IceboxMaxInsulation"),
         (decoder) -> decoder.getInt("IceboxMaxInsulation"),
-        (saver) -> WorldSettingsConfig.ICEBOX_MAX_INSULATION.set(saver));
+        (saver) -> WorldSettingsConfig.ICEBOX_MAX_INSULATION.set(saver),
+        SyncType.BOTH_WAYS);
 
-        INSULATION_STRENGTH = addSetting("insulation_strength", () -> 1d, holder -> holder.set(ItemSettingsConfig.INSULATION_STRENGTH.get()));
+        INSULATION_STRENGTH = addSyncedSetting("insulation_strength", () -> 1d, holder -> holder.set(ItemSettingsConfig.INSULATION_STRENGTH.get()),
+        (encoder) -> ConfigHelper.serializeNbtDouble(encoder, "InsulationStrength"),
+        (decoder) -> decoder.getDouble("InsulationStrength"),
+        (saver) -> ItemSettingsConfig.INSULATION_STRENGTH.set(saver),
+        SyncType.BOTH_WAYS);
 
         DISABLED_MODIFIERS = addSetting("disabled_modifiers", ArrayList::new, holder -> holder.get().addAll(MainSettingsConfig.DISABLED_TEMP_MODIFIERS.get().stream().map(ResourceLocation::new).toList()));
 
@@ -1055,21 +1112,23 @@ public class ConfigSettings
         return holder;
     }
 
-    public static <T> DynamicHolder<T> addSyncedSetting(String id, Supplier<T> defaultVal, Consumer<DynamicHolder<T>> loader, Function<T, CompoundTag> writer, Function<CompoundTag, T> reader, Consumer<T> saver)
-    {   DynamicHolder<T> holder = DynamicHolder.createSynced(defaultVal, loader, writer, reader, saver);
+    public static <T> DynamicHolder<T> addSyncedSetting(String id, Supplier<T> defaultVal, Consumer<DynamicHolder<T>> loader, Function<T, CompoundTag> writer, Function<CompoundTag, T> reader,
+                                                        Consumer<T> saver, DynamicHolder.SyncType syncType)
+    {   DynamicHolder<T> holder = DynamicHolder.createSynced(defaultVal, loader, writer, reader, saver, syncType);
         CONFIG_SETTINGS.put(id, holder);
         return holder;
     }
 
-    public static <T> DynamicHolder<T> addSyncedSettingWithRegistries(String id, Supplier<T> defaultVal, DynamicHolder.Loader<T> loader, DynamicHolder.Writer<T> writer, DynamicHolder.Reader<T> reader, DynamicHolder.Saver<T> saver)
-    {   DynamicHolder<T> holder = DynamicHolder.createSyncedWithRegistries(defaultVal, loader, writer, reader, saver);
+    public static <T> DynamicHolder<T> addSyncedSettingWithRegistries(String id, Supplier<T> defaultVal, DynamicHolder.Loader<T> loader, DynamicHolder.Writer<T> writer, DynamicHolder.Reader<T> reader,
+                                                                      DynamicHolder.Saver<T> saver, DynamicHolder.SyncType syncType)
+    {   DynamicHolder<T> holder = DynamicHolder.createSyncedWithRegistries(defaultVal, loader, writer, reader, saver, syncType);
         CONFIG_SETTINGS.put(id, holder);
         return holder;
     }
 
     public static <T> DynamicHolder<T> addClientSetting(String id, Supplier<T> defaultVal, Consumer<DynamicHolder<T>> loader)
     {
-        if (FMLEnvironment.dist == Dist.CLIENT)
+        if (EffectiveSide.get().isClient())
         {
             DynamicHolder<T> holder = DynamicHolder.create(defaultVal, loader);
             CLIENT_SETTINGS.put(id, holder);
@@ -1083,7 +1142,7 @@ public class ConfigSettings
         CompoundTag map = new CompoundTag();
         CONFIG_SETTINGS.forEach((key, value) ->
         {
-            if (value.isSynced())
+            if (value.getSyncType().canSend())
             {   CompoundTag encoded = value.encode(registryAccess);
                 map.merge(encoded);
             }
@@ -1096,7 +1155,7 @@ public class ConfigSettings
         ConfigData.IDENTIFIABLES.clear();
         for (DynamicHolder<?> config : CONFIG_SETTINGS.values())
         {
-            if (config.isSynced())
+            if (config.getSyncType().canReceive())
             {   config.decode(tag, registryAccess);
             }
         }
