@@ -22,58 +22,49 @@ public class MixinXPBar
             (   from = @At(value = "INVOKE", target = "Lnet/minecraft/util/profiling/ProfilerFiller;pop()V"),
                 to   = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/Font;width(Ljava/lang/String;)I")
             ))
-    public void renderExperienceBar1(PoseStack poseStack, int xPos, CallbackInfo ci)
+    public void shiftExperienceBar(PoseStack poseStack, int xPos, CallbackInfo ci)
     {
+        poseStack.pushPose();
         // Render XP bar
         if (ConfigSettings.CUSTOM_HOTBAR_LAYOUT.get())
-        {   poseStack.translate(0.0D, 4.0D, 0.0D);
+        {   poseStack.translate(0, 4, 0);
         }
     }
 
     @Inject(method = "renderExperienceBar",
             at = @At
             (   value = "INVOKE",
-                target = "Lnet/minecraft/util/profiling/ProfilerFiller;pop()V"
+                target = "Lnet/minecraft/client/gui/Font;draw(Lcom/mojang/blaze3d/vertex/PoseStack;Ljava/lang/String;FFI)I",
+                ordinal = 0
             ),
             slice = @Slice
             (   from = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/Font;width(Ljava/lang/String;)I"),
                 to   = @At(value = "RETURN")
             ))
-    public void renderExperienceBar2(PoseStack poseStack, int xPos, CallbackInfo ci)
+    public void experienceBarPop(PoseStack poseStack, int xPos, CallbackInfo ci)
     {
-        // Render XP bar
-        if (ConfigSettings.CUSTOM_HOTBAR_LAYOUT.get())
-        {   poseStack.translate(0.0D, -4.0D, 0.0D);
-        }
+        poseStack.popPose();
     }
 
     @Mixin(Gui.class)
     public static class MixinItemLabel
     {
         @Inject(method = "renderSelectedItemName(Lcom/mojang/blaze3d/vertex/PoseStack;)V",
-                at = @At
-                (   value = "INVOKE",
-                    target = "Lnet/minecraft/util/profiling/ProfilerFiller;push(Ljava/lang/String;)V",
-                    shift = At.Shift.AFTER
-                ))
-        public void renderItemNamePre(PoseStack matrixStack, CallbackInfo ci)
+                at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;defaultBlendFunc()V"), remap = false)
+        public void shiftItemName(PoseStack poseStack, CallbackInfo ci)
         {
+            poseStack.pushPose();
             if (ConfigSettings.CUSTOM_HOTBAR_LAYOUT.get())
-            {   matrixStack.translate(0, -4, 0);
+            {   poseStack.translate(0, -4, 0);
             }
         }
 
         @Inject(method = "renderSelectedItemName(Lcom/mojang/blaze3d/vertex/PoseStack;)V",
-                at = @At
-                (   value = "INVOKE",
-                    target = "Lnet/minecraft/util/profiling/ProfilerFiller;pop()V",
-                    shift = At.Shift.BEFORE
-                ))
-        public void renderItemNamePost(PoseStack matrixStack, CallbackInfo ci)
+                at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;disableBlend()V",
+                         shift = At.Shift.AFTER), remap = false)
+        public void itemNamePop(PoseStack poseStack, CallbackInfo ci)
         {
-            if (ConfigSettings.CUSTOM_HOTBAR_LAYOUT.get())
-            {   matrixStack.translate(0, 4, 0);
-            }
+            poseStack.popPose();
         }
     }
 }
