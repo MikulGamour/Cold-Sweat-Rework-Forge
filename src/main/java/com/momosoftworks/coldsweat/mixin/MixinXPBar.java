@@ -26,9 +26,10 @@ public class MixinXPBar
             ))
     public void moveXPNumberDown(MatrixStack poseStack, int xPos, CallbackInfo ci)
     {
+        poseStack.pushPose();
         // Render XP bar
         if (ConfigSettings.CUSTOM_HOTBAR_LAYOUT.get())
-        {   poseStack.translate(0.0D, 4.0D, 0.0D);
+        {   poseStack.translate(0, 4, 0);
         }
     }
 
@@ -36,10 +37,7 @@ public class MixinXPBar
             at = @At(value = "INVOKE", target = "Lnet/minecraft/profiler/IProfiler;pop()V", ordinal = 1))
     public void renderXPNumberPost(MatrixStack poseStack, int xPos, CallbackInfo ci)
     {
-        // Render XP bar
-        if (ConfigSettings.CUSTOM_HOTBAR_LAYOUT.get())
-        {   poseStack.translate(0.0D, -4.0D, 0.0D);
-        }
+        poseStack.popPose();
     }
 
     @Mixin(IngameGui.class)
@@ -47,20 +45,19 @@ public class MixinXPBar
     {
         @Inject(method = "renderSelectedItemName(Lcom/mojang/blaze3d/matrix/MatrixStack;)V",
                 at = @At(value = "HEAD"))
-        public void moveItemNameUp(MatrixStack matrixStack, CallbackInfo ci)
+        public void moveItemNameUp(MatrixStack poseStack, CallbackInfo ci)
         {
+            poseStack.pushPose();
             if (ConfigSettings.CUSTOM_HOTBAR_LAYOUT.get())
-            {   matrixStack.translate(0, -4, 0);
+            {   poseStack.translate(0, -4, 0);
             }
         }
 
         @Inject(method = "renderSelectedItemName(Lcom/mojang/blaze3d/matrix/MatrixStack;)V",
                 at = @At(value = "TAIL"))
-        public void renderItemNamePost(MatrixStack matrixStack, CallbackInfo ci)
+        public void renderItemNamePost(MatrixStack poseStack, CallbackInfo ci)
         {
-            if (ConfigSettings.CUSTOM_HOTBAR_LAYOUT.get())
-            {   matrixStack.translate(0, 4, 0);
-            }
+            poseStack.popPose();
         }
     }
 }
