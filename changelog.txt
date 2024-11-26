@@ -2629,3 +2629,40 @@ Technical Changes:
 - The hearth, icebox, and boiler now use fluid tags for fueling:
       - cold_sweat:hot
       - cold_sweat:cold
+
+
+------------------------------------------------------------------------------------------------------------------------
+2.3.9
+* item_settings/entity_settings/world_settings.toml have been renamed to item/entity/world.toml
+      - Existing files will be automatically migrated
+- Insulation attributes with unmet requirements are now shown with a red strikethrough, rather than being omitted from the tooltip
+- Added config options for the maximum range and volume of the hearth, boiler, and icebox individually to world.toml
+
+Fixes:
+- Fixed the hotbar tooltip for filled waterskins not having a negative symbol for cold temperatures
+- Fixed thermal source blocks (hearth/boiler/icebox) not consuming fuel items immediately upon being inserted
+
+Technical Changes:
+* Added KubeJS support
+      - Added events for adding insulators, block temps, biome temps, etc; as well as TempModifiers
+      - Added several Cold-Sweat-related methods that can be accessed from the "coldsweat" binding
+      - Added a few other events for specific Cold Sweat actions. This list will grow over time
+      - See the mod's documentation page for more details
+* Added "remove" config type, which allows for the removal of registered config settings that match a given data structure
+      - This includes TOML and JSON configs
+      - Removals are handled after all of the config settings are parsed, but before they are committed to memory
+      - Removals will not directly change the config files; only whether they are loaded
+* Massive internal registry standardization and boilerplate reduction
+      - Internal registries and configs are now much more standardized, with fewer points of failure
+      - Codecs are used wherever possible for data serialization, rather than bespoke methods
+      - Many of the config holders have been updated to hold custom data types, rather than unorganized tuples (like Pairs and Triplets)
+* Cold Sweat configs that rely on dynamic registries now use Holders for their keys
+      - This includes biomes, dimensions, structures, etc.
+      - For example, ConfigSettings.BIOME_TEMPS is now a DynamicHolder<Map<Holder<Biome>, BiomeTempData>>
+      - Any methods that previously accepted an "unwrapped" value now accept a Holder instead
+      - These changes will only affect direct interactions via Java; not JSON or KubeJS
+- ItemRequirements and EntityRequirements can now take in a Predicate<ItemStack> and Predicate<Entity> respectively
+      - These allow for absolute control over the conditions for insulators, entity temperatures, etc.
+      - These requirements are now calculated on the server, and the results are sent to the client
+- Defining biome temperatures with only one temperature value is no longer supported in TOML configs
+- All configs that accept items, blocks, biomes, etc. will now accept comma-separated lists and #tags if they previously didn't
