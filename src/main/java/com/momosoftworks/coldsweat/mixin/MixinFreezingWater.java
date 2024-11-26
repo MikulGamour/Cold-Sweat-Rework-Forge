@@ -1,6 +1,7 @@
 package com.momosoftworks.coldsweat.mixin;
 
 import com.momosoftworks.coldsweat.config.ConfigSettings;
+import com.momosoftworks.coldsweat.util.serialization.RegistryHelper;
 import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -8,13 +9,15 @@ import net.minecraft.block.CampfireBlock;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.registry.DynamicRegistries;
+import net.minecraft.world.GameRules;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.fluids.IFluidBlock;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(Biome.class)
@@ -22,6 +25,8 @@ public abstract class MixinFreezingWater
 {
     private static IWorldReader LEVEL = null;
     private static Boolean IS_CHECKING_FREEZING = false;
+
+    Biome self = (Biome) (Object) this;
 
     @Inject(method = "shouldFreeze(Lnet/minecraft/world/IWorldReader;Lnet/minecraft/util/math/BlockPos;Z)Z",
             at = @At(value = "HEAD"), cancellable = true)
@@ -62,11 +67,37 @@ public abstract class MixinFreezingWater
     {
         if (!ConfigSettings.USE_CUSTOM_WATER_FREEZE_BEHAVIOR.get()) return;
 
+        DynamicRegistries registries = RegistryHelper.getDynamicRegistries();
+        if (registries != null)
+        {
+            if (self.getBiomeCategory() == Biome.Category.OCEAN
+            && pos.getY() <= LEVEL.getSeaLevel())
+            {   return;
+            }
+        }
+
         if (IS_CHECKING_FREEZING && LEVEL instanceof World)
         {
             double biomeTemp = WorldHelper.getWorldTemperatureAt((World) LEVEL, pos);
             cir.setReturnValue((float) biomeTemp);
         }
         IS_CHECKING_FREEZING = false;
+    }
+
+    @Mixin(ServerWorld.class)
+    public static abstract class FreezeTickSpeed
+    {
+        ServerWorld self = (ServerWorld) (Object) this;
+
+        @ModifyArg(method = "tickChunk", at = @At(target = "Ljava/util/Random;nextInt(I)I", value = "INVOKE"),
+                  slice = @Slice(from = @At(target = "Lnet/minecraft/profiler/IProfiler;popPush(Ljava/lang/String;)V", value = "INVOKE", ordinal = 0),
+                                 to = @At(target = "Lnet/minecraft/profiler/IProfiler;popPush(Ljava/lang/String;)V", value = "INVOKE", ordinal = 1)))
+        private int tickFreezeSpeed(int bound)
+        {
+            if (!ConfigSettings.USE_CUSTOM_WATER_FREEZE_BEHAVIOR.get()) return bound;
+
+            int tickSpeed = self.getGameRules().getInt(GameRules.RULE_RANDOMTICKING);
+            return Math.max(1, bound / (tickSpeed / 3));
+        }
     }
 }
