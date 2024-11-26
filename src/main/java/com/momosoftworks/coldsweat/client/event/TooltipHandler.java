@@ -200,7 +200,7 @@ public class TooltipHandler
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public static void updateHoveredItem(GuiScreenEvent.DrawScreenEvent.Post event)
+    public static void updateHoveredItem(GuiScreenEvent.DrawScreenEvent.Pre event)
     {
         if (event.getGui() instanceof ContainerScreen<?>)
         {
