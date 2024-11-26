@@ -107,7 +107,7 @@ public class ShearableFurManager
             {   entity.getPersistentData().putInt("FurGrowthCooldown", entity.getPersistentData().getInt("FurGrowthCooldown") - 1);
             }
             // Entity is shearable, current tick is a multiple of the regrow time, and random chance succeeds
-            if (!entity.level.isClientSide && entity.tickCount % furConfig.getA() == 0 && Math.random() < furConfig.getC())
+            if (!entity.level.isClientSide && entity.getAge() % Math.max(1, furConfig.getA()) == 0 && Math.random() < furConfig.getC())
             {
                 getFurCap(entity).ifPresent(cap ->
                 {
