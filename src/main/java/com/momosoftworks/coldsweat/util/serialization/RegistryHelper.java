@@ -105,6 +105,12 @@ public class RegistryHelper
         }
     }
 
+    public static <T> Optional<Holder<T>> getHolder(T object, ResourceKey<Registry<T>> registry, RegistryAccess registryAccess)
+    {
+        Registry<T> reg = registryAccess.registryOrThrow(registry);
+        return reg.getHolder(reg.getId(object));
+    }
+
     @Nullable
     public static ResourceLocation getKey(Holder<?> holder)
     {   return holder.unwrapKey().map(ResourceKey::location).orElse(null);
