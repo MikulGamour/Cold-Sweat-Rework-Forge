@@ -181,7 +181,7 @@ public class TooltipHandler
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
-    public static void updateHoveredItem(ScreenEvent.DrawScreenEvent.Post event)
+    public static void updateHoveredItem(ScreenEvent.DrawScreenEvent.Pre event)
     {
         if (event.getScreen() instanceof AbstractContainerScreen<?> menu)
         {
