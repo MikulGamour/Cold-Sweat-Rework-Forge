@@ -341,7 +341,7 @@ public class ConfigHelper
                 continue;
             }
             codec.encode(entry.getValue(), encoderOps, encoderOps.empty())
-            .resultOrPartial(e -> ColdSweat.LOGGER.error("Error serializing {} \"{}\": {}", gameRegistry.location(), elementId, e))
+            .resultOrPartial(e -> ColdSweat.LOGGER.error("Error serializing {} {}: {}", modRegistry.location(), entry.getValue(), e))
             .ifPresent(encoded ->
             {
                 ((CompoundNBT) encoded).putUUID("UUID", entry.getValue().getId());
@@ -391,22 +391,25 @@ public class ConfigHelper
     }
 
     public static <K, V extends ConfigData<?>> CompoundNBT serializeMultimapRegistry(Multimap<K, V> map, String key,
-                                                                                    RegistryKey<Registry<V>> modRegistry,
-                                                                                    Function<K, ResourceLocation> keyGetter)
+                                                                                     RegistryKey<Registry<K>> gameRegistry,
+                                                                                     RegistryKey<Registry<V>> modRegistry,
+                                                                                     Function<K, ResourceLocation> keyGetter)
     {
-        return serializeEitherMultimapRegistry(map, key, modRegistry, keyGetter);
+        return serializeEitherMultimapRegistry(map, key, gameRegistry, modRegistry, keyGetter);
     }
 
     public static <K, V extends ConfigData<?>> CompoundNBT serializeHolderMultimapRegistry(Multimap<K, V> map, String key,
-                                                                                           RegistryKey<Registry<K>> gameRegistry, RegistryKey<Registry<V>> modRegistry,
+                                                                                           RegistryKey<Registry<K>> gameRegistry,
+                                                                                           RegistryKey<Registry<V>> modRegistry,
                                                                                            DynamicRegistries dynamicRegistries)
     {
-        return serializeEitherMultimapRegistry(map, key, modRegistry, k -> dynamicRegistries.registryOrThrow(gameRegistry).getKey(k));
+        return serializeEitherMultimapRegistry(map, key, gameRegistry, modRegistry, k -> dynamicRegistries.registryOrThrow(gameRegistry).getKey(k));
     }
 
     private static <K, V extends ConfigData<?>> CompoundNBT serializeEitherMultimapRegistry(Multimap<K, V> map, String key,
-                                                                                           RegistryKey<Registry<V>> modRegistry,
-                                                                                           Function<K, ResourceLocation> keyGetter)
+                                                                                            RegistryKey<Registry<K>> gameRegistry,
+                                                                                            RegistryKey<Registry<V>> modRegistry,
+                                                                                            Function<K, ResourceLocation> keyGetter)
     {
         Codec<V> codec = ModRegistries.getCodec(modRegistry);
         CompoundNBT tag = new CompoundNBT();
@@ -416,13 +419,13 @@ public class ConfigHelper
         {
             ResourceLocation elementId = keyGetter.apply(entry.getKey());
             if (elementId == null)
-            {   ColdSweat.LOGGER.error("Error serializing: \"{}\" does not exist in registry", entry.getKey());
+            {   ColdSweat.LOGGER.error("Error serializing {}: \"{}\" does not exist", gameRegistry.location(), entry.getKey());
                 continue;
             }
             ListNBT valuesTag = new ListNBT();
             for (V value : entry.getValue())
             {
-                codec.encodeStart(NBTDynamicOps.INSTANCE, value)
+                codec.encode(value, NBTDynamicOps.INSTANCE, NBTDynamicOps.INSTANCE.empty())
                 .resultOrPartial(e -> ColdSweat.LOGGER.error("Error serializing {} \"{}\": {}", modRegistry.location(), elementId, e))
                 .ifPresent(encoded ->
                 {
@@ -440,20 +443,22 @@ public class ConfigHelper
                                                                                           RegistryKey<Registry<V>> modRegistry,
                                                                                           Function<ResourceLocation, K> keyGetter)
     {
-        return deserializeEitherMultimapRegistry(tag, key, modRegistry, keyGetter);
+        return deserializeEitherMultimapRegistry(tag, key, modRegistry, keyGetter, null);
     }
 
     public static <K, V extends ConfigData<?>> Multimap<K, V> deserializeHolderMultimapRegistry(CompoundNBT tag, String key,
-                                                                                                        RegistryKey<Registry<K>> gameRegistry, RegistryKey<Registry<V>> modRegistry,
-                                                                                                        DynamicRegistries DynamicRegistries)
+                                                                                                        RegistryKey<Registry<K>> gameRegistry,
+                                                                                                        RegistryKey<Registry<V>> modRegistry,
+                                                                                                        DynamicRegistries dynamicRegistries)
     {
-        Registry<K> registry = DynamicRegistries.registryOrThrow(gameRegistry);
-        return deserializeEitherMultimapRegistry(tag, key, modRegistry, k -> registry.getOptional(RegistryKey.create(gameRegistry, k)).orElse(null));
+        Registry<K> registry = dynamicRegistries.registryOrThrow(gameRegistry);
+        return deserializeEitherMultimapRegistry(tag, key, modRegistry, k -> registry.getOptional(RegistryKey.create(gameRegistry, k)).orElse(null), dynamicRegistries);
     }
 
     private static <K, V extends ConfigData<?>> Multimap<K, V> deserializeEitherMultimapRegistry(CompoundNBT tag, String key,
-                                                                                                RegistryKey<Registry<V>> modRegistry,
-                                                                                                Function<ResourceLocation, K> keyGetter)
+                                                                                                 RegistryKey<Registry<V>> modRegistry,
+                                                                                                 Function<ResourceLocation, K> keyGetter,
+                                                                                                 DynamicRegistries registryAccess)
     {
         Codec<V> codec = ModRegistries.getCodec(modRegistry);
 

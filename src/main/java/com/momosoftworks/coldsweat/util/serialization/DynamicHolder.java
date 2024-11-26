@@ -4,7 +4,9 @@ import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import net.minecraft.nbt.CompoundNBT;
 import com.momosoftworks.coldsweat.util.exceptions.SerializationException;
+import net.minecraft.client.Minecraft;
 import net.minecraft.util.registry.DynamicRegistries;
+import net.minecraftforge.fml.common.thread.EffectiveSide;
 
 import java.util.function.*;
 
@@ -20,7 +22,7 @@ public class DynamicHolder<T>
     private Saver<T> saver;
     private Writer<T> encoder;
     private Reader<T> decoder;
-    private boolean synced = false;
+    private SyncType syncType = SyncType.NONE;
     private boolean requireRegistries = false;
 
     protected DynamicHolder(Supplier<T> valueCreator, Consumer<DynamicHolder<T>> loader)
@@ -63,26 +65,32 @@ public class DynamicHolder<T>
      * @return A synced value holder.
      * @param <T> The type of the value.
      */
-    public static <T> DynamicHolder<T> createSyncedWithRegistries(Supplier<T> valueCreator, Loader<T> loader, Writer<T> encoder, Reader<T> decoder, Saver<T> saver)
+    public static <T> DynamicHolder<T> createSyncedWithRegistries(Supplier<T> valueCreator, Loader<T> loader, Writer<T> encoder, Reader<T> decoder, Saver<T> saver, SyncType syncType)
     {
+        if (syncType == SyncType.NONE)
+        {   throw new IllegalArgumentException("SyncType cannot be NONE for a synced DynamicHolder.");
+        }
         DynamicHolder<T> holder = new DynamicHolder<>(valueCreator, loader);
         holder.value = valueCreator.get();
         holder.encoder = encoder;
         holder.decoder = decoder;
         holder.saver = saver;
-        holder.synced = true;
+        holder.syncType = syncType;
         holder.requireRegistries = true;
         return holder;
     }
 
-    public static <T> DynamicHolder<T> createSynced(Supplier<T> valueCreator, Consumer<DynamicHolder<T>> loader, Function<T, CompoundNBT> encoder, Function<CompoundNBT, T> decoder, Consumer<T> saver)
+    public static <T> DynamicHolder<T> createSynced(Supplier<T> valueCreator, Consumer<DynamicHolder<T>> loader, Function<T, CompoundNBT> encoder, Function<CompoundNBT, T> decoder, Consumer<T> saver, SyncType syncType)
     {
+        if (syncType == SyncType.NONE)
+        {   throw new IllegalArgumentException("SyncType cannot be NONE for a synced DynamicHolder.");
+        }
         DynamicHolder<T> holder = new DynamicHolder<>(valueCreator, loader);
         holder.value = valueCreator.get();
         holder.encoder = (val, registryAccess) -> encoder.apply(val);
         holder.decoder = (tag, registryAccess) -> decoder.apply(tag);
         holder.saver = (val, registryAccess) -> saver.accept(val);
-        holder.synced = true;
+        holder.syncType = syncType;
         return holder;
     }
 
@@ -133,7 +141,7 @@ public class DynamicHolder<T>
 
     public CompoundNBT encode(DynamicRegistries registryAccess)
     {
-        if (!synced)
+        if (!isSynced())
         {  throw ColdSweat.LOGGER.throwing(SerializationException.serialize(this.value, "Tried to encode non-synced DynamicHolder", null));
         }
         try
@@ -146,7 +154,7 @@ public class DynamicHolder<T>
 
     public void decode(CompoundNBT tag, DynamicRegistries registryAccess)
     {
-        if (!synced)
+        if (!isSynced())
         {  throw ColdSweat.LOGGER.throwing(new SerializationException("Tried to decode non-synced DynamicHolder", null));
         }
         try
@@ -159,7 +167,7 @@ public class DynamicHolder<T>
 
     public void save(DynamicRegistries registryAccess)
     {
-        if (!synced)
+        if (!isSynced())
         {  throw ColdSweat.LOGGER.throwing(new SerializationException("Tried to save non-synced DynamicHolder", null));
         }
         try
@@ -175,7 +183,11 @@ public class DynamicHolder<T>
     }
 
     public boolean isSynced()
-    {   return synced;
+    {   return syncType != SyncType.NONE;
+    }
+
+    public SyncType getSyncType()
+    {   return syncType;
     }
 
     public boolean requiresRegistries()
@@ -204,5 +216,24 @@ public class DynamicHolder<T>
     public interface Saver<T>
     {
         void save(T value, DynamicRegistries registryAccess);
+    }
+
+    public enum SyncType
+    {
+        // The value is not synced between the server and client.
+        NONE,
+        // The value is synced server -> client AND client -> server (when the config menu is used)
+        BOTH_WAYS,
+        // The value is synced server -> client only
+        ONE_WAY;
+
+        public boolean canSend()
+        {
+            return this == BOTH_WAYS || (this == ONE_WAY && EffectiveSide.get().isServer());
+        }
+
+        public boolean canReceive()
+        {   return this == BOTH_WAYS || (this == ONE_WAY && EffectiveSide.get().isClient() && !Minecraft.getInstance().isLocalServer());
+        }
     }
 }
