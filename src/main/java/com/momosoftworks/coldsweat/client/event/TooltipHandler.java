@@ -189,17 +189,20 @@ public class TooltipHandler
             if (hoveredSlot == null) return;
 
             ItemStack stack = hoveredSlot.getItem();
-            if (stack.isEmpty()) return;
 
             EquipmentSlot equipmentSlot = EntityHelper.getEquipmentSlot(hoveredSlot.index);
             if (!HOVERED_STACK.equals(stack))
             {
+                if (stack.isEmpty())
+                {   HOVERED_STACK = stack;
+                    return;
+                }
                 if (HOVERED_ITEM_UPDATE_COOLDOWN <= 0
                 || ItemInsulationManager.getInsulatorsForStack(stack).stream().map(InsulatorData::getId).anyMatch(id -> !HOVERED_STACK_PREDICATES.containsKey(id)))
                 {
-                    ColdSweatPacketHandler.INSTANCE.sendToServer(SyncItemPredicatesMessage.fromClient(stack, hoveredSlot.index, equipmentSlot));
                     HOVERED_STACK = stack;
-                    HOVERED_ITEM_UPDATE_COOLDOWN = 10;
+                    HOVERED_ITEM_UPDATE_COOLDOWN = 5;
+                    ColdSweatPacketHandler.INSTANCE.sendToServer(SyncItemPredicatesMessage.fromClient(stack, hoveredSlot.index, equipmentSlot));
                 }
             }
         }
