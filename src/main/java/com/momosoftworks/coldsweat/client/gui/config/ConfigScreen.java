@@ -2,10 +2,7 @@ package com.momosoftworks.coldsweat.client.gui.config;
 
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.client.event.TooltipHandler;
-import com.momosoftworks.coldsweat.client.gui.config.pages.ConfigPageDifficulty;
-import com.momosoftworks.coldsweat.client.gui.config.pages.ConfigPageOne;
-import com.momosoftworks.coldsweat.client.gui.config.pages.ConfigPageThree;
-import com.momosoftworks.coldsweat.client.gui.config.pages.ConfigPageTwo;
+import com.momosoftworks.coldsweat.client.gui.config.pages.*;
 import com.momosoftworks.coldsweat.config.spec.ClientSettingsConfig;
 import com.momosoftworks.coldsweat.core.network.message.SyncConfigSettingsMessage;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
@@ -44,7 +41,8 @@ public class ConfigScreen
     public static int MOUSE_X = 0;
     public static int MOUSE_Y = 0;
 
-    static List<Function<Screen, AbstractConfigPage>> PAGES = new ArrayList<>(Arrays.asList(ConfigPageOne::new, ConfigPageTwo::new, ConfigPageThree::new));
+    static List<Function<Screen, AbstractConfigPage>> PAGES = new ArrayList<>(Arrays.asList(ConfigPageOne::new, ConfigPageTwo::new, ConfigPageThree::new,
+                                                                                            ConfigPageFour::new, ConfigPageFive::new));
     public static int FIRST_PAGE = 0;
     public static int LAST_PAGE = PAGES.size() - 1;
     public static int CURRENT_PAGE = 0;
