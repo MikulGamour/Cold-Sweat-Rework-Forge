@@ -196,13 +196,13 @@ public class SyncItemPredicatesMessage
 
     private void checkItemRequirement(ItemStack stack, Entity entity, DynamicHolder<Multimap<Item, RequirementHolder>> configSetting)
     {
-        Map<UUID, Boolean> configMap = configSetting.get().get(stack.getItem())
-                                       .stream()
-                                       .map(data ->
-                                       {   UUID id = ((ConfigData<?>) data).getId();
-                                           return new AbstractMap.SimpleEntry<>(id, data.test(entity, stack));
-                                       })
-                                       .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        Map<UUID, Boolean> configMap = new FastMap<>();
+        configSetting.get().get(stack.getItem())
+        .forEach(data ->
+        {
+            UUID id = ((ConfigData<?>) data).getId();
+            configMap.put(id, data.test(entity, stack));
+        });
         this.predicateMap.putAll(configMap);
     }
 }
