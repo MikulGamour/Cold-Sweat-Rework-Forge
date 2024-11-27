@@ -61,7 +61,7 @@ public abstract class AbstractConfigPage extends Screen
     private static final int TITLE_HEIGHT = ConfigScreen.TITLE_HEIGHT;
     private static final int BOTTOM_BUTTON_HEIGHT_OFFSET = ConfigScreen.BOTTOM_BUTTON_HEIGHT_OFFSET;
     private static final int BOTTOM_BUTTON_WIDTH = ConfigScreen.BOTTOM_BUTTON_WIDTH;
-    public static Minecraft mc = Minecraft.getInstance();
+    public static Minecraft MINECRAFT = Minecraft.getInstance();
 
     static ResourceLocation TEXTURE = new ResourceLocation("cold_sweat:textures/gui/screen/config_gui.png");
 
@@ -131,7 +131,7 @@ public abstract class AbstractConfigPage extends Screen
     {
         IFormattableTextComponent label = dynamicLabel.get();
 
-        boolean shouldBeActive = !requireOP || mc.player == null || mc.player.hasPermissions(2);
+        boolean shouldBeActive = !requireOP || MINECRAFT.player == null || MINECRAFT.player.hasPermissions(2);
         int buttonX = this.width / 2;
         int xOffset = side == Side.LEFT ? -179 : 56;
         int buttonY = this.height / 4 - 8 + (side == Side.LEFT ? leftSideLength : rightSideLength);
@@ -141,14 +141,13 @@ public abstract class AbstractConfigPage extends Screen
         // Make the button
         Button button = new ConfigButton(buttonX + xOffset, buttonY, buttonWidth, 20, label, button1 ->
         {
-            onClick.accept(button1);
             button1.setMessage(dynamicLabel.get());
+            onClick.accept(button1);
         })
         {
             @Override
             public boolean setsCustomDifficulty()
-            {
-                return setsCustomDifficulty;
+            {   return setsCustomDifficulty;
             }
         };
         button.active = shouldBeActive;
@@ -190,7 +189,7 @@ public abstract class AbstractConfigPage extends Screen
                                    boolean requireOP, boolean setsCustomDifficulty, boolean clientside,
                                    IFormattableTextComponent... tooltip)
     {
-        boolean shouldBeActive = !requireOP || mc.player == null || mc.player.hasPermissions(2);
+        boolean shouldBeActive = !requireOP || MINECRAFT.player == null || MINECRAFT.player.hasPermissions(2);
         int xOffset = side == Side.LEFT ? -82 : 151;
         int yOffset = (side == Side.LEFT ? this.leftSideLength : this.rightSideLength) - 2;
         int labelOffset = font.width(label.getString()) > 90 ?
@@ -199,38 +198,34 @@ public abstract class AbstractConfigPage extends Screen
         // Make the input
         TextFieldWidget textBox = new TextFieldWidget(this.font, this.width / 2 + xOffset + labelOffset, this.height / 4 - 6 + yOffset, 51, 22, new StringTextComponent(""))
         {
+            public void onEdit()
+            {
+                CSMath.tryCatch(() ->
+                {
+                    onEdited.accept(Double.parseDouble(this.getValue()));
+                    if (setsCustomDifficulty)
+                    {   ConfigSettings.DIFFICULTY.set(ConfigSettings.Difficulty.CUSTOM);
+                    }
+                });
+            }
+
             @Override
             public void insertText(String text)
             {
                 super.insertText(text);
-                CSMath.tryCatch(() ->
-                {
-                    if (setsCustomDifficulty)
-                        ConfigSettings.DIFFICULTY.set(ConfigSettings.Difficulty.CUSTOM);
-                    onEdited.accept(Double.parseDouble(this.getValue()));
-                });
+                this.onEdit();
             }
             @Override
             public void deleteWords(int i)
             {
                 super.deleteWords(i);
-                CSMath.tryCatch(() ->
-                {
-                    if (setsCustomDifficulty)
-                        ConfigSettings.DIFFICULTY.set(ConfigSettings.Difficulty.CUSTOM);
-                    onEdited.accept(Double.parseDouble(this.getValue()));
-                });
+                this.onEdit();
             }
             @Override
             public void deleteChars(int i)
             {
                 super.deleteChars(i);
-                CSMath.tryCatch(() ->
-                {
-                    if (setsCustomDifficulty)
-                        ConfigSettings.DIFFICULTY.set(ConfigSettings.Difficulty.CUSTOM);
-                    onEdited.accept(Double.parseDouble(this.getValue()));
-                });
+                this.onEdit();
             }
         };
 
@@ -286,7 +281,7 @@ public abstract class AbstractConfigPage extends Screen
         int xOffset = side == Side.LEFT ? -97 : 136;
         int yOffset = side == Side.LEFT ? this.leftSideLength : this.rightSideLength;
 
-        boolean shouldBeActive = !requireOP || mc.player == null || mc.player.hasPermissions(2);
+        boolean shouldBeActive = !requireOP || MINECRAFT.player == null || MINECRAFT.player.hasPermissions(2);
 
         int labelWidth = font.width(label.getString());
         int labelOffset = labelWidth > 84
@@ -391,12 +386,13 @@ public abstract class AbstractConfigPage extends Screen
             this.rightSideLength += ConfigScreen.OPTION_SIZE * 1.2;
     }
 
-    protected void addSliderButton(String id, Side side, IFormattableTextComponent label, double minVal, double maxVal,
+    protected void addSliderButton(String id, Side side, Supplier<ITextComponent> dynamicLabel, double minVal, double maxVal,
                                    BiConsumer<Double, ConfigSliderButton> onChanged, Consumer<ConfigSliderButton> onInit,
                                    boolean requireOP, boolean clientside,
                                    IFormattableTextComponent... tooltip)
     {
-        boolean shouldBeActive = !requireOP || mc.player == null || mc.player.hasPermissions(2);
+        ITextComponent label = dynamicLabel.get();
+        boolean shouldBeActive = !requireOP || MINECRAFT.player == null || MINECRAFT.player.hasPermissions(2);
         int buttonX = this.width / 2;
         int xOffset = side == Side.LEFT ? -179 : 56;
         int buttonY = this.height / 4 - 8 + (side == Side.LEFT ? leftSideLength : rightSideLength);
@@ -410,9 +406,8 @@ public abstract class AbstractConfigPage extends Screen
             public void updateSlider()
             {
                 super.updateSlider();
-                if (!AbstractConfigPage.this.isDragging())
-                {   this.dragging = false;
-                }
+                this.setMessage(dynamicLabel.get());
+                onChanged.accept(CSMath.blend(minVal, maxVal, CSMath.truncate(this.sliderValue, 2), 0, 1), this);
             }
         };
 
@@ -464,7 +459,7 @@ public abstract class AbstractConfigPage extends Screen
         nextNavButton = new ImageButton(this.width - 32, 12, 20, 20, 0, 88, 20, TEXTURE,
                 button ->
                 {   ConfigScreen.CURRENT_PAGE++;
-                    mc.setScreen(ConfigScreen.getPage(ConfigScreen.CURRENT_PAGE, parentScreen));
+                    MINECRAFT.setScreen(ConfigScreen.getPage(ConfigScreen.CURRENT_PAGE, parentScreen));
                 });
         if (ConfigScreen.CURRENT_PAGE < ConfigScreen.LAST_PAGE)
             this.addWidget(nextNavButton);
@@ -472,7 +467,7 @@ public abstract class AbstractConfigPage extends Screen
         prevNavButton = new ImageButton(this.width - 76, 12, 20, 20, 20, 88, 20, TEXTURE,
                 button ->
                 {   ConfigScreen.CURRENT_PAGE--;
-                    mc.setScreen(ConfigScreen.getPage(ConfigScreen.CURRENT_PAGE, parentScreen));
+                    MINECRAFT.setScreen(ConfigScreen.getPage(ConfigScreen.CURRENT_PAGE, parentScreen));
                 });
         if (ConfigScreen.CURRENT_PAGE > ConfigScreen.FIRST_PAGE)
             this.addWidget(prevNavButton);
@@ -613,5 +608,39 @@ public abstract class AbstractConfigPage extends Screen
         {   imageX.set(button, x);
         }
         catch (Exception ignored) {}
+    }
+
+    @Override
+    public void onClose()
+    {   MINECRAFT.setScreen(this.parentScreen);
+        ConfigScreen.saveConfig();
+    }
+
+    public IFormattableTextComponent getToggleButtonText(ITextComponent text, boolean on)
+    {   return new StringTextComponent(text.getString() + ": " + (on ? ON : OFF));
+    }
+
+    public IFormattableTextComponent getSliderPercentageText(IFormattableTextComponent message, double value, double offAt)
+    {
+        return message.append(": ")
+                      .append(Double.compare(offAt, value) != 0
+                              ? new StringTextComponent((int) (value * 100) + "%")
+                              : new StringTextComponent(DialogTexts.OPTION_OFF.getString()));
+    }
+
+    public IFormattableTextComponent getSliderText(IFormattableTextComponent message, int value, int min, int max, int offAt)
+    {
+        return message.append(": ")
+                      .append((value > min || value < max) && value != offAt
+                              ? new StringTextComponent(value + "")
+                              : new StringTextComponent(DialogTexts.OPTION_OFF.getString()));
+    }
+
+    public IFormattableTextComponent getSliderText(IFormattableTextComponent message, double value, double min, double max, double offAt)
+    {
+        return message.append(": ")
+                .append((value > min || value < max) && Double.compare(value, offAt) != 0
+                        ? new StringTextComponent(CSMath.truncate(value, 1) + "")
+                        : new StringTextComponent(DialogTexts.OPTION_OFF.getString()));
     }
 }
