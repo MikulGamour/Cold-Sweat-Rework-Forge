@@ -8,8 +8,8 @@ import net.minecraft.util.registry.DynamicRegistries;
 import net.minecraft.util.registry.Registry;
 import net.minecraftforge.eventbus.api.Event;
 
-import java.util.HashSet;
-import java.util.Set;
+import javax.xml.ws.Holder;
+import java.util.*;
 
 /**
  * Gives subscribers unrestricted access to Cold Sweat's registries as they are being loaded.<br>
@@ -37,58 +37,56 @@ public class CreateRegistriesEvent extends Event
     {   return registries;
     }
 
-    public Set<InsulatorData> getInsulators()
+    public Collection<InsulatorData> getInsulators()
     {   return getRegistry(ModRegistries.INSULATOR_DATA);
     }
 
-    public Set<FuelData> getFuels()
+    public Collection<FuelData> getFuels()
     {   return getRegistry(ModRegistries.FUEL_DATA);
     }
 
-    public Set<FoodData> getFoods()
+    public Collection<FoodData> getFoods()
     {   return getRegistry(ModRegistries.FOOD_DATA);
     }
 
-    public Set<ItemCarryTempData> getCarryTemps()
+    public Collection<ItemCarryTempData> getCarryTemps()
     {   return getRegistry(ModRegistries.CARRY_TEMP_DATA);
     }
 
-    public Set<BlockTempData> getBlockTemps()
+    public Collection<BlockTempData> getBlockTemps()
     {   return getRegistry(ModRegistries.BLOCK_TEMP_DATA);
     }
 
-    public Set<BiomeTempData> getBiomeTemps()
+    public Collection<BiomeTempData> getBiomeTemps()
     {   return getRegistry(ModRegistries.BIOME_TEMP_DATA);
     }
 
-    public Set<DimensionTempData> getDimensionTemps()
+    public Collection<DimensionTempData> getDimensionTemps()
     {   return getRegistry(ModRegistries.DIMENSION_TEMP_DATA);
     }
 
-    public Set<StructureTempData> getStructureTemps()
+    public Collection<StructureTempData> getStructureTemps()
     {   return getRegistry(ModRegistries.STRUCTURE_TEMP_DATA);
     }
 
-    public Set<DepthTempData> getDepthTemps()
+    public Collection<DepthTempData> getDepthTemps()
     {   return getRegistry(ModRegistries.DEPTH_TEMP_DATA);
     }
 
-    public Set<MountData> getMounts()
+    public Collection<MountData> getMounts()
     {   return getRegistry(ModRegistries.MOUNT_DATA);
     }
 
-    public Set<SpawnBiomeData> getSpawnBiomes()
+    public Collection<SpawnBiomeData> getSpawnBiomes()
     {   return getRegistry(ModRegistries.ENTITY_SPAWN_BIOME_DATA);
     }
 
-    public Set<EntityTempData> getEntityTemps()
+    public Collection<EntityTempData> getEntityTemps()
     {   return getRegistry(ModRegistries.ENTITY_TEMP_DATA);
     }
 
-    public <T> Set<T> getRegistry(RegistryKey<Registry<T>> key)
+    public <T> Collection<T> getRegistry(RegistryKey<Registry<T>> key)
     {
-        return registries.containsKey(key)
-               ? new HashSet<>(registries.get((RegistryKey) key))
-               : new HashSet<>();
+        return (Collection<T>) registries.get((RegistryKey) key);
     }
 }
