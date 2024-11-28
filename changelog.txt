@@ -2635,6 +2635,11 @@ Technical Changes:
 2.3.9
 * item_settings/entity_settings/world_settings.toml have been renamed to item/entity/world.toml
       - Existing files will be automatically migrated
+* Added new config settings to the in-game menu:
+      - Insulation Strength
+      - Check Sleep Conditions
+      - New settings for the hearth/boiler/icebox
+- The rate at which water freezes is now affected by randomTickSpeed if "Custom Freezing Behavior" is enabled
 - Insulation attributes with unmet requirements are now shown with a red strikethrough, rather than being omitted from the tooltip
 - Added config options for the maximum range and volume of the hearth, boiler, and icebox individually to world.toml
 
@@ -2652,6 +2657,8 @@ Technical Changes:
       - This includes TOML and JSON configs
       - Removals are handled after all of the config settings are parsed, but before they are committed to memory
       - Removals will not directly change the config files; only whether they are loaded
+* Any JSON configs named "default" will now be loaded last
+      - This allows for configs to have a default value that can be overridden by other mods/datapacks/configs
 * Massive internal registry standardization and boilerplate reduction
       - Internal registries and configs are now much more standardized, with fewer points of failure
       - Codecs are used wherever possible for data serialization, rather than bespoke methods
