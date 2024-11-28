@@ -113,9 +113,9 @@ public class BlockTempData implements ConfigData<BlockTempData>
                                  : Double.MAX_VALUE;
 
         // Get block predicate
-        Map<String, Object> blockPredicates = entry.size() > 4 && entry.get(4) instanceof String && !((String) entry.get(4)).isEmpty()
-                                                             ? ConfigHelper.getBlockStatePredicates(effectBlocks[0], ((String) entry.get(4)))
-                                                             : new HashMap<>();
+        BlockRequirement.StateRequirement blockPredicates = entry.size() > 4 && entry.get(4) instanceof String && !((String) entry.get(4)).isEmpty()
+                                                            ? BlockRequirement.StateRequirement.fromToml(((String) entry.get(4)).split(","), effectBlocks[0])
+                                                            : BlockRequirement.StateRequirement.NONE;
 
         NbtRequirement tag = entry.size() > 5 && entry.get(5) instanceof String && !((String) entry.get(5)).isEmpty()
                              ? new NbtRequirement(NBTHelper.parseCompoundNbt(((String) entry.get(5))))
@@ -130,8 +130,7 @@ public class BlockTempData implements ConfigData<BlockTempData>
         double maxTemperature = blockTemp > 0 ? tempLimit : Double.MAX_VALUE;
         double minTemperature = blockTemp < 0 ? tempLimit : -Double.MAX_VALUE;
 
-        BlockRequirement.StateRequirement stateRequirement = new BlockRequirement.StateRequirement(blockPredicates);
-        BlockRequirement blockRequirement = new BlockRequirement(Optional.empty(), Optional.of(stateRequirement), Optional.of(tag),
+        BlockRequirement blockRequirement = new BlockRequirement(Optional.empty(), Optional.of(blockPredicates), Optional.of(tag),
                                                                  Optional.empty(), Optional.empty(), Optional.empty(), false);
 
         return new BlockTempData(Arrays.asList(effectBlocks), blockTemp, blockRange, maxEffect, true, maxTemperature, minTemperature, Temperature.Units.MC, Arrays.asList(blockRequirement));

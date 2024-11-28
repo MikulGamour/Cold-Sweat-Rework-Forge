@@ -23,10 +23,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public class BlockRequirement
 {
@@ -132,6 +129,8 @@ public class BlockRequirement
         public static final Codec<StateRequirement> CODEC = Codec.unboundedMap(Codec.STRING, ExtraCodecs.anyOf(Codec.BOOL, Codec.INT, Codec.STRING, IntegerBounds.CODEC))
                                                                  .xmap(StateRequirement::new, req -> req.properties);
 
+        public static final StateRequirement NONE = new StateRequirement(new HashMap<>());
+
         public boolean test(BlockState state)
         {   return this.test(state.getBlock().getStateDefinition(), state);
         }
@@ -172,12 +171,16 @@ public class BlockRequirement
             return true;
         }
 
-        public static StateRequirement fromToml(List<String> entry, Block block)
+        public static StateRequirement fromToml(String[] entries, Block block)
+        {   return fromToml(Arrays.asList(entries), block);
+        }
+
+        public static StateRequirement fromToml(List<String> entries, Block block)
         {
             Map<String, Object> blockPredicates = new HashMap<>();
 
             // Iterate predicates
-            for (String predicate : entry)
+            for (String predicate : entries)
             {
                 // Split predicate into key-value pairs separated by "="
                 String[] pair = predicate.split("=");
