@@ -23,10 +23,7 @@ import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraftforge.registries.ForgeRegistries;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 public record BlockRequirement(Optional<List<Either<TagKey<Block>, Block>>> blocks, Optional<StateRequirement> state,
                                Optional<NbtRequirement> nbt, Optional<Direction> sturdyFace,
@@ -107,6 +104,8 @@ public record BlockRequirement(Optional<List<Either<TagKey<Block>, Block>>> bloc
         public static final Codec<StateRequirement> CODEC = Codec.unboundedMap(Codec.STRING, ExtraCodecs.anyOf(Codec.BOOL, Codec.INT, Codec.STRING, IntegerBounds.CODEC))
                                                                  .xmap(StateRequirement::new, StateRequirement::properties);
 
+        public static final StateRequirement NONE = new StateRequirement(new HashMap<>());
+
         public boolean test(BlockState state)
         {   return this.test(state.getBlock().getStateDefinition(), state);
         }
@@ -146,12 +145,16 @@ public record BlockRequirement(Optional<List<Either<TagKey<Block>, Block>>> bloc
             return true;
         }
 
-        public static StateRequirement fromToml(List<String> entry, Block block)
+        public static StateRequirement fromToml(String[] entries, Block block)
+        {   return fromToml(Arrays.asList(entries), block);
+        }
+
+        public static StateRequirement fromToml(List<String> entries, Block block)
         {
             Map<String, Object> blockPredicates = new HashMap<>();
 
             // Iterate predicates
-            for (String predicate : entry)
+            for (String predicate : entries)
             {
                 // Split predicate into key-value pairs separated by "="
                 String[] pair = predicate.split("=");

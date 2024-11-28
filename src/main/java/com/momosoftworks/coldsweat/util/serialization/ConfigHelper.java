@@ -165,35 +165,6 @@ public class ConfigHelper
         return map;
     }
 
-    public static Map<String, Object> getBlockStatePredicates(Block block, String predicates)
-    {
-        Map<String, Object> blockPredicates = new HashMap<>();
-        // Separate comma-delineated predicates
-        String[] predicateList = predicates.split(",");
-
-        // Iterate predicates
-        for (String predicate : predicateList)
-        {
-            // Split predicate into key-value pairs separated by "="
-            String[] pair = predicate.split("=");
-            String key = pair[0];
-            String value = pair[1];
-
-            // Get the property with the given name
-            Property<?> property = block.getStateDefinition().getProperty(key);
-            if (property != null)
-            {
-                // Parse the desired value for this property
-                property.getValue(value).ifPresent(propertyValue ->
-                {
-                    // Add a new predicate to the list
-                    blockPredicates.put(key, propertyValue);
-                });
-            }
-        }
-        return blockPredicates;
-    }
-
     public static List<EntityType<?>> getEntityTypes(String... entities)
     {
         List<EntityType<?>> entityList = new ArrayList<>();

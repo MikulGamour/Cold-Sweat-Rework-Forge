@@ -89,9 +89,9 @@ public record BlockTempData(List<Either<TagKey<Block>, Block>> blocks, double te
                                  : Double.MAX_VALUE;
 
         // Get block predicate
-        Map<String, Object> blockPredicates = entry.size() > 4 && entry.get(4) instanceof String str && !str.isEmpty()
-                                                             ? ConfigHelper.getBlockStatePredicates(effectBlocks[0], str)
-                                                             : new HashMap<>();
+        BlockRequirement.StateRequirement blockPredicates = entry.size() > 4 && entry.get(4) instanceof String str && !str.isEmpty()
+                                                            ? BlockRequirement.StateRequirement.fromToml(str.split(","), effectBlocks[0])
+                                                            : BlockRequirement.StateRequirement.NONE;
 
         NbtRequirement tag = entry.size() > 5 && entry.get(5) instanceof String str && !str.isEmpty()
                              ? new NbtRequirement(NBTHelper.parseCompoundNbt(str))
@@ -106,8 +106,7 @@ public record BlockTempData(List<Either<TagKey<Block>, Block>> blocks, double te
         double maxTemperature = blockTemp > 0 ? tempLimit : Double.MAX_VALUE;
         double minTemperature = blockTemp < 0 ? tempLimit : -Double.MAX_VALUE;
 
-        BlockRequirement.StateRequirement stateRequirement = new BlockRequirement.StateRequirement(blockPredicates);
-        BlockRequirement blockRequirement = new BlockRequirement(Optional.empty(), Optional.of(stateRequirement), Optional.of(tag),
+        BlockRequirement blockRequirement = new BlockRequirement(Optional.empty(), Optional.of(blockPredicates), Optional.of(tag),
                                                                  Optional.empty(), Optional.empty(), Optional.empty(), false);
 
         return new BlockTempData(Arrays.asList(effectBlocks), blockTemp, blockRange, maxEffect, true, maxTemperature, minTemperature, Temperature.Units.MC, List.of(blockRequirement));
