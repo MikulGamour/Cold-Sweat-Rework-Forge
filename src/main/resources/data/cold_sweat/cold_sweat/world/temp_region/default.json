@@ -71,7 +71,7 @@
       },
       "bottom": {
         "anchor": "world_bottom",
-        "depth": -68,
+        "depth": -319,
         "temperature": -273.15,
         "units": "c"
       }
@@ -80,7 +80,7 @@
       "type": "constant",
       "top": {
         "anchor": "world_bottom",
-        "depth": -69,
+        "depth": -320,
         "temperature": -273.15,
         "units": "c"
       }

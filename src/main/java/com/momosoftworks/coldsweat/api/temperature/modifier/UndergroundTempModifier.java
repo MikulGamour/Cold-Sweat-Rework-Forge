@@ -53,7 +53,12 @@ public class UndergroundTempModifier extends TempModifier
 
         for (Pair<BlockPos, Double> pair : depthTable)
         {
-            BlockPos pos = pair.getFirst().offset(0, skylight - 4, 0);
+            BlockPos originalPos = pair.getFirst();
+            int originalY = originalPos.getY();
+            int minY = 0;
+            BlockPos pos = new BlockPos(originalPos.getX(),
+                                        originalY <= minY ? originalY : Math.max(minY, originalY + skylight - 4),
+                                        originalPos.getZ());
             double distance = pair.getSecond();
             DepthTempData tempData = null;
             for (DepthTempData data : ConfigSettings.DEPTH_REGIONS.get())
