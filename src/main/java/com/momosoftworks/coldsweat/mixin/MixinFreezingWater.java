@@ -20,6 +20,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import java.util.Random;
+
 @Mixin(Biome.class)
 public abstract class MixinFreezingWater
 {
@@ -33,6 +35,10 @@ public abstract class MixinFreezingWater
     private void shouldFreezeBlock(IWorldReader levelReader, BlockPos pos, boolean mustBeAtEdge, CallbackInfoReturnable<Boolean> cir)
     {
         if (!ConfigSettings.USE_CUSTOM_WATER_FREEZE_BEHAVIOR.get()) return;
+        if (levelReader instanceof ServerWorld && ((ServerWorld) levelReader).getGameRules().getInt(GameRules.RULE_RANDOMTICKING) == 0)
+        {   cir.setReturnValue(false);
+            return;
+        }
 
         LEVEL = levelReader;
         IS_CHECKING_FREEZING = true;
@@ -89,15 +95,16 @@ public abstract class MixinFreezingWater
     {
         ServerWorld self = (ServerWorld) (Object) this;
 
-        @ModifyArg(method = "tickChunk", at = @At(target = "Ljava/util/Random;nextInt(I)I", value = "INVOKE"),
+        @Redirect(method = "tickChunk", at = @At(target = "Ljava/util/Random;nextInt(I)I", value = "INVOKE"),
                   slice = @Slice(from = @At(target = "Lnet/minecraft/profiler/IProfiler;popPush(Ljava/lang/String;)V", value = "INVOKE", ordinal = 0),
                                  to = @At(target = "Lnet/minecraft/profiler/IProfiler;popPush(Ljava/lang/String;)V", value = "INVOKE", ordinal = 1)))
-        private int tickFreezeSpeed(int bound)
+        private int tickFreezeSpeed(Random instance, int bound)
         {
-            if (!ConfigSettings.USE_CUSTOM_WATER_FREEZE_BEHAVIOR.get()) return bound;
+            if (!ConfigSettings.USE_CUSTOM_WATER_FREEZE_BEHAVIOR.get()) return instance.nextInt(bound);
 
             int tickSpeed = self.getGameRules().getInt(GameRules.RULE_RANDOMTICKING);
-            return Math.max(1, bound / (tickSpeed / 3));
+            if (tickSpeed == 0) return 1;
+            return instance.nextInt(Math.max(1, bound / (tickSpeed / 3)));
         }
     }
 }

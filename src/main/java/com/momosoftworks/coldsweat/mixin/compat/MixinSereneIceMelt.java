@@ -21,7 +21,8 @@ public class MixinSereneIceMelt
     @Inject(method = "meltInChunk",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/block/IceBlock;melt(Lnet/minecraft/block/BlockState;Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;)V"),
             locals = LocalCapture.CAPTURE_FAILHARD,
-            cancellable = true)
+            cancellable = true,
+            remap = false)
     private void getBiomeTemperatureOverride(ChunkManager chunkManager, Chunk chunkIn, Season.SubSeason subSeason, CallbackInfo ci,
                                              //locals
                                              ServerWorld level, ChunkPos chunkpos, int i, int j, int meltRand, BlockPos topAirPos)
@@ -30,8 +31,7 @@ public class MixinSereneIceMelt
 
         BlockPos groundPos = topAirPos.below();
         if (WorldHelper.getWorldTemperatureAt(level, groundPos) < 0.15F)
-        {
-            ci.cancel();
+        {   ci.cancel();
         }
     }
 }
