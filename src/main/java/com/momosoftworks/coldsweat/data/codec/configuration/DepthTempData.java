@@ -36,7 +36,7 @@ public record DepthTempData(List<TempRegion> temperatures, List<Either<TagKey<Di
     public boolean withinBounds(Level level, BlockPos pos)
     {
         Holder<DimensionType> dim = level.dimensionTypeRegistration();
-        if (!CSMath.anyMatch(this.dimensions, dimension -> dimension.map(dim::is, type -> type.equals(dim.value()))))
+        if (!CSMath.anyMatch(this.dimensions, dimension -> dimension.map(dim::is, type -> type.equals(dim))))
         {   return false;
         }
         for (TempRegion region : temperatures)
