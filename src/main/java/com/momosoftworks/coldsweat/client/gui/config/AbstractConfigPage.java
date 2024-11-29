@@ -36,9 +36,6 @@ public abstract class AbstractConfigPage extends Screen
     static int MOUSE_STILL_TIMER = 0;
     static int TOOLTIP_DELAY = 5;
 
-    public final String ON = DialogTexts.OPTION_ON.getString();
-    public final String OFF = DialogTexts.OPTION_OFF.getString();
-
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event)
     {   MOUSE_STILL_TIMER++;
@@ -141,8 +138,8 @@ public abstract class AbstractConfigPage extends Screen
         // Make the button
         Button button = new ConfigButton(buttonX + xOffset, buttonY, buttonWidth, 20, label, button1 ->
         {
-            button1.setMessage(dynamicLabel.get());
             onClick.accept(button1);
+            button1.setMessage(dynamicLabel.get());
         })
         {
             @Override
@@ -616,8 +613,10 @@ public abstract class AbstractConfigPage extends Screen
         ConfigScreen.saveConfig();
     }
 
-    public IFormattableTextComponent getToggleButtonText(ITextComponent text, boolean on)
-    {   return new StringTextComponent(text.getString() + ": " + (on ? ON : OFF));
+    public IFormattableTextComponent getToggleButtonText(IFormattableTextComponent text, boolean on)
+    {
+        return text.append(": ")
+                   .append(on ? DialogTexts.OPTION_ON : DialogTexts.OPTION_OFF);
     }
 
     public IFormattableTextComponent getSliderPercentageText(IFormattableTextComponent message, double value, double offAt)

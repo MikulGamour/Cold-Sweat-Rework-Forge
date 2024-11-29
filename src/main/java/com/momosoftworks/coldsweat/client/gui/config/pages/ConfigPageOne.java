@@ -97,7 +97,7 @@ public class ConfigPageOne extends AbstractConfigPage
         // Difficulty button
         this.addButton("difficulty", Side.RIGHT, () -> new TranslationTextComponent("cold_sweat.config.difficulty.name").append(
                         " (" + ConfigSettings.Difficulty.getFormattedName(ConfigSettings.DIFFICULTY.get()).getString() + ")..."),
-                button -> MINECRAFT.setScreen(new ConfigPageDifficulty(this)),
+                button -> minecraft.setScreen(new ConfigPageDifficulty(this)),
                 true, false, false, new TranslationTextComponent("cold_sweat.config.difficulty.desc"));
 
         this.addEmptySpace(Side.RIGHT, 1);
@@ -105,22 +105,22 @@ public class ConfigPageOne extends AbstractConfigPage
 
         // Misc. Temp Effects
         this.addButton("ice_resistance", Side.RIGHT,
-                () -> new TranslationTextComponent("cold_sweat.config.ice_resistance.name").append(": ").append(ConfigSettings.ICE_RESISTANCE_ENABLED.get() ? ON : OFF),
+                () -> getToggleButtonText(new TranslationTextComponent("cold_sweat.config.ice_resistance.name"), ConfigSettings.ICE_RESISTANCE_ENABLED.get()),
                 button -> ConfigSettings.ICE_RESISTANCE_ENABLED.set(!ConfigSettings.ICE_RESISTANCE_ENABLED.get()),
                 true, true, false, new TranslationTextComponent("cold_sweat.config.ice_resistance.desc"));
 
         this.addButton("fire_resistance", Side.RIGHT,
-                () -> new TranslationTextComponent("cold_sweat.config.fire_resistance.name").append(": ").append(ConfigSettings.FIRE_RESISTANCE_ENABLED.get() ? ON : OFF),
+                () -> getToggleButtonText(new TranslationTextComponent("cold_sweat.config.fire_resistance.name"), ConfigSettings.FIRE_RESISTANCE_ENABLED.get()),
                 button -> ConfigSettings.FIRE_RESISTANCE_ENABLED.set(!ConfigSettings.FIRE_RESISTANCE_ENABLED.get()),
                 true, true, false, new TranslationTextComponent("cold_sweat.config.fire_resistance.desc"));
 
         this.addButton("require_thermometer", Side.RIGHT,
-                () -> new TranslationTextComponent("cold_sweat.config.require_thermometer.name").append(": ").append(ConfigSettings.REQUIRE_THERMOMETER.get() ? ON : OFF),
+                () -> getToggleButtonText(new TranslationTextComponent("cold_sweat.config.require_thermometer.name"), ConfigSettings.REQUIRE_THERMOMETER.get()),
                 button -> ConfigSettings.REQUIRE_THERMOMETER.set(!ConfigSettings.REQUIRE_THERMOMETER.get()),
                 true, true, false, new TranslationTextComponent("cold_sweat.config.require_thermometer.desc"));
 
         this.addButton("use_peaceful", Side.RIGHT,
-                () -> new TranslationTextComponent("cold_sweat.config.use_peaceful.name").append(": ").append(ConfigSettings.USE_PEACEFUL_MODE.get() ? ON : OFF),
+                () -> getToggleButtonText(new TranslationTextComponent("cold_sweat.config.use_peaceful.name"), ConfigSettings.USE_PEACEFUL_MODE.get()),
                 button -> ConfigSettings.USE_PEACEFUL_MODE.set(!ConfigSettings.USE_PEACEFUL_MODE.get()),
                 true, true, false, new TranslationTextComponent("cold_sweat.config.use_peaceful.desc"));
     }
