@@ -13,15 +13,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class MixinXPBar
 {
     @Inject(method = "renderExperienceBar",
-            at = @At
-            (   value = "INVOKE",
-                target = "Lnet/minecraft/util/profiling/ProfilerFiller;push(Ljava/lang/String;)V",
-                shift = At.Shift.AFTER
-            ),
-            slice = @Slice
-            (   from = @At(value = "INVOKE", target = "Lnet/minecraft/util/profiling/ProfilerFiller;pop()V"),
-                to   = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/Font;width(Ljava/lang/String;)I")
-            ))
+            at = @At(value = "INVOKE",
+                     target = "Lnet/minecraft/client/gui/Font;draw(Lcom/mojang/blaze3d/vertex/PoseStack;Ljava/lang/String;FFI)I",
+                     ordinal = 0))
     public void shiftExperienceBar(PoseStack poseStack, int xPos, CallbackInfo ci)
     {
         poseStack.pushPose();
@@ -34,7 +28,7 @@ public class MixinXPBar
     @Inject(method = "renderExperienceBar",
             at = @At
             (   value = "INVOKE",
-                target = "Lnet/minecraft/client/gui/Font;draw(Lcom/mojang/blaze3d/vertex/PoseStack;Ljava/lang/String;FFI)I",
+                target = "Lnet/minecraft/util/profiling/ProfilerFiller;pop()V",
                 ordinal = 0
             ),
             slice = @Slice
@@ -50,7 +44,7 @@ public class MixinXPBar
     public static class MixinItemLabel
     {
         @Inject(method = "renderSelectedItemName(Lcom/mojang/blaze3d/vertex/PoseStack;)V",
-                at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;defaultBlendFunc()V"), remap = false)
+                at = @At(value = "HEAD"), remap = false)
         public void shiftItemName(PoseStack poseStack, CallbackInfo ci)
         {
             poseStack.pushPose();
@@ -60,8 +54,7 @@ public class MixinXPBar
         }
 
         @Inject(method = "renderSelectedItemName(Lcom/mojang/blaze3d/vertex/PoseStack;)V",
-                at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;disableBlend()V",
-                         shift = At.Shift.AFTER), remap = false)
+                at = @At(value = "TAIL"), remap = false)
         public void itemNamePop(PoseStack poseStack, CallbackInfo ci)
         {
             poseStack.popPose();
