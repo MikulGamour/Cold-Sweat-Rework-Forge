@@ -20,16 +20,17 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class SpawnBiomeData implements ConfigData<SpawnBiomeData>
+public class SpawnBiomeData extends ConfigData
 {
-    public final List<Biome> biomes;
-    public final EntityClassification category;
-    public final int weight;
-    public final List<Either<ITag<EntityType<?>>, EntityType<?>>> entities;
-    public final Optional<List<String>> requiredMods;
+    final List<Biome> biomes;
+    final EntityClassification category;
+    final int weight;
+    final List<Either<ITag<EntityType<?>>, EntityType<?>>> entities;
+    final Optional<List<String>> requiredMods;
 
     public SpawnBiomeData(List<Biome> biomes, EntityClassification category,
-                          int weight, List<Either<ITag<EntityType<?>>, EntityType<?>>> entities, Optional<List<String>> requiredMods)
+                          int weight, List<Either<ITag<EntityType<?>>, EntityType<?>>> entities,
+                          Optional<List<String>> requiredMods)
     {
         this.biomes = biomes;
         this.category = category;
@@ -53,6 +54,22 @@ public class SpawnBiomeData implements ConfigData<SpawnBiomeData>
             Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(data -> data.requiredMods)
     ).apply(instance, SpawnBiomeData::new));
 
+    public List<Biome> biomes()
+    {   return biomes;
+    }
+    public EntityClassification category()
+    {   return category;
+    }
+    public int weight()
+    {   return weight;
+    }
+    public List<Either<ITag<EntityType<?>>, EntityType<?>>> entities()
+    {   return entities;
+    }
+    public Optional<List<String>> requiredMods()
+    {   return requiredMods;
+    }
+
     @Nullable
     public static SpawnBiomeData fromToml(List<?> entry, EntityType<?> entityType, DynamicRegistries registryAccess)
     {
@@ -71,10 +88,5 @@ public class SpawnBiomeData implements ConfigData<SpawnBiomeData>
     @Override
     public Codec<SpawnBiomeData> getCodec()
     {   return CODEC;
-    }
-
-    @Override
-    public String toString()
-    {   return this.asString();
     }
 }

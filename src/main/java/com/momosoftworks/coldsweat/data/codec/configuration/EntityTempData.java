@@ -17,18 +17,17 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
 
-public class EntityTempData implements RequirementHolder, ConfigData<EntityTempData>
+public class EntityTempData extends ConfigData implements RequirementHolder
 {
-    public final EntityRequirement entity;
-    public final double temperature;
-    public final double range;
-    public final Temperature.Units units;
-    public final Optional<PlayerDataRequirement> playerRequirement;
-    public final Optional<List<String>> requiredMods;
+    final EntityRequirement entity;
+    final double temperature;
+    final double range;
+    final Temperature.Units units;
+    final Optional<PlayerDataRequirement> playerRequirement;
+    final Optional<List<String>> requiredMods;
 
     public EntityTempData(EntityRequirement entity, double temperature, double range,
-                          Temperature.Units units,
-                          Optional<PlayerDataRequirement> playerRequirement,
+                          Temperature.Units units, Optional<PlayerDataRequirement> playerRequirement,
                           Optional<List<String>> requiredMods)
     {
         this.entity = entity;
@@ -51,6 +50,25 @@ public class EntityTempData implements RequirementHolder, ConfigData<EntityTempD
         double cTemp = Temperature.convert(temperature, units, Temperature.Units.MC, false);
         return new EntityTempData(entity, cTemp, range, units, playerRequirement, requiredMods);
     }));
+
+    public EntityRequirement entity()
+    {   return entity;
+    }
+    public double temperature()
+    {   return temperature;
+    }
+    public double range()
+    {   return range;
+    }
+    public Temperature.Units units()
+    {   return units;
+    }
+    public Optional<PlayerDataRequirement> playerRequirement()
+    {   return playerRequirement;
+    }
+    public Optional<List<String>> requiredMods()
+    {   return requiredMods;
+    }
 
     @Nullable
     public static EntityTempData fromToml(List<?> entry)
@@ -93,11 +111,6 @@ public class EntityTempData implements RequirementHolder, ConfigData<EntityTempD
     @Override
     public Codec<EntityTempData> getCodec()
     {   return CODEC;
-    }
-
-    @Override
-    public String toString()
-    {   return this.asString();
     }
 
     @Override

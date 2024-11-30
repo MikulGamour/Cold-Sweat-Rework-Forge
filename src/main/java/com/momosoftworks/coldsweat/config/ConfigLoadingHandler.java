@@ -16,6 +16,7 @@ import com.momosoftworks.coldsweat.compat.CompatManager;
 import com.momosoftworks.coldsweat.core.init.TempModifierInit;
 import com.momosoftworks.coldsweat.data.ModRegistries;
 import com.momosoftworks.coldsweat.data.codec.configuration.*;
+import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.data.codec.requirement.BlockRequirement;
 import com.momosoftworks.coldsweat.data.tag.ModBlockTags;
 import com.momosoftworks.coldsweat.data.tag.ModItemTags;
@@ -55,7 +56,7 @@ import java.util.stream.Collectors;
 @Mod.EventBusSubscriber
 public class ConfigLoadingHandler
 {
-    public static final Multimap<RegistryKey<Registry<?>>, RemoveRegistryData<?>> REMOVED_REGISTRIES = new FastMultiMap<>();
+    public static final Multimap<RegistryKey<Registry<? extends ConfigData>>, RemoveRegistryData<?>> REMOVED_REGISTRIES = new FastMultiMap<>();
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void loadConfigs(ServerConfigsLoadedEvent event)
@@ -64,7 +65,7 @@ public class ConfigLoadingHandler
         BlockTempRegistry.flush();
 
         DynamicRegistries registryAccess = event.getServer().registryAccess();
-        Multimap<RegistryKey<Registry<?>>, ?> registries = new FastMultiMap<>();
+        Multimap<RegistryKey<Registry<? extends ConfigData>>, ? extends ConfigData> registries = new FastMultiMap<>();
 
         // User JSON configs (config folder)
         ColdSweat.LOGGER.info("Loading registries from configs...");
@@ -99,7 +100,7 @@ public class ConfigLoadingHandler
     /**
      * Loads JSON-based configs from data resources
      */
-    public static Multimap<RegistryKey<Registry<?>>, ?> collectDataRegistries(DynamicRegistries registryAccess)
+    public static Multimap<RegistryKey<Registry<? extends ConfigData>>, ? extends ConfigData> collectDataRegistries(DynamicRegistries registryAccess)
     {
         if (registryAccess == null)
         {   ColdSweat.LOGGER.error("Failed to load registries from null DynamicRegistries");
@@ -124,7 +125,7 @@ public class ConfigLoadingHandler
         /*
          Fetch JSON registries
         */
-        Multimap<RegistryKey<Registry<?>>, ?> registries = new FastMultiMap<>();
+        Multimap<RegistryKey<Registry<? extends ConfigData>>, ? extends ConfigData> registries = new FastMultiMap<>();
         for (Map.Entry<String, ModRegistries.RegistryHolder<?>> entry : ModRegistries.getRegistries().entrySet())
         {
             RegistryKey key = entry.getValue().registry;
@@ -136,7 +137,7 @@ public class ConfigLoadingHandler
     /**
      * Loads JSON-based configs from the configs folder
      */
-    public static Multimap<RegistryKey<Registry<?>>, ?> collectUserRegistries(DynamicRegistries registryAccess)
+    public static Multimap<RegistryKey<Registry<? extends ConfigData>>, ? extends ConfigData> collectUserRegistries(DynamicRegistries registryAccess)
     {
         if (registryAccess == null)
         {   ColdSweat.LOGGER.error("Failed to load registries from null DynamicRegistries");
@@ -146,23 +147,28 @@ public class ConfigLoadingHandler
         /*
          Parse user-defined JSON data from the configs folder
         */
-        Multimap<RegistryKey<Registry<?>>, ?> registries = new FastMultiMap<>();
+        Multimap<RegistryKey<Registry<? extends ConfigData>>, ? extends ConfigData> registries = new FastMultiMap<>();
         for (Map.Entry<String, ModRegistries.RegistryHolder<?>> entry : ModRegistries.getRegistries().entrySet())
         {
-            RegistryKey<Registry<?>> key = (RegistryKey) entry.getValue().registry;
+            RegistryKey<Registry<? extends ConfigData>> key = (RegistryKey) entry.getValue().registry;
             Codec<?> codec = entry.getValue().codec;
             registries.putAll(key, parseConfigData((RegistryKey) key, (Codec) codec, registryAccess));
         }
         return registries;
     }
 
-    private static void logAndAddRegistries(DynamicRegistries registryAccess, Multimap<RegistryKey<Registry<?>>, ?> registries)
+    private static void logAndAddRegistries(DynamicRegistries registryAccess, Multimap<RegistryKey<Registry<? extends ConfigData>>, ? extends ConfigData> registries)
     {
         // Ensure default registry entries load last
         setDefaultRegistryPriority(registries, registryAccess);
 
         // Load registry removals
         loadRegistryRemovals(registryAccess);
+
+        // Mark holders as "JSON"
+        for (ConfigData data : registries.values())
+        {   data.setType(ConfigData.Type.JSON);
+        }
 
         // Fire registry creation event
         CreateRegistriesEvent event = new CreateRegistriesEvent(registryAccess, registries);
@@ -229,11 +235,11 @@ public class ConfigLoadingHandler
         }
     }
 
-    private static void setDefaultRegistryPriority(Multimap<RegistryKey<Registry<?>>, ?> registries, DynamicRegistries dynamicRegistries)
+    private static void setDefaultRegistryPriority(Multimap<RegistryKey<Registry<? extends ConfigData>>, ? extends ConfigData> registries, DynamicRegistries dynamicRegistries)
     {
-        for (RegistryKey<Registry<?>> key : registries.keySet())
+        for (RegistryKey<Registry<? extends ConfigData>> key : registries.keySet())
         {
-            List<?> sortedHolders = new ArrayList<>(registries.get(key));
+            List<? extends ConfigData> sortedHolders = new ArrayList<>(registries.get(key));
             sortedHolders.sort(Comparator.comparing(holder ->
             {   return RegistryHelper.getKey(holder, dynamicRegistries).getPath().equals("default") ? 1 : 0;
             }));
@@ -250,40 +256,40 @@ public class ConfigLoadingHandler
         removals.addAll(parseConfigData(ModRegistries.REMOVE_REGISTRY_DATA, RemoveRegistryData.CODEC, registryAccess));
         removals.forEach(data ->
         {
-            RegistryKey<Registry<?>> key = data.registry;
+            RegistryKey<Registry<? extends ConfigData>> key = (RegistryKey) data.registry();
             REMOVED_REGISTRIES.put(key, data);
         });
     }
 
-    private static void removeRegistries(Multimap<RegistryKey<Registry<?>>, ?> registries)
+    private static void removeRegistries(Multimap<RegistryKey<Registry<? extends ConfigData>>, ? extends ConfigData> registries)
     {
         ColdSweat.LOGGER.info("Handling registry removals...");
-        for (Map.Entry<RegistryKey<Registry<?>>, Collection<RemoveRegistryData<?>>> entry : REMOVED_REGISTRIES.asMap().entrySet())
+        for (Map.Entry<RegistryKey<Registry<? extends ConfigData>>, Collection<RemoveRegistryData<? extends ConfigData>>> entry : REMOVED_REGISTRIES.asMap().entrySet())
         {
-            removeEntries((Collection) entry.getValue(), registries.get(entry.getKey()));
+            removeEntries((Collection) entry.getValue(), (Collection) registries.get(entry.getKey()));
         }
     }
 
-    private static <T> void removeEntries(Collection<RemoveRegistryData<T>> removals, Collection<T> registry)
+    private static <T extends ConfigData> void removeEntries(Collection<RemoveRegistryData<T>> removals, Collection<T> registry)
     {
         for (RemoveRegistryData<T> data : removals)
-        {   registry.removeIf(entry -> data.matches(((T) entry)));
+        {   registry.removeIf(data::matches);
         }
     }
 
-    public static <T> Collection<T> removeEntries(Collection<T> registries, RegistryKey<Registry<T>> registryName)
+    public static <T extends ConfigData> Collection<T> removeEntries(Collection<T> registries, RegistryKey<Registry<T>> registryName)
     {
         REMOVED_REGISTRIES.get((RegistryKey) registryName).forEach(data ->
         {
             RemoveRegistryData<T> removeData = ((RemoveRegistryData<T>) data);
-            if (removeData.getRegistry() == registryName)
+            if (removeData.registry() == registryName)
             {   registries.removeIf(removeData::matches);
             }
         });
         return registries;
     }
 
-    public static <T> boolean isRemoved(T entry, RegistryKey<Registry<T>> registryName)
+    public static <T extends ConfigData> boolean isRemoved(T entry, RegistryKey<Registry<T>> registryName)
     {
         return REMOVED_REGISTRIES.get((RegistryKey) registryName).stream().anyMatch(data -> ((RemoveRegistryData<T>) data).matches(entry));
     }
@@ -293,9 +299,9 @@ public class ConfigLoadingHandler
         insulators.forEach(insulator ->
         {
             // Check if the required mods are loaded
-            if (insulator.requiredMods.isPresent())
+            if (insulator.requiredMods().isPresent())
             {
-                List<String> requiredMods = insulator.requiredMods.get();
+                List<String> requiredMods = insulator.requiredMods().get();
                 if (requiredMods.stream().anyMatch(mod -> !CompatManager.modLoaded(mod)))
                 {   return;
                 }
@@ -303,16 +309,16 @@ public class ConfigLoadingHandler
 
             // Add listed items as insulators
             List<Item> items = new ArrayList<>();
-            insulator.data.items.ifPresent(itemList ->
+            insulator.data().items().ifPresent(itemList ->
             {   items.addAll(RegistryHelper.mapTaggableList(itemList));
             });
-            insulator.data.tag.ifPresent(tag ->
+            insulator.data().tag().ifPresent(tag ->
             {   items.addAll(tag.getValues());
             });
 
             for (Item item : items)
             {
-                switch (insulator.slot)
+                switch (insulator.slot())
                 {
                     case ITEM  : ConfigSettings.INSULATION_ITEMS.get().put(item, insulator); break;
                     case ARMOR : ConfigSettings.INSULATING_ARMORS.get().put(item, insulator); break;
@@ -333,25 +339,25 @@ public class ConfigLoadingHandler
         fuels.forEach(fuelData ->
         {
             // Check if the required mods are loaded
-            if (fuelData.requiredMods.isPresent())
+            if (fuelData.requiredMods().isPresent())
             {
-                List<String> requiredMods = fuelData.requiredMods.get();
+                List<String> requiredMods = fuelData.requiredMods().get();
                 if (requiredMods.stream().anyMatch(mod -> !CompatManager.modLoaded(mod)))
                 {   return;
                 }
             }
 
             List<Item> items = new ArrayList<>();
-            fuelData.data.items.ifPresent(itemList ->
+            fuelData.data().items().ifPresent(itemList ->
             {   items.addAll(RegistryHelper.mapTaggableList(itemList));
             });
-            fuelData.data.tag.ifPresent(tag ->
+            fuelData.data().tag().ifPresent(tag ->
             {   items.addAll(tag.getValues());
             });
 
             for (Item item : items)
             {
-                switch (fuelData.type)
+                switch (fuelData.type())
                 {
                     case BOILER : ConfigSettings.BOILER_FUEL.get().put(item, fuelData); break;
                     case ICEBOX : ConfigSettings.ICEBOX_FUEL.get().put(item, fuelData); break;
@@ -367,19 +373,19 @@ public class ConfigLoadingHandler
         foods.forEach(foodData ->
         {
             // Check if the required mods are loaded
-            if (foodData.requiredMods.isPresent())
+            if (foodData.requiredMods().isPresent())
             {
-                List<String> requiredMods = foodData.requiredMods.get();
+                List<String> requiredMods = foodData.requiredMods().get();
                 if (requiredMods.stream().anyMatch(mod -> !CompatManager.modLoaded(mod)))
                 {   return;
                 }
             }
 
             List<Item> items = new ArrayList<>();
-            foodData.data.items.ifPresent(itemList ->
+            foodData.data().items().ifPresent(itemList ->
             {   items.addAll(RegistryHelper.mapTaggableList(itemList));
             });
-            foodData.data.tag.ifPresent(tag ->
+            foodData.data().tag().ifPresent(tag ->
             {   items.addAll(tag.getValues());
             });
 
@@ -394,19 +400,19 @@ public class ConfigLoadingHandler
         carryTemps.forEach(carryTempData ->
         {
             // Check if the required mods are loaded
-            if (carryTempData.requiredMods.isPresent())
+            if (carryTempData.requiredMods().isPresent())
             {
-                List<String> requiredMods = carryTempData.requiredMods.get();
+                List<String> requiredMods = carryTempData.requiredMods().get();
                 if (requiredMods.stream().anyMatch(mod -> !CompatManager.modLoaded(mod)))
                 {   return;
                 }
             }
 
             List<Item> items = new ArrayList<>();
-            carryTempData.data.items.ifPresent(itemList ->
+            carryTempData.data().items().ifPresent(itemList ->
             {   items.addAll(RegistryHelper.mapTaggableList(itemList));
             });
-            carryTempData.data.tag.ifPresent(tag ->
+            carryTempData.data().tag().ifPresent(tag ->
             {   items.addAll(tag.getValues());
             });
             for (Item item : items)
@@ -425,24 +431,24 @@ public class ConfigLoadingHandler
         blockTemps.forEach(blockTempData ->
         {
             // Check if the required mods are loaded
-            if (blockTempData.requiredMods.isPresent())
+            if (blockTempData.requiredMods().isPresent())
             {
-                List<String> requiredMods = blockTempData.requiredMods.get();
+                List<String> requiredMods = blockTempData.requiredMods().get();
                 if (requiredMods.stream().anyMatch(mod -> !CompatManager.modLoaded(mod)))
                 {   return;
                 }
             }
-            Block[] blocks = RegistryHelper.mapTaggableList(blockTempData.blocks).toArray(new Block[0]);
-            BlockTemp blockTemp = new BlockTemp(blockTempData.temperature < 0 ? -blockTempData.maxEffect : -Double.MAX_VALUE,
-                                                blockTempData.temperature > 0 ? blockTempData.maxEffect : Double.MAX_VALUE,
-                                                blockTempData.minTemp,
-                                                blockTempData.maxTemp,
-                                                blockTempData.range,
-                                                blockTempData.fade,
+            Block[] blocks = RegistryHelper.mapTaggableList(blockTempData.blocks()).toArray(new Block[0]);
+            BlockTemp blockTemp = new BlockTemp(blockTempData.getTemperature() < 0 ? -blockTempData.getMaxEffect() : -Double.MAX_VALUE,
+                                                blockTempData.getTemperature() > 0 ? blockTempData.getMaxEffect() : Double.MAX_VALUE,
+                                                blockTempData.getMinTemp(),
+                                                blockTempData.getMaxTemp(),
+                                                blockTempData.range(),
+                                                blockTempData.fade(),
                                                 blocks)
             {
-                final double temperature = blockTempData.temperature;
-                final List<BlockRequirement> conditions = blockTempData.conditions;
+                final double temperature = blockTempData.getTemperature();
+                final List<BlockRequirement> conditions = blockTempData.conditions();
 
                 @Override
                 public double getTemperature(World level, LivingEntity entity, BlockState state, BlockPos pos, double distance)
@@ -470,16 +476,16 @@ public class ConfigLoadingHandler
         biomeTemps.forEach(biomeTempData ->
         {
             // Check if the required mods are loaded
-            if (biomeTempData.requiredMods.isPresent())
+            if (biomeTempData.requiredMods().isPresent())
             {
-                List<String> requiredMods = biomeTempData.requiredMods.get();
+                List<String> requiredMods = biomeTempData.requiredMods().get();
                 if (requiredMods.stream().anyMatch(mod -> !CompatManager.modLoaded(mod)))
                 {   return;
                 }
             }
-            for (Biome biome : biomeTempData.biomes)
+            for (Biome biome : biomeTempData.biomes())
             {
-                if (biomeTempData.isOffset)
+                if (biomeTempData.isOffset())
                 {   ConfigSettings.BIOME_OFFSETS.get(registryAccess).put(biome, biomeTempData);
                 }
                 else
@@ -494,17 +500,17 @@ public class ConfigLoadingHandler
         dimensionTemps.forEach(dimensionTempData ->
         {
             // Check if the required mods are loaded
-            if (dimensionTempData.requiredMods.isPresent())
+            if (dimensionTempData.requiredMods().isPresent())
             {
-                List<String> requiredMods = dimensionTempData.requiredMods.get();
+                List<String> requiredMods = dimensionTempData.requiredMods().get();
                 if (requiredMods.stream().anyMatch(mod -> !CompatManager.modLoaded(mod)))
                 {   return;
                 }
             }
 
-            for (DimensionType dimension : dimensionTempData.dimensions)
+            for (DimensionType dimension : dimensionTempData.dimensions())
             {
-                if (dimensionTempData.isOffset)
+                if (dimensionTempData.isOffset())
                 {   ConfigSettings.DIMENSION_OFFSETS.get(registryAccess).put(dimension, dimensionTempData);
                 }
                 else
@@ -519,16 +525,16 @@ public class ConfigLoadingHandler
         structureTemps.forEach(structureTempData ->
         {
             // Check if the required mods are loaded
-            if (structureTempData.requiredMods.isPresent())
+            if (structureTempData.requiredMods().isPresent())
             {
-                List<String> requiredMods = structureTempData.requiredMods.get();
+                List<String> requiredMods = structureTempData.requiredMods().get();
                 if (requiredMods.stream().anyMatch(mod -> !CompatManager.modLoaded(mod)))
                 {   return;
                 }
             }
-            for (Structure<?> structure : structureTempData.structures)
+            for (Structure<?> structure : structureTempData.structures())
             {
-                if (structureTempData.isOffset)
+                if (structureTempData.isOffset())
                 {   ConfigSettings.STRUCTURE_OFFSETS.get(registryAccess).put(structure, structureTempData);
                 }
                 else
@@ -544,9 +550,9 @@ public class ConfigLoadingHandler
         for (DepthTempData depthTemp : depthTemps)
         {
             // Check if the required mods are loaded
-            if (depthTemp.requiredMods.isPresent())
+            if (depthTemp.requiredMods().isPresent())
             {
-                List<String> requiredMods = depthTemp.requiredMods.get();
+                List<String> requiredMods = depthTemp.requiredMods().get();
                 if (requiredMods.stream().anyMatch(mod -> !CompatManager.modLoaded(mod)))
                 {   return;
                 }
@@ -560,16 +566,16 @@ public class ConfigLoadingHandler
         mounts.forEach(mountData ->
         {
             // Check if the required mods are loaded
-            if (mountData.requiredMods.isPresent())
+            if (mountData.requiredMods().isPresent())
             {
-                List<String> requiredMods = mountData.requiredMods.get();
+                List<String> requiredMods = mountData.requiredMods().get();
                 if (requiredMods.stream().anyMatch(mod -> !CompatManager.modLoaded(mod)))
                 {   return;
                 }
             }
-            List<EntityType<?>> entities = RegistryHelper.mapTaggableList(mountData.entities);
+            List<EntityType<?>> entities = RegistryHelper.mapTaggableList(mountData.entities());
             for (EntityType<?> entity : entities)
-            {   ConfigSettings.INSULATED_MOUNTS.get().put(entity, new MountData(entities, mountData.coldInsulation, mountData.heatInsulation, mountData.requirement));
+            {   ConfigSettings.INSULATED_MOUNTS.get().put(entity, new MountData(entities, mountData.coldInsulation(), mountData.heatInsulation(), mountData.requirement()));
             }
         });
     }
@@ -579,14 +585,14 @@ public class ConfigLoadingHandler
         spawnBiomes.forEach(spawnBiomeData ->
         {
             // Check if the required mods are loaded
-            if (spawnBiomeData.requiredMods.isPresent())
+            if (spawnBiomeData.requiredMods().isPresent())
             {
-                List<String> requiredMods = spawnBiomeData.requiredMods.get();
+                List<String> requiredMods = spawnBiomeData.requiredMods().get();
                 if (requiredMods.stream().anyMatch(mod -> !CompatManager.modLoaded(mod)))
                 {   return;
                 }
             }
-            for (Biome biome : spawnBiomeData.biomes)
+            for (Biome biome : spawnBiomeData.biomes())
             {   ConfigSettings.ENTITY_SPAWN_BIOMES.get(registryAccess).put(biome, spawnBiomeData);
             }
         });
@@ -597,16 +603,16 @@ public class ConfigLoadingHandler
         entityTemps.forEach(entityTempData ->
         {
             // Check if the required mods are loaded
-            if (entityTempData.requiredMods.isPresent())
+            if (entityTempData.requiredMods().isPresent())
             {
-                List<String> requiredMods = entityTempData.requiredMods.get();
+                List<String> requiredMods = entityTempData.requiredMods().get();
                 if (requiredMods.stream().anyMatch(mod -> !CompatManager.modLoaded(mod)))
                 {   return;
                 }
             }
             // Gather entity types and tags
             List<Either<ITag<EntityType<?>>, EntityType<?>>> types = new ArrayList<>();
-            entityTempData.entity.entities.ifPresent(type -> types.addAll(type));
+            entityTempData.entity().entities.ifPresent(type -> types.addAll(type));
 
             for (EntityType<?> entity : RegistryHelper.mapTaggableList(types))
             {   ConfigSettings.ENTITY_TEMPERATURES.get().put(entity, entityTempData);

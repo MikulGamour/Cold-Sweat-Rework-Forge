@@ -20,6 +20,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.NBTDynamicOps;
+import net.minecraft.tags.ITag;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -27,20 +28,18 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-public class ItemCarryTempData implements NbtSerializable, RequirementHolder, ConfigData<ItemCarryTempData>
+public class ItemCarryTempData extends ConfigData implements RequirementHolder
 {
-    public final ItemRequirement data;
-    public final List<Either<IntegerBounds, EquipmentSlotType>> slots;
-    public final double temperature;
-    public final Temperature.Trait trait;
-    public final Double maxEffect;
-    public final EntityRequirement entityRequirement;
-    public final Optional<List<String>> requiredMods;
+    final ItemRequirement data;
+    final List<Either<IntegerBounds, EquipmentSlotType>> slots;
+    final double temperature;
+    final Temperature.Trait trait;
+    final Double maxEffect;
+    final EntityRequirement entityRequirement;
+    final Optional<List<String>> requiredMods;
 
     public ItemCarryTempData(ItemRequirement data, List<Either<IntegerBounds, EquipmentSlotType>> slots, double temperature,
-                             Temperature.Trait trait,
-                             Double maxEffect,
-                             EntityRequirement entityRequirement,
+                             Temperature.Trait trait, Double maxEffect, EntityRequirement entityRequirement,
                              Optional<List<String>> requiredMods)
     {
         this.data = data;
@@ -63,10 +62,32 @@ public class ItemCarryTempData implements NbtSerializable, RequirementHolder, Co
                  .listOf().fieldOf("slots").forGetter(data -> data.slots),
             Codec.DOUBLE.fieldOf("temperature").forGetter(data -> data.temperature),
             Temperature.Trait.CODEC.optionalFieldOf("trait", Temperature.Trait.WORLD).forGetter(data -> data.trait),
-            Codec.DOUBLE.optionalFieldOf("max_effect", Double.MAX_VALUE).forGetter(data -> data.maxEffect),
+            Codec.DOUBLE.optionalFieldOf("max_effect", java.lang.Double.MAX_VALUE).forGetter(data -> data.maxEffect),
             EntityRequirement.getCodec().optionalFieldOf("entity", EntityRequirement.NONE).forGetter(data -> data.entityRequirement),
             Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(data -> data.requiredMods)
     ).apply(instance, ItemCarryTempData::new));
+
+    public ItemRequirement data()
+    {   return data;
+    }
+    public List<Either<IntegerBounds, EquipmentSlotType>> slots()
+    {   return slots;
+    }
+    public double temperature()
+    {   return temperature;
+    }
+    public Temperature.Trait trait()
+    {   return trait;
+    }
+    public Double maxEffect()
+    {   return maxEffect;
+    }
+    public EntityRequirement entityRequirement()
+    {   return entityRequirement;
+    }
+    public Optional<List<String>> requiredMods()
+    {   return requiredMods;
+    }
 
     @Override
     public boolean test(Entity entity)
@@ -113,7 +134,8 @@ public class ItemCarryTempData implements NbtSerializable, RequirementHolder, Co
             {   requiredMods.add(split[0].replace("#", ""));
             }
         }
-        List<Item> items = ConfigHelper.getItems(itemIDs);
+        List<Either<ITag<Item>, Item>> items = ConfigHelper.getItems(itemIDs);
+        if (items.isEmpty()) return null;
         //temp
         double temp = ((Number) entry.get(1)).doubleValue();
         // slots
@@ -161,22 +183,8 @@ public class ItemCarryTempData implements NbtSerializable, RequirementHolder, Co
     }
 
     @Override
-    public CompoundNBT serialize()
-    {   return (CompoundNBT) CODEC.encodeStart(NBTDynamicOps.INSTANCE, this).result().orElseGet(CompoundNBT::new);
-    }
-
-    public static ItemCarryTempData deserialize(CompoundNBT tag)
-    {   return CODEC.decode(NBTDynamicOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalArgumentException("Could not deserialize Insulator")).getFirst();
-    }
-
-    @Override
     public Codec<ItemCarryTempData> getCodec()
     {   return CODEC;
-    }
-
-    @Override
-    public String toString()
-    {   return this.asString();
     }
 
     @Override

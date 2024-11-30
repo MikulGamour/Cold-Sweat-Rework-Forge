@@ -3,6 +3,7 @@ package com.momosoftworks.coldsweat.config;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.Multimap;
+import com.mojang.datafixers.util.Either;
 import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.api.insulation.Insulation;
 import com.momosoftworks.coldsweat.api.insulation.slot.ScalingFormula;
@@ -23,6 +24,7 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.item.Item;
 import net.minecraft.nbt.*;
 import net.minecraft.potion.Effect;
+import net.minecraft.tags.ITag;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.registry.DynamicRegistries;
 import net.minecraft.util.registry.Registry;
@@ -296,154 +298,79 @@ public class ConfigSettings
         BIOME_TEMPS = addSyncedSettingWithRegistries("biome_temps", FastMap::new, (holder, registryAccess) ->
         {
             Map<Biome, BiomeTempData> dataMap = ConfigHelper.getRegistryMap(WorldSettingsConfig.BIOME_TEMPERATURES.get(), Registry.BIOME_REGISTRY,
-                                                                            toml -> BiomeTempData.fromToml(toml, false, registryAccess), data -> data.biomes);
+                                                                            toml -> BiomeTempData.fromToml(toml, false, registryAccess), BiomeTempData::biomes);
             ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.BIOME_TEMP_DATA);
 
             holder.get(registryAccess).putAll(dataMap);
         },
         (encoder, registryAccess) -> ConfigHelper.serializeHolderRegistry(encoder, "BiomeTemps", Registry.BIOME_REGISTRY, ModRegistries.BIOME_TEMP_DATA, registryAccess),
         (decoder, registryAccess) -> ConfigHelper.deserializeRegistry(decoder, "BiomeTemps", Registry.BIOME_REGISTRY, ModRegistries.BIOME_TEMP_DATA, registryAccess),
-        (saver, registryAccess) -> WorldSettingsConfig.BIOME_TEMPERATURES.set(saver.entrySet().stream()
-                                                            .map(entry ->
-                                                            {
-                                                                ResourceLocation biome = RegistryHelper.getKey(entry.getKey(), registryAccess);
-                                                                if (biome == null) return null;
-
-                                                                Temperature.Units units = entry.getValue().units;
-                                                                double min = Temperature.convert(entry.getValue().minTemp(), Temperature.Units.MC, units, true);
-                                                                double max = Temperature.convert(entry.getValue().maxTemp(), Temperature.Units.MC, units, true);
-
-                                                                return Arrays.asList(biome.toString(), min, max, units.toString());
-                                                            })
-                                                            .filter(Objects::nonNull)
-                                                            .collect(Collectors.toList())),
+        (saver, registryAccess) -> {},
         SyncType.ONE_WAY);
 
         BIOME_OFFSETS = addSyncedSettingWithRegistries("biome_offsets", FastMap::new, (holder, registryAccess) ->
         {
             Map<Biome, BiomeTempData> dataMap = ConfigHelper.getRegistryMap(WorldSettingsConfig.BIOME_TEMP_OFFSETS.get(), Registry.BIOME_REGISTRY,
-                                                                            toml -> BiomeTempData.fromToml(toml, true, registryAccess), data -> data.biomes);
+                                                                            toml -> BiomeTempData.fromToml(toml, true, registryAccess), BiomeTempData::biomes);
             ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.BIOME_TEMP_DATA);
 
             holder.get(registryAccess).putAll(dataMap);
         },
         (encoder, registryAccess) -> ConfigHelper.serializeHolderRegistry(encoder, "BiomeOffsets", Registry.BIOME_REGISTRY, ModRegistries.BIOME_TEMP_DATA, registryAccess),
         (decoder, registryAccess) -> ConfigHelper.deserializeRegistry(decoder, "BiomeOffsets", Registry.BIOME_REGISTRY, ModRegistries.BIOME_TEMP_DATA, registryAccess),
-        (saver, registryAccess) -> WorldSettingsConfig.BIOME_TEMP_OFFSETS.set(saver.entrySet().stream()
-                                                            .map(entry ->
-                                                            {
-                                                                BiomeTempData data = entry.getValue();
-                                                                ResourceLocation biome = RegistryHelper.getKey(entry.getKey(), registryAccess);
-                                                                if (biome == null) return null;
-
-                                                                Temperature.Units units = data.units;
-                                                                double min = Temperature.convert(data.min, Temperature.Units.MC, units, false);
-                                                                double max = Temperature.convert(data.max, Temperature.Units.MC, units, false);
-
-                                                                return Arrays.asList(biome.toString(), min, max, units.toString());
-                                                            })
-                                                            .filter(Objects::nonNull)
-                                                            .collect(Collectors.toList())),
+        (saver, registryAccess) -> {},
         SyncType.ONE_WAY);
 
         DIMENSION_TEMPS = addSyncedSettingWithRegistries("dimension_temps", FastMap::new, (holder, registryAccess) ->
         {
             Map<DimensionType, DimensionTempData> dataMap = ConfigHelper.getRegistryMap(WorldSettingsConfig.DIMENSION_TEMPERATURES.get(), Registry.DIMENSION_TYPE_REGISTRY,
-                                                                                       toml -> DimensionTempData.fromToml(toml, false, registryAccess), data -> data.dimensions);
+                                                                                       toml -> DimensionTempData.fromToml(toml, false, registryAccess), DimensionTempData::dimensions);
             ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.DIMENSION_TEMP_DATA);
 
             holder.get(registryAccess).putAll(dataMap);
         },
         (encoder, registryAccess) -> ConfigHelper.serializeHolderRegistry(encoder, "DimensionTemps", Registry.DIMENSION_TYPE_REGISTRY, ModRegistries.DIMENSION_TEMP_DATA, registryAccess),
         (decoder, registryAccess) -> ConfigHelper.deserializeRegistry(decoder, "DimensionTemps", Registry.DIMENSION_TYPE_REGISTRY, ModRegistries.DIMENSION_TEMP_DATA, registryAccess),
-        (saver, registryAccess) -> WorldSettingsConfig.DIMENSION_TEMPERATURES.set(saver.entrySet().stream()
-                                                     .map(entry ->
-                                                     {
-                                                         ResourceLocation dim = RegistryHelper.getKey(entry.getKey(), registryAccess);
-                                                         if (dim == null) return null;
-
-                                                         Temperature.Units units = entry.getValue().units;
-                                                         double temp = Temperature.convert(entry.getValue().temperature, Temperature.Units.MC, units, true);
-
-                                                         return Arrays.asList(dim.toString(), temp, units.toString());
-                                                     })
-                                                     .filter(Objects::nonNull)
-                                                     .collect(Collectors.toList())),
+        (saver, registryAccess) -> {},
         SyncType.ONE_WAY);
 
         DIMENSION_OFFSETS = addSyncedSettingWithRegistries("dimension_offsets", FastMap::new, (holder, registryAccess) ->
         {
             Map<DimensionType, DimensionTempData> dataMap = ConfigHelper.getRegistryMap(WorldSettingsConfig.DIMENSION_TEMP_OFFSETS.get(), Registry.DIMENSION_TYPE_REGISTRY,
-                                                                                       toml -> DimensionTempData.fromToml(toml, true, registryAccess), data -> data.dimensions);
+                                                                                       toml -> DimensionTempData.fromToml(toml, true, registryAccess), DimensionTempData::dimensions);
             ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.DIMENSION_TEMP_DATA);
 
             holder.get(registryAccess).putAll(dataMap);
         },
         (encoder, registryAccess) -> ConfigHelper.serializeHolderRegistry(encoder, "DimensionOffsets", Registry.DIMENSION_TYPE_REGISTRY, ModRegistries.DIMENSION_TEMP_DATA, registryAccess),
         (decoder, registryAccess) -> ConfigHelper.deserializeRegistry(decoder, "DimensionOffsets", Registry.DIMENSION_TYPE_REGISTRY, ModRegistries.DIMENSION_TEMP_DATA, registryAccess),
-        (saver, registryAccess) -> WorldSettingsConfig.DIMENSION_TEMP_OFFSETS.set(saver.entrySet().stream()
-                                                     .map(entry ->
-                                                     {
-                                                         ResourceLocation dim = RegistryHelper.getKey(entry.getKey(), registryAccess);
-                                                         if (dim == null) return null;
-
-                                                         Temperature.Units units = entry.getValue().units;
-                                                         double temp = Temperature.convert(entry.getValue().temperature, Temperature.Units.MC, units, false);
-
-                                                         return Arrays.asList(dim.toString(), temp, units.toString());
-                                                     })
-                                                     .filter(Objects::nonNull)
-                                                     .collect(Collectors.toList())),
+        (saver, registryAccess) -> {},
         SyncType.ONE_WAY);
 
         STRUCTURE_TEMPS = addSyncedSettingWithRegistries("structure_temperatures", FastMap::new, (holder, registryAccess) ->
         {
             Map<Structure<?>, StructureTempData> dataMap = ConfigHelper.getRegistryMap(WorldSettingsConfig.STRUCTURE_TEMPERATURES.get(), Registry.STRUCTURE_FEATURE_REGISTRY,
-                                                                                   toml -> StructureTempData.fromToml(toml, true, registryAccess), data -> data.structures);
+                                                                                   toml -> StructureTempData.fromToml(toml, true, registryAccess), StructureTempData::structures);
             ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.STRUCTURE_TEMP_DATA);
 
             holder.get(registryAccess).putAll(dataMap);
         },
-        (encoder, registryAccess) -> ConfigHelper.serializeRegistry(encoder, "StructureTemperatures", Registry.STRUCTURE_FEATURE_REGISTRY, ModRegistries.STRUCTURE_TEMP_DATA, registryAccess),
+        (encoder, registryAccess) -> ConfigHelper.serializeHolderRegistry(encoder, "StructureTemperatures", Registry.STRUCTURE_FEATURE_REGISTRY, ModRegistries.STRUCTURE_TEMP_DATA, registryAccess),
         (decoder, registryAccess) -> ConfigHelper.deserializeRegistry(decoder, "StructureTemperatures", Registry.STRUCTURE_FEATURE_REGISTRY, ModRegistries.STRUCTURE_TEMP_DATA, registryAccess),
-        (saver, registryAccess) -> WorldSettingsConfig.STRUCTURE_TEMPERATURES.set(saver.entrySet().stream()
-                                                     .map(entry ->
-                                                     {
-                                                         ResourceLocation struct = RegistryHelper.getKey(entry.getKey(), registryAccess);
-                                                         if (struct == null) return null;
-
-                                                         Temperature.Units units = entry.getValue().units;
-                                                         double temp = Temperature.convert(entry.getValue().temperature, Temperature.Units.MC, units, true);
-
-                                                         return Arrays.asList(struct.toString(), temp, units.toString());
-                                                     })
-                                                     .filter(Objects::nonNull)
-                                                     .collect(Collectors.toList())),
+        (saver, registryAccess) -> {},
         SyncType.ONE_WAY);
 
         STRUCTURE_OFFSETS = addSyncedSettingWithRegistries("structure_offsets", FastMap::new, (holder, registryAccess) ->
         {
             Map<Structure<?>, StructureTempData> dataMap = ConfigHelper.getRegistryMap(WorldSettingsConfig.STRUCTURE_TEMP_OFFSETS.get(), Registry.STRUCTURE_FEATURE_REGISTRY,
-                                                                                   toml -> StructureTempData.fromToml(toml, false, registryAccess), data -> data.structures);
+                                                                                   toml -> StructureTempData.fromToml(toml, false, registryAccess), StructureTempData::structures);
             ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.STRUCTURE_TEMP_DATA);
 
             holder.get(registryAccess).putAll(dataMap);
         },
-        (encoder, registryAccess) -> ConfigHelper.serializeRegistry(encoder, "StructureOffsets", Registry.STRUCTURE_FEATURE_REGISTRY, ModRegistries.STRUCTURE_TEMP_DATA, registryAccess),
+        (encoder, registryAccess) -> ConfigHelper.serializeHolderRegistry(encoder, "StructureOffsets", Registry.STRUCTURE_FEATURE_REGISTRY, ModRegistries.STRUCTURE_TEMP_DATA, registryAccess),
         (decoder, registryAccess) -> ConfigHelper.deserializeRegistry(decoder, "StructureOffsets", Registry.STRUCTURE_FEATURE_REGISTRY, ModRegistries.STRUCTURE_TEMP_DATA, registryAccess),
-        (saver, registryAccess) -> WorldSettingsConfig.STRUCTURE_TEMP_OFFSETS.set(saver.entrySet().stream()
-                                                     .map(entry ->
-                                                     {
-                                                         ResourceLocation struct = RegistryHelper.getKey(entry.getKey(), registryAccess);
-                                                         if (struct == null) return null;
-
-                                                         Temperature.Units units = entry.getValue().units;
-                                                         double temp = Temperature.convert(entry.getValue().temperature, Temperature.Units.MC, units, false);
-
-                                                         return Arrays.asList(struct.toString(), temp, units.toString());
-                                                     })
-                                                     .filter(Objects::nonNull)
-                                                     .collect(Collectors.toList())),
+        (saver, registryAccess) -> {},
         SyncType.ONE_WAY);
 
         DEPTH_REGIONS = addSetting("depth_regions", ArrayList::new, holder -> {});
@@ -457,7 +384,9 @@ public class ConfigSettings
                 FuelData data = FuelData.fromToml(list, fuelType);
                 if (data == null) continue;
 
-                for (Item item : RegistryHelper.mapTaggableList(data.data.items.get()))
+                data.setType(ConfigData.Type.TOML);
+
+                for (Item item : RegistryHelper.mapTaggableList(data.data().items().get()))
                 {   dataMap.put(item, data);
                 }
             }
@@ -471,10 +400,7 @@ public class ConfigSettings
         SOULSPRING_LAMP_FUEL = addSyncedSetting("lamp_fuel_items", FastMultiMap::new, holder -> fuelAdder.accept(FuelData.FuelType.SOUL_LAMP, ItemSettingsConfig.SOULSPRING_LAMP_FUELS, holder),
         (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "LampFuelItems", Registry.ITEM_REGISTRY, ModRegistries.FUEL_DATA, ForgeRegistries.ITEMS::getKey),
         (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "LampFuelItems", ModRegistries.FUEL_DATA, ForgeRegistries.ITEMS::getValue),
-        (saver) -> ConfigHelper.writeRegistryMultimap(saver,
-                                                      fuel -> ConfigHelper.getTaggableListStrings(fuel.data.items.get(), Registry.ITEM_REGISTRY),
-                                                      fuel -> Arrays.asList(fuel.fuel, fuel.data.nbt.tag.toString()),
-                                                      list -> ItemSettingsConfig.SOULSPRING_LAMP_FUELS.set(list)),
+        (saver) -> {},
         SyncType.ONE_WAY);
 
         HEARTH_POTIONS_ENABLED = addSetting("hearth_potions_enabled", () -> true, holder -> holder.set(ItemSettingsConfig.ALLOW_POTIONS_IN_HEARTH.get()));
@@ -494,7 +420,9 @@ public class ConfigSettings
                 InsulatorData data = InsulatorData.fromToml(list, slot);
                 if (data == null) continue;
 
-                for (Item item : RegistryHelper.mapTaggableList(data.data.items.get()))
+                data.setType(ConfigData.Type.TOML);
+
+                for (Item item : RegistryHelper.mapTaggableList(data.data().items().get()))
                 {   dataMap.put(item, data);
                 }
             }
@@ -508,7 +436,7 @@ public class ConfigSettings
         },
         (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "InsulationItems", Registry.ITEM_REGISTRY, ModRegistries.INSULATOR_DATA, item -> ForgeRegistries.ITEMS.getKey(item)),
         (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "InsulationItems", ModRegistries.INSULATOR_DATA, rl -> ForgeRegistries.ITEMS.getValue(rl)),
-        (saver) -> ConfigHelper.writeItemInsulations(saver, list -> ItemSettingsConfig.INSULATION_ITEMS.set(list)),
+        (saver) -> {},
         SyncType.ONE_WAY);
 
         INSULATING_ARMORS = addSyncedSetting("insulating_armors", FastMultiMap::new, holder ->
@@ -516,7 +444,7 @@ public class ConfigSettings
         },
         (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "InsulatingArmors", Registry.ITEM_REGISTRY, ModRegistries.INSULATOR_DATA, item -> ForgeRegistries.ITEMS.getKey(item)),
         (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "InsulatingArmors", ModRegistries.INSULATOR_DATA, rl -> ForgeRegistries.ITEMS.getValue(rl)),
-        (saver) -> ConfigHelper.writeItemInsulations(saver, list -> ItemSettingsConfig.INSULATING_ARMOR.set(list)),
+        (saver) -> {},
         SyncType.ONE_WAY);
 
         INSULATING_CURIOS = addSyncedSetting("insulating_curios", FastMultiMap::new, holder ->
@@ -527,11 +455,7 @@ public class ConfigSettings
         },
         (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "InsulatingCurios", Registry.ITEM_REGISTRY, ModRegistries.INSULATOR_DATA, item -> ForgeRegistries.ITEMS.getKey(item)),
         (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "InsulatingCurios", ModRegistries.INSULATOR_DATA, rl -> ForgeRegistries.ITEMS.getValue(rl)),
-        (saver) ->
-        {   if (CompatManager.isCuriosLoaded())
-            {   ConfigHelper.writeItemInsulations(saver, list -> ItemSettingsConfig.INSULATING_CURIOS.set(list));
-            }
-        },
+        (saver) -> {},
         SyncType.ONE_WAY);
 
         INSULATION_SLOTS = addSyncedSetting("insulation_slots", () -> new ScalingFormula.Static(0, 0, 0, 0), holder ->
@@ -574,7 +498,11 @@ public class ConfigSettings
 
         CHECK_SLEEP_CONDITIONS = addSetting("check_sleep_conditions", () -> true, holder -> holder.set(WorldSettingsConfig.SHOULD_CHECK_SLEEP.get()));
 
-        SLEEP_CHECK_IGNORE_BLOCKS = addSetting("sleep_check_override_blocks", ArrayList::new, holder -> holder.get().addAll(ConfigHelper.getBlocks(WorldSettingsConfig.SLEEPING_OVERRIDE_BLOCKS.get().toArray(new String[0]))));
+        SLEEP_CHECK_IGNORE_BLOCKS = addSetting("sleep_check_override_blocks", ArrayList::new, holder ->
+        {
+            List<Either<ITag<Block>, Block>> blocks = ConfigHelper.getBlocks(WorldSettingsConfig.SLEEPING_OVERRIDE_BLOCKS.get().toArray(new String[0]));
+            holder.get().addAll(RegistryHelper.mapTaggableList(blocks));
+        });
 
         USE_CUSTOM_WATER_FREEZE_BEHAVIOR = addSetting("custom_freeze_check", () -> true, holder -> holder.set(WorldSettingsConfig.CUSTOM_WATER_FREEZE_BEHAVIOR.get()));
 
@@ -589,7 +517,7 @@ public class ConfigSettings
                 FoodData data = FoodData.fromToml(list);
                 if (data == null) continue;
 
-                for (Item item : RegistryHelper.mapTaggableList(data.data.items.get()))
+                for (Item item : RegistryHelper.mapTaggableList(data.data().items().get()))
                 {   dataMap.put(item, data);
                 }
             }
@@ -600,11 +528,7 @@ public class ConfigSettings
         },
         (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "FoodTemperatures", Registry.ITEM_REGISTRY, ModRegistries.FOOD_DATA, item -> ForgeRegistries.ITEMS.getKey(item)),
         (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "FoodTemperatures", ModRegistries.FOOD_DATA, rl -> ForgeRegistries.ITEMS.getValue(rl)),
-        (saver) -> ConfigHelper.writeRegistryMultimap(saver,
-                                                      food -> ConfigHelper.getTaggableListStrings(food.data.items.get(), Registry.ITEM_REGISTRY),
-                                                      food -> ListBuilder.begin(food.temperature, food.data.nbt.tag.toString())
-                                                              .addIf(food.duration > 0, () -> food.duration).build(),
-                                                      list -> ItemSettingsConfig.FOOD_TEMPERATURES.set(list)),
+        (saver) -> {},
         SyncType.ONE_WAY);
 
         CARRIED_ITEM_TEMPERATURES = addSyncedSetting("carried_item_temps", FastMultiMap::new, holder ->
@@ -616,7 +540,7 @@ public class ConfigSettings
                 ItemCarryTempData data = ItemCarryTempData.fromToml(list);
                 if (data == null) continue;
 
-                for (Item item : RegistryHelper.mapTaggableList(data.data.items.get()))
+                for (Item item : RegistryHelper.mapTaggableList(data.data().items().get()))
                 {   dataMap.put(item, data);
                 }
             }
@@ -627,29 +551,7 @@ public class ConfigSettings
         },
         (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "CarriedItemTemps", Registry.ITEM_REGISTRY, ModRegistries.CARRY_TEMP_DATA, item -> ForgeRegistries.ITEMS.getKey(item)),
         (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "CarriedItemTemps", ModRegistries.CARRY_TEMP_DATA, rl -> ForgeRegistries.ITEMS.getValue(rl)),
-        (saver) ->
-        {
-            ConfigHelper.writeRegistryMultimap(saver,
-            temp -> ConfigHelper.getTaggableListStrings(temp.data.items.get(), Registry.ITEM_REGISTRY),
-            temp ->
-            {
-                List<Object> entry = new ArrayList<>();
-                // Temperature
-                entry.add(temp.temperature);
-                // Slot types
-                String strictType = temp.getSlotRangeName();
-                if (strictType.isEmpty()) return null;
-                entry.add(strictType);
-                // Trait
-                entry.add(temp.trait.getSerializedName());
-                // NBT data
-                if (!temp.data.nbt.tag.isEmpty())
-                {   entry.add(temp.data.nbt.tag.toString());
-                }
-                return entry;
-            },
-            list -> ItemSettingsConfig.CARRIED_ITEM_TEMPERATURES.set(list));
-        },
+        (saver) -> {},
         SyncType.ONE_WAY);
 
         WATERSKIN_STRENGTH = addSetting("waterskin_strength", () -> 50, holder -> holder.set(ItemSettingsConfig.WATERSKIN_STRENGTH.get()));
@@ -721,7 +623,7 @@ public class ConfigSettings
             BiConsumer<EntityType<?>, List<? extends List<?>>> configReader = (entityType, configBiomes) ->
             {
                 Multimap<Biome, SpawnBiomeData> dataMap = ConfigHelper.getRegistryMultimap(configBiomes, Registry.BIOME_REGISTRY,
-                                                                                                   toml -> SpawnBiomeData.fromToml(toml, entityType, registryAccess), data -> data.biomes);
+                                                                                                   toml -> SpawnBiomeData.fromToml(toml, entityType, registryAccess), SpawnBiomeData::biomes);
                 ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.ENTITY_SPAWN_BIOME_DATA);
 
                 holder.get(registryAccess).putAll(dataMap);
@@ -739,7 +641,11 @@ public class ConfigSettings
             for (List<?> list : EntitySettingsConfig.INSULATED_MOUNTS.get())
             {
                 MountData data = MountData.fromToml(list);
-                for (EntityType<?> entityType : RegistryHelper.mapTaggableList(data.entities))
+                if (data == null) continue;
+
+                data.setType(ConfigData.Type.TOML);
+
+                for (EntityType<?> entityType : RegistryHelper.mapTaggableList(data.entities()))
                 {   dataMap.put(entityType, data);
                 }
             }
@@ -758,7 +664,9 @@ public class ConfigSettings
                 EntityTempData data = EntityTempData.fromToml(list);
                 if (data == null) continue;
 
-                for (EntityType<?> entityType : RegistryHelper.mapTaggableList(data.entity.entities.get()))
+                data.setType(ConfigData.Type.TOML);
+
+                for (EntityType<?> entityType : RegistryHelper.mapTaggableList(data.entity().entities.get()))
                 {   dataMap.put(entityType, data);
                 }
             }
@@ -776,7 +684,11 @@ public class ConfigSettings
 
         COLD_SOUL_FIRE = addSetting("cold_soul_fire", () -> true, holder -> holder.set(WorldSettingsConfig.IS_SOUL_FIRE_COLD.get()));
 
-        THERMAL_SOURCE_SPREAD_WHITELIST = addSyncedSetting("hearth_spread_whitelist", ArrayList::new, holder -> holder.get().addAll(ConfigHelper.getBlocks(WorldSettingsConfig.SOURCE_SPREAD_WHITELIST.get().toArray(new String[0]))),
+        THERMAL_SOURCE_SPREAD_WHITELIST = addSyncedSetting("hearth_spread_whitelist", ArrayList::new, holder ->
+        {
+            List<Either<ITag<Block>, Block>> blocks = ConfigHelper.getBlocks(WorldSettingsConfig.SOURCE_SPREAD_WHITELIST.get().toArray(new String[0]));
+            holder.get().addAll(RegistryHelper.mapTaggableList(blocks));
+        },
         (encoder) ->
         {
             CompoundNBT tag = new CompoundNBT();
@@ -798,7 +710,11 @@ public class ConfigSettings
         saver -> WorldSettingsConfig.SOURCE_SPREAD_WHITELIST.set(saver.stream().map(block -> ForgeRegistries.BLOCKS.getKey(block).toString()).collect(Collectors.toList())),
         SyncType.BOTH_WAYS);
 
-        THERMAL_SOURCE_SPREAD_BLACKLIST = addSyncedSetting("hearth_spread_blacklist", ArrayList::new, holder -> holder.get().addAll(ConfigHelper.getBlocks(WorldSettingsConfig.SOURCE_SPREAD_BLACKLIST.get().toArray(new String[0]))),
+        THERMAL_SOURCE_SPREAD_BLACKLIST = addSyncedSetting("hearth_spread_blacklist", ArrayList::new, holder ->
+        {
+            List<Either<ITag<Block>, Block>> blocks = ConfigHelper.getBlocks(WorldSettingsConfig.SOURCE_SPREAD_BLACKLIST.get().toArray(new String[0]));
+            holder.get().addAll(RegistryHelper.mapTaggableList(blocks));
+        },
         (encoder) ->
         {
             CompoundNBT tag = new CompoundNBT();
@@ -1148,7 +1064,6 @@ public class ConfigSettings
 
     public static void decode(CompoundNBT tag, DynamicRegistries registryAccess)
     {
-        ConfigData.IDENTIFIABLES.clear();
         for (DynamicHolder<?> config : CONFIG_SETTINGS.values())
         {
             if (config.getSyncType().canReceive())
@@ -1188,6 +1103,5 @@ public class ConfigSettings
         for (Map.Entry<String, DynamicHolder<?>> entry : CONFIG_SETTINGS.entrySet())
         {   entry.getValue().reset();
         }
-        ConfigData.IDENTIFIABLES.clear();
     }
 }

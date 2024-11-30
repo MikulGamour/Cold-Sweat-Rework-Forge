@@ -19,14 +19,17 @@ import net.minecraft.world.World;
 import java.util.List;
 import java.util.Optional;
 
-public class DepthTempData implements ConfigData<DepthTempData>
+public class DepthTempData extends ConfigData
 {
-    public final List<TempRegion> temperatures;
-    public final List<DimensionType> dimensions;
-    public final Optional<List<String>> requiredMods;
+    final List<TempRegion> temperatures;
+    final List<DimensionType> dimensions;
+    final Optional<List<String>> requiredMods;
 
-    public DepthTempData(List<TempRegion> temperatures, List<DimensionType> dimensions, Optional<List<String>> requiredMods)
-    {   this.temperatures = temperatures;
+    public DepthTempData(List<TempRegion> temperatures,
+                         List<DimensionType> dimensions,
+                         Optional<List<String>> requiredMods)
+    {
+        this.temperatures = temperatures;
         this.dimensions = dimensions;
         this.requiredMods = requiredMods;
     }
@@ -36,6 +39,16 @@ public class DepthTempData implements ConfigData<DepthTempData>
             ConfigHelper.dynamicCodec(Registry.DIMENSION_TYPE_REGISTRY).listOf().fieldOf("dimensions").forGetter(data -> data.dimensions),
             Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(data -> data.requiredMods)
     ).apply(instance, DepthTempData::new));
+
+    public List<TempRegion> temperatures()
+    {   return temperatures;
+    }
+    public List<DimensionType> dimensions()
+    {   return dimensions;
+    }
+    public Optional<List<String>> requiredMods()
+    {   return requiredMods;
+    }
 
     public boolean withinBounds(World level, BlockPos pos)
     {
@@ -66,11 +79,6 @@ public class DepthTempData implements ConfigData<DepthTempData>
     @Override
     public Codec<DepthTempData> getCodec()
     {   return CODEC;
-    }
-
-    @Override
-    public String toString()
-    {   return this.asString();
     }
 
     @Override

@@ -12,6 +12,7 @@ import com.momosoftworks.coldsweat.util.math.FastMultiMap;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.ListNBT;
+import net.minecraft.nbt.NBTDynamicOps;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -58,7 +59,7 @@ public class ItemInsulationCap implements IInsulatableCap
     public void addInsulationItem(ItemStack stack)
     {
         Multimap<InsulatorData, Insulation> insulation = ConfigSettings.INSULATION_ITEMS.get().get(stack.getItem()).stream()
-                                                     .map(insulator -> new AbstractMap.SimpleEntry<>(insulator, insulator.insulation.split()))
+                                                     .map(insulator -> new AbstractMap.SimpleEntry<>(insulator, insulator.insulation().split()))
                                                      .collect(FastMultiMap::new, (map, o) -> map.putAll(o.getKey(), o.getValue()), FastMultiMap::putAll);
         if (!insulation.isEmpty())
         {   this.insulation.add(Pair.of(stack, insulation));
@@ -87,7 +88,7 @@ public class ItemInsulationCap implements IInsulatableCap
 
         Multimap<InsulatorData, Insulation> insulation = ConfigSettings.INSULATION_ITEMS.get().get(insulationItem.getItem())
                                                      .stream().filter(insulator -> insulator.test(null, insulationItem))
-                                                     .map(insulator -> new AbstractMap.SimpleEntry<>(insulator, insulator.insulation.split()))
+                                                     .map(insulator -> new AbstractMap.SimpleEntry<>(insulator, insulator.insulation().split()))
                                                      .collect(FastMultiMap::new, (map, o) -> map.putAll(o.getKey(), o.getValue()), FastMultiMap::putAll);
         if (insulation.isEmpty())
         {   return false;
@@ -173,7 +174,7 @@ public class ItemInsulationCap implements IInsulatableCap
             if (!pairListNBT.isEmpty() && !pairListNBT.getCompound(0).contains("Insulator"))
             {
                 for (InsulatorData insulator : ConfigSettings.INSULATION_ITEMS.get().get(stack.getItem()))
-                {   insulMap.putAll(insulator, insulator.insulation.split());
+                {   insulMap.putAll(insulator, insulator.insulation().split());
                 }
             }
             // Handle normal insulation
@@ -181,13 +182,16 @@ public class ItemInsulationCap implements IInsulatableCap
             {
                 // Legacy insulation handling
                 CompoundNBT mappingNBT = pairListNBT.getCompound(j);
-                InsulatorData insulator = InsulatorData.deserialize(mappingNBT.getCompound("Insulator"));
-                ListNBT insulListNBT = mappingNBT.getList("Insulation", 10);
-                List<Insulation> insulList = new ArrayList<>();
-                for (int k = 0; k < insulListNBT.size(); k++)
-                {   insulList.add(Insulation.deserialize(insulListNBT.getCompound(k)));
-                }
-                insulMap.putAll(insulator, insulList);
+                InsulatorData.CODEC.decode(NBTDynamicOps.INSTANCE, mappingNBT.getCompound("Insulator")).map(Pair::getFirst).result()
+                .ifPresent(insulator ->
+                {
+                    ListNBT insulListNBT = mappingNBT.getList("Insulation", 10);
+                    List<Insulation> insulList = new ArrayList<>();
+                    for (int k = 0; k < insulListNBT.size(); k++)
+                    {   insulList.add(Insulation.deserialize(insulListNBT.getCompound(k)));
+                    }
+                    insulMap.putAll(insulator, insulList);
+                });
             }
             this.insulation.add(Pair.of(stack, insulMap));
         }

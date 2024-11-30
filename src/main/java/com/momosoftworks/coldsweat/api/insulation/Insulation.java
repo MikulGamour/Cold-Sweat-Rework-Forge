@@ -48,36 +48,35 @@ public abstract class Insulation implements NbtSerializable
     public static List<Insulation> sort(List<Insulation> pairs)
     {
         List<Insulation> newPairs = new ArrayList<>(pairs);
-        newPairs.sort(Comparator.comparingDouble(pair ->
-        {
-            if (pair instanceof AdaptiveInsulation)
-            {
-                AdaptiveInsulation insul = ((AdaptiveInsulation) pair);
-                return Math.abs(insul.getInsulation()) >= 2 ? 6 : 7;
-            }
-            else if (pair instanceof StaticInsulation)
-            {
-                StaticInsulation insul = ((StaticInsulation) pair);
-                double absCold = Math.abs(insul.getCold());
-                double absHot = Math.abs(insul.getHeat());
-                if (absCold >= 2 && absHot >= 2)
-                    return 2;
-                else if (absCold >= 2)
-                    return 0;
-                else if (absHot >= 2)
-                    return 4;
-                else if (absCold >= 1 && absHot >= 1)
-                    return 3;
-                else if (absCold >= 1)
-                    return 1;
-                else if (absHot >= 1)
-                    return 5;
-                else
-                    return 1;
-            }
-            return 0;
-        }));
+        newPairs.sort(Comparator.comparingDouble(Insulation::getCompareValue));
         return newPairs;
+    }
+
+    public int getCompareValue()
+    {
+        if (this instanceof AdaptiveInsulation)
+        {   return Math.abs(((AdaptiveInsulation) this).getInsulation()) >= 2 ? 6 : 7;
+        }
+        else if (this instanceof StaticInsulation)
+        {
+            double absCold = Math.abs(this.getCold());
+            double absHot = Math.abs(this.getHeat());
+            if (absCold >= 2 && absHot >= 2)
+                return 2;
+            else if (absCold >= 2)
+                return 0;
+            else if (absHot >= 2)
+                return 4;
+            else if (absCold >= 1 && absHot >= 1)
+                return 3;
+            else if (absCold >= 1)
+                return 1;
+            else if (absHot >= 1)
+                return 5;
+            else
+                return 1;
+        }
+        return 0;
     }
 
     public static Insulation deserialize(CompoundNBT tag)

@@ -4,6 +4,7 @@ import com.momosoftworks.coldsweat.api.insulation.AdaptiveInsulation;
 import com.momosoftworks.coldsweat.api.insulation.Insulation;
 import com.momosoftworks.coldsweat.api.insulation.StaticInsulation;
 import com.momosoftworks.coldsweat.data.codec.configuration.InsulatorData;
+import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
 import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
 import com.momosoftworks.coldsweat.data.codec.util.AttributeModifierMap;
@@ -89,7 +90,9 @@ public class InsulatorBuilderJS
 
     public InsulatorData build()
     {
-        return new InsulatorData(slot, insulation, new ItemRequirement(itemPredicate), new EntityRequirement(entityPredicate),
-                             attributes, immuneTempModifiers);
+        InsulatorData data = new InsulatorData(slot, insulation, new ItemRequirement(itemPredicate), new EntityRequirement(entityPredicate),
+                                               attributes, immuneTempModifiers);
+        data.setType(ConfigData.Type.KUBEJS);
+        return data;
     }
 }

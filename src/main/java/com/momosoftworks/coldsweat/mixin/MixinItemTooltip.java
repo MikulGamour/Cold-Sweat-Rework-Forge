@@ -44,9 +44,9 @@ public class MixinItemTooltip
         for (InsulatorData insulator : ConfigSettings.INSULATION_ITEMS.get().get(stack.getItem()))
         {
             if (TooltipHandler.passesRequirement(insulator))
-            {   insulatorAttributes.putAll(insulator.attributes);
+            {   insulatorAttributes.putAll(insulator.attributes());
             }
-            else unmetInsulatorAttributes.putAll(insulator.attributes);
+            else unmetInsulatorAttributes.putAll(insulator.attributes());
         }
         if (!insulatorAttributes.isEmpty() || !unmetInsulatorAttributes.isEmpty())
         {
@@ -62,9 +62,9 @@ public class MixinItemTooltip
         for (InsulatorData insulator : ConfigSettings.INSULATING_CURIOS.get().get(stack.getItem()))
         {
             if (TooltipHandler.passesRequirement(insulator))
-            {   curioAttributes.putAll(insulator.attributes);
+            {   curioAttributes.putAll(insulator.attributes());
             }
-            else unmetCurioAttributes.putAll(insulator.attributes);
+            else unmetCurioAttributes.putAll(insulator.attributes());
         }
         if (!curioAttributes.isEmpty() || !unmetCurioAttributes.isEmpty())
         {
@@ -97,9 +97,9 @@ public class MixinItemTooltip
         {
             for (InsulatorData insulator : ConfigSettings.INSULATING_ARMORS.get().get(stack.getItem()))
             {
-                modifiers.putAll(insulator.attributes.getMap());
+                modifiers.putAll(insulator.attributes().getMap());
                 if (!TooltipHandler.passesRequirement(insulator))
-                {   unmetModifiers.putAll(insulator.attributes.getMap());
+                {   unmetModifiers.putAll(insulator.attributes().getMap());
                 }
             }
             ItemInsulationManager.getInsulationCap(stack).ifPresent(cap ->
@@ -108,9 +108,9 @@ public class MixinItemTooltip
                 {
                     for (InsulatorData insulator : ConfigSettings.INSULATION_ITEMS.get().get(item.getItem()))
                     {
-                        modifiers.putAll(insulator.attributes.getMap());
+                        modifiers.putAll(insulator.attributes().getMap());
                         if (!TooltipHandler.passesRequirement(insulator))
-                        {   unmetModifiers.putAll(insulator.attributes.getMap());
+                        {   unmetModifiers.putAll(insulator.attributes().getMap());
                         }
                     }
                 });

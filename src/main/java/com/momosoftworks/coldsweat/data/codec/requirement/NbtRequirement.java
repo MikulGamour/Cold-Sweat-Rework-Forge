@@ -15,7 +15,7 @@ import static net.minecraft.advancements.criterion.NBTPredicate.getEntityTagToCo
 
 public class NbtRequirement
 {
-    public final CompoundNBT tag;
+    private final CompoundNBT tag;
 
     public NbtRequirement(CompoundNBT tag)
     {   this.tag = tag;
@@ -25,6 +25,10 @@ public class NbtRequirement
 
     public NbtRequirement()
     {   this(new CompoundNBT());
+    }
+
+    public CompoundNBT tag()
+    {   return tag;
     }
 
     public boolean test(ItemStack pStack)

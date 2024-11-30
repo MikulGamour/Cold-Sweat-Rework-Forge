@@ -8,6 +8,7 @@ import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.core.init.BlockEntityInit;
 import com.momosoftworks.coldsweat.core.network.ColdSweatPacketHandler;
 import com.momosoftworks.coldsweat.core.network.message.BlockDataUpdateMessage;
+import com.momosoftworks.coldsweat.data.codec.configuration.FuelData;
 import com.momosoftworks.coldsweat.data.tag.ModItemTags;
 import com.momosoftworks.coldsweat.util.registries.ModItems;
 import com.momosoftworks.coldsweat.util.registries.ModSounds;
@@ -179,7 +180,7 @@ public class BoilerBlockEntity extends HearthBlockEntity implements ITickableTil
     @Override
     public int getItemFuel(ItemStack item)
     {   return ConfigHelper.findFirstFuelMatching(ConfigSettings.BOILER_FUEL, item)
-               .map(it -> it.fuel).orElse(0d).intValue();
+               .map(FuelData::fuel).orElse(0d).intValue();
     }
 
     @Override

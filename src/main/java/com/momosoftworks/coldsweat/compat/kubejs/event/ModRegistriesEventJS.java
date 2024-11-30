@@ -7,8 +7,10 @@ import com.momosoftworks.coldsweat.api.registry.TempModifierRegistry;
 import com.momosoftworks.coldsweat.api.temperature.modifier.TempModifier;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.compat.kubejs.event.builder.*;
+import com.momosoftworks.coldsweat.compat.kubejs.util.TempModifierDataJS;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.data.codec.configuration.*;
+import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.util.serialization.DynamicHolder;
 import com.momosoftworks.coldsweat.util.serialization.RegistryHelper;
 import com.momosoftworks.coldsweat.util.serialization.Triplet;
@@ -144,7 +146,9 @@ public class ModRegistriesEventJS extends StartupEventJS
         {   ColdSweat.LOGGER.error("Failed to find biome with ID: {}", biomeId);
             return;
         }
-        ConfigSettings.BIOME_TEMPS.get().put(biome, new BiomeTempData(biome, minTemp, maxTemp, Temperature.Units.fromID(units), true));
+        BiomeTempData biomeData = new BiomeTempData(biome, minTemp, maxTemp, Temperature.Units.fromID(units), true);
+        biomeData.setType(ConfigData.Type.KUBEJS);
+        ConfigSettings.BIOME_TEMPS.get().put(biome, biomeData);
     }
 
     public void addBiomeTemperature(String biomeId, double minTemp, double maxTemp)
@@ -159,7 +163,9 @@ public class ModRegistriesEventJS extends StartupEventJS
         {   ColdSweat.LOGGER.error("Failed to find biome with ID: {}", biomeId);
             return;
         }
-        ConfigSettings.BIOME_OFFSETS.get().put(biome, new BiomeTempData(biome, minTemp, maxTemp, Temperature.Units.fromID(units), false));
+        BiomeTempData biomeData = new BiomeTempData(biome, minTemp, maxTemp, Temperature.Units.fromID(units), false);
+        biomeData.setType(ConfigData.Type.KUBEJS);
+        ConfigSettings.BIOME_OFFSETS.get().put(biome, biomeData);
     }
 
     public void addBiomeOffset(String biomeId, double minTemp, double maxTemp)
@@ -178,7 +184,9 @@ public class ModRegistriesEventJS extends StartupEventJS
         {   ColdSweat.LOGGER.error("Failed to find dimension with ID: {}", dimensionId);
             return;
         }
-        ConfigSettings.DIMENSION_TEMPS.get().put(dimension, new DimensionTempData(dimension, temperature, Temperature.Units.fromID(units), false));
+        DimensionTempData dimensionData = new DimensionTempData(dimension, temperature, Temperature.Units.fromID(units), false);
+        dimensionData.setType(ConfigData.Type.KUBEJS);
+        ConfigSettings.DIMENSION_TEMPS.get().put(dimension, dimensionData);
     }
 
     public void addDimensionTemperature(String dimensionId, double temperature)
@@ -193,7 +201,9 @@ public class ModRegistriesEventJS extends StartupEventJS
         {   ColdSweat.LOGGER.error("Failed to find dimension with ID: {}", dimensionId);
             return;
         }
-        ConfigSettings.DIMENSION_OFFSETS.get().put(dimension, new DimensionTempData(dimension, temperature, Temperature.Units.fromID(units), true));
+        DimensionTempData dimensionData = new DimensionTempData(dimension, temperature, Temperature.Units.fromID(units), true);
+        dimensionData.setType(ConfigData.Type.KUBEJS);
+        ConfigSettings.DIMENSION_OFFSETS.get().put(dimension, dimensionData);
     }
 
     public void addDimensionOffset(String dimensionId, double temperature)
@@ -212,7 +222,9 @@ public class ModRegistriesEventJS extends StartupEventJS
         {   ColdSweat.LOGGER.error("Failed to find structure with ID: {}", structure);
             return;
         }
-        ConfigSettings.STRUCTURE_TEMPS.get().put(structure, new StructureTempData(structure, temperature, false, Temperature.Units.fromID(units)));
+        StructureTempData structureData = new StructureTempData(structure, temperature, false, Temperature.Units.fromID(units));
+        structureData.setType(ConfigData.Type.KUBEJS);
+        ConfigSettings.STRUCTURE_TEMPS.get().put(structure, structureData);
     }
 
     public void addStructureTemperature(String structureId, double temperature)
@@ -227,7 +239,9 @@ public class ModRegistriesEventJS extends StartupEventJS
         {   ColdSweat.LOGGER.error("Failed to find structure with ID: {}", structure);
             return;
         }
-        ConfigSettings.STRUCTURE_OFFSETS.get().put(structure, new StructureTempData(structure, temperature, false, Temperature.Units.fromID(units)));
+        StructureTempData structureData = new StructureTempData(structure, temperature, true, Temperature.Units.fromID(units));
+        structureData.setType(ConfigData.Type.KUBEJS);
+        ConfigSettings.STRUCTURE_OFFSETS.get().put(structure, structureData);
     }
 
     public void addStructureOffset(String structureId, double temperature)

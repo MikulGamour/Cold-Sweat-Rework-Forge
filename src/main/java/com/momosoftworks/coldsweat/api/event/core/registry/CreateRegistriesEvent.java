@@ -3,6 +3,7 @@ package com.momosoftworks.coldsweat.api.event.core.registry;
 import com.google.common.collect.Multimap;
 import com.momosoftworks.coldsweat.data.ModRegistries;
 import com.momosoftworks.coldsweat.data.codec.configuration.*;
+import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.util.registry.DynamicRegistries;
 import net.minecraft.util.registry.Registry;
@@ -21,9 +22,9 @@ import java.util.*;
 public class CreateRegistriesEvent extends Event
 {
     DynamicRegistries registryAccess;
-    Multimap<RegistryKey<Registry<?>>, ?> registries;
+    Multimap<RegistryKey<Registry<? extends ConfigData>>, ? extends ConfigData> registries;
 
-    public CreateRegistriesEvent(DynamicRegistries registryAccess, Multimap<RegistryKey<Registry<?>>, ?> registries)
+    public CreateRegistriesEvent(DynamicRegistries registryAccess, Multimap<RegistryKey<Registry<? extends ConfigData>>, ? extends ConfigData> registries)
     {
         this.registryAccess = registryAccess;
         this.registries = registries;
@@ -33,7 +34,7 @@ public class CreateRegistriesEvent extends Event
     {   return registryAccess;
     }
 
-    public Multimap<RegistryKey<Registry<?>>, ?> getRegistries()
+    public Multimap<RegistryKey<Registry<? extends ConfigData>>, ? extends ConfigData> getRegistries()
     {   return registries;
     }
 

@@ -40,7 +40,7 @@ public class BiomeTempModifier extends TempModifier
             // In the case that the dimension temperature is overridden by config, use that and skip everything else
             DimensionTempData dimTempOverride = ConfigSettings.DIMENSION_TEMPS.get(entity.level.registryAccess()).get(level.dimensionType());
             if (dimTempOverride != null)
-            {   return temp -> temp + dimTempOverride.temperature;
+            {   return temp -> temp + dimTempOverride.getTemperature();
             }
 
             // If there's a temperature structure here, ignore biome temp
@@ -87,7 +87,7 @@ public class BiomeTempModifier extends TempModifier
             // Add dimension offset, if present
             DimensionTempData dimTempOffsetConf = ConfigSettings.DIMENSION_OFFSETS.get(entity.level.registryAccess()).get(level.dimensionType());
             if (dimTempOffsetConf != null)
-            {   worldTemp += dimTempOffsetConf.temperature;
+            {   worldTemp += dimTempOffsetConf.getTemperature();
             }
 
             // Add structure offset, if present
@@ -106,8 +106,8 @@ public class BiomeTempModifier extends TempModifier
         Structure<?> structure = WorldHelper.getStructureAt(level, pos);
         if (structure == null) return Pair.of(null, 0d);
 
-        Double strucTemp = CSMath.getIfNotNull(ConfigSettings.STRUCTURE_TEMPS.get(level.registryAccess()).get(structure), data -> data.temperature, null);
-        Double strucOffset = CSMath.getIfNotNull(ConfigSettings.STRUCTURE_OFFSETS.get(level.registryAccess()).get(structure), data -> data.temperature, 0d);
+        Double strucTemp = CSMath.getIfNotNull(ConfigSettings.STRUCTURE_TEMPS.get(level.registryAccess()).get(structure), StructureTempData::getTemperature, null);
+        Double strucOffset = CSMath.getIfNotNull(ConfigSettings.STRUCTURE_OFFSETS.get(level.registryAccess()).get(structure), StructureTempData::getTemperature, 0d);
 
         return Pair.of(strucTemp, strucOffset);
     }

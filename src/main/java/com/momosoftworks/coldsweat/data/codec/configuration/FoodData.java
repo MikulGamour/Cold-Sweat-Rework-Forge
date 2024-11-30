@@ -1,5 +1,6 @@
 package com.momosoftworks.coldsweat.data.codec.configuration;
 
+import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
@@ -9,6 +10,8 @@ import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
 import com.momosoftworks.coldsweat.data.codec.requirement.NbtRequirement;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
 import com.momosoftworks.coldsweat.util.serialization.NBTHelper;
+import net.minecraft.tags.ITag;
+import net.minecraftforge.registries.IForgeRegistryEntry;
 import com.momosoftworks.coldsweat.util.serialization.NbtSerializable;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.Item;
@@ -20,15 +23,16 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
 
-public class FoodData implements NbtSerializable, RequirementHolder, ConfigData<FoodData>
+public class FoodData extends ConfigData implements RequirementHolder
 {
-    public Double temperature;
-    public ItemRequirement data;
-    public int duration;
-    public EntityRequirement entityRequirement;
-    public Optional<List<String>> requiredMods;
+    final Double temperature;
+    final ItemRequirement data;
+    final int duration;
+    final EntityRequirement entityRequirement;
+    final Optional<List<String>> requiredMods;
 
-    public FoodData(Double temperature, ItemRequirement data, int duration, EntityRequirement entityRequirement, Optional<List<String>> requiredMods)
+    public FoodData(Double temperature, ItemRequirement data, int duration,
+                    EntityRequirement entityRequirement, Optional<List<String>> requiredMods)
     {
         this.temperature = temperature;
         this.data = data;
@@ -49,6 +53,22 @@ public class FoodData implements NbtSerializable, RequirementHolder, ConfigData<
             Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(data -> data.requiredMods)
     ).apply(instance, FoodData::new));
 
+    public Double temperature()
+    {   return temperature;
+    }
+    public ItemRequirement data()
+    {   return data;
+    }
+    public int duration()
+    {   return duration;
+    }
+    public EntityRequirement entityRequirement()
+    {   return entityRequirement;
+    }
+    public Optional<List<String>> requiredMods()
+    {   return requiredMods;
+    }
+
     @Override
     public boolean test(ItemStack stack)
     {   return data.test(stack, true);
@@ -66,7 +86,7 @@ public class FoodData implements NbtSerializable, RequirementHolder, ConfigData<
         {   return null;
         }
         String[] itemIDs = ((String) entry.get(0)).split(",");
-        List<Item> items = ConfigHelper.getItems(itemIDs);
+        List<Either<ITag<Item>, Item>> items = ConfigHelper.getItems(itemIDs);
         if (items.isEmpty())
         {   return null;
         }
@@ -78,26 +98,12 @@ public class FoodData implements NbtSerializable, RequirementHolder, ConfigData<
         int duration = entry.size() > 3 ? ((Number) entry.get(3)).intValue() : -1;
         ItemRequirement itemRequirement = new ItemRequirement(items, nbtRequirement);
 
-        return new FoodData(temperature, itemRequirement, duration, EntityRequirement.NONE, Optional.empty());
-    }
-
-    @Override
-    public CompoundNBT serialize()
-    {   return (CompoundNBT) CODEC.encodeStart(NBTDynamicOps.INSTANCE, this).result().orElseGet(CompoundNBT::new);
-    }
-
-    public static FoodData deserialize(CompoundNBT tag)
-    {   return CODEC.decode(NBTDynamicOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalStateException("Failed to deserialize FuelData")).getFirst();
+        return new FoodData(temperature, itemRequirement, duration, EntityRequirement.NONE);
     }
 
     @Override
     public Codec<FoodData> getCodec()
     {   return CODEC;
-    }
-
-    @Override
-    public String toString()
-    {   return this.asString();
     }
 
     @Override

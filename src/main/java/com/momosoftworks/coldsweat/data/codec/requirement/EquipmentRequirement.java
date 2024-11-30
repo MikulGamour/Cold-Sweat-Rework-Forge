@@ -11,12 +11,12 @@ import java.util.Optional;
 
 public class EquipmentRequirement
 {
-    public final Optional<ItemRequirement> head;
-    public final Optional<ItemRequirement> chest;
-    public final Optional<ItemRequirement> legs;
-    public final Optional<ItemRequirement> feet;
-    public final Optional<ItemRequirement> mainHand;
-    public final Optional<ItemRequirement> offHand;
+    private final Optional<ItemRequirement> head;
+    private final Optional<ItemRequirement> chest;
+    private final Optional<ItemRequirement> legs;
+    private final Optional<ItemRequirement> feet;
+    private final Optional<ItemRequirement> mainHand;
+    private final Optional<ItemRequirement> offHand;
 
     public EquipmentRequirement(Optional<ItemRequirement> head, Optional<ItemRequirement> chest,
                                 Optional<ItemRequirement> legs, Optional<ItemRequirement> feet,
@@ -38,6 +38,25 @@ public class EquipmentRequirement
             ItemRequirement.CODEC.optionalFieldOf("mainhand").forGetter(requirement -> requirement.mainHand),
             ItemRequirement.CODEC.optionalFieldOf("offhand").forGetter(requirement -> requirement.offHand)
     ).apply(instance, EquipmentRequirement::new));
+
+    public Optional<ItemRequirement> head()
+    {   return head;
+    }
+    public Optional<ItemRequirement> chest()
+    {   return chest;
+    }
+    public Optional<ItemRequirement> legs()
+    {   return legs;
+    }
+    public Optional<ItemRequirement> feet()
+    {   return feet;
+    }
+    public Optional<ItemRequirement> mainHand()
+    {   return mainHand;
+    }
+    public Optional<ItemRequirement> offHand()
+    {   return offHand;
+    }
 
     public boolean test(Entity entity)
     {

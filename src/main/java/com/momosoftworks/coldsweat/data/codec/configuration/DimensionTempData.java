@@ -1,5 +1,6 @@
 package com.momosoftworks.coldsweat.data.codec.configuration;
 
+import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.ColdSweat;
@@ -11,21 +12,21 @@ import net.minecraft.util.registry.Registry;
 import net.minecraft.world.DimensionType;
 
 import javax.annotation.Nullable;
-import javax.xml.ws.Holder;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-public class DimensionTempData implements ConfigData<DimensionTempData>
+public class DimensionTempData extends ConfigData
 {
-    public final List<DimensionType> dimensions;
-    public final double temperature;
-    public final Temperature.Units units;
-    public final boolean isOffset;
-    public final Optional<List<String>> requiredMods;
+    final List<DimensionType> dimensions;
+    final double temperature;
+    final Temperature.Units units;
+    final boolean isOffset;
+    final Optional<List<String>> requiredMods;
 
-    public DimensionTempData(List<DimensionType> dimensions, double temperature,
-                             Temperature.Units units, boolean isOffset, Optional<List<String>> requiredMods)
+    public DimensionTempData(List<DimensionType> dimensions,
+                             double temperature, Temperature.Units units, boolean isOffset,
+                             Optional<List<String>> requiredMods)
     {
         this.dimensions = dimensions;
         this.temperature = temperature;
@@ -34,12 +35,12 @@ public class DimensionTempData implements ConfigData<DimensionTempData>
         this.requiredMods = requiredMods;
     }
 
-    public DimensionTempData(List<DimensionType> dimensions, double temperature, Temperature.Units units, boolean isOffset)
-    {   this(dimensions, temperature, units, isOffset, Optional.empty());
+    public DimensionTempData(DimensionType dimension, double temperature, Temperature.Units units, boolean isOffset)
+    {   this(Arrays.asList(dimension), temperature, units, isOffset, Optional.empty());
     }
 
-    public DimensionTempData(DimensionType dimension, double temperature, Temperature.Units units, boolean isOffset)
-    {   this(Arrays.asList(dimension), temperature, units, isOffset);
+    public DimensionTempData(List<DimensionType> dimensions, double temperature, Temperature.Units units, boolean isOffset)
+    {   this(dimensions, temperature, units, isOffset, Optional.empty());
     }
 
     public static final Codec<DimensionTempData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -48,11 +49,27 @@ public class DimensionTempData implements ConfigData<DimensionTempData>
             Temperature.Units.CODEC.optionalFieldOf("units", Temperature.Units.MC).forGetter(data -> data.units),
             Codec.BOOL.optionalFieldOf("is_offset", false).forGetter(data -> data.isOffset),
             Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(data -> data.requiredMods)
-    ).apply(instance, (dimensions, temperature, units, isOffset, requiredMods) ->
-    {
-        double cTemp = Temperature.convert(temperature, units, Temperature.Units.MC, !isOffset);
-        return new DimensionTempData(dimensions, cTemp, units, isOffset, requiredMods);
-    }));
+    ).apply(instance, DimensionTempData::new));
+
+    public List<DimensionType> dimensions()
+    {   return dimensions;
+    }
+    public double temperature()
+    {   return temperature;
+    }
+    public Temperature.Units units()
+    {   return units;
+    }
+    public boolean isOffset()
+    {   return isOffset;
+    }
+    public Optional<List<String>> requiredMods()
+    {   return requiredMods;
+    }
+
+    public double getTemperature()
+    {   return Temperature.convert(temperature, units, Temperature.Units.MC, !isOffset);
+    }
 
     @Nullable
     public static DimensionTempData fromToml(List<?> entry, boolean isOffset, DynamicRegistries registryAccess)
@@ -76,11 +93,6 @@ public class DimensionTempData implements ConfigData<DimensionTempData>
     @Override
     public Codec<DimensionTempData> getCodec()
     {   return CODEC;
-    }
-
-    @Override
-    public String toString()
-    {   return this.asString();
     }
 
     @Override

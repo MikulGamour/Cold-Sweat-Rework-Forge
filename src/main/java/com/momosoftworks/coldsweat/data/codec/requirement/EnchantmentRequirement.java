@@ -14,8 +14,8 @@ import java.util.Optional;
 
 public class EnchantmentRequirement
 {
-    public final Enchantment enchantment;
-    public final Optional<IntegerBounds> level;
+    private final Enchantment enchantment;
+    private final Optional<IntegerBounds> level;
 
     public EnchantmentRequirement(Enchantment enchantment, Optional<IntegerBounds> level)
     {
@@ -27,6 +27,13 @@ public class EnchantmentRequirement
             Registry.ENCHANTMENT.fieldOf("enchantment").forGetter(requirement -> requirement.enchantment),
             IntegerBounds.CODEC.optionalFieldOf("levels").forGetter(requirement -> requirement.level)
     ).apply(instance, EnchantmentRequirement::new));
+
+    public Enchantment enchantment()
+    {   return enchantment;
+    }
+    public Optional<IntegerBounds> level()
+    {   return level;
+    }
 
     public boolean test(Enchantment enchantment, int level)
     {   return this.enchantment == enchantment && this.level.map(bounds -> bounds.test(level)).orElse(true);

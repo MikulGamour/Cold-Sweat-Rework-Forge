@@ -210,7 +210,7 @@ public class ItemInsulationManager
         {
             if (insulator.test(owner, stack))
             {
-                modifiers.addAll(insulator.attributes.get(attribute)
+                modifiers.addAll(insulator.attributes().get(attribute)
                                           .stream()
                                           .filter(mod -> operation == null || mod.getOperation() == operation)
                                           .collect(Collectors.toList()));

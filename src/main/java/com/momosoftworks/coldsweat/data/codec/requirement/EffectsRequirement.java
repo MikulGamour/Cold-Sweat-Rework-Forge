@@ -16,7 +16,7 @@ import java.util.Optional;
 
 public class EffectsRequirement
 {
-    public final Map<Effect, Instance> effects;
+    private final Map<Effect, Instance> effects;
 
     public EffectsRequirement(Map<Effect, Instance> effects)
     {
@@ -26,6 +26,10 @@ public class EffectsRequirement
     public static final Codec<EffectsRequirement> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.unboundedMap(Registry.MOB_EFFECT, Instance.CODEC).fieldOf("effects").forGetter(predicate -> predicate.effects)
     ).apply(instance, EffectsRequirement::new));
+
+    public Map<Effect, Instance> effects()
+    {   return effects;
+    }
 
     public boolean test(Entity entity)
     {   return !(entity instanceof LivingEntity) || test(((LivingEntity) entity).getActiveEffects());

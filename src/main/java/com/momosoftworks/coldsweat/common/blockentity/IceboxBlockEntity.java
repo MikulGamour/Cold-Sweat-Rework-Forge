@@ -244,7 +244,7 @@ public class IceboxBlockEntity extends HearthBlockEntity implements ITickableTil
     @Override
     public int getItemFuel(ItemStack item)
     {   return ConfigHelper.findFirstFuelMatching(ConfigSettings.ICEBOX_FUEL, item)
-               .map(fuelData -> fuelData.fuel).orElse(0d).intValue();
+               .map(FuelData::fuel).orElse(0d).intValue();
     }
 
     @Override

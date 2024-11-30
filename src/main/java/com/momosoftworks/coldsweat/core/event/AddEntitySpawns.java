@@ -56,13 +56,13 @@ public class AddEntitySpawns
             {
                 for (SpawnBiomeData spawnBiomeData : spawns)
                 {
-                    RegistryHelper.mapTaggableList(spawnBiomeData.entities)
+                    RegistryHelper.mapTaggableList(spawnBiomeData.entities())
                     .forEach(entityType ->
                     {
-                        List<MobSpawnInfo.Spawners> spawners = new ArrayList<>(biome.getMobSettings().getMobs(spawnBiomeData.category));
+                        List<MobSpawnInfo.Spawners> spawners = new ArrayList<>(biome.getMobSettings().getMobs(spawnBiomeData.category()));
                         spawners.removeIf(spawnerData -> spawnerData.type == entityType);
-                        spawners.add(new MobSpawnInfo.Spawners(entityType, spawnBiomeData.weight, 1, 3));
-                        spawnerMap.put(spawnBiomeData.category, spawners);
+                        spawners.add(new MobSpawnInfo.Spawners(entityType, spawnBiomeData.weight(), 1, 3));
+                        spawnerMap.put(spawnBiomeData.category(), spawners);
                     });
                 }
             });

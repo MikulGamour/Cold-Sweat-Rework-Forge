@@ -10,13 +10,13 @@ import java.util.Optional;
 
 public class EntityFlagsRequirement
 {
-    public final Optional<Boolean> onFire;
-    public final Optional<Boolean> sneaking;
-    public final Optional<Boolean> sprinting;
-    public final Optional<Boolean> swimming;
-    public final Optional<Boolean> invisible;
-    public final Optional<Boolean> glowing;
-    public final Optional<Boolean> baby;
+    private final Optional<Boolean> onFire;
+    private final Optional<Boolean> sneaking;
+    private final Optional<Boolean> sprinting;
+    private final Optional<Boolean> swimming;
+    private final Optional<Boolean> invisible;
+    private final Optional<Boolean> glowing;
+    private final Optional<Boolean> baby;
 
     public EntityFlagsRequirement(Optional<Boolean> onFire, Optional<Boolean> sneaking, Optional<Boolean> sprinting,
                                   Optional<Boolean> swimming, Optional<Boolean> invisible, Optional<Boolean> glowing, Optional<Boolean> baby)
@@ -39,6 +39,28 @@ public class EntityFlagsRequirement
             Codec.BOOL.optionalFieldOf("is_glowing").forGetter(predicate -> predicate.glowing),
             Codec.BOOL.optionalFieldOf("is_baby").forGetter(predicate -> predicate.baby)
     ).apply(instance, EntityFlagsRequirement::new));
+
+    public Optional<Boolean> onFire()
+    {   return onFire;
+    }
+    public Optional<Boolean> sneaking()
+    {   return sneaking;
+    }
+    public Optional<Boolean> sprinting()
+    {   return sprinting;
+    }
+    public Optional<Boolean> swimming()
+    {   return swimming;
+    }
+    public Optional<Boolean> invisible()
+    {   return invisible;
+    }
+    public Optional<Boolean> glowing()
+    {   return glowing;
+    }
+    public Optional<Boolean> baby()
+    {   return baby;
+    }
 
     public boolean test(Entity entity)
     {

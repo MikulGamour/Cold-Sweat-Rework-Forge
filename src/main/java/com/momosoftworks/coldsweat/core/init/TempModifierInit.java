@@ -76,15 +76,15 @@ public class TempModifierInit
 
         for (BlockTempData blockConfig : blockTemps)
         {
-            Block[] blocks = RegistryHelper.mapTaggableList(blockConfig.blocks).toArray(new Block[0]);
+            Block[] blocks = RegistryHelper.mapTaggableList(blockConfig.blocks()).toArray(new Block[0]);
 
-            BlockTemp blockTemp = new BlockTempConfig(-blockConfig.maxEffect, blockConfig.maxEffect,
-                                                      blockConfig.minTemp, blockConfig.maxTemp,
-                                                      blockConfig.range, true, blockConfig.conditions, blocks)
+            BlockTemp blockTemp = new BlockTempConfig(-blockConfig.getMaxEffect(), blockConfig.getMaxEffect(),
+                                                      blockConfig.getMinTemp(), blockConfig.getMaxTemp(),
+                                                      blockConfig.range(), true, blockConfig.conditions(), blocks)
             {
                 @Override
                 public double getTemperature(World level, LivingEntity entity, BlockState state, BlockPos pos, double distance)
-                {   return blockConfig.temperature;
+                {   return blockConfig.getTemperature();
                 }
             };
 

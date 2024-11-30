@@ -126,6 +126,40 @@ public class EntityRequirement
         REQUIREMENT_CODEC_STACK.add(codec);
     }
 
+    public Optional<List<Either<ITag<EntityType<?>>, EntityType<?>>>> entities()
+    {   return entities;
+    }
+    public Optional<LocationRequirement> location()
+    {   return location;
+    }
+    public Optional<LocationRequirement> steppingOn()
+    {   return steppingOn;
+    }
+    public Optional<EffectsRequirement> effects()
+    {   return effects;
+    }
+    public Optional<NbtRequirement> nbt()
+    {   return nbt;
+    }
+    public Optional<EntityFlagsRequirement> flags()
+    {   return flags;
+    }
+    public Optional<EquipmentRequirement> equipment()
+    {   return equipment;
+    }
+    public Optional<PlayerDataRequirement> playerData()
+    {   return playerData;
+    }
+    public Optional<EntityRequirement> vehicle()
+    {   return vehicle;
+    }
+    public Optional<EntityRequirement> passenger()
+    {   return passenger;
+    }
+    public Optional<EntityRequirement> target()
+    {   return target;
+    }
+
     public boolean test(Entity entity)
     {
         if (entity == null)

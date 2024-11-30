@@ -280,7 +280,7 @@ public class EntityTempManager
 
         for (Map.Entry<ItemCarryTempData, Double> entry : effectsPerCarriedTemp.entrySet())
         {
-            Temperature.Trait trait = entry.getKey().trait;
+            Temperature.Trait trait = entry.getKey().trait();
             double temp = entry.getValue();
 
             effectsPerTrait.put(trait, effectsPerTrait.get(trait) + temp);
@@ -303,9 +303,9 @@ public class EntityTempManager
     {
         if (carried.test(entity, stack, slot, equipmentSlot))
         {
-            double temp = carried.temperature * stack.getCount();
+            double temp = carried.temperature() * stack.getCount();
             double currentEffect = effectsPerCarriedTemp.getOrDefault(carried, 0.0);
-            double newEffect = Math.min(carried.maxEffect, Math.abs(currentEffect + temp)) * CSMath.sign(currentEffect + temp);
+            double newEffect = Math.min(carried.maxEffect(), Math.abs(currentEffect + temp)) * CSMath.sign(currentEffect + temp);
 
             effectsPerCarriedTemp.put(carried, newEffect);
         }
@@ -488,7 +488,7 @@ public class EntityTempManager
             InsulatorData insulator = entry.getValue();
             ItemStack stack = entry.getKey();
 
-            Double immunity = insulator.immuneTempModifiers.get(modifierKey);
+            Double immunity = insulator.immuneTempModifiers().get(modifierKey);
             if (immunity != null && insulator.test(event.getEntity(), stack))
             {
                 Function<Double, Double> func = event.getFunction();
@@ -536,7 +536,7 @@ public class EntityTempManager
         .flatMap(Collection::stream)
         .forEach(insulator ->
         {
-            for (Map.Entry<Attribute, AttributeModifier> entry : insulator.attributes.getMap().entries())
+            for (Map.Entry<Attribute, AttributeModifier> entry : insulator.attributes().getMap().entries())
             {
                 Attribute attribute = entry.getKey();
                 AttributeModifier modifier = entry.getValue();
@@ -553,7 +553,7 @@ public class EntityTempManager
             ItemStack stack = insulationItem.getKey();
             if (insulator.test(entity, stack))
             {
-                for (Map.Entry<Attribute, AttributeModifier> entry : insulator.attributes.getMap().entries())
+                for (Map.Entry<Attribute, AttributeModifier> entry : insulator.attributes().getMap().entries())
                 {
                     Attribute attribute = entry.getKey();
                     AttributeModifier modifier = entry.getValue();
@@ -669,7 +669,7 @@ public class EntityTempManager
                     MountData entityInsul = ConfigSettings.INSULATED_MOUNTS.get().get(mount.getType())
                                                   .stream().filter(mnt -> mnt.test(mount)).findFirst().orElse(null);
                     if (entityInsul != null && entityInsul.test(mount))
-                    {   Temperature.addOrReplaceModifier(player, new MountTempModifier(entityInsul.coldInsulation, entityInsul.heatInsulation).tickRate(5).expires(5), Temperature.Trait.RATE, Placement.Duplicates.BY_CLASS);
+                    {   Temperature.addOrReplaceModifier(player, new MountTempModifier(entityInsul.coldInsulation(), entityInsul.heatInsulation()).tickRate(5).expires(5), Temperature.Trait.RATE, Placement.Duplicates.BY_CLASS);
                     }
                 }
             }
@@ -692,17 +692,17 @@ public class EntityTempManager
             {
                 if (foodData != null && foodData.test(event.getItem()))
                 {
-                    double effect = foodData.temperature;
-                    if (foodData.duration > 0)
+                    double effect = foodData.temperature();
+                    if (foodData.duration() > 0)
                     {
                         // Special case for soul sprouts
                         FoodTempModifier foodModifier = event.getItem().getItem() == ModItems.SOUL_SPROUT
                                                         ? new SoulSproutTempModifier(effect)
                                                         : new FoodTempModifier(effect);
                         // Store the duration of the TempModifier
-                        foodModifier.getNBT().putInt("duration", foodData.duration);
+                        foodModifier.getNBT().putInt("duration", foodData.duration());
                         // Add the TempModifier
-                        Temperature.addModifier(player, foodModifier.expires(foodData.duration), Temperature.Trait.BASE, Placement.Duplicates.BY_CLASS);
+                        Temperature.addModifier(player, foodModifier.expires(foodData.duration()), Temperature.Trait.BASE, Placement.Duplicates.BY_CLASS);
                     }
                     else
                     {   Temperature.addModifier(player, new FoodTempModifier(effect).expires(0), Temperature.Trait.CORE, Placement.Duplicates.EXACT);

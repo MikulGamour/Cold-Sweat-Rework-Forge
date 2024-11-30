@@ -126,24 +126,21 @@ public class ConfigHelper
         return null;
     }
 
-    public static List<Block> getBlocks(String... ids)
+    public static List<Either<ITag<Block>, Block>> getBlocks(String... ids)
     {
-        List<Block> blocks = new ArrayList<>();
+        List<Either<ITag<Block>, Block>> blocks = new ArrayList<>();
         for (String id : ids)
         {
             if (id.startsWith("#"))
             {
                 final String tagID = id.replace("#", "");
-                ITag<Block> blockTag = BlockTags.getAllTags().getTag(new ResourceLocation(tagID));
-                if (blockTag != null)
-                {   blocks.addAll(blockTag.getValues());
-                }
+                blocks.add(Either.left(BlockTags.getAllTags().getTag(new ResourceLocation(tagID))));
             }
             else
             {
                 ResourceLocation blockId = new ResourceLocation(id);
                 if (ForgeRegistries.BLOCKS.containsKey(blockId))
-                {   blocks.add(ForgeRegistries.BLOCKS.getValue(blockId));
+                {   blocks.add(Either.right(ForgeRegistries.BLOCKS.getValue(blockId)));
                 }
                 else
                 {   ColdSweat.LOGGER.error("Error parsing block config: block \"{}\" does not exist", id);
@@ -153,24 +150,21 @@ public class ConfigHelper
         return blocks;
     }
 
-    public static List<Item> getItems(String... ids)
+    public static List<Either<ITag<Item>, Item>> getItems(String... ids)
     {
-        List<Item> items = new ArrayList<>();
+        List<Either<ITag<Item>, Item>> items = new ArrayList<>();
         for (String itemId : ids)
         {
             if (itemId.startsWith("#"))
             {
                 final String tagID = itemId.replace("#", "");
-                ITag<Item> itemTag = ItemTags.getAllTags().getTag(new ResourceLocation(tagID));
-                if (itemTag != null)
-                {   items.addAll(itemTag.getValues());
-                }
+                items.add(Either.left(ItemTags.getAllTags().getTag(new ResourceLocation(tagID))));
             }
             else
             {
                 ResourceLocation itemID = new ResourceLocation(itemId);
                 if (ForgeRegistries.ITEMS.containsKey(itemID))
-                {   items.add(ForgeRegistries.ITEMS.getValue(itemID));
+                {   items.add(Either.right(ForgeRegistries.ITEMS.getValue(itemID)));
                 }
                 else
                 {   ColdSweat.LOGGER.error("Error parsing item config: item \"{}\" does not exist", itemId);
@@ -180,35 +174,35 @@ public class ConfigHelper
         return items;
     }
 
-    public static <K, V> Map<K, V> getRegistryMap(List<? extends List<?>> source, DynamicRegistries DynamicRegistries, RegistryKey<Registry<K>> keyRegistry,
-                                                          Function<List<?>, V> valueCreator, Function<V, List<Either<ITag<K>, K>>> taggedListGetter)
+    public static <K, V extends ConfigData> Map<K, V> getRegistryMap(List<? extends List<?>> source, DynamicRegistries dynamicRegistries, RegistryKey<Registry<K>> keyRegistry,
+                                                                             Function<List<?>, V> valueCreator, Function<V, List<Either<ITag<K>, K>>> taggedListGetter)
     {
-        return getRegistryMapLike(source, DynamicRegistries, keyRegistry, valueCreator, taggedListGetter, FastMap::new, FastMap::put);
+        return getRegistryMapLike(source, dynamicRegistries, keyRegistry, valueCreator, taggedListGetter, FastMap::new, FastMap::put);
     }
-    public static <K, V> Map<K, V> getRegistryMap(List<? extends List<?>> source, RegistryKey<Registry<K>> keyRegistry,
+    public static <K, V extends ConfigData> Map<K, V> getRegistryMap(List<? extends List<?>> source, RegistryKey<Registry<K>> keyRegistry,
                                                   Function<List<?>, V> valueCreator, Function<V, List<K>> taggedListGetter)
     {
         return getRegistryMapLike(source, null, keyRegistry, valueCreator,
-                                  v -> taggedListGetter.apply(v).stream().map(val -> Either.<ITag<K>, K>right(val)).collect(Collectors.toList()),
+                                  v -> taggedListGetter.apply(v).stream().map(Either::<ITag<K>, K>right).collect(Collectors.toList()),
                                   FastMap::new, FastMap::put);
     }
 
-    public static <K, V> Multimap<K, V> getRegistryMultimap(List<? extends List<?>> source, DynamicRegistries DynamicRegistries, RegistryKey<Registry<K>> keyRegistry,
-                                                                    Function<List<?>, V> valueCreator, Function<V, List<Either<ITag<K>, K>>> taggedListGetter)
+    public static <K, V extends ConfigData> Multimap<K, V> getRegistryMultimap(List<? extends List<?>> source, DynamicRegistries dynamicRegistries, RegistryKey<Registry<K>> keyRegistry,
+                                                                                       Function<List<?>, V> valueCreator, Function<V, List<Either<ITag<K>, K>>> taggedListGetter)
     {
-        return getRegistryMapLike(source, DynamicRegistries, keyRegistry, valueCreator, taggedListGetter, FastMultiMap::new, FastMultiMap::put);
+        return getRegistryMapLike(source, dynamicRegistries, keyRegistry, valueCreator, taggedListGetter, FastMultiMap::new, FastMultiMap::put);
     }
-    public static <K, V> Multimap<K, V> getRegistryMultimap(List<? extends List<?>> source, RegistryKey<Registry<K>> keyRegistry,
+    public static <K, V extends ConfigData> Multimap<K, V> getRegistryMultimap(List<? extends List<?>> source, RegistryKey<Registry<K>> keyRegistry,
                                                             Function<List<?>, V> valueCreator, Function<V, List<K>> taggedListGetter)
     {
         return getRegistryMapLike(source, null, keyRegistry, valueCreator,
-                                  v -> taggedListGetter.apply(v).stream().map(val -> Either.<ITag<K>, K>right(val)).collect(Collectors.toList()),
+                                  v -> taggedListGetter.apply(v).stream().map(Either::<ITag<K>, K>right).collect(Collectors.toList()),
                                   FastMultiMap::new, FastMultiMap::put);
     }
 
-    private static <K, V, M> M getRegistryMapLike(List<? extends List<?>> source, DynamicRegistries DynamicRegistries, RegistryKey<Registry<K>> keyRegistry,
-                                                  Function<List<?>, V> valueCreator, Function<V, List<Either<ITag<K>, K>>> listGetter,
-                                                  Supplier<M> mapSupplier, TriConsumer<M, K, V> mapAdder)
+    private static <K, V extends ConfigData, M> M getRegistryMapLike(List<? extends List<?>> source, DynamicRegistries dynamicRegistries, RegistryKey<Registry<K>> keyRegistry,
+                                                                     Function<List<?>, V> valueCreator, Function<V, List<Either<ITag<K>, K>>> listGetter,
+                                                                     Supplier<M> mapSupplier, TriConsumer<M, K, V> mapAdder)
     {
         M map = mapSupplier.get();
         for (List<?> entry : source)
@@ -216,6 +210,7 @@ public class ConfigHelper
             V data = valueCreator.apply(entry);
             if (data != null)
             {
+                data.setType(ConfigData.Type.TOML);
                 for (K key : RegistryHelper.mapTaggableList(listGetter.apply(data)))
                 {   mapAdder.accept(map, key, data);
                 }
@@ -280,23 +275,23 @@ public class ConfigHelper
         return tag;
     }
 
-    public static <K, V extends ConfigData<?>> CompoundNBT serializeRegistry(Map<K, V> map, String key,
-                                                                             RegistryKey<Registry<K>> gameRegistry, RegistryKey<Registry<V>> modRegistry,
-                                                                             DynamicRegistries registryAccess)
+    public static <K, V extends ConfigData> CompoundNBT serializeRegistry(Map<K, V> map, String key,
+                                                                          RegistryKey<Registry<K>> gameRegistry, RegistryKey<Registry<V>> modRegistry,
+                                                                          DynamicRegistries registryAccess)
     {
         return serializeEitherRegistry(map, key, gameRegistry, modRegistry, null, rl -> registryAccess.registryOrThrow(gameRegistry).getKey(rl));
     }
 
-    public static <K, V extends ConfigData<?>> CompoundNBT serializeHolderRegistry(Map<K, V> map, String key,
-                                                                                   RegistryKey<Registry<K>> gameRegistry, RegistryKey<Registry<V>> modRegistry,
-                                                                                   DynamicRegistries dynamicRegistries)
+    public static <K, V extends ConfigData> CompoundNBT serializeHolderRegistry(Map<K, V> map, String key,
+                                                                                RegistryKey<Registry<K>> gameRegistry, RegistryKey<Registry<V>> modRegistry,
+                                                                                DynamicRegistries dynamicRegistries)
     {
         return serializeEitherRegistry(map, key, gameRegistry, modRegistry, dynamicRegistries, k -> dynamicRegistries.registryOrThrow(gameRegistry).getKey(k));
     }
 
-    private static <K, V extends ConfigData<?>> CompoundNBT serializeEitherRegistry(Map<K, V> map, String key,
-                                                                                    RegistryKey<?> gameRegistry, RegistryKey<Registry<V>> modRegistry,
-                                                                                    DynamicRegistries dynamicRegistries, Function<K, ResourceLocation> keyGetter)
+    private static <K, V extends ConfigData> CompoundNBT serializeEitherRegistry(Map<K, V> map, String key,
+                                                                                 RegistryKey<?> gameRegistry, RegistryKey<Registry<V>> modRegistry,
+                                                                                 DynamicRegistries dynamicRegistries, Function<K, ResourceLocation> keyGetter)
     {
         Codec<V> codec = ModRegistries.getCodec(modRegistry);
         DynamicOps<INBT> encoderOps = NBTDynamicOps.INSTANCE;
@@ -323,16 +318,16 @@ public class ConfigHelper
         return tag;
     }
 
-    public static <K, V extends ConfigData<?>> Map<K, V> deserializeRegistry(CompoundNBT tag, String key,
-                                                                            RegistryKey<Registry<K>> gameRegistry,
+    public static <K, V extends ConfigData> Map<K, V> deserializeRegistry(CompoundNBT tag, String key,
+                                                                          RegistryKey<Registry<K>> gameRegistry,
                                                                             RegistryKey<Registry<V>> modRegistry,
-                                                                            DynamicRegistries dynamicRegistries)
+                                                                          DynamicRegistries dynamicRegistries)
     {
         Registry<K> registry = dynamicRegistries.registryOrThrow(gameRegistry);
         return deserializeEitherRegistry(tag, key, modRegistry, rl -> registry.getOptional(RegistryKey.create(gameRegistry, rl)).orElse(null), dynamicRegistries);
     }
 
-    private static <K, V extends ConfigData<?>> Map<K, V> deserializeEitherRegistry(CompoundNBT tag, String key,
+    private static <K, V extends ConfigData> Map<K, V> deserializeEitherRegistry(CompoundNBT tag, String key,
                                                                                     RegistryKey<Registry<V>> modRegistry,
                                                                                     Function<ResourceLocation, K> keyGetter,
                                                                                     DynamicRegistries dynamicRegistries)
@@ -353,7 +348,7 @@ public class ConfigHelper
             {
                 K entry = keyGetter.apply(new ResourceLocation(entryKey));
                 if (entry != null)
-                {   ConfigData.IDENTIFIABLES.put(entryData.getUUID("UUID"), value);
+                {   value.setId(entryData.getUUID("UUID"));
                     map.put(entry, value);
                 }
             });
@@ -361,7 +356,7 @@ public class ConfigHelper
         return map;
     }
 
-    public static <K, V extends ConfigData<?>> CompoundNBT serializeMultimapRegistry(Multimap<K, V> map, String key,
+    public static <K, V extends ConfigData> CompoundNBT serializeMultimapRegistry(Multimap<K, V> map, String key,
                                                                                      RegistryKey<Registry<K>> gameRegistry,
                                                                                      RegistryKey<Registry<V>> modRegistry,
                                                                                      Function<K, ResourceLocation> keyGetter)
@@ -369,16 +364,16 @@ public class ConfigHelper
         return serializeEitherMultimapRegistry(map, key, gameRegistry, modRegistry, keyGetter);
     }
 
-    public static <K, V extends ConfigData<?>> CompoundNBT serializeHolderMultimapRegistry(Multimap<K, V> map, String key,
-                                                                                           RegistryKey<Registry<K>> gameRegistry,
-                                                                                           RegistryKey<Registry<V>> modRegistry,
-                                                                                           DynamicRegistries dynamicRegistries)
+    public static <K, V extends ConfigData> CompoundNBT serializeHolderMultimapRegistry(Multimap<K, V> map, String key,
+                                                                                        RegistryKey<Registry<K>> gameRegistry,
+                                                                                        RegistryKey<Registry<V>> modRegistry,
+                                                                                        DynamicRegistries dynamicRegistries)
     {
         return serializeEitherMultimapRegistry(map, key, gameRegistry, modRegistry, k -> dynamicRegistries.registryOrThrow(gameRegistry).getKey(k));
     }
 
-    private static <K, V extends ConfigData<?>> CompoundNBT serializeEitherMultimapRegistry(Multimap<K, V> map, String key,
-                                                                                            RegistryKey<Registry<K>> gameRegistry,
+    private static <K, V extends ConfigData> CompoundNBT serializeEitherMultimapRegistry(Multimap<K, V> map, String key,
+                                                                                         RegistryKey<Registry<K>> gameRegistry,
                                                                                             RegistryKey<Registry<V>> modRegistry,
                                                                                             Function<K, ResourceLocation> keyGetter)
     {
@@ -410,26 +405,26 @@ public class ConfigHelper
         return tag;
     }
 
-    public static <K, V extends ConfigData<?>> Multimap<K, V> deserializeMultimapRegistry(CompoundNBT tag, String key,
-                                                                                          RegistryKey<Registry<V>> modRegistry,
-                                                                                          Function<ResourceLocation, K> keyGetter)
+    public static <K, V extends ConfigData> Multimap<K, V> deserializeMultimapRegistry(CompoundNBT tag, String key,
+                                                                                       RegistryKey<Registry<V>> modRegistry,
+                                                                                       Function<ResourceLocation, K> keyGetter)
     {
         return deserializeEitherMultimapRegistry(tag, key, modRegistry, keyGetter, null);
     }
 
-    public static <K, V extends ConfigData<?>> Multimap<K, V> deserializeHolderMultimapRegistry(CompoundNBT tag, String key,
-                                                                                                        RegistryKey<Registry<K>> gameRegistry,
-                                                                                                        RegistryKey<Registry<V>> modRegistry,
-                                                                                                        DynamicRegistries dynamicRegistries)
+    public static <K, V extends ConfigData> Multimap<K, V> deserializeHolderMultimapRegistry(CompoundNBT tag, String key,
+                                                                                                     RegistryKey<Registry<K>> gameRegistry,
+                                                                                                     RegistryKey<Registry<V>> modRegistry,
+                                                                                                     DynamicRegistries dynamicRegistries)
     {
         Registry<K> registry = dynamicRegistries.registryOrThrow(gameRegistry);
         return deserializeEitherMultimapRegistry(tag, key, modRegistry, k -> registry.getOptional(RegistryKey.create(gameRegistry, k)).orElse(null), dynamicRegistries);
     }
 
-    private static <K, V extends ConfigData<?>> Multimap<K, V> deserializeEitherMultimapRegistry(CompoundNBT tag, String key,
-                                                                                                 RegistryKey<Registry<V>> modRegistry,
-                                                                                                 Function<ResourceLocation, K> keyGetter,
-                                                                                                 DynamicRegistries registryAccess)
+    private static <K, V extends ConfigData> Multimap<K, V> deserializeEitherMultimapRegistry(CompoundNBT tag, String key,
+                                                                                              RegistryKey<Registry<V>> modRegistry,
+                                                                                              Function<ResourceLocation, K> keyGetter,
+                                                                                              DynamicRegistries registryAccess)
     {
         Codec<V> codec = ModRegistries.getCodec(modRegistry);
 
@@ -450,7 +445,7 @@ public class ConfigHelper
                 codec.decode(NBTDynamicOps.INSTANCE, valueData).result().map(Pair::getFirst)
                 .ifPresent(value ->
                 {
-                    ConfigData.IDENTIFIABLES.put(valueData.getUUID("UUID"), value);
+                    value.setId(valueData.getUUID("UUID"));
                     map.put(object, value);
                 });
             }
@@ -492,26 +487,26 @@ public class ConfigHelper
 
     public static void writeItemInsulations(Multimap<Item, InsulatorData> items, Consumer<List<? extends List<?>>> saver)
     {
-        writeRegistryMultimap(items, insulator -> getTaggableListStrings(insulator.data.items.orElse(Arrays.asList()), Registry.ITEM_REGISTRY), insulator ->
+        writeRegistryMultimap(items, insulator -> getTaggableListStrings(insulator.data().items().orElse(Arrays.asList()), Registry.ITEM_REGISTRY), insulator ->
         {
             if (insulator == null)
             {   ColdSweat.LOGGER.error("Error writing item insulations: insulator value is null");
                 return new ArrayList<>();
             }
-            if (!insulator.predicate.equals(EntityRequirement.NONE) || !insulator.attributes.getMap().isEmpty())
+            if (!insulator.predicate().equals(EntityRequirement.NONE) || !insulator.attributes().getMap().isEmpty())
             {   return new ArrayList<>();
             }
             List<Object> itemData = new ArrayList<>();
-            itemData.add(insulator.insulation instanceof StaticInsulation
-                         ? insulator.insulation.getCold()
-                         : ((AdaptiveInsulation) insulator.insulation).getInsulation());
-            itemData.add(insulator.insulation instanceof StaticInsulation
-                         ? insulator.insulation.getHeat()
-                         : ((AdaptiveInsulation) insulator.insulation).getSpeed());
-            itemData.add(insulator.insulation instanceof StaticInsulation
+            itemData.add(insulator.insulation() instanceof StaticInsulation
+                         ? insulator.insulation().getCold()
+                         : ((AdaptiveInsulation) insulator.insulation()).getInsulation());
+            itemData.add(insulator.insulation() instanceof StaticInsulation
+                         ? insulator.insulation().getHeat()
+                         : ((AdaptiveInsulation) insulator.insulation()).getSpeed());
+            itemData.add(insulator.insulation() instanceof StaticInsulation
                          ? "static"
                          : "adaptive");
-            itemData.add(insulator.data.nbt.tag.toString());
+            itemData.add(insulator.data().nbt().tag().toString());
 
             return itemData;
         }, saver);

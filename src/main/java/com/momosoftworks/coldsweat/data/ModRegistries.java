@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableMap;
 import com.mojang.serialization.Codec;
 import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.data.codec.configuration.*;
+import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.util.math.FastMap;
 import net.minecraft.resources.FallbackResourceManager;
 import net.minecraft.resources.IResourceManager;
@@ -51,7 +52,7 @@ public class ModRegistries
     // Special registries
     public static final RegistryKey<Registry<RemoveRegistryData<?>>> REMOVE_REGISTRY_DATA = createRegistry(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "remove")), RemoveRegistryData.CODEC, null);
 
-    public static <K, V> RegistryKey<Registry<V>> createRegistry(RegistryKey<Registry<V>> registry, Codec<V> codec, Class<V> type)
+    public static <K, V extends ConfigData> RegistryKey<Registry<V>> createRegistry(RegistryKey<Registry<V>> registry, Codec<V> codec, Class<V> type)
     {
         REGISTRIES.put(registry.location().getPath(), new RegistryHolder<>(registry, codec, type));
         return registry;
@@ -61,7 +62,7 @@ public class ModRegistries
     {   return ImmutableMap.copyOf(REGISTRIES);
     }
 
-    public static RegistryKey<Registry<?>> getRegistry(String name)
+    public static RegistryKey<Registry<? extends ConfigData>> getRegistry(String name)
     {
         return Optional.ofNullable(REGISTRIES.get(name)).map(holder -> (RegistryKey) holder.registry)
                .orElseThrow(() -> ColdSweat.LOGGER.throwing(new IllegalArgumentException("Unknown Cold Sweat registry: " + name)));
@@ -75,17 +76,17 @@ public class ModRegistries
                .orElse(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "unknown")));
     }
 
-    public static String getRegistryName(RegistryKey<?> key)
+    public static String getRegistryName(RegistryKey<Registry<? extends ConfigData>> key)
     {   return key.location().getPath();
     }
 
-    public static <T> Codec<T> getCodec(RegistryKey<Registry<T>> registry)
+    public static <T extends ConfigData> Codec<T> getCodec(RegistryKey<Registry<T>> registry)
     {
-        return (Codec<T>) Optional.of(REGISTRIES.get(getRegistryName(registry))).map(holder -> holder.codec)
+        return (Codec<T>) Optional.of(REGISTRIES.get(getRegistryName((RegistryKey) registry))).map(holder -> holder.codec)
                .orElseThrow(() -> ColdSweat.LOGGER.throwing(new IllegalArgumentException("Unknown Cold Sweat registry: " + registry.location().getPath())));
     }
 
-    public static class RegistryHolder<V>
+    public static class RegistryHolder<V extends ConfigData>
     {
         public final RegistryKey<Registry<V>> registry;
         public final Codec<V> codec;

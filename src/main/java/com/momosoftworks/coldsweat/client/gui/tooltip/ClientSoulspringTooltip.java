@@ -63,7 +63,7 @@ public class ClientSoulspringTooltip extends Tooltip
                 for (FuelData fuelData : ConfigSettings.SOULSPRING_LAMP_FUEL.get().get(item))
                 {
                     ItemStack stack = new ItemStack(item, 1);
-                    stack.setTag(fuelData.data.nbt.tag);
+                    stack.setTag(fuelData.data().nbt().tag());
                     itemRenderer.renderGuiItem(stack,
                                                x + ((i * 16) % 96),
                                                y + 12 + CSMath.floor(i / 6d) * 16);

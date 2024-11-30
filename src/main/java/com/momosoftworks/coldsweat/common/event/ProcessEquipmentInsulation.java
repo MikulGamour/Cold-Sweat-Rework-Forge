@@ -76,8 +76,8 @@ public class ProcessEquipmentInsulation
                             if (!armorInsulator.test(player, armorStack))
                             {   continue;
                             }
-                            mapAdd(armorInsulation, "cold_armor", armorInsulator.insulation.getCold());
-                            mapAdd(armorInsulation, "heat_armor", armorInsulator.insulation.getHeat());
+                            mapAdd(armorInsulation, "cold_armor", armorInsulator.insulation().getCold());
+                            mapAdd(armorInsulation, "heat_armor", armorInsulator.insulation().getHeat());
                         }
                     }
                     else
@@ -150,8 +150,8 @@ public class ProcessEquipmentInsulation
                 {
                     if (insulator.test(player, curio))
                     {
-                        mapAdd(armorInsulation, "cold_curios", insulator.insulation.getCold());
-                        mapAdd(armorInsulation, "heat_curios", insulator.insulation.getHeat());
+                        mapAdd(armorInsulation, "cold_curios", insulator.insulation().getCold());
+                        mapAdd(armorInsulation, "heat_curios", insulator.insulation().getHeat());
                     }
                 }
             }

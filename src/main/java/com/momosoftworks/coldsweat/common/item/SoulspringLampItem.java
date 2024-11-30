@@ -168,7 +168,7 @@ public class SoulspringLampItem extends Item
     public static double getFuelForStack(ItemStack item)
     {
         return ConfigHelper.findFirstFuelMatching(ConfigSettings.SOULSPRING_LAMP_FUEL, item)
-                .map(fuelData -> fuelData.fuel).orElse(0d).intValue();
+                .map(FuelData::fuel).orElse(0d).intValue();
     }
 
     // Restore fuel if player hits an enemy

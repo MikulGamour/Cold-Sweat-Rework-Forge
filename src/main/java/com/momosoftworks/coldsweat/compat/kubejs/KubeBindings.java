@@ -49,7 +49,7 @@ public class KubeBindings
         }
         double coldInsulation = 0;
         for (InsulatorData insulator : EntityTempManager.getInsulatorsOnEntity(((LivingEntity) entity)).values())
-        {   coldInsulation += insulator.insulation.getCold();
+        {   coldInsulation += insulator.insulation().getCold();
         }
         return coldInsulation;
     }
@@ -61,7 +61,7 @@ public class KubeBindings
         }
         double heatInsulation = 0;
         for (InsulatorData insulator : EntityTempManager.getInsulatorsOnEntity(((LivingEntity) entity)).values())
-        {   heatInsulation += insulator.insulation.getHeat();
+        {   heatInsulation += insulator.insulation().getHeat();
         }
         return heatInsulation;
     }

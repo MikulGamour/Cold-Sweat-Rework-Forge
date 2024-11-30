@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.mojang.datafixers.util.Either;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.data.codec.configuration.ItemCarryTempData;
+import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
 import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
 import com.momosoftworks.coldsweat.data.codec.util.IntegerBounds;
@@ -100,7 +101,9 @@ public class CarriedItemBuilderJS
 
     public ItemCarryTempData build()
     {
-        return new ItemCarryTempData(new ItemRequirement(this.itemPredicate), ImmutableList.copyOf(this.slots),
-                                          this.temperature, this.trait, maxEffect, new EntityRequirement(this.entityPredicate));
+        ItemCarryTempData data = new ItemCarryTempData(new ItemRequirement(this.itemPredicate), ImmutableList.copyOf(this.slots),
+                                                       this.temperature, this.trait, maxEffect, new EntityRequirement(this.entityPredicate));
+        data.setType(ConfigData.Type.KUBEJS);
+        return data;
     }
 }

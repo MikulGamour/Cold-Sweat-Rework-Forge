@@ -26,15 +26,15 @@ import java.util.stream.Collectors;
 
 public class ItemRequirement
 {
-    public final Optional<List<Either<ITag<Item>, Item>>> items;
-    public final Optional<ITag<Item>> tag;
-    public final Optional<IntegerBounds> count;
-    public final Optional<IntegerBounds> durability;
-    public final Optional<List<EnchantmentRequirement>> enchantments;
-    public final Optional<List<EnchantmentRequirement>> storedEnchantments;
-    public final Optional<Potion> potion;
-    public final NbtRequirement nbt;
-    public final Optional<Predicate<ItemStack>> predicate;
+    private final Optional<List<Either<ITag<Item>, Item>>> items;
+    private final Optional<ITag<Item>> tag;
+    private final Optional<IntegerBounds> count;
+    private final Optional<IntegerBounds> durability;
+    private final Optional<List<EnchantmentRequirement>> enchantments;
+    private final Optional<List<EnchantmentRequirement>> storedEnchantments;
+    private final Optional<Potion> potion;
+    private final NbtRequirement nbt;
+    private final Optional<Predicate<ItemStack>> predicate;
 
     public ItemRequirement(Optional<List<Either<ITag<Item>, Item>>> items, Optional<ITag<Item>> tag,
                            Optional<IntegerBounds> count, Optional<IntegerBounds> durability,
@@ -75,10 +75,9 @@ public class ItemRequirement
         this(items, tag, count, durability, enchantments, storedEnchantments, potion, nbt, Optional.empty());
     }
 
-    public ItemRequirement(List<Item> items, NbtRequirement nbt)
+    public ItemRequirement(List<Either<ITag<Item>, Item>> items, NbtRequirement nbt)
     {
-        this(Optional.of(items.stream().map(Either::<ITag<Item>, Item>right).collect(Collectors.toList())), Optional.empty(),
-             Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), nbt);
+        this(Optional.of(items), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), nbt);
     }
 
     public ItemRequirement(Predicate<ItemStack> predicate)
@@ -86,6 +85,34 @@ public class ItemRequirement
         this(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
              Optional.empty(), Optional.empty(), Optional.empty(), new NbtRequirement(),
              Optional.of(predicate));
+    }
+
+    public Optional<List<Either<ITag<Item>, Item>>> items()
+    {   return items;
+    }
+    public Optional<ITag<Item>> tag()
+    {   return tag;
+    }
+    public Optional<IntegerBounds> count()
+    {   return count;
+    }
+    public Optional<IntegerBounds> durability()
+    {   return durability;
+    }
+    public Optional<List<EnchantmentRequirement>> enchantments()
+    {   return enchantments;
+    }
+    public Optional<List<EnchantmentRequirement>> storedEnchantments()
+    {   return storedEnchantments;
+    }
+    public Optional<Potion> potion()
+    {   return potion;
+    }
+    public NbtRequirement nbt()
+    {   return nbt;
+    }
+    public Optional<Predicate<ItemStack>> predicate()
+    {   return predicate;
     }
 
     public boolean test(ItemStack stack, boolean ignoreCount)

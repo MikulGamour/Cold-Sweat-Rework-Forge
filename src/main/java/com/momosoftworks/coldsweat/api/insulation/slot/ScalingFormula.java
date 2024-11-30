@@ -10,6 +10,7 @@ import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.ItemStack;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public abstract class ScalingFormula implements NbtSerializable
 {
@@ -57,6 +58,10 @@ public abstract class ScalingFormula implements NbtSerializable
             slots.put(EquipmentSlotType.FEET, feet);
         }
 
+        private Static()
+        {   super(Type.STATIC);
+        }
+
         @Override
         public int getSlots(EquipmentSlotType slot, ItemStack stack)
         {   return slots.getOrDefault(slot, 0);
@@ -65,16 +70,18 @@ public abstract class ScalingFormula implements NbtSerializable
         @Override
         public List<? extends Number> getValues()
         {
-            ArrayList<Integer> values = new ArrayList<>();
-            values.add(0, slots.get(EquipmentSlotType.HEAD));
-            values.add(1, slots.get(EquipmentSlotType.CHEST));
-            values.add(2, slots.get(EquipmentSlotType.LEGS));
-            values.add(3, slots.get(EquipmentSlotType.FEET));
-            return values;
+            return Arrays.stream(EquipmentSlotType.values()).filter(slot -> slot.getType() == EquipmentSlotType.Group.ARMOR).map(slots::get).collect(Collectors.toList());
         }
 
         public static Static deserialize(CompoundNBT nbt)
-        {   return new Static(nbt.getInt("head"), nbt.getInt("body"), nbt.getInt("legs"), nbt.getInt("feet"));
+        {
+            Static instance = new Static();
+            for (EquipmentSlotType slot : EquipmentSlotType.values())
+            {   if (slot.getType() == EquipmentSlotType.Group.ARMOR)
+                {   instance.slots.put(slot, nbt.getInt(slot.getName()));
+                }
+            }
+            return instance;
         }
 
         @Override

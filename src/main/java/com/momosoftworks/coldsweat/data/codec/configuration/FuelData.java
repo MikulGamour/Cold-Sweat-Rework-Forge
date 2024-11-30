@@ -1,5 +1,6 @@
 package com.momosoftworks.coldsweat.data.codec.configuration;
 
+import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
@@ -14,18 +15,19 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.NBTDynamicOps;
 import com.momosoftworks.coldsweat.util.serialization.StringRepresentable;
+import net.minecraft.tags.ITag;
 
 import java.util.List;
 import java.util.Optional;
 
 import javax.annotation.Nullable;
 
-public class FuelData implements NbtSerializable, RequirementHolder, ConfigData<FuelData>
+public class FuelData extends ConfigData implements RequirementHolder
 {
-    public final FuelType type;
-    public final Double fuel;
-    public final ItemRequirement data;
-    public final Optional<List<String>> requiredMods;
+    final FuelType type;
+    final Double fuel;
+    final ItemRequirement data;
+    final Optional<List<String>> requiredMods;
 
     public FuelData(FuelType type, Double fuel, ItemRequirement data, Optional<List<String>> requiredMods)
     {
@@ -46,6 +48,19 @@ public class FuelData implements NbtSerializable, RequirementHolder, ConfigData<
             Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(data -> data.requiredMods)
     ).apply(instance, FuelData::new));
 
+    public FuelType type()
+    {   return type;
+    }
+    public Double fuel()
+    {   return fuel;
+    }
+    public ItemRequirement data()
+    {   return data;
+    }
+    public Optional<List<String>> requiredMods()
+    {   return requiredMods;
+    }
+
     @Override
     public boolean test(ItemStack stack)
     {   return data.test(stack, true);
@@ -58,7 +73,7 @@ public class FuelData implements NbtSerializable, RequirementHolder, ConfigData<
         {   return null;
         }
         String[] itemIDs = ((String) entry.get(0)).split(",");
-        List<Item> items = ConfigHelper.getItems(itemIDs);
+        List<Either<ITag<Item>, Item>> items = ConfigHelper.getItems(itemIDs);
         double fuel = ((Number) entry.get(1)).doubleValue();
         NbtRequirement nbtRequirement = entry.size() > 2
                                         ? new NbtRequirement(NBTHelper.parseCompoundNbt((String) entry.get(3)))
@@ -68,22 +83,8 @@ public class FuelData implements NbtSerializable, RequirementHolder, ConfigData<
     }
 
     @Override
-    public CompoundNBT serialize()
-    {   return (CompoundNBT) CODEC.encodeStart(NBTDynamicOps.INSTANCE, this).result().orElseGet(CompoundNBT::new);
-    }
-
-    public static FuelData deserialize(CompoundNBT tag)
-    {   return CODEC.decode(NBTDynamicOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalStateException("Failed to deserialize FuelData")).getFirst();
-    }
-
-    @Override
     public Codec<FuelData> getCodec()
     {   return CODEC;
-    }
-
-    @Override
-    public String toString()
-    {   return this.asString();
     }
 
     @Override

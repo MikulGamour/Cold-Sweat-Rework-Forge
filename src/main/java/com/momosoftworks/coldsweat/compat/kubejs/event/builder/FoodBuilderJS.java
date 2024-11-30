@@ -1,6 +1,7 @@
 package com.momosoftworks.coldsweat.compat.kubejs.event.builder;
 
 import com.momosoftworks.coldsweat.data.codec.configuration.FoodData;
+import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
 import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
 import net.minecraft.entity.Entity;
@@ -64,6 +65,8 @@ public class FoodBuilderJS
 
     public FoodData build()
     {
-        return new FoodData(this.temperature, new ItemRequirement(this.itemPredicate), this.duration, new EntityRequirement(this.entityPredicate));
+        FoodData data = new FoodData(this.temperature, new ItemRequirement(this.itemPredicate), this.duration, new EntityRequirement(this.entityPredicate));
+        data.setType(ConfigData.Type.KUBEJS);
+        return data;
     }
 }

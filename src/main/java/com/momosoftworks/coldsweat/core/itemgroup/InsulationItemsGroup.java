@@ -66,6 +66,6 @@ public class InsulationItemsGroup extends ItemGroup
         list.sort(Comparator.comparing(item -> item.getKey() instanceof ArmorItem
                                                ? ((ArmorItem) item.getKey()).getMaterial().getName() + (3 - MobEntity.getEquipmentSlotForItem(item.getKey().getDefaultInstance()).getIndex())
                                                : ""));
-        return list.stream().map(data -> new ItemStack(data.getKey(), 1, data.getValue().data.nbt.tag)).collect(Collectors.toList());
+        return list.stream().map(data -> new ItemStack(data.getKey(), 1, data.getValue().data().nbt().tag())).collect(Collectors.toList());
     }
 }

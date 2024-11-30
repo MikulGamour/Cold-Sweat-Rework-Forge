@@ -7,26 +7,26 @@ import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
-import net.minecraft.tags.ITag;
 import net.minecraft.util.registry.DynamicRegistries;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.biome.Biome;
 
 import javax.annotation.Nullable;
-import javax.xml.ws.Holder;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 
-public class BiomeTempData implements ConfigData<BiomeTempData>
+public class BiomeTempData extends ConfigData
 {
-    public final List<Biome> biomes;
-    public final double min;
-    public final double max;
-    public final Temperature.Units units;
-    public final boolean isOffset;
-    public final Optional<List<String>> requiredMods;
+    final List<Biome> biomes;
+    final double min;
+    final double max;
+    final Temperature.Units units;
+    final boolean isOffset;
+    final Optional<List<String>> requiredMods;
 
-    public BiomeTempData(List<Biome> biomes, double min, double max, Temperature.Units units, boolean isOffset, Optional<List<String>> requiredMods)
+    public BiomeTempData(List<Biome> biomes, double min, double max,
+                         Temperature.Units units, boolean isOffset, Optional<List<String>> requiredMods)
     {
         this.biomes = biomes;
         this.min = min;
@@ -36,14 +36,14 @@ public class BiomeTempData implements ConfigData<BiomeTempData>
         this.requiredMods = requiredMods;
     }
 
+    public BiomeTempData(Biome biome, double min, double max, Temperature.Units units, boolean absolute)
+    {   this(Arrays.asList(biome), min, max, units, !absolute, Optional.empty());
+    }
+
     public BiomeTempData(List<Biome> biomes, double min, double max,
                          Temperature.Units units, boolean isOffset)
     {
         this(biomes, min, max, units, isOffset, Optional.empty());
-    }
-
-    public BiomeTempData(Biome biome, double min, double max, Temperature.Units units, boolean isOffset)
-    {   this(Arrays.asList(biome), min, max, units, isOffset);
     }
 
     public static final Codec<BiomeTempData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -56,15 +56,33 @@ public class BiomeTempData implements ConfigData<BiomeTempData>
                     either ->
                     either.map(left -> left, right -> right),
                     Either::right).forGetter(data -> data.max),
-            Temperature.Units.CODEC.optionalFieldOf("units", Temperature.Units.MC).forGetter(data -> data.units),
+            com.momosoftworks.coldsweat.api.util.Temperature.Units.CODEC.optionalFieldOf("units", Temperature.Units.MC).forGetter(data -> data.units),
             Codec.BOOL.optionalFieldOf("is_offset", false).forGetter(data -> data.isOffset),
             Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(data -> data.requiredMods)
     ).apply(instance, BiomeTempData::new));
 
+    public List<Biome> biomes()
+    {   return biomes;
+    }
+    public double min()
+    {   return min;
+    }
+    public double max()
+    {   return max;
+    }
+    public Temperature.Units units()
+    {   return units;
+    }
+    public boolean isOffset()
+    {   return isOffset;
+    }
+    public Optional<List<String>> requiredMods()
+    {   return requiredMods;
+    }
+
     public double minTemp()
     {   return Temperature.convert(min, units, Temperature.Units.MC, !this.isOffset);
     }
-
     public double maxTemp()
     {   return Temperature.convert(max, units, Temperature.Units.MC, !this.isOffset);
     }
@@ -96,11 +114,6 @@ public class BiomeTempData implements ConfigData<BiomeTempData>
     @Override
     public Codec<BiomeTempData> getCodec()
     {   return CODEC;
-    }
-
-    @Override
-    public String toString()
-    {   return this.asString();
     }
 
     @Override

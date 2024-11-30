@@ -12,23 +12,21 @@ import com.momosoftworks.coldsweat.client.gui.tooltip.ClientSoulspringTooltip;
 import com.momosoftworks.coldsweat.client.gui.tooltip.Tooltip;
 import com.momosoftworks.coldsweat.common.capability.handler.ItemInsulationManager;
 import com.momosoftworks.coldsweat.common.item.SoulspringLampItem;
+import com.momosoftworks.coldsweat.compat.CompatManager;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
-import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
-import com.momosoftworks.coldsweat.data.codec.util.AttributeModifierMap;
 import com.momosoftworks.coldsweat.core.network.ColdSweatPacketHandler;
 import com.momosoftworks.coldsweat.core.network.message.SyncItemPredicatesMessage;
 import com.momosoftworks.coldsweat.data.codec.configuration.FoodData;
 import com.momosoftworks.coldsweat.data.codec.configuration.FuelData;
 import com.momosoftworks.coldsweat.data.codec.configuration.InsulatorData;
+import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.data.codec.util.AttributeModifierMap;
-import com.momosoftworks.coldsweat.compat.CompatManager;
 import com.momosoftworks.coldsweat.util.entity.EntityHelper;
 import com.momosoftworks.coldsweat.util.exceptions.RegistryFailureException;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.math.FastMap;
 import com.momosoftworks.coldsweat.util.registries.ModAttributes;
 import com.momosoftworks.coldsweat.util.registries.ModItems;
-import com.momosoftworks.coldsweat.util.serialization.DynamicHolder;
 import com.momosoftworks.coldsweat.util.serialization.ListBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.AbstractGui;
@@ -52,6 +50,7 @@ import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -70,7 +69,7 @@ public class TooltipHandler
     private static ItemStack HOVERED_STACK = ItemStack.EMPTY;
     public static FastMap<UUID, Boolean> HOVERED_STACK_PREDICATES = new FastMap<>();
 
-    public static <T extends ConfigData<?>> boolean passesRequirement(T element)
+    public static <T extends ConfigData> boolean passesRequirement(T element)
     {   return HOVERED_STACK_PREDICATES.getOrDefault(element.getId(), true);
     }
 
@@ -284,7 +283,7 @@ public class TooltipHandler
             for (FoodData foodData : ConfigSettings.FOOD_TEMPERATURES.get().get(item))
             {
                 if (passesRequirement(foodData))
-                {   foodTemps.merge(foodData.duration, foodData.temperature, Double::sum);
+                {   foodTemps.merge(foodData.duration(), foodData.temperature(), Double::sum);
                 }
             }
 
@@ -325,12 +324,12 @@ public class TooltipHandler
                 List<Insulation> unmetInsulation = new ArrayList<>();
                 for (InsulatorData insulator : ConfigSettings.INSULATION_ITEMS.get().get(item))
                 {
-                    if (!insulator.insulation.isEmpty())
+                    if (!insulator.insulation().isEmpty())
                     {
                         if (passesRequirement(insulator))
-                        {   insulation.addAll(insulator.insulation.split());
+                        {   insulation.addAll(insulator.insulation().split());
                         }
-                        else unmetInsulation.addAll(insulator.insulation.split());
+                        else unmetInsulation.addAll(insulator.insulation().split());
                     }
                 }
                 if (!insulation.isEmpty())
@@ -348,12 +347,12 @@ public class TooltipHandler
                 List<Insulation> unmetInsulation = new ArrayList<>();
                 for (InsulatorData insulator : ConfigSettings.INSULATING_CURIOS.get().get(item))
                 {
-                    if (!insulator.insulation.isEmpty())
+                    if (!insulator.insulation().isEmpty())
                     {
                         if (passesRequirement(insulator))
-                        {   insulation.addAll(insulator.insulation.split());
+                        {   insulation.addAll(insulator.insulation().split());
                         }
-                        else unmetInsulation.addAll(insulator.insulation.split());
+                        else unmetInsulation.addAll(insulator.insulation().split());
                     }
                 }
                 if (!insulation.isEmpty())
@@ -370,12 +369,12 @@ public class TooltipHandler
             // Insulating armor
             for (InsulatorData insulator : ConfigSettings.INSULATING_ARMORS.get().get(item))
             {
-                if (!insulator.insulation.isEmpty())
+                if (!insulator.insulation().isEmpty())
                 {
                     if (passesRequirement(insulator))
-                    {   insulation.addAll(insulator.insulation.split());
+                    {   insulation.addAll(insulator.insulation().split());
                     }
-                    else unmetInsulation.addAll(insulator.insulation.split());
+                    else unmetInsulation.addAll(insulator.insulation().split());
                 }
             }
 
@@ -393,12 +392,12 @@ public class TooltipHandler
 
                     for (InsulatorData insulator : insulatorMap.keySet())
                     {
-                        if (!insulator.insulation.isEmpty())
+                        if (!insulator.insulation().isEmpty())
                         {
                             if (passesRequirement(insulator))
-                            {   insulation.addAll(insulator.insulation.split());
+                            {   insulation.addAll(insulator.insulation().split());
                             }
-                            else unmetInsulation.addAll(insulator.insulation.split());
+                            else unmetInsulation.addAll(insulator.insulation().split());
                         }
                     }
                 }
@@ -486,7 +485,7 @@ public class TooltipHandler
                 if (!carriedStack.isEmpty()
                 && itemFuel != null)
                 {
-                    double fuelValue = carriedStack.getCount() * itemFuel.fuel;
+                    double fuelValue = carriedStack.getCount() * itemFuel.fuel();
                     int slotX = inventoryScreen.getSlotUnderMouse().x + ((ContainerScreen<?>) event.getGui()).getGuiLeft();
                     int slotY = inventoryScreen.getSlotUnderMouse().y + ((ContainerScreen<?>) event.getGui()).getGuiTop();
 

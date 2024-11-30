@@ -2,6 +2,8 @@ package com.momosoftworks.coldsweat.util.world;
 
 import com.mojang.datafixers.util.Pair;
 import com.momosoftworks.coldsweat.api.event.core.init.GatherDefaultTempModifiersEvent;
+import com.momosoftworks.coldsweat.api.registry.BlockTempRegistry;
+import com.momosoftworks.coldsweat.api.temperature.block_temp.BlockTemp;
 import com.momosoftworks.coldsweat.api.temperature.modifier.TempModifier;
 import com.momosoftworks.coldsweat.api.util.Placement;
 import com.momosoftworks.coldsweat.api.util.Temperature;
@@ -41,6 +43,7 @@ import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.registry.DynamicRegistries;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
@@ -244,7 +247,10 @@ public abstract class WorldHelper
                     // If the structure has a piece at the position, get the temperature
                     if (structurestart.getPieces().stream().anyMatch(piece -> piece.getBoundingBox().isInside(pos)))
                     {
-                        return structure;
+                        // If the structure has a piece at the position, get the temperature
+                        if (structurestart.getPieces().stream().anyMatch(piece -> piece.getBoundingBox().isInside(pos)))
+                        {   return structure;
+                        }
                     }
                 }
             }
@@ -555,7 +561,7 @@ public abstract class WorldHelper
     }
 
     /**
-     * Gets the temperature of the biome at the specified position, including biome temperature and time of day.
+     * Gets the temperature of the biome at the specified position, including time of day.
      * @return The temperature of the biome at the specified position
      */
     public static double getBiomeTemperature(IWorld level, Biome biome)
@@ -588,6 +594,22 @@ public abstract class WorldHelper
         Biome biome = level.getBiome(pos); // Can't use getNoiseBiomeAtPosition because it's client-only for some reason
         // Get biome temperature
         return getBiomeTemperatureAt(level, biome, pos);
+    }
+
+    /**
+     * Gets the "raw" temperature for a block, ignoring distance and occlusion
+     */
+    public static double getBlockTemperatureAt(World level, BlockPos pos)
+    {   return getBlockTemperature(level.getBlockState(pos));
+    }
+    public static double getBlockTemperature(BlockState block)
+    {
+        Collection<BlockTemp> blockTemps = BlockTempRegistry.getBlockTempsFor(block);
+        double temp = 0;
+        for (BlockTemp blockTemp : blockTemps)
+        {   temp += blockTemp.getTemperature(null, null, block, BlockPos.ZERO, 0);
+        }
+        return temp;
     }
 
     public static DummyPlayer getDummyPlayer(World level)

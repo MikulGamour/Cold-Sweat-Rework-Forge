@@ -27,13 +27,13 @@ import java.util.*;
 
 public class BlockRequirement
 {
-    public final Optional<List<Either<ITag<Block>, Block>>> blocks;
-    public final Optional<StateRequirement> state;
-    public final Optional<NbtRequirement> nbt;
-    public final Optional<Direction> sturdyFace;
-    public final Optional<Boolean> withinWorldBounds;
-    public final Optional<Boolean> replaceable;
-    public final boolean negate;
+    private final Optional<List<Either<ITag<Block>, Block>>> blocks;
+    private final Optional<StateRequirement> state;
+    private final Optional<NbtRequirement> nbt;
+    private final Optional<Direction> sturdyFace;
+    private final Optional<Boolean> withinWorldBounds;
+    private final Optional<Boolean> replaceable;
+    private final boolean negate;
 
     public BlockRequirement(Optional<List<Either<ITag<Block>, Block>>> blocks, Optional<StateRequirement> state,
                             Optional<NbtRequirement> nbt, Optional<Direction> sturdyFace,
@@ -62,6 +62,28 @@ public class BlockRequirement
             Codec.BOOL.optionalFieldOf("replaceable").forGetter(predicate -> predicate.replaceable),
             Codec.BOOL.optionalFieldOf("negate", false).forGetter(predicate -> predicate.negate)
     ).apply(instance, BlockRequirement::new));
+
+    public Optional<List<Either<ITag<Block>, Block>>> blocks()
+    {   return blocks;
+    }
+    public Optional<StateRequirement> state()
+    {   return state;
+    }
+    public Optional<NbtRequirement> nbt()
+    {   return nbt;
+    }
+    public Optional<Direction> sturdyFace()
+    {   return sturdyFace;
+    }
+    public Optional<Boolean> withinWorldBounds()
+    {   return withinWorldBounds;
+    }
+    public Optional<Boolean> replaceable()
+    {   return replaceable;
+    }
+    public boolean negate()
+    {   return negate;
+    }
 
     public boolean test(World pLevel, BlockPos pPos)
     {

@@ -7,26 +7,22 @@ import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
-import net.minecraft.tags.ITag;
-import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.registry.DynamicRegistries;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.gen.feature.structure.Structure;
-import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
-public class StructureTempData implements ConfigData<StructureTempData>
+public class StructureTempData extends ConfigData
 {
-    public final List<Structure<?>> structures;
-    public final double temperature;
-    public final Temperature.Units units;
-    public final boolean isOffset;
-    public final Optional<List<String>> requiredMods;
+    List<Structure<?>> structures;
+    double temperature;
+    Temperature.Units units;
+    boolean isOffset;
+    Optional<List<String>> requiredMods;
 
     public StructureTempData(List<Structure<?>> structures, double temperature,
                              Temperature.Units units, boolean isOffset, Optional<List<String>> requiredMods)
@@ -52,11 +48,27 @@ public class StructureTempData implements ConfigData<StructureTempData>
             Temperature.Units.CODEC.optionalFieldOf("units", Temperature.Units.MC).forGetter(data -> data.units),
             Codec.BOOL.optionalFieldOf("offset", false).forGetter(data -> data.isOffset),
             Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(data -> data.requiredMods)
-    ).apply(instance, (structures, temperature, units, isOffset, requiredMods) ->
-    {
-        double cTemp = Temperature.convert(temperature, units, Temperature.Units.MC, !isOffset);
-        return new StructureTempData(structures, cTemp, units, isOffset, requiredMods);
-    }));
+    ).apply(instance, StructureTempData::new));
+
+    public List<Structure<?>> structures()
+    {   return structures;
+    }
+    public double temperature()
+    {   return temperature;
+    }
+    public Temperature.Units units()
+    {   return units;
+    }
+    public boolean isOffset()
+    {   return isOffset;
+    }
+    public Optional<List<String>> requiredMods()
+    {   return requiredMods;
+    }
+
+    public double getTemperature()
+    {   return Temperature.convert(temperature, units, Temperature.Units.MC, isOffset);
+    }
 
     @Nullable
     public static StructureTempData fromToml(List<?> entry, boolean absolute, DynamicRegistries registryAccess)
@@ -76,11 +88,6 @@ public class StructureTempData implements ConfigData<StructureTempData>
     @Override
     public Codec<StructureTempData> getCodec()
     {   return CODEC;
-    }
-
-    @Override
-    public String toString()
-    {   return this.asString();
     }
 
     @Override

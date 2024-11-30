@@ -20,17 +20,18 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class MountData implements NbtSerializable, RequirementHolder, ConfigData<MountData>
+public class MountData extends ConfigData implements RequirementHolder
 {
-    public List<Either<ITag<EntityType<?>>, EntityType<?>>> entities;
-    public double coldInsulation;
-    public double heatInsulation;
-    public EntityRequirement requirement;
-    public Optional<List<String>> requiredMods;
+    final List<Either<ITag<EntityType<?>>, EntityType<?>>> entities;
+    final double coldInsulation;
+    final double heatInsulation;
+    final EntityRequirement requirement;
+    final Optional<List<String>> requiredMods;
 
-    public MountData(List<Either<ITag<EntityType<?>>, EntityType<?>>> entities, double coldInsulation, double heatInsulation,
-                     EntityRequirement requirement, Optional<List<String>> requiredMods)
-    {   this.entities = entities;
+    public MountData(List<Either<ITag<EntityType<?>>, EntityType<?>>> entities, double coldInsulation,
+                     double heatInsulation, EntityRequirement requirement, Optional<List<String>> requiredMods)
+    {
+        this.entities = entities;
         this.coldInsulation = coldInsulation;
         this.heatInsulation = heatInsulation;
         this.requirement = requirement;
@@ -47,9 +48,25 @@ public class MountData implements NbtSerializable, RequirementHolder, ConfigData
             ConfigHelper.tagOrBuiltinCodec(Registry.ENTITY_TYPE_REGISTRY, Registry.ENTITY_TYPE).listOf().fieldOf("entities").forGetter(data -> data.entities),
             Codec.DOUBLE.fieldOf("cold_insulation").forGetter(data -> data.coldInsulation),
             Codec.DOUBLE.fieldOf("heat_insulation").forGetter(data -> data.heatInsulation),
-            EntityRequirement.getCodec().fieldOf("entity").forGetter(data -> data.requirement),
+            com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement.getCodec().fieldOf("entity").forGetter(data -> data.requirement),
             Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(data -> data.requiredMods)
     ).apply(instance, MountData::new));
+
+    public List<Either<ITag<EntityType<?>>, EntityType<?>>> entities()
+    {   return entities;
+    }
+    public double coldInsulation()
+    {   return coldInsulation;
+    }
+    public double heatInsulation()
+    {   return heatInsulation;
+    }
+    public EntityRequirement requirement()
+    {   return requirement;
+    }
+    public Optional<List<String>> requiredMods()
+    {   return requiredMods;
+    }
 
     @Nullable
     public static MountData fromToml(List<?> entry)
@@ -66,7 +83,7 @@ public class MountData implements NbtSerializable, RequirementHolder, ConfigData
         if (entities.isEmpty())
         {   return null;
         }
-        return new MountData(entities, coldInsul, hotInsul, EntityRequirement.NONE);
+        return new MountData(entities, coldInsul, hotInsul, com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement.NONE);
     }
 
     @Override
@@ -75,22 +92,8 @@ public class MountData implements NbtSerializable, RequirementHolder, ConfigData
     }
 
     @Override
-    public CompoundNBT serialize()
-    {   return (CompoundNBT) CODEC.encodeStart(NBTDynamicOps.INSTANCE, this).result().orElseGet(CompoundNBT::new);
-    }
-
-    public static MountData deserialize(CompoundNBT tag)
-    {   return CODEC.decode(NBTDynamicOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalStateException("Failed to deserialize MountData")).getFirst();
-    }
-
-    @Override
     public Codec<MountData> getCodec()
     {   return CODEC;
-    }
-
-    @Override
-    public String toString()
-    {   return this.asString();
     }
 
     @Override

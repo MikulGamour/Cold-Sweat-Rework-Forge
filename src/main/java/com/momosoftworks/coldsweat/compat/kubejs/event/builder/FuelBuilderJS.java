@@ -1,6 +1,7 @@
 package com.momosoftworks.coldsweat.compat.kubejs.event.builder;
 
 import com.momosoftworks.coldsweat.data.codec.configuration.FuelData;
+import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -50,6 +51,8 @@ public class FuelBuilderJS
 
     public FuelData build(FuelData.FuelType fuelType)
     {
-        return new FuelData(fuelType, this.fuel, new ItemRequirement(this.itemPredicate));
+        FuelData data = new FuelData(fuelType, this.fuel, new ItemRequirement(this.itemPredicate));
+        data.setType(ConfigData.Type.KUBEJS);
+        return data;
     }
 }

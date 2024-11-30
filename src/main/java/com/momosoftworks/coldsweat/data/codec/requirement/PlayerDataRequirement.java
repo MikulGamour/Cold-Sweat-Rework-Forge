@@ -31,11 +31,11 @@ import java.util.Optional;
 
 public class PlayerDataRequirement implements RequirementHolder
 {
-    public final Optional<GameType> gameType;
-    public final Optional<Map<StatRequirement, IntegerBounds>> stats;
-    public final Optional<Map<ResourceLocation, Boolean>> recipes;
-    public final Optional<Map<ResourceLocation, Either<AdvancementCompletionRequirement, AdvancementCriteriaRequirement>>> advancements;
-    public final Optional<EntityRequirement> lookingAt;
+    private final Optional<GameType> gameType;
+    private final Optional<Map<StatRequirement, IntegerBounds>> stats;
+    private final Optional<Map<ResourceLocation, Boolean>> recipes;
+    private final Optional<Map<ResourceLocation, Either<AdvancementCompletionRequirement, AdvancementCriteriaRequirement>>> advancements;
+    private final Optional<EntityRequirement> lookingAt;
 
     public PlayerDataRequirement(Optional<GameType> gameType, Optional<Map<StatRequirement, IntegerBounds>> stats,
                                  Optional<Map<ResourceLocation, Boolean>> recipes,
@@ -65,6 +65,22 @@ public class PlayerDataRequirement implements RequirementHolder
                 Codec.unboundedMap(ResourceLocation.CODEC, Codec.either(AdvancementCompletionRequirement.CODEC, AdvancementCriteriaRequirement.CODEC)).optionalFieldOf("advancements").forGetter(requirement -> requirement.advancements),
                 lastCodec.optionalFieldOf("lookingAt").forGetter(requirement -> requirement.lookingAt)
         ).apply(instance, PlayerDataRequirement::new));
+    }
+
+    public Optional<GameType> gameType()
+    {   return gameType;
+    }
+    public Optional<Map<StatRequirement, IntegerBounds>> stats()
+    {   return stats;
+    }
+    public Optional<Map<ResourceLocation, Boolean>> recipes()
+    {   return recipes;
+    }
+    public Optional<Map<ResourceLocation, Either<AdvancementCompletionRequirement, AdvancementCriteriaRequirement>>> advancements()
+    {   return advancements;
+    }
+    public Optional<EntityRequirement> lookingAt()
+    {   return lookingAt;
     }
 
     @Override
