@@ -14,9 +14,9 @@ import com.momosoftworks.coldsweat.client.gui.tooltip.SoulspringTooltip;
 import com.momosoftworks.coldsweat.common.capability.handler.ItemInsulationManager;
 import com.momosoftworks.coldsweat.common.item.SoulspringLampItem;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
-import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.core.network.ColdSweatPacketHandler;
 import com.momosoftworks.coldsweat.core.network.message.SyncItemPredicatesMessage;
+import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.data.codec.configuration.FoodData;
 import com.momosoftworks.coldsweat.data.codec.configuration.FuelData;
 import com.momosoftworks.coldsweat.data.codec.configuration.InsulatorData;
@@ -70,7 +70,7 @@ public class TooltipHandler
     private static ItemStack HOVERED_STACK = ItemStack.EMPTY;
     public static FastMap<UUID, Boolean> HOVERED_STACK_PREDICATES = new FastMap<>();
 
-    public static <T extends ConfigData<?>> boolean passesRequirement(T element)
+    public static <T extends ConfigData> boolean passesRequirement(T element)
     {   return HOVERED_STACK_PREDICATES.getOrDefault(element.getId(), true);
     }
 

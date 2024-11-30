@@ -13,9 +13,8 @@ import com.momosoftworks.coldsweat.data.codec.util.ExtraCodecs;
 import com.momosoftworks.coldsweat.data.codec.util.IntegerBounds;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
 import com.momosoftworks.coldsweat.util.serialization.NBTHelper;
-import com.momosoftworks.coldsweat.util.serialization.NbtSerializable;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.Item;
@@ -26,12 +25,29 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public record ItemCarryTempData(ItemRequirement data, List<Either<IntegerBounds, EquipmentSlot>> slots, double temperature,
-                                Temperature.Trait trait,
-                                Double maxEffect,
-                                EntityRequirement entityRequirement,
-                                Optional<List<String>> requiredMods) implements NbtSerializable, RequirementHolder, ConfigData<ItemCarryTempData>
+public class ItemCarryTempData extends ConfigData implements RequirementHolder
 {
+    final ItemRequirement data;
+    final List<Either<IntegerBounds, EquipmentSlot>> slots;
+    final double temperature;
+    final Temperature.Trait trait;
+    final Double maxEffect;
+    final EntityRequirement entityRequirement;
+    final Optional<List<String>> requiredMods;
+
+    public ItemCarryTempData(ItemRequirement data, List<Either<IntegerBounds, EquipmentSlot>> slots, double temperature,
+                             Temperature.Trait trait, Double maxEffect, EntityRequirement entityRequirement,
+                             Optional<List<String>> requiredMods)
+    {
+        this.data = data;
+        this.slots = slots;
+        this.temperature = temperature;
+        this.trait = trait;
+        this.maxEffect = maxEffect;
+        this.entityRequirement = entityRequirement;
+        this.requiredMods = requiredMods;
+    }
+
     public ItemCarryTempData(ItemRequirement data, List<Either<IntegerBounds, EquipmentSlot>> slots, double temperature,
                              Temperature.Trait trait, Double maxEffect, EntityRequirement entityRequirement)
     {
@@ -43,10 +59,32 @@ public record ItemCarryTempData(ItemRequirement data, List<Either<IntegerBounds,
             Codec.either(IntegerBounds.CODEC, ExtraCodecs.EQUIPMENT_SLOT).listOf().fieldOf("slots").forGetter(ItemCarryTempData::slots),
             Codec.DOUBLE.fieldOf("temperature").forGetter(ItemCarryTempData::temperature),
             Temperature.Trait.CODEC.optionalFieldOf("trait", Temperature.Trait.WORLD).forGetter(ItemCarryTempData::trait),
-            Codec.DOUBLE.optionalFieldOf("max_effect", Double.MAX_VALUE).forGetter(ItemCarryTempData::maxEffect),
+            Codec.DOUBLE.optionalFieldOf("max_effect", java.lang.Double.MAX_VALUE).forGetter(ItemCarryTempData::maxEffect),
             EntityRequirement.getCodec().optionalFieldOf("entity", EntityRequirement.NONE).forGetter(ItemCarryTempData::entityRequirement),
             Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(ItemCarryTempData::requiredMods)
     ).apply(instance, ItemCarryTempData::new));
+
+    public ItemRequirement data()
+    {   return data;
+    }
+    public List<Either<IntegerBounds, EquipmentSlot>> slots()
+    {   return slots;
+    }
+    public double temperature()
+    {   return temperature;
+    }
+    public Temperature.Trait trait()
+    {   return trait;
+    }
+    public Double maxEffect()
+    {   return maxEffect;
+    }
+    public EntityRequirement entityRequirement()
+    {   return entityRequirement;
+    }
+    public Optional<List<String>> requiredMods()
+    {   return requiredMods;
+    }
 
     @Override
     public boolean test(Entity entity)
@@ -93,16 +131,17 @@ public record ItemCarryTempData(ItemRequirement data, List<Either<IntegerBounds,
             {   requiredMods.add(split[0].replace("#", ""));
             }
         }
-        List<Item> items = ConfigHelper.getItems(itemIDs);
+        List<Either<TagKey<Item>, Item>> items = ConfigHelper.getItems(itemIDs);
+        if (items.isEmpty()) return null;
         //temp
         double temp = ((Number) entry.get(1)).doubleValue();
         // slots
         List<Either<IntegerBounds, EquipmentSlot>> slots = switch ((String) entry.get(2))
         {
-            case "inventory" -> List.of(Either.left(IntegerBounds.NONE));
-            case "hotbar"    -> List.of(Either.left(new IntegerBounds(36, 44)));
-            case "hand" -> List.of(Either.right(EquipmentSlot.MAINHAND), Either.right(EquipmentSlot.OFFHAND));
-            default -> List.of(Either.left(new IntegerBounds(-1, -1)));
+            case "inventory" -> java.util.List.of(Either.left(IntegerBounds.NONE));
+            case "hotbar"    -> java.util.List.of(Either.left(new IntegerBounds(36, 44)));
+            case "hand" -> java.util.List.of(Either.right(EquipmentSlot.MAINHAND), Either.right(EquipmentSlot.OFFHAND));
+            default -> java.util.List.of(Either.left(new IntegerBounds(-1, -1)));
         };
         // trait
         Temperature.Trait trait = Temperature.Trait.fromID((String) entry.get(3));
@@ -140,22 +179,8 @@ public record ItemCarryTempData(ItemRequirement data, List<Either<IntegerBounds,
     }
 
     @Override
-    public CompoundTag serialize()
-    {   return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).result().orElseGet(CompoundTag::new);
-    }
-
-    public static ItemCarryTempData deserialize(CompoundTag tag)
-    {   return CODEC.decode(NbtOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalArgumentException("Could not deserialize Insulator")).getFirst();
-    }
-
-    @Override
     public Codec<ItemCarryTempData> getCodec()
     {   return CODEC;
-    }
-
-    @Override
-    public String toString()
-    {   return this.asString();
     }
 
     @Override

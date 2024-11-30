@@ -2,6 +2,8 @@ package com.momosoftworks.coldsweat.util.world;
 
 import com.mojang.datafixers.util.Pair;
 import com.momosoftworks.coldsweat.api.event.core.init.GatherDefaultTempModifiersEvent;
+import com.momosoftworks.coldsweat.api.registry.BlockTempRegistry;
+import com.momosoftworks.coldsweat.api.temperature.block_temp.BlockTemp;
 import com.momosoftworks.coldsweat.api.temperature.modifier.TempModifier;
 import com.momosoftworks.coldsweat.api.util.Placement;
 import com.momosoftworks.coldsweat.api.util.Temperature;
@@ -218,7 +220,7 @@ public abstract class WorldHelper
     }
 
     @Nullable
-    public static Structure getStructureAt(Level level, BlockPos pos)
+    public static Holder<Structure> getStructureAt(Level level, BlockPos pos)
     {
         if (!(level instanceof ServerLevel serverLevel)) return null;
 
@@ -241,13 +243,15 @@ public abstract class WorldHelper
                 {
                     // If the structure has a piece at the position, get the temperature
                     if (structureManager.structureHasPieceAt(pos, structurestart))
-                    {   return structure;
+                    {
+                        return serverLevel.registryAccess().registryOrThrow(Registry.STRUCTURE_REGISTRY).createIntrusiveHolder(structure);
                     }
                 }
             }
         }
         return null;
     }
+
     /**
      * Plays a sound for all tracking clients that follows the source entity around.<br>
      * Why this isn't in Vanilla Minecraft is beyond me
@@ -549,7 +553,7 @@ public abstract class WorldHelper
     }
 
     /**
-     * Gets the temperature of the biome at the specified position, including biome temperature and time of day.
+     * Gets the temperature of the biome at the specified position, including time of day.
      * @return The temperature of the biome at the specified position
      */
     public static double getBiomeTemperature(LevelAccessor level, Holder<Biome> biome)
@@ -584,6 +588,22 @@ public abstract class WorldHelper
         Holder<Biome> biome = chunk.getNoiseBiome(pos.getX(), pos.getY(), pos.getZ());
         // Get biome temperature
         return getBiomeTemperatureAt(level, biome, pos);
+    }
+
+    /**
+     * Gets the "raw" temperature for a block, ignoring distance and occlusion
+     */
+    public static double getBlockTemperatureAt(Level level, BlockPos pos)
+    {   return getBlockTemperature(level.getBlockState(pos));
+    }
+    public static double getBlockTemperature(BlockState block)
+    {
+        Collection<BlockTemp> blockTemps = BlockTempRegistry.getBlockTempsFor(block);
+        double temp = 0;
+        for (BlockTemp blockTemp : blockTemps)
+        {   temp += blockTemp.getTemperature(null, null, block, BlockPos.ZERO, 0);
+        }
+        return temp;
     }
 
     public static DummyPlayer getDummyPlayer(Level level)

@@ -17,9 +17,25 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
 
-public record DimensionTempData(List<Either<TagKey<DimensionType>, Holder<DimensionType>>> dimensions, double temperature,
-                                Temperature.Units units, boolean isOffset, Optional<List<String>> requiredMods) implements ConfigData<DimensionTempData>
+public class DimensionTempData extends ConfigData
 {
+    final List<Either<TagKey<DimensionType>, Holder<DimensionType>>> dimensions;
+    final double temperature;
+    final Temperature.Units units;
+    final boolean isOffset;
+    final Optional<List<String>> requiredMods;
+
+    public DimensionTempData(List<Either<TagKey<DimensionType>, Holder<DimensionType>>> dimensions,
+                             double temperature, Temperature.Units units, boolean isOffset,
+                             Optional<List<String>> requiredMods)
+    {
+        this.dimensions = dimensions;
+        this.temperature = temperature;
+        this.units = units;
+        this.isOffset = isOffset;
+        this.requiredMods = requiredMods;
+    }
+
     public DimensionTempData(Holder<DimensionType> dimension, double temperature, Temperature.Units units)
     {   this(List.of(Either.right(dimension)), temperature, units, false, Optional.empty());
     }
@@ -34,11 +50,27 @@ public record DimensionTempData(List<Either<TagKey<DimensionType>, Holder<Dimens
             Temperature.Units.CODEC.optionalFieldOf("units", Temperature.Units.MC).forGetter(DimensionTempData::units),
             Codec.BOOL.optionalFieldOf("is_offset", false).forGetter(DimensionTempData::isOffset),
             Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(DimensionTempData::requiredMods)
-    ).apply(instance, (dimensions, temperature, units, isOffset, requiredMods) ->
-    {
-        double cTemp = Temperature.convert(temperature, units, Temperature.Units.MC, !isOffset);
-        return new DimensionTempData(dimensions, cTemp, units, isOffset, requiredMods);
-    }));
+    ).apply(instance, DimensionTempData::new));
+
+    public List<Either<TagKey<DimensionType>, Holder<DimensionType>>> dimensions()
+    {   return dimensions;
+    }
+    public double temperature()
+    {   return temperature;
+    }
+    public Temperature.Units units()
+    {   return units;
+    }
+    public boolean isOffset()
+    {   return isOffset;
+    }
+    public Optional<List<String>> requiredMods()
+    {   return requiredMods;
+    }
+
+    public double getTemperature()
+    {   return Temperature.convert(temperature, units, Temperature.Units.MC, !isOffset);
+    }
 
     @Nullable
     public static DimensionTempData fromToml(List<?> entry, boolean absolute, RegistryAccess registryAccess)
@@ -62,11 +94,6 @@ public record DimensionTempData(List<Either<TagKey<DimensionType>, Holder<Dimens
     @Override
     public Codec<DimensionTempData> getCodec()
     {   return CODEC;
-    }
-
-    @Override
-    public String toString()
-    {   return this.asString();
     }
 
     @Override

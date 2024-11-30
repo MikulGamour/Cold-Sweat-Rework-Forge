@@ -18,9 +18,25 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
 
-public record SpawnBiomeData(List<Either<TagKey<Biome>, Holder<Biome>>> biomes, MobCategory category,
-                             int weight, List<Either<TagKey<EntityType<?>>, EntityType<?>>> entities, Optional<List<String>> requiredMods) implements ConfigData<SpawnBiomeData>
+public class SpawnBiomeData extends ConfigData
 {
+    final List<Either<TagKey<Biome>, Holder<Biome>>> biomes;
+    final MobCategory category;
+    final int weight;
+    final List<Either<TagKey<EntityType<?>>, EntityType<?>>> entities;
+    final Optional<List<String>> requiredMods;
+
+    public SpawnBiomeData(List<Either<TagKey<Biome>, Holder<Biome>>> biomes, MobCategory category,
+                          int weight, List<Either<TagKey<EntityType<?>>, EntityType<?>>> entities,
+                          Optional<List<String>> requiredMods)
+    {
+        this.biomes = biomes;
+        this.category = category;
+        this.weight = weight;
+        this.entities = entities;
+        this.requiredMods = requiredMods;
+    }
+
     public SpawnBiomeData(List<Holder<Biome>> biomes, MobCategory category, int weight, List<EntityType<?>> entities)
     {
         this(biomes.stream().map(Either::<TagKey<Biome>, Holder<Biome>>right).toList(),
@@ -31,11 +47,27 @@ public record SpawnBiomeData(List<Either<TagKey<Biome>, Holder<Biome>>> biomes, 
 
     public static final Codec<SpawnBiomeData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             ConfigHelper.tagOrHolderCodec(Registry.BIOME_REGISTRY, Biome.CODEC).listOf().fieldOf("biomes").forGetter(SpawnBiomeData::biomes),
-            MobCategory.CODEC.fieldOf("category").forGetter(SpawnBiomeData::category),
+            net.minecraft.world.entity.MobCategory.CODEC.fieldOf("category").forGetter(SpawnBiomeData::category),
             Codec.INT.fieldOf("weight").forGetter(SpawnBiomeData::weight),
             ConfigHelper.tagOrBuiltinCodec(Registry.ENTITY_TYPE_REGISTRY, ForgeRegistries.ENTITY_TYPES).listOf().fieldOf("entities").forGetter(SpawnBiomeData::entities),
             Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(SpawnBiomeData::requiredMods)
     ).apply(instance, SpawnBiomeData::new));
+
+    public List<Either<TagKey<Biome>, Holder<Biome>>> biomes()
+    {   return biomes;
+    }
+    public MobCategory category()
+    {   return category;
+    }
+    public int weight()
+    {   return weight;
+    }
+    public List<Either<TagKey<EntityType<?>>, EntityType<?>>> entities()
+    {   return entities;
+    }
+    public Optional<List<String>> requiredMods()
+    {   return requiredMods;
+    }
 
     @Nullable
     public static SpawnBiomeData fromToml(List<?> entry, EntityType<?> entityType, RegistryAccess registryAccess)
@@ -48,17 +80,12 @@ public record SpawnBiomeData(List<Either<TagKey<Biome>, Holder<Biome>>> biomes, 
         if (biomes.isEmpty())
         {   return null;
         }
-        return new SpawnBiomeData(biomes, MobCategory.CREATURE, ((Number) entry.get(1)).intValue(),
-                                  List.of(entityType));
+        return new SpawnBiomeData(biomes, net.minecraft.world.entity.MobCategory.CREATURE, ((Number) entry.get(1)).intValue(),
+                                  java.util.List.of(entityType));
     }
 
     @Override
     public Codec<SpawnBiomeData> getCodec()
     {   return CODEC;
-    }
-
-    @Override
-    public String toString()
-    {   return this.asString();
     }
 }

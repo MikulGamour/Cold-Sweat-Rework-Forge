@@ -163,7 +163,7 @@ dependencies {
     implementation fg.deobf("org.valkyrienskies:valkyrienskies-119-forge:2.1.2-beta.1+a04911c932")
     implementation fg.deobf("curse.maven:eureka-ships-654384:5321628")
 
-    implementation fg.deobf("dev.latvian.mods:kubejs-forge:${kubejs_version}")
+    compileOnly fg.deobf("dev.latvian.mods:kubejs-forge:${kubejs_version}")
     implementation fg.deobf("dev.latvian.mods:rhino-forge:${rhino_version}")
     implementation fg.deobf("dev.architectury:architectury-forge:${architectury_version}")
 

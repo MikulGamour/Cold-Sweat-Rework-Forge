@@ -52,10 +52,9 @@ public record ItemRequirement(Optional<List<Either<TagKey<Item>, Item>>> items, 
         this(items, tag, count, durability, enchantments, storedEnchantments, potion, nbt, Optional.empty());
     }
 
-    public ItemRequirement(List<Item> items, NbtRequirement nbt)
+    public ItemRequirement(List<Either<TagKey<Item>, Item>> items, NbtRequirement nbt)
     {
-        this(Optional.of(items.stream().map(Either::<TagKey<Item>, Item>right).toList()), Optional.empty(),
-             Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), nbt);
+        this(Optional.of(items), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), nbt);
     }
 
     public ItemRequirement(Predicate<ItemStack> predicate)

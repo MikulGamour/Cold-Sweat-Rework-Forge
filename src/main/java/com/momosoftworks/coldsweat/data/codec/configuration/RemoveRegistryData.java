@@ -3,6 +3,7 @@ package com.momosoftworks.coldsweat.data.codec.configuration;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.data.ModRegistries;
+import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.data.codec.requirement.NbtRequirement;
 import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
@@ -13,15 +14,27 @@ import net.minecraft.resources.ResourceKey;
 import java.util.List;
 import java.util.Optional;
 
-public record RemoveRegistryData<T>(ResourceKey<Registry<?>> registry, List<CompoundTag> entries)
+public class RemoveRegistryData<T extends ConfigData> extends ConfigData
 {
+    ResourceKey<Registry<T>> registry;
+    List<CompoundTag> entries;
+
+    public RemoveRegistryData(ResourceKey<Registry<T>> registry, List<CompoundTag> entries)
+    {
+        this.registry = registry;
+        this.entries = entries;
+    }
+
     public static final Codec<RemoveRegistryData<?>> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            Codec.STRING.xmap(ModRegistries::getRegistry, ModRegistries::getRegistryName).fieldOf("registry").forGetter(data -> data.registry),
+            Codec.STRING.xmap(s -> (ResourceKey)ModRegistries.getRegistry(s), key -> ModRegistries.getRegistryName(key)).fieldOf("registry").forGetter(data -> data.registry()),
             CompoundTag.CODEC.listOf().fieldOf("matches").forGetter(data -> data.entries)
     ).apply(instance, RemoveRegistryData::new));
 
-    public ResourceKey<Registry<T>> getRegistry()
-    {   return (ResourceKey) registry;
+    public ResourceKey<Registry<T>> registry()
+    {   return registry;
+    }
+    public List<CompoundTag> entries()
+    {   return entries;
     }
 
     public boolean matches(T object)
@@ -37,5 +50,10 @@ public record RemoveRegistryData<T>(ResourceKey<Registry<?>> registry, List<Comp
             }
         }
         return false;
+    }
+
+    @Override
+    public Codec<? extends ConfigData> getCodec()
+    {   return CODEC;
     }
 }

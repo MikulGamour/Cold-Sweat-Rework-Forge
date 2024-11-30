@@ -11,6 +11,7 @@ import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.math.FastMultiMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.*;
@@ -180,13 +181,16 @@ public class ItemInsulationCap implements IInsulatableCap
             {
                 // Legacy insulation handling
                 CompoundTag mappingNBT = pairListNBT.getCompound(j);
-                InsulatorData insulator = InsulatorData.deserialize(mappingNBT.getCompound("Insulator"));
-                ListTag insulListNBT = mappingNBT.getList("Insulation", 10);
-                List<Insulation> insulList = new ArrayList<>();
-                for (int k = 0; k < insulListNBT.size(); k++)
-                {   insulList.add(Insulation.deserialize(insulListNBT.getCompound(k)));
-                }
-                insulMap.putAll(insulator, insulList);
+                InsulatorData.CODEC.decode(NbtOps.INSTANCE, mappingNBT.getCompound("Insulator")).map(Pair::getFirst).result()
+                .ifPresent(insulator ->
+                {
+                    ListTag insulListNBT = mappingNBT.getList("Insulation", 10);
+                    List<Insulation> insulList = new ArrayList<>();
+                    for (int k = 0; k < insulListNBT.size(); k++)
+                    {   insulList.add(Insulation.deserialize(insulListNBT.getCompound(k)));
+                    }
+                    insulMap.putAll(insulator, insulList);
+                });
             }
             this.insulation.add(Pair.of(stack, insulMap));
         }
