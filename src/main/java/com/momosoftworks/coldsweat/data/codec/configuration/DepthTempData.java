@@ -24,14 +24,36 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Optional;
 
-public record DepthTempData(List<TempRegion> temperatures, List<Either<TagKey<DimensionType>, Holder<DimensionType>>> dimensions,
-                            Optional<List<String>> requiredMods) implements ConfigData<DepthTempData>, IForgeRegistryEntry<DepthTempData>
+public class DepthTempData extends ConfigData implements IForgeRegistryEntry<DepthTempData>
 {
+    final List<TempRegion> temperatures;
+    final List<Either<TagKey<DimensionType>, Holder<DimensionType>>> dimensions;
+    final Optional<List<String>> requiredMods;
+
+    public DepthTempData(List<TempRegion> temperatures,
+                         List<Either<TagKey<DimensionType>, Holder<DimensionType>>> dimensions,
+                         Optional<List<String>> requiredMods)
+    {
+        this.temperatures = temperatures;
+        this.dimensions = dimensions;
+        this.requiredMods = requiredMods;
+    }
+
     public static final Codec<DepthTempData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             TempRegion.CODEC.listOf().fieldOf("regions").forGetter(DepthTempData::temperatures),
             ConfigHelper.tagOrHolderCodec(Registry.DIMENSION_TYPE_REGISTRY, DimensionType.CODEC).listOf().fieldOf("dimensions").forGetter(DepthTempData::dimensions),
             Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(DepthTempData::requiredMods)
     ).apply(instance, DepthTempData::new));
+
+    public List<TempRegion> temperatures()
+    {   return temperatures;
+    }
+    public List<Either<TagKey<DimensionType>, Holder<DimensionType>>> dimensions()
+    {   return dimensions;
+    }
+    public Optional<List<String>> requiredMods()
+    {   return requiredMods;
+    }
 
     public boolean withinBounds(Level level, BlockPos pos)
     {
@@ -63,11 +85,6 @@ public record DepthTempData(List<TempRegion> temperatures, List<Either<TagKey<Di
     @Override
     public Codec<DepthTempData> getCodec()
     {   return CODEC;
-    }
-
-    @Override
-    public String toString()
-    {   return this.asString();
     }
 
     @Override

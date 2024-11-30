@@ -19,9 +19,24 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Optional;
 
-public record StructureTempData(List<Either<TagKey<ConfiguredStructureFeature<?, ?>>, Holder<ConfiguredStructureFeature<?, ?>>>> structures, double temperature,
-                                Temperature.Units units, boolean isOffset, Optional<List<String>> requiredMods) implements ConfigData<StructureTempData>, IForgeRegistryEntry<StructureTempData>
+public class StructureTempData extends ConfigData implements IForgeRegistryEntry<StructureTempData>
 {
+    List<Either<TagKey<ConfiguredStructureFeature<?, ?>>, Holder<ConfiguredStructureFeature<?, ?>>>> structures;
+    double temperature;
+    Temperature.Units units;
+    boolean isOffset;
+    Optional<List<String>> requiredMods;
+
+    public StructureTempData(List<Either<TagKey<ConfiguredStructureFeature<?, ?>>, Holder<ConfiguredStructureFeature<?, ?>>>> structures, double temperature,
+                             Temperature.Units units, boolean isOffset, Optional<List<String>> requiredMods)
+    {
+        this.structures = structures;
+        this.temperature = temperature;
+        this.units = units;
+        this.isOffset = isOffset;
+        this.requiredMods = requiredMods;
+    }
+
     public StructureTempData(Holder<ConfiguredStructureFeature<?, ?>> structure, double temperature, boolean isOffset, Temperature.Units units)
     {   this(List.of(Either.right(structure)), temperature, units, !isOffset, Optional.empty());
     }
@@ -36,11 +51,27 @@ public record StructureTempData(List<Either<TagKey<ConfiguredStructureFeature<?,
             Temperature.Units.CODEC.optionalFieldOf("units", Temperature.Units.MC).forGetter(StructureTempData::units),
             Codec.BOOL.optionalFieldOf("offset", false).forGetter(StructureTempData::isOffset),
             Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(StructureTempData::requiredMods)
-    ).apply(instance, (structures, temperature, units, isOffset, requiredMods) ->
-    {
-        double cTemp = Temperature.convert(temperature, units, Temperature.Units.MC, !isOffset);
-        return new StructureTempData(structures, cTemp, units, isOffset, requiredMods);
-    }));
+    ).apply(instance, StructureTempData::new));
+
+    public List<Either<TagKey<ConfiguredStructureFeature<?, ?>>, Holder<ConfiguredStructureFeature<?, ?>>>> structures()
+    {   return structures;
+    }
+    public double temperature()
+    {   return temperature;
+    }
+    public Temperature.Units units()
+    {   return units;
+    }
+    public boolean isOffset()
+    {   return isOffset;
+    }
+    public Optional<List<String>> requiredMods()
+    {   return requiredMods;
+    }
+
+    public double getTemperature()
+    {   return Temperature.convert(temperature, units, Temperature.Units.MC, isOffset);
+    }
 
     @Nullable
     public static StructureTempData fromToml(List<?> entry, boolean absolute, RegistryAccess registryAccess)
@@ -60,11 +91,6 @@ public record StructureTempData(List<Either<TagKey<ConfiguredStructureFeature<?,
     @Override
     public Codec<StructureTempData> getCodec()
     {   return CODEC;
-    }
-
-    @Override
-    public String toString()
-    {   return this.asString();
     }
 
     @Override

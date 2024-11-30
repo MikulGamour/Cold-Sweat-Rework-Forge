@@ -40,9 +40,9 @@ public class BiomeTempModifier extends TempModifier
             BlockPos entPos = entity.blockPosition();
 
             // In the case that the dimension temperature is overridden by config, use that and skip everything else
-            DimensionTempData dimTempOverride = ConfigSettings.DIMENSION_TEMPS.get(entity.level.registryAccess()).get(level.dimensionType());
+            DimensionTempData dimTempOverride = ConfigSettings.DIMENSION_TEMPS.get(entity.level.registryAccess()).get(level.dimensionTypeRegistration());
             if (dimTempOverride != null)
-            {   return temp -> temp + dimTempOverride.temperature();
+            {   return temp -> temp + dimTempOverride.getTemperature();
             }
 
             // If there's a temperature structure here, ignore biome temp
@@ -89,9 +89,9 @@ public class BiomeTempModifier extends TempModifier
             worldTemp /= Math.max(1, biomeCount);
 
             // Add dimension offset, if present
-            DimensionTempData dimTempOffsetConf = ConfigSettings.DIMENSION_OFFSETS.get(entity.level.registryAccess()).get(level.dimensionType());
+            DimensionTempData dimTempOffsetConf = ConfigSettings.DIMENSION_OFFSETS.get(entity.level.registryAccess()).get(level.dimensionTypeRegistration());
             if (dimTempOffsetConf != null)
-            {   worldTemp += dimTempOffsetConf.temperature();
+            {   worldTemp += dimTempOffsetConf.getTemperature();
             }
 
             // Add structure offset, if present
@@ -107,11 +107,11 @@ public class BiomeTempModifier extends TempModifier
 
     public static Pair<Double, Double> getStructureTemp(Level level, BlockPos pos)
     {
-        ConfiguredStructureFeature<?, ?> structure = WorldHelper.getStructureAt(level, pos);
+        Holder<ConfiguredStructureFeature<?, ?>> structure = WorldHelper.getStructureAt(level, pos);
         if (structure == null) return Pair.of(null, 0d);
 
-        Double strucTemp = CSMath.getIfNotNull(ConfigSettings.STRUCTURE_TEMPS.get(level.registryAccess()).get(structure), StructureTempData::temperature, null);
-        Double strucOffset = CSMath.getIfNotNull(ConfigSettings.STRUCTURE_OFFSETS.get(level.registryAccess()).get(structure), StructureTempData::temperature, 0d);
+        Double strucTemp = CSMath.getIfNotNull(ConfigSettings.STRUCTURE_TEMPS.get(level.registryAccess()).get(structure), StructureTempData::getTemperature, null);
+        Double strucOffset = CSMath.getIfNotNull(ConfigSettings.STRUCTURE_OFFSETS.get(level.registryAccess()).get(structure), StructureTempData::getTemperature, 0d);
 
         return Pair.of(strucTemp, strucOffset);
     }

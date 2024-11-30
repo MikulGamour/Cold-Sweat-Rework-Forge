@@ -16,6 +16,7 @@ import com.momosoftworks.coldsweat.compat.CompatManager;
 import com.momosoftworks.coldsweat.core.init.TempModifierInit;
 import com.momosoftworks.coldsweat.data.ModRegistries;
 import com.momosoftworks.coldsweat.data.codec.configuration.*;
+import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.data.codec.requirement.BlockRequirement;
 import com.momosoftworks.coldsweat.data.tag.ModBlockTags;
 import com.momosoftworks.coldsweat.data.tag.ModDimensionTags;
@@ -59,7 +60,7 @@ import java.util.stream.Collectors;
 @Mod.EventBusSubscriber
 public class ConfigLoadingHandler
 {
-    public static final Multimap<ResourceKey<Registry<?>>, RemoveRegistryData<?>> REMOVED_REGISTRIES = new FastMultiMap<>();
+    public static final Multimap<ResourceKey<Registry<? extends ConfigData>>, RemoveRegistryData<?>> REMOVED_REGISTRIES = new FastMultiMap<>();
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void loadConfigs(ServerConfigsLoadedEvent event)
@@ -68,7 +69,7 @@ public class ConfigLoadingHandler
         BlockTempRegistry.flush();
 
         RegistryAccess registryAccess = event.getServer().registryAccess();
-        Multimap<ResourceKey<Registry<?>>, Holder<?>> registries = new FastMultiMap<>();
+        Multimap<ResourceKey<Registry<? extends ConfigData>>, Holder<? extends ConfigData>> registries = new FastMultiMap<>();
 
         // User JSON configs (config folder)
         ColdSweat.LOGGER.info("Loading registries from configs...");
@@ -103,7 +104,7 @@ public class ConfigLoadingHandler
     /**
      * Loads JSON-based configs from data resources
      */
-    public static Multimap<ResourceKey<Registry<?>>, Holder<?>> collectDataRegistries(RegistryAccess registryAccess)
+    public static Multimap<ResourceKey<Registry<? extends ConfigData>>, Holder<? extends ConfigData>> collectDataRegistries(RegistryAccess registryAccess)
     {
         if (registryAccess == null)
         {   ColdSweat.LOGGER.error("Failed to load registries from null RegistryAccess");
@@ -164,10 +165,10 @@ public class ConfigLoadingHandler
         /*
          Fetch JSON registries
         */
-        Multimap<ResourceKey<Registry<?>>, Holder<?>> registries = new FastMultiMap<>();
+        Multimap<ResourceKey<Registry<? extends ConfigData>>, Holder<? extends ConfigData>> registries = new FastMultiMap<>();
         for (Map.Entry<String, ModRegistries.RegistryHolder<?>> entry : ModRegistries.getRegistries().entrySet())
         {
-            ResourceKey<Registry<?>> key = (ResourceKey) entry.getValue().registry();
+            ResourceKey<Registry<? extends ConfigData>> key = (ResourceKey) entry.getValue().registry();
             registries.putAll(key, registryAccess.registryOrThrow(key).holders().collect(Collectors.toSet()));
         }
         return registries;
@@ -176,7 +177,7 @@ public class ConfigLoadingHandler
     /**
      * Loads JSON-based configs from the configs folder
      */
-    public static Multimap<ResourceKey<Registry<?>>, Holder<?>> collectUserRegistries(RegistryAccess registryAccess)
+    public static Multimap<ResourceKey<Registry<? extends ConfigData>>, Holder<? extends ConfigData>> collectUserRegistries(RegistryAccess registryAccess)
     {
         if (registryAccess == null)
         {   ColdSweat.LOGGER.error("Failed to load registries from null RegistryAccess");
@@ -186,23 +187,28 @@ public class ConfigLoadingHandler
         /*
          Parse user-defined JSON data from the configs folder
         */
-        Multimap<ResourceKey<Registry<?>>, Holder<?>> registries = new FastMultiMap<>();
+        Multimap<ResourceKey<Registry<? extends ConfigData>>, Holder<? extends ConfigData>> registries = new FastMultiMap<>();
         for (Map.Entry<String, ModRegistries.RegistryHolder<?>> entry : ModRegistries.getRegistries().entrySet())
         {
-            ResourceKey<Registry<?>> key = (ResourceKey) entry.getValue().registry();
+            ResourceKey<Registry<? extends ConfigData>> key = (ResourceKey) entry.getValue().registry();
             Codec<?> codec = entry.getValue().codec();
             registries.putAll(key, parseConfigData((ResourceKey) key, (Codec) codec, registryAccess));
         }
         return registries;
     }
 
-    private static void logAndAddRegistries(RegistryAccess registryAccess, Multimap<ResourceKey<Registry<?>>, Holder<?>> registries)
+    private static void logAndAddRegistries(RegistryAccess registryAccess, Multimap<ResourceKey<Registry<? extends ConfigData>>, Holder<? extends ConfigData>> registries)
     {
         // Ensure default registry entries load last
         setDefaultRegistryPriority(registries);
 
         // Load registry removals
         loadRegistryRemovals(registryAccess);
+
+        // Mark holders as "JSON"
+        for (Holder<? extends ConfigData> holder : registries.values())
+        {   holder.value().setType(ConfigData.Type.JSON);
+        }
 
         // Fire registry creation event
         CreateRegistriesEvent event = new CreateRegistriesEvent(registryAccess, registries);
@@ -275,11 +281,11 @@ public class ConfigLoadingHandler
         }
     }
 
-    private static void setDefaultRegistryPriority(Multimap<ResourceKey<Registry<?>>, Holder<?>> registries)
+    private static void setDefaultRegistryPriority(Multimap<ResourceKey<Registry<? extends ConfigData>>, Holder<? extends ConfigData>> registries)
     {
-        for (ResourceKey<Registry<?>> key : registries.keySet())
+        for (ResourceKey<Registry<? extends ConfigData>> key : registries.keySet())
         {
-            List<Holder<?>> sortedHolders = new ArrayList<>(registries.get(key));
+            List<Holder<? extends ConfigData>> sortedHolders = new ArrayList<>(registries.get(key));
             sortedHolders.sort(Comparator.comparing(holder ->
             {   return holder.unwrapKey().map(k -> k.location().getPath().equals("default") ? 1 : 0).orElse(0);
             }));
@@ -297,40 +303,40 @@ public class ConfigLoadingHandler
         removals.forEach(holder ->
         {
             RemoveRegistryData<?> data = holder.value();
-            ResourceKey<Registry<?>> key = data.registry();
+            ResourceKey<Registry<? extends ConfigData>> key = (ResourceKey) data.registry();
             REMOVED_REGISTRIES.put(key, data);
         });
     }
 
-    private static void removeRegistries(Multimap<ResourceKey<Registry<?>>, Holder<?>> registries)
+    private static void removeRegistries(Multimap<ResourceKey<Registry<? extends ConfigData>>, Holder<? extends ConfigData>> registries)
     {
         ColdSweat.LOGGER.info("Handling registry removals...");
-        for (Map.Entry<ResourceKey<Registry<?>>, Collection<RemoveRegistryData<?>>> entry : REMOVED_REGISTRIES.asMap().entrySet())
+        for (Map.Entry<ResourceKey<Registry<? extends ConfigData>>, Collection<RemoveRegistryData<? extends ConfigData>>> entry : REMOVED_REGISTRIES.asMap().entrySet())
         {
-            removeEntries((Collection) entry.getValue(), registries.get(entry.getKey()));
+            removeEntries((Collection) entry.getValue(), (Collection) registries.get(entry.getKey()));
         }
     }
 
-    private static <T> void removeEntries(Collection<RemoveRegistryData<T>> removals, Collection<T> registry)
+    private static <T extends ConfigData> void removeEntries(Collection<RemoveRegistryData<T>> removals, Collection<T> registry)
     {
         for (RemoveRegistryData<T> data : removals)
-        {   registry.removeIf(entry -> data.matches(((Holder<T>) entry).value()));
+        {   registry.removeIf(data::matches);
         }
     }
 
-    public static <T> Collection<T> removeEntries(Collection<T> registries, ResourceKey<Registry<T>> registryName)
+    public static <T extends ConfigData> Collection<T> removeEntries(Collection<T> registries, ResourceKey<Registry<T>> registryName)
     {
         REMOVED_REGISTRIES.get((ResourceKey) registryName).forEach(data ->
         {
             RemoveRegistryData<T> removeData = ((RemoveRegistryData<T>) data);
-            if (removeData.getRegistry() == registryName)
+            if (removeData.registry() == registryName)
             {   registries.removeIf(removeData::matches);
             }
         });
         return registries;
     }
 
-    public static <T> boolean isRemoved(T entry, ResourceKey<Registry<T>> registryName)
+    public static <T extends ConfigData> boolean isRemoved(T entry, ResourceKey<Registry<T>> registryName)
     {
         return REMOVED_REGISTRIES.get((ResourceKey) registryName).stream().anyMatch(data -> ((RemoveRegistryData<T>) data).matches(entry));
     }
@@ -483,15 +489,15 @@ public class ConfigLoadingHandler
                 }
             }
             Block[] blocks = RegistryHelper.mapForgeRegistryTagList(ForgeRegistries.BLOCKS, blockTempData.blocks()).toArray(Block[]::new);
-            BlockTemp blockTemp = new BlockTemp(blockTempData.temperature() < 0 ? -blockTempData.maxEffect() : -Double.MAX_VALUE,
-                                                blockTempData.temperature() > 0 ? blockTempData.maxEffect() : Double.MAX_VALUE,
-                                                blockTempData.minTemp(),
-                                                blockTempData.maxTemp(),
+            BlockTemp blockTemp = new BlockTemp(blockTempData.getTemperature() < 0 ? -blockTempData.getMaxEffect() : -Double.MAX_VALUE,
+                                                blockTempData.getTemperature() > 0 ? blockTempData.getMaxEffect() : Double.MAX_VALUE,
+                                                blockTempData.getMinTemp(),
+                                                blockTempData.getMaxTemp(),
                                                 blockTempData.range(),
                                                 blockTempData.fade(),
                                                 blocks)
             {
-                final double temperature = blockTempData.temperature();
+                final double temperature = blockTempData.getTemperature();
                 final List<BlockRequirement> conditions = blockTempData.conditions();
 
                 @Override

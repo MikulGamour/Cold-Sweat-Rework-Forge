@@ -1,36 +1,57 @@
 package com.momosoftworks.coldsweat.data.codec.impl;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
-import com.google.gson.JsonElement;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
+import com.momosoftworks.coldsweat.util.serialization.NbtSerializable;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.util.UUID;
 
-public interface ConfigData<T>
+public abstract class ConfigData implements NbtSerializable
 {
-    BiMap<UUID, ConfigData<?>> IDENTIFIABLES = HashBiMap.create();
+    private UUID id;
+    private Type type;
 
-    Codec<T> getCodec();
+    public abstract Codec<? extends ConfigData> getCodec();
 
-    default UUID getId()
+    public UUID getId()
     {
-        UUID id = IDENTIFIABLES.inverse().get(this);
         if (id == null)
         {   id = UUID.randomUUID();
-            setId(id);
         }
         return id;
     }
 
-    @ApiStatus.Internal
-    default void setId(UUID id)
-    {   IDENTIFIABLES.put(id, this);
+    public Type getType()
+    {   return type;
     }
 
-    default String asString()
-    {   return this.getClass().getSimpleName() + getCodec().encodeStart(JsonOps.INSTANCE, (T) this).result().map(JsonElement::toString).orElse("");
+    @ApiStatus.Internal
+    public void setId(UUID id)
+    {   this.id = id;
+    }
+
+    @ApiStatus.Internal
+    public void setType(Type type)
+    {   this.type = type;
+    }
+
+    @Override
+    public CompoundTag serialize()
+    {   return (CompoundTag) ((Codec<ConfigData>) this.getCodec()).encodeStart(NbtOps.INSTANCE, this).result().orElse(new CompoundTag());
+    }
+
+    @Override
+    public String toString()
+    {   return this.getClass().getSimpleName() + ((Codec) getCodec()).encodeStart(JsonOps.INSTANCE, this).result().map(Object::toString).orElse("");
+    }
+
+    public enum Type
+    {
+        TOML,
+        JSON,
+        KUBEJS
     }
 }
