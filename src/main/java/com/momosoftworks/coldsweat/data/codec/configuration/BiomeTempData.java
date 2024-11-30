@@ -18,9 +18,26 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
-public record BiomeTempData(List<Either<TagKey<Biome>, Holder<Biome>>> biomes, double min, double max,
-                            Temperature.Units units, boolean isOffset, Optional<List<String>> requiredMods) implements ConfigData<BiomeTempData>
+public class BiomeTempData extends ConfigData
 {
+    final List<Either<TagKey<Biome>, Holder<Biome>>> biomes;
+    final double min;
+    final double max;
+    final Temperature.Units units;
+    final boolean isOffset;
+    final Optional<List<String>> requiredMods;
+
+    public BiomeTempData(List<Either<TagKey<Biome>, Holder<Biome>>> biomes, double min, double max,
+                         Temperature.Units units, boolean isOffset, Optional<List<String>> requiredMods)
+    {
+        this.biomes = biomes;
+        this.min = min;
+        this.max = max;
+        this.units = units;
+        this.isOffset = isOffset;
+        this.requiredMods = requiredMods;
+    }
+
     public BiomeTempData(Holder<Biome> biome, double min, double max, Temperature.Units units, boolean absolute)
     {   this(List.of(Either.right(biome)), min, max, units, !absolute, Optional.empty());
     }
@@ -35,15 +52,33 @@ public record BiomeTempData(List<Either<TagKey<Biome>, Holder<Biome>>> biomes, d
                 either -> either.map(left -> left, right -> right), Either::right).forGetter(BiomeTempData::min),
             Codec.mapEither(Codec.DOUBLE.fieldOf("temperature"), Codec.DOUBLE.fieldOf("max_temp")).xmap(
                 either -> either.map(left -> left, right -> right), Either::right).forGetter(BiomeTempData::max),
-            Temperature.Units.CODEC.optionalFieldOf("units", Temperature.Units.MC).forGetter(BiomeTempData::units),
+            com.momosoftworks.coldsweat.api.util.Temperature.Units.CODEC.optionalFieldOf("units", Temperature.Units.MC).forGetter(BiomeTempData::units),
             Codec.BOOL.optionalFieldOf("is_offset", false).forGetter(BiomeTempData::isOffset),
             Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(BiomeTempData::requiredMods)
     ).apply(instance, BiomeTempData::new));
 
+    public List<Either<TagKey<Biome>, Holder<Biome>>> biomes()
+    {   return biomes;
+    }
+    public double min()
+    {   return min;
+    }
+    public double max()
+    {   return max;
+    }
+    public Temperature.Units units()
+    {   return units;
+    }
+    public boolean isOffset()
+    {   return isOffset;
+    }
+    public Optional<List<String>> requiredMods()
+    {   return requiredMods;
+    }
+
     public double minTemp()
     {   return Temperature.convert(min, units, Temperature.Units.MC, !this.isOffset);
     }
-
     public double maxTemp()
     {   return Temperature.convert(max, units, Temperature.Units.MC, !this.isOffset);
     }
@@ -75,11 +110,6 @@ public record BiomeTempData(List<Either<TagKey<Biome>, Holder<Biome>>> biomes, d
     @Override
     public Codec<BiomeTempData> getCodec()
     {   return CODEC;
-    }
-
-    @Override
-    public String toString()
-    {   return this.asString();
     }
 
     @Override

@@ -11,6 +11,7 @@ import com.momosoftworks.coldsweat.data.codec.requirement.NbtRequirement;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
 import net.minecraft.core.registries.BuiltInRegistries;
 import com.momosoftworks.coldsweat.util.serialization.NBTHelper;
+import com.momosoftworks.coldsweat.util.serialization.RegistryHelper;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.block.Block;
@@ -18,10 +19,36 @@ import net.minecraft.world.level.block.Block;
 import javax.annotation.Nullable;
 import java.util.*;
 
-public record BlockTempData(List<Either<TagKey<Block>, Block>> blocks, double temperature, double range,
-                            double maxEffect, boolean fade, double maxTemp, double minTemp, Temperature.Units units,
-                            List<BlockRequirement> conditions, Optional<List<String>> requiredMods) implements ConfigData<BlockTempData>
+public class BlockTempData extends ConfigData
 {
+    final List<Either<TagKey<Block>, Block>> blocks;
+    final double temperature;
+    final double range;
+    final double maxEffect;
+    final boolean fade;
+    final double maxTemp;
+    final double minTemp;
+    final Temperature.Units units;
+    final List<BlockRequirement> conditions;
+    final Optional<List<String>> requiredMods;
+
+    public BlockTempData(List<Either<TagKey<Block>, Block>> blocks, double temperature, double range,
+                         double maxEffect, boolean fade, double maxTemp, double minTemp,
+                         Temperature.Units units, List<BlockRequirement> conditions,
+                         Optional<List<String>> requiredMods)
+    {
+        this.blocks = blocks;
+        this.temperature = temperature;
+        this.range = range;
+        this.maxEffect = maxEffect;
+        this.fade = fade;
+        this.maxTemp = maxTemp;
+        this.minTemp = minTemp;
+        this.units = units;
+        this.conditions = conditions;
+        this.requiredMods = requiredMods;
+    }
+
     public BlockTempData(Collection<Block> blocks, double temperature, double range, double maxEffect, boolean fade, double maxTemp,
                          double minTemp, Temperature.Units units, List<BlockRequirement> conditions)
     {
@@ -52,14 +79,51 @@ public record BlockTempData(List<Either<TagKey<Block>, Block>> blocks, double te
             Temperature.Units.CODEC.optionalFieldOf("units", Temperature.Units.MC).forGetter(BlockTempData::units),
             BlockRequirement.CODEC.listOf().optionalFieldOf("conditions", List.of()).forGetter(BlockTempData::conditions),
             Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(BlockTempData::requiredMods)
-    ).apply(instance, (blocks, temperature, range, maxEffect, fade, maxTemp, minTemp, units, conditions, requiredMods) ->
-    {
-        double cTemp = Temperature.convert(temperature, units, Temperature.Units.MC, false);
-        double cMaxEffect = Temperature.convert(maxEffect, units, Temperature.Units.MC, false);
-        double cMaxTemp = Temperature.convert(maxTemp, units, Temperature.Units.MC, false);
-        double cMinTemp = Temperature.convert(minTemp, units, Temperature.Units.MC, false);
-        return new BlockTempData(blocks, cTemp, range, cMaxEffect, fade, cMaxTemp, cMinTemp, units, conditions, requiredMods);
-    }));
+    ).apply(instance, BlockTempData::new));
+
+    public List<Either<TagKey<Block>, Block>> blocks()
+    {   return blocks;
+    }
+    public double temperature()
+    {   return temperature;
+    }
+    public double range()
+    {   return range;
+    }
+    public double maxEffect()
+    {   return maxEffect;
+    }
+    public boolean fade()
+    {   return fade;
+    }
+    public double maxTemp()
+    {   return maxTemp;
+    }
+    public double minTemp()
+    {   return minTemp;
+    }
+    public Temperature.Units units()
+    {   return units;
+    }
+    public List<BlockRequirement> conditions()
+    {   return conditions;
+    }
+    public Optional<List<String>> requiredMods()
+    {   return requiredMods;
+    }
+
+    public double getTemperature()
+    {   return Temperature.convert(temperature, units, Temperature.Units.MC, false);
+    }
+    public double getMaxEffect()
+    {   return Temperature.convert(maxEffect, units, Temperature.Units.MC, false);
+    }
+    public double getMaxTemp()
+    {   return Temperature.convert(maxTemp, units, Temperature.Units.MC, false);
+    }
+    public double getMinTemp()
+    {   return Temperature.convert(minTemp, units, Temperature.Units.MC, false);
+    }
 
     @Nullable
     public static BlockTempData fromToml(List<?> entry)
@@ -71,7 +135,11 @@ public record BlockTempData(List<Either<TagKey<Block>, Block>> blocks, double te
         String[] blockIDs = ((String) entry.get(0)).split(",");
 
         // Parse block IDs into blocks
-        Block[] effectBlocks = Arrays.stream(blockIDs).map(ConfigHelper::getBlocks).flatMap(List::stream).toArray(Block[]::new);
+        Block[] effectBlocks = Arrays.stream(blockIDs)
+                               .map(ConfigHelper::getBlocks)
+                               .map(blocks -> RegistryHelper.mapBuiltinRegistryTagList(BuiltInRegistries.BLOCK, blocks))
+                               .flatMap(List::stream)
+                               .toArray(Block[]::new);
         if (effectBlocks.length == 0)
         {   return null;
         }
@@ -87,13 +155,13 @@ public record BlockTempData(List<Either<TagKey<Block>, Block>> blocks, double te
                                  : Double.MAX_VALUE;
 
         // Get block predicate
-        BlockRequirement.StateRequirement blockPredicates = entry.size() > 4 && entry.get(4) instanceof String str && !str.isEmpty()
-                                                            ? BlockRequirement.StateRequirement.fromToml(str.split(","), effectBlocks[0])
-                                                            : BlockRequirement.StateRequirement.NONE;
+        Optional<BlockRequirement.StateRequirement> blockPredicates = entry.size() > 4 && entry.get(4) instanceof String str && !str.isEmpty()
+                                                                      ? Optional.of(BlockRequirement.StateRequirement.fromToml(str.split(","), effectBlocks[0]))
+                                                                      : Optional.empty();
 
-        NbtRequirement tag = entry.size() > 5 && entry.get(5) instanceof String str && !str.isEmpty()
-                             ? new NbtRequirement(NBTHelper.parseCompoundNbt(str))
-                             : new NbtRequirement();
+        Optional<NbtRequirement> nbtRequirement = entry.size() > 5 && entry.get(5) instanceof String str && !str.isEmpty()
+                                                  ? Optional.of(new NbtRequirement(NBTHelper.parseCompoundNbt(str)))
+                                                  : Optional.empty();
 
         double tempLimit = entry.size() > 6
                            ? ((Number) entry.get(6)).doubleValue()
@@ -104,7 +172,7 @@ public record BlockTempData(List<Either<TagKey<Block>, Block>> blocks, double te
         double maxTemperature = blockTemp > 0 ? tempLimit : Double.MAX_VALUE;
         double minTemperature = blockTemp < 0 ? tempLimit : -Double.MAX_VALUE;
 
-        BlockRequirement blockRequirement = new BlockRequirement(Optional.empty(), Optional.of(blockPredicates), Optional.of(tag),
+        BlockRequirement blockRequirement = new BlockRequirement(Optional.empty(), blockPredicates, nbtRequirement,
                                                                  Optional.empty(), Optional.empty(), Optional.empty(), false);
 
         return new BlockTempData(Arrays.asList(effectBlocks), blockTemp, blockRange, maxEffect, true, maxTemperature, minTemperature, Temperature.Units.MC, List.of(blockRequirement));
@@ -113,11 +181,6 @@ public record BlockTempData(List<Either<TagKey<Block>, Block>> blocks, double te
     @Override
     public Codec<BlockTempData> getCodec()
     {   return CODEC;
-    }
-
-    @Override
-    public String toString()
-    {   return this.asString();
     }
 
     @Override

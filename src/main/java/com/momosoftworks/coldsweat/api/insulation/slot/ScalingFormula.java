@@ -9,10 +9,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.ArrayList;
-import java.util.EnumMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public abstract class ScalingFormula implements NbtSerializable
 {
@@ -60,6 +57,10 @@ public abstract class ScalingFormula implements NbtSerializable
             slots.put(EquipmentSlot.FEET, feet);
         }
 
+        private Static()
+        {   super(Type.STATIC);
+        }
+
         @Override
         public int getSlots(EquipmentSlot slot, ItemStack stack)
         {   return slots.getOrDefault(slot, 0);
@@ -68,16 +69,18 @@ public abstract class ScalingFormula implements NbtSerializable
         @Override
         public List<? extends Number> getValues()
         {
-            ArrayList<Integer> values = new ArrayList<>();
-            values.add(0, slots.get(EquipmentSlot.HEAD));
-            values.add(1, slots.get(EquipmentSlot.CHEST));
-            values.add(2, slots.get(EquipmentSlot.LEGS));
-            values.add(3, slots.get(EquipmentSlot.FEET));
-            return values;
+            return Arrays.stream(EquipmentSlot.values()).filter(EquipmentSlot::isArmor).map(slots::get).toList();
         }
 
         public static Static deserialize(CompoundTag nbt)
-        {   return new Static(nbt.getInt("head"), nbt.getInt("body"), nbt.getInt("legs"), nbt.getInt("feet"));
+        {
+            Static instance = new Static();
+            for (EquipmentSlot slot : EquipmentSlot.values())
+            {   if (slot.isArmor())
+                {   instance.slots.put(slot, nbt.getInt(slot.getName()));
+                }
+            }
+            return instance;
         }
 
         @Override

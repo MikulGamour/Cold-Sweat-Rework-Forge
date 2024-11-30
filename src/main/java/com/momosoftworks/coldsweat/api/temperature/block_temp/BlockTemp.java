@@ -8,6 +8,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
+import javax.annotation.Nullable;
 import java.util.Set;
 
 public abstract class BlockTemp
@@ -20,7 +21,7 @@ public abstract class BlockTemp
     private final double range;
     private final boolean fade;
 
-    public abstract double getTemperature(Level level, LivingEntity entity, BlockState state, BlockPos pos, double distance);
+    public abstract double getTemperature(Level level, @Nullable LivingEntity entity, BlockState state, BlockPos pos, double distance);
 
     public boolean isValid(Level level, BlockPos pos, BlockState state)
     {   return true;

@@ -1,5 +1,6 @@
 package com.momosoftworks.coldsweat.data.codec.configuration;
 
+import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
@@ -10,9 +11,8 @@ import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
 import com.momosoftworks.coldsweat.data.codec.requirement.NbtRequirement;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
 import com.momosoftworks.coldsweat.util.serialization.NBTHelper;
-import com.momosoftworks.coldsweat.util.serialization.NbtSerializable;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -21,9 +21,24 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
 
-public record FoodData(Double temperature, ItemRequirement data, int duration, EntityRequirement entityRequirement,
-                       Optional<List<String>> requiredMods) implements NbtSerializable, RequirementHolder, ConfigData<FoodData>
+public class FoodData extends ConfigData implements RequirementHolder
 {
+    final Double temperature;
+    final ItemRequirement data;
+    final int duration;
+    final EntityRequirement entityRequirement;
+    final Optional<List<String>> requiredMods;
+
+    public FoodData(Double temperature, ItemRequirement data, int duration,
+                    EntityRequirement entityRequirement, Optional<List<String>> requiredMods)
+    {
+        this.temperature = temperature;
+        this.data = data;
+        this.duration = duration;
+        this.entityRequirement = entityRequirement;
+        this.requiredMods = requiredMods;
+    }
+
     public FoodData(Double temperature, ItemRequirement data, int duration, EntityRequirement entityRequirement)
     {   this(temperature, data, duration, entityRequirement, Optional.empty());
     }
@@ -35,6 +50,22 @@ public record FoodData(Double temperature, ItemRequirement data, int duration, E
             EntityRequirement.getCodec().optionalFieldOf("entity", EntityRequirement.NONE).forGetter(FoodData::entityRequirement),
             Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(FoodData::requiredMods)
     ).apply(instance, FoodData::new));
+
+    public Double temperature()
+    {   return temperature;
+    }
+    public ItemRequirement data()
+    {   return data;
+    }
+    public int duration()
+    {   return duration;
+    }
+    public EntityRequirement entityRequirement()
+    {   return entityRequirement;
+    }
+    public Optional<List<String>> requiredMods()
+    {   return requiredMods;
+    }
 
     @Override
     public boolean test(ItemStack stack)
@@ -53,7 +84,7 @@ public record FoodData(Double temperature, ItemRequirement data, int duration, E
         {   return null;
         }
         String[] itemIDs = ((String) entry.get(0)).split(",");
-        List<Item> items = ConfigHelper.getItems(itemIDs);
+        List<Either<TagKey<Item>, Item>> items = ConfigHelper.getItems(itemIDs);
         if (items.isEmpty())
         {   return null;
         }
@@ -65,26 +96,12 @@ public record FoodData(Double temperature, ItemRequirement data, int duration, E
         int duration = entry.size() > 3 ? ((Number) entry.get(3)).intValue() : -1;
         ItemRequirement itemRequirement = new ItemRequirement(items, componentsRequirement);
 
-        return new FoodData(temperature, itemRequirement, duration, EntityRequirement.NONE, Optional.empty());
-    }
-
-    @Override
-    public CompoundTag serialize()
-    {   return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).result().orElseGet(CompoundTag::new);
-    }
-
-    public static FoodData deserialize(CompoundTag tag)
-    {   return CODEC.decode(NbtOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalStateException("Failed to deserialize FuelData")).getFirst();
+        return new FoodData(temperature, itemRequirement, duration, EntityRequirement.NONE);
     }
 
     @Override
     public Codec<FoodData> getCodec()
     {   return CODEC;
-    }
-
-    @Override
-    public String toString()
-    {   return this.asString();
     }
 
     @Override

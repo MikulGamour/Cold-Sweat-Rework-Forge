@@ -6,7 +6,6 @@ import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.data.codec.impl.RequirementHolder;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
-import com.momosoftworks.coldsweat.data.codec.requirement.sub_type.EntitySubRequirement;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
 import net.minecraft.world.entity.Entity;
@@ -16,10 +15,24 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
 
-public record EntityTempData(EntityRequirement entity, double temperature, double range,
-                             Temperature.Units units,
-                             Optional<List<String>> requiredMods) implements RequirementHolder, ConfigData<EntityTempData>
+public class EntityTempData extends ConfigData implements RequirementHolder
 {
+    final EntityRequirement entity;
+    final double temperature;
+    final double range;
+    final Temperature.Units units;
+    final Optional<List<String>> requiredMods;
+
+    public EntityTempData(EntityRequirement entity, double temperature, double range,
+                          Temperature.Units units, Optional<List<String>> requiredMods)
+    {
+        this.entity = entity;
+        this.temperature = temperature;
+        this.range = range;
+        this.units = units;
+        this.requiredMods = requiredMods;
+    }
+
     public static final Codec<EntityTempData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             EntityRequirement.getCodec().fieldOf("entity").forGetter(EntityTempData::entity),
             Codec.DOUBLE.fieldOf("temperature").forGetter(EntityTempData::temperature),
@@ -31,6 +44,22 @@ public record EntityTempData(EntityRequirement entity, double temperature, doubl
         double cTemp = Temperature.convert(temperature, units, Temperature.Units.MC, false);
         return new EntityTempData(entity, cTemp, range, units, requiredMods);
     }));
+
+    public EntityRequirement entity()
+    {   return entity;
+    }
+    public double temperature()
+    {   return temperature;
+    }
+    public double range()
+    {   return range;
+    }
+    public Temperature.Units units()
+    {   return units;
+    }
+    public Optional<List<String>> requiredMods()
+    {   return requiredMods;
+    }
 
     @Nullable
     public static EntityTempData fromToml(List<?> entry)
@@ -72,11 +101,6 @@ public record EntityTempData(EntityRequirement entity, double temperature, doubl
     @Override
     public Codec<EntityTempData> getCodec()
     {   return CODEC;
-    }
-
-    @Override
-    public String toString()
-    {   return this.asString();
     }
 
     @Override

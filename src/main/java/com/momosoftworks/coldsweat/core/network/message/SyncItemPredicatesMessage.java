@@ -195,7 +195,7 @@ public class SyncItemPredicatesMessage implements CustomPacketPayload
         configSetting.get().get(stack.getItem())
         .forEach(data ->
         {
-            UUID id = ((ConfigData<?>) data).getId();
+            UUID id = ((ConfigData) data).getId();
             configMap.put(id, data.test(entity, stack));
         });
         this.predicateMap.putAll(configMap);

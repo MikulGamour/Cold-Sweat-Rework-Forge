@@ -1,5 +1,6 @@
 package com.momosoftworks.coldsweat.data.codec.configuration;
 
+import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.data.codec.requirement.ItemComponentsRequirement;
@@ -7,9 +8,7 @@ import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.data.codec.impl.RequirementHolder;
 import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
-import com.momosoftworks.coldsweat.util.serialization.NbtSerializable;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
+import net.minecraft.tags.TagKey;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -17,9 +16,21 @@ import net.minecraft.world.item.ItemStack;
 import javax.annotation.Nullable;
 import java.util.*;
 
-public record FuelData(FuelType type, Double fuel,
-                       ItemRequirement data, Optional<List<String>> requiredMods) implements NbtSerializable, RequirementHolder, ConfigData<FuelData>
+public class FuelData extends ConfigData implements RequirementHolder
 {
+    final FuelType type;
+    final Double fuel;
+    final ItemRequirement data;
+    final Optional<List<String>> requiredMods;
+
+    public FuelData(FuelType type, Double fuel, ItemRequirement data, Optional<List<String>> requiredMods)
+    {
+        this.type = type;
+        this.fuel = fuel;
+        this.data = data;
+        this.requiredMods = requiredMods;
+    }
+
     public FuelData(FuelType type, Double fuel, ItemRequirement data)
     {   this(type, fuel, data, Optional.empty());
     }
@@ -30,6 +41,19 @@ public record FuelData(FuelType type, Double fuel,
             ItemRequirement.CODEC.fieldOf("data").forGetter(FuelData::data),
             Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(FuelData::requiredMods)
     ).apply(instance, FuelData::new));
+
+    public FuelType type()
+    {   return type;
+    }
+    public Double fuel()
+    {   return fuel;
+    }
+    public ItemRequirement data()
+    {   return data;
+    }
+    public Optional<List<String>> requiredMods()
+    {   return requiredMods;
+    }
 
     @Override
     public boolean test(ItemStack stack)
@@ -43,32 +67,18 @@ public record FuelData(FuelType type, Double fuel,
         {   return null;
         }
         String[] itemIDs = ((String) entry.get(0)).split(",");
-        List<Item> items = ConfigHelper.getItems(itemIDs);
+        List<Either<TagKey<Item>, Item>> items = ConfigHelper.getItems(itemIDs);
         double fuel = ((Number) entry.get(1)).doubleValue();
         ItemComponentsRequirement componentsRequirement = entry.size() > 2
                                                           ? ItemComponentsRequirement.parse((String) entry.get(2))
                                                           : new ItemComponentsRequirement();
         ItemRequirement itemRequirement = new ItemRequirement(items, componentsRequirement);
-        return new FuelData(fuelType, fuel, itemRequirement, Optional.empty());
-    }
-
-    @Override
-    public CompoundTag serialize()
-    {   return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).result().orElseGet(CompoundTag::new);
-    }
-
-    public static FuelData deserialize(CompoundTag tag)
-    {   return CODEC.decode(NbtOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalStateException("Failed to deserialize FuelData")).getFirst();
+        return new FuelData(fuelType, fuel, itemRequirement, java.util.Optional.empty());
     }
 
     @Override
     public Codec<FuelData> getCodec()
     {   return CODEC;
-    }
-
-    @Override
-    public String toString()
-    {   return this.asString();
     }
 
     @Override

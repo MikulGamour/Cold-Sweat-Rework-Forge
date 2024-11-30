@@ -8,10 +8,7 @@ import com.momosoftworks.coldsweat.data.codec.impl.RequirementHolder;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
 import net.minecraft.core.registries.BuiltInRegistries;
-import com.momosoftworks.coldsweat.util.serialization.NbtSerializable;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -20,10 +17,24 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Optional;
 
-public record MountData(List<Either<TagKey<EntityType<?>>, EntityType<?>>> entities, double coldInsulation,
-                        double heatInsulation, EntityRequirement requirement,
-                        Optional<List<String>> requiredMods) implements NbtSerializable, RequirementHolder, ConfigData<MountData>
+public class MountData extends ConfigData implements RequirementHolder
 {
+    final List<Either<TagKey<EntityType<?>>, EntityType<?>>> entities;
+    final double coldInsulation;
+    final double heatInsulation;
+    final EntityRequirement requirement;
+    final Optional<List<String>> requiredMods;
+
+    public MountData(List<Either<TagKey<EntityType<?>>, EntityType<?>>> entities, double coldInsulation,
+                     double heatInsulation, EntityRequirement requirement, Optional<List<String>> requiredMods)
+    {
+        this.entities = entities;
+        this.coldInsulation = coldInsulation;
+        this.heatInsulation = heatInsulation;
+        this.requirement = requirement;
+        this.requiredMods = requiredMods;
+    }
+
     public MountData(List<EntityType<?>> entities, double coldInsulation, double heatInsulation, EntityRequirement requirement)
     {
         this(entities.stream().map(Either::<TagKey<EntityType<?>>, EntityType<?>>right).toList(),
@@ -34,9 +45,25 @@ public record MountData(List<Either<TagKey<EntityType<?>>, EntityType<?>>> entit
             ConfigHelper.tagOrBuiltinCodec(Registries.ENTITY_TYPE, BuiltInRegistries.ENTITY_TYPE).listOf().fieldOf("entities").forGetter(MountData::entities),
             Codec.DOUBLE.fieldOf("cold_insulation").forGetter(MountData::coldInsulation),
             Codec.DOUBLE.fieldOf("heat_insulation").forGetter(MountData::heatInsulation),
-            EntityRequirement.getCodec().fieldOf("entity").forGetter(MountData::requirement),
+            com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement.getCodec().fieldOf("entity").forGetter(MountData::requirement),
             Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(MountData::requiredMods)
     ).apply(instance, MountData::new));
+
+    public List<Either<TagKey<EntityType<?>>, EntityType<?>>> entities()
+    {   return entities;
+    }
+    public double coldInsulation()
+    {   return coldInsulation;
+    }
+    public double heatInsulation()
+    {   return heatInsulation;
+    }
+    public EntityRequirement requirement()
+    {   return requirement;
+    }
+    public Optional<List<String>> requiredMods()
+    {   return requiredMods;
+    }
 
     @Nullable
     public static MountData fromToml(List<?> entry)
@@ -53,7 +80,7 @@ public record MountData(List<Either<TagKey<EntityType<?>>, EntityType<?>>> entit
         if (entities.isEmpty())
         {   return null;
         }
-        return new MountData(entities, coldInsul, hotInsul, EntityRequirement.NONE);
+        return new MountData(entities, coldInsul, hotInsul, com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement.NONE);
     }
 
     @Override
@@ -62,22 +89,8 @@ public record MountData(List<Either<TagKey<EntityType<?>>, EntityType<?>>> entit
     }
 
     @Override
-    public CompoundTag serialize()
-    {   return (CompoundTag) CODEC.encodeStart(NbtOps.INSTANCE, this).result().orElseGet(CompoundTag::new);
-    }
-
-    public static MountData deserialize(CompoundTag tag)
-    {   return CODEC.decode(NbtOps.INSTANCE, tag).result().orElseThrow(() -> new IllegalStateException("Failed to deserialize MountData")).getFirst();
-    }
-
-    @Override
     public Codec<MountData> getCodec()
     {   return CODEC;
-    }
-
-    @Override
-    public String toString()
-    {   return this.asString();
     }
 
     @Override
