@@ -46,7 +46,7 @@ public class CommandInit
 
     public static final DeferredRegister<ArgumentTypeInfo<?, ?>> ARGUMENTS = DeferredRegister.create(ForgeRegistries.COMMAND_ARGUMENT_TYPES, ColdSweat.MOD_ID);
 
-    RegistryObject<ArgumentTypeInfo<?, ?>> TEMP_MODIFIER_TYPE = ARGUMENTS.register("temp_modifier_type", () -> new TempModifierTraitArgument.Info());
-    RegistryObject<ArgumentTypeInfo<?, ?>> TEMPERATURE_TYPE = ARGUMENTS.register("temperature_type", () -> new TemperatureTraitArgument.Info());
-    RegistryObject<ArgumentTypeInfo<?, ?>> ABILITY_OR_TEMP_TYPE = ARGUMENTS.register("ability_or_temp_type", () -> new TempAttributeTraitArgument.Info());
+    public static final RegistryObject<ArgumentTypeInfo<?, ?>> TEMP_MODIFIER_TYPE = ARGUMENTS.register("temp_modifier_type", () -> new TempModifierTraitArgument.Info());
+    public static final RegistryObject<ArgumentTypeInfo<?, ?>> TEMPERATURE_TYPE = ARGUMENTS.register("temperature_type", () -> new TemperatureTraitArgument.Info());
+    public static final RegistryObject<ArgumentTypeInfo<?, ?>> ATTRIBUTE_TRAIT_TYPE = ARGUMENTS.register("attribute_trait_type", () -> new TempAttributeTraitArgument.Info());
 }
