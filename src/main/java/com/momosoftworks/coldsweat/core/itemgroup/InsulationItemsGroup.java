@@ -1,5 +1,6 @@
 package com.momosoftworks.coldsweat.core.itemgroup;
 
+import com.momosoftworks.coldsweat.api.event.client.InsulatorTabBuildEvent;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.data.codec.configuration.InsulatorData;
 import com.momosoftworks.coldsweat.util.registries.ModItems;
@@ -8,8 +9,10 @@ import net.minecraft.item.ArmorItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.util.NonNullList;
 import net.minecraft.util.ResourceLocation;
+import net.minecraftforge.common.MinecraftForge;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -57,15 +60,29 @@ public class InsulationItemsGroup extends ItemGroup
     }
 
     private static List<ItemStack> sort(Collection<Map.Entry<Item, InsulatorData>> items)
-    {   List<Map.Entry<Item, InsulatorData>> list = new ArrayList<>(items);
-        // Sort by name first
-        list.sort(Comparator.comparing(item -> item.getKey().getDefaultInstance().getDisplayName().getString()));
+    {
+        List<Map.Entry<Item, InsulatorData>> list = new ArrayList<>(items);
+
         // Sort by tags the items are in
-        list.sort(Comparator.comparing(item -> item.getKey().getTags().stream().map(ResourceLocation::toString).reduce("", (a, b) -> a + b)));
+        list.sort(Comparator.comparing(entry -> entry.getKey().getTags().stream().map(ResourceLocation::toString).reduce("", (a, b) -> a + b)));
+        // Sort by insulation value
+        list.sort(Comparator.comparingInt(entry -> entry.getValue().insulation().getCompareValue()));
         // Sort by armor material and slot
-        list.sort(Comparator.comparing(item -> item.getKey() instanceof ArmorItem
-                                               ? ((ArmorItem) item.getKey()).getMaterial().getName() + (3 - MobEntity.getEquipmentSlotForItem(item.getKey().getDefaultInstance()).getIndex())
+        list.sort(Comparator.comparing(entry -> entry.getKey() instanceof ArmorItem
+                                               ? ((ArmorItem) entry.getKey()).getMaterial().getName() + (3 - MobEntity.getEquipmentSlotForItem(entry.getKey().getDefaultInstance()).getIndex())
                                                : ""));
-        return list.stream().map(data -> new ItemStack(data.getKey(), 1, data.getValue().data().nbt().tag())).collect(Collectors.toList());
+
+        InsulatorTabBuildEvent event = new InsulatorTabBuildEvent(list);
+        MinecraftForge.EVENT_BUS.post(event);
+
+        return event.getItems().stream().map(entry ->
+        {
+            ItemStack stack = new ItemStack(entry.getKey());
+            CompoundNBT nbt = entry.getValue().data().nbt().tag();
+            if (!nbt.isEmpty())
+            {   stack.getOrCreateTag().merge(nbt);
+            }
+            return stack;
+        }).collect(Collectors.toList());
     }
 }
