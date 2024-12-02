@@ -6,9 +6,16 @@ import com.momosoftworks.coldsweat.api.util.Placement;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.common.capability.handler.EntityTempManager;
 import com.momosoftworks.coldsweat.data.codec.configuration.InsulatorData;
+import com.momosoftworks.coldsweat.util.world.WorldHelper;
+import dev.latvian.kubejs.world.BlockContainerJS;
+import dev.latvian.kubejs.world.WorldJS;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.ResourceLocation;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
+
+import javax.annotation.Nullable;
 
 public class KubeBindings
 {
@@ -27,6 +34,7 @@ public class KubeBindings
         }
     }
 
+    @Nullable
     public TempModifier createModifier(String id)
     {   return TempModifierRegistry.getValue(new ResourceLocation(id)).orElse(null);
     }
@@ -64,5 +72,17 @@ public class KubeBindings
         {   heatInsulation += insulator.insulation().getHeat();
         }
         return heatInsulation;
+    }
+
+    public double getBlockTemperature(BlockContainerJS block)
+    {   return WorldHelper.getBlockTemperature(block.getBlockState());
+    }
+
+    public double getBiomeTemperature(WorldJS level, BlockPos pos)
+    {   return WorldHelper.getBiomeTemperature(level.minecraftLevel, level.minecraftLevel.getBiome(pos));
+    }
+
+    public double getTemperatureAt(WorldJS level, BlockPos pos)
+    {   return Temperature.getTemperatureAt(pos, level.minecraftLevel);
     }
 }

@@ -60,11 +60,16 @@ public class GatherDefaultTempModifiersEvent extends Event
         }
     }
 
-    public void addModifierById(ResourceLocation id, Consumer<TempModifier> modifierConsumer, Placement.Duplicates duplicatePolicy, Placement params)
+    /**
+     * Allows for adding a TempModifier by its registered ID.
+     * @param id The ID of the TempModifier to add
+     * @param modifierBuilder Called on the TempModifier when it is created for additional processing
+     */
+    public void addModifierById(ResourceLocation id, Consumer<TempModifier> modifierBuilder, Placement.Duplicates duplicatePolicy, Placement params)
     {
         TempModifierRegistry.getValue(id).ifPresent(mod ->
         {
-            modifierConsumer.accept(mod);
+            modifierBuilder.accept(mod);
             addModifier(mod, duplicatePolicy, params);
         });
     }
