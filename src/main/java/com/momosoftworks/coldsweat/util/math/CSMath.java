@@ -752,6 +752,10 @@ public class CSMath
         return null;
     }
 
+    public static <T> List<T> listOrEmpty(Optional<List<T>> list)
+    {   return list.orElseGet(Collections::emptyList);
+    }
+
     public static Class<?> getCallerClass(int depth)
     {
         StackTraceElement[] stElements = Thread.currentThread().getStackTrace();

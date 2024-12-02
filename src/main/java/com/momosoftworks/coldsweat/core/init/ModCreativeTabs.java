@@ -1,17 +1,22 @@
 package com.momosoftworks.coldsweat.core.init;
 
 import com.momosoftworks.coldsweat.ColdSweat;
+import com.momosoftworks.coldsweat.api.event.client.InsulatorTabBuildEvent;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.compat.CompatManager;
 import com.momosoftworks.coldsweat.data.codec.configuration.InsulatorData;
 import com.momosoftworks.coldsweat.util.serialization.ObjectBuilder;
 import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ArmorItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 
@@ -88,15 +93,27 @@ public class ModCreativeTabs
             .build());
 
     private static List<ItemStack> sort(Collection<Map.Entry<Item, InsulatorData>> items)
-    {   List<Map.Entry<Item, InsulatorData>> list = new ArrayList<>(items);
-        // Sort by name first
-        list.sort(Comparator.comparing(item -> item.getKey().getDefaultInstance().getDisplayName().getString()));
+    {
+        List<Map.Entry<Item, InsulatorData>> list = new ArrayList<>(items);
+
         // Sort by tags the items are in
-        list.sort(Comparator.comparing(item -> item.getKey().getDefaultInstance().getTags().map(tag -> tag.location().toString()).reduce("", (a, b) -> a + b)));
+        list.sort(Comparator.comparing(entry -> entry.getKey().builtInRegistryHolder().tags().sequential().map(tag -> tag.location().toString()).reduce("", (a, b) -> a + b)));
+        // Sort by insulation value
+        list.sort(Comparator.comparingInt(entry -> entry.getValue().insulation().getCompareValue()));
         // Sort by armor material and slot
-        list.sort(Comparator.comparing(item -> item.getKey() instanceof ArmorItem armor
-                                               ? armor.getMaterial().getRegisteredName() + (3 - armor.getEquipmentSlot().getIndex())
+        list.sort(Comparator.comparing(entry -> entry.getKey() instanceof ArmorItem armor
+                                               ? armor.getMaterial().getKey().location().toString() + (3 - armor.getDefaultInstance().getEquipmentSlot().getIndex())
                                                : ""));
-        return list.stream().map(data -> new ItemStack(Holder.direct(data.getKey()), 1, data.getValue().data().components().getAsPatch())).toList();
+
+        InsulatorTabBuildEvent event = new InsulatorTabBuildEvent(list);
+        NeoForge.EVENT_BUS.post(event);
+
+        return event.getItems().stream().map(entry ->
+        {
+            ItemStack stack = new ItemStack(entry.getKey());
+            DataComponentMap components = entry.getValue().data().components().components();
+            stack.applyComponents(components);
+            return stack;
+        }).toList();
     }
 }
