@@ -3,10 +3,8 @@ package com.momosoftworks.coldsweat.compat.kubejs;
 import com.momosoftworks.coldsweat.api.event.common.insulation.InsulateItemEvent;
 import com.momosoftworks.coldsweat.api.event.common.temperautre.TempModifierEvent;
 import com.momosoftworks.coldsweat.api.event.common.temperautre.TemperatureChangedEvent;
-import com.momosoftworks.coldsweat.compat.kubejs.event.AddModifierEventJS;
-import com.momosoftworks.coldsweat.compat.kubejs.event.ApplyInsulationEventJS;
-import com.momosoftworks.coldsweat.compat.kubejs.event.ModRegistriesEventJS;
-import com.momosoftworks.coldsweat.compat.kubejs.event.TempChangedEventJS;
+import com.momosoftworks.coldsweat.api.event.core.init.GatherDefaultTempModifiersEvent;
+import com.momosoftworks.coldsweat.compat.kubejs.event.*;
 import dev.architectury.event.EventResult;
 import dev.latvian.mods.kubejs.script.ScriptType;
 
@@ -15,15 +13,18 @@ public class KubeEventHandlers
     public static final String COLD_SWEAT = "cs:";
 
     public static final String REGISTER = event("registries");
+    public static final String GATHER_DEFAULT_MODIFIERS = event("gatherDefaultModifiers");
 
     public static final String TEMP_CHANGED = event("temperatureChanged");
     public static final String MODIFIER_ADD = event("addModifier");
 
     public static final String APPLY_INSULATION = event("applyInsulation");
 
+
     public static void init()
     {
         KubeEventSignatures.REGISTRIES.register(KubeEventHandlers::buildRegistries);
+        KubeEventSignatures.GATHER_MODIFIERS.register(KubeEventHandlers::gatherDefaultModifiers);
         KubeEventSignatures.TEMPERATURE_CHANGED.register(KubeEventHandlers::onTemperatureChanged);
         KubeEventSignatures.INSULATE_ITEM.register(KubeEventHandlers::onInsulateItem);
         KubeEventSignatures.ADD_MODIFIER.register(KubeEventHandlers::onTempModifierAdd);
@@ -31,6 +32,10 @@ public class KubeEventHandlers
 
     private static void buildRegistries()
     {   new ModRegistriesEventJS().post(ScriptType.SERVER, REGISTER);
+    }
+
+    private static void gatherDefaultModifiers(GatherDefaultTempModifiersEvent event)
+    {   new DefaultModifiersEventJS(event).post(ScriptType.SERVER, GATHER_DEFAULT_MODIFIERS);
     }
 
     private static String event(String name)
