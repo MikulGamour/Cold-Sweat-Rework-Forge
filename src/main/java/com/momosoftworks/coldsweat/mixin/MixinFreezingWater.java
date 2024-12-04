@@ -72,7 +72,7 @@ public class MixinFreezingWater
     @Inject(method = "getTemperature", at = @At("HEAD"), cancellable = true)
     private void getTemperature(BlockPos pos, CallbackInfoReturnable<Float> cir)
     {
-        if (!ConfigSettings.USE_CUSTOM_WATER_FREEZE_BEHAVIOR.get()) return;
+        if (!ConfigSettings.USE_CUSTOM_WATER_FREEZE_BEHAVIOR.get() || LEVEL == null) return;
 
         RegistryAccess registries = RegistryHelper.getRegistryAccess();
         if (registries != null)
