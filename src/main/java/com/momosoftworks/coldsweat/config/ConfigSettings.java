@@ -13,6 +13,7 @@ import com.momosoftworks.coldsweat.core.init.ModEntities;
 import com.momosoftworks.coldsweat.data.ModRegistries;
 import com.momosoftworks.coldsweat.data.codec.configuration.*;
 import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
+import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.math.FastMultiMap;
 import com.momosoftworks.coldsweat.util.math.FastMap;
 import com.momosoftworks.coldsweat.util.serialization.*;
@@ -292,7 +293,7 @@ public class ConfigSettings
         BIOME_TEMPS = addSyncedSettingWithRegistries("biome_temps", FastMap::new, (holder, registryAccess) ->
         {
             Map<Holder<Biome>, BiomeTempData> dataMap = ConfigHelper.getRegistryMap(WorldSettingsConfig.BIOME_TEMPERATURES.get(), registryAccess, Registries.BIOME,
-                                                                            toml -> BiomeTempData.fromToml(toml, true, registryAccess), BiomeTempData::biomes);
+                                                                            toml -> BiomeTempData.fromToml(toml, false, registryAccess), BiomeTempData::biomes);
             ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.BIOME_TEMP_DATA);
 
             holder.get(registryAccess).putAll(dataMap);
@@ -305,7 +306,7 @@ public class ConfigSettings
         BIOME_OFFSETS = addSyncedSettingWithRegistries("biome_offsets", FastMap::new, (holder, registryAccess) ->
         {
             Map<Holder<Biome>, BiomeTempData> dataMap = ConfigHelper.getRegistryMap(WorldSettingsConfig.BIOME_TEMP_OFFSETS.get(), registryAccess, Registries.BIOME,
-                                                                            toml -> BiomeTempData.fromToml(toml, false, registryAccess), BiomeTempData::biomes);
+                                                                            toml -> BiomeTempData.fromToml(toml, true, registryAccess), BiomeTempData::biomes);
             ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.BIOME_TEMP_DATA);
 
             holder.get(registryAccess).putAll(dataMap);
@@ -318,7 +319,7 @@ public class ConfigSettings
         DIMENSION_TEMPS = addSyncedSettingWithRegistries("dimension_temps", FastMap::new, (holder, registryAccess) ->
         {
             Map<Holder<DimensionType>, DimensionTempData> dataMap = ConfigHelper.getRegistryMap(WorldSettingsConfig.DIMENSION_TEMPERATURES.get(), registryAccess, Registries.DIMENSION_TYPE,
-                                                                                       toml -> DimensionTempData.fromToml(toml, true, registryAccess), DimensionTempData::dimensions);
+                                                                                       toml -> DimensionTempData.fromToml(toml, false, registryAccess), DimensionTempData::dimensions);
             ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.DIMENSION_TEMP_DATA);
 
             holder.get(registryAccess).putAll(dataMap);
@@ -331,7 +332,7 @@ public class ConfigSettings
         DIMENSION_OFFSETS = addSyncedSettingWithRegistries("dimension_offsets", FastMap::new, (holder, registryAccess) ->
         {
             Map<Holder<DimensionType>, DimensionTempData> dataMap = ConfigHelper.getRegistryMap(WorldSettingsConfig.DIMENSION_TEMP_OFFSETS.get(), registryAccess, Registries.DIMENSION_TYPE,
-                                                                                       toml -> DimensionTempData.fromToml(toml, false, registryAccess), DimensionTempData::dimensions);
+                                                                                       toml -> DimensionTempData.fromToml(toml, true, registryAccess), DimensionTempData::dimensions);
             ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.DIMENSION_TEMP_DATA);
 
             holder.get(registryAccess).putAll(dataMap);
@@ -344,7 +345,7 @@ public class ConfigSettings
         STRUCTURE_TEMPS = addSyncedSettingWithRegistries("structure_temperatures", FastMap::new, (holder, registryAccess) ->
         {
             Map<Holder<Structure>, StructureTempData> dataMap = ConfigHelper.getRegistryMap(WorldSettingsConfig.STRUCTURE_TEMPERATURES.get(), registryAccess, Registries.STRUCTURE,
-                                                                                   toml -> StructureTempData.fromToml(toml, true, registryAccess), StructureTempData::structures);
+                                                                                   toml -> StructureTempData.fromToml(toml, false, registryAccess), StructureTempData::structures);
             ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.STRUCTURE_TEMP_DATA);
 
             holder.get(registryAccess).putAll(dataMap);
@@ -357,7 +358,7 @@ public class ConfigSettings
         STRUCTURE_OFFSETS = addSyncedSettingWithRegistries("structure_offsets", FastMap::new, (holder, registryAccess) ->
         {
             Map<Holder<Structure>, StructureTempData> dataMap = ConfigHelper.getRegistryMap(WorldSettingsConfig.STRUCTURE_TEMP_OFFSETS.get(), registryAccess, Registries.STRUCTURE,
-                                                                                   toml -> StructureTempData.fromToml(toml, false, registryAccess), StructureTempData::structures);
+                                                                                   toml -> StructureTempData.fromToml(toml, true, registryAccess), StructureTempData::structures);
             ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.STRUCTURE_TEMP_DATA);
 
             holder.get(registryAccess).putAll(dataMap);
@@ -380,7 +381,7 @@ public class ConfigSettings
 
                 data.setType(ConfigData.Type.TOML);
 
-                for (Item item : RegistryHelper.mapBuiltinRegistryTagList(BuiltInRegistries.ITEM, data.data().items().get()))
+                for (Item item : RegistryHelper.mapBuiltinRegistryTagList(BuiltInRegistries.ITEM, CSMath.listOrEmpty(data.data().items())))
                 {   dataMap.put(item, data);
                 }
             }
@@ -416,7 +417,7 @@ public class ConfigSettings
 
                 data.setType(ConfigData.Type.TOML);
 
-                for (Item item : RegistryHelper.mapBuiltinRegistryTagList(BuiltInRegistries.ITEM, data.data().items().get()))
+                for (Item item : RegistryHelper.mapBuiltinRegistryTagList(BuiltInRegistries.ITEM, CSMath.listOrEmpty(data.data().items())))
                 {   dataMap.put(item, data);
                 }
             }
@@ -425,17 +426,13 @@ public class ConfigSettings
             // Add entries
             holder.get().putAll(dataMap);
         };
-        INSULATION_ITEMS = addSyncedSetting("insulation_items", FastMultiMap::new, holder ->
-        {   insulatorAdder.accept(ItemSettingsConfig.INSULATION_ITEMS, holder, Insulation.Slot.ITEM);
-        },
+        INSULATION_ITEMS = addSyncedSetting("insulation_items", FastMultiMap::new, holder -> insulatorAdder.accept(ItemSettingsConfig.INSULATION_ITEMS, holder, Insulation.Slot.ITEM),
         (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "InsulationItems", Registries.ITEM, ModRegistries.INSULATOR_DATA, item -> BuiltInRegistries.ITEM.getKey(item)),
         (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "InsulationItems", ModRegistries.INSULATOR_DATA, rl -> BuiltInRegistries.ITEM.get(rl)),
         (saver) -> {},
         SyncType.ONE_WAY);
 
-        INSULATING_ARMORS = addSyncedSetting("insulating_armors", FastMultiMap::new, holder ->
-        {   insulatorAdder.accept(ItemSettingsConfig.INSULATING_ARMOR, holder, Insulation.Slot.ARMOR);
-        },
+        INSULATING_ARMORS = addSyncedSetting("insulating_armors", FastMultiMap::new, holder -> insulatorAdder.accept(ItemSettingsConfig.INSULATING_ARMOR, holder, Insulation.Slot.ARMOR),
         (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "InsulatingArmors", Registries.ITEM, ModRegistries.INSULATOR_DATA, item -> BuiltInRegistries.ITEM.getKey(item)),
         (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "InsulatingArmors", ModRegistries.INSULATOR_DATA, rl -> BuiltInRegistries.ITEM.get(rl)),
         (saver) -> {},
@@ -511,7 +508,7 @@ public class ConfigSettings
                 FoodData data = FoodData.fromToml(list);
                 if (data == null) continue;
 
-                for (Item item : RegistryHelper.mapBuiltinRegistryTagList(BuiltInRegistries.ITEM, data.data().items().get()))
+                for (Item item : RegistryHelper.mapBuiltinRegistryTagList(BuiltInRegistries.ITEM, CSMath.listOrEmpty(data.data().items())))
                 {   dataMap.put(item, data);
                 }
             }
@@ -534,7 +531,7 @@ public class ConfigSettings
                 ItemCarryTempData data = ItemCarryTempData.fromToml(list);
                 if (data == null) continue;
 
-                for (Item item : RegistryHelper.mapBuiltinRegistryTagList(BuiltInRegistries.ITEM, data.data().items().get()))
+                for (Item item : RegistryHelper.mapBuiltinRegistryTagList(BuiltInRegistries.ITEM, CSMath.listOrEmpty(data.data().items())))
                 {   dataMap.put(item, data);
                 }
             }
@@ -639,7 +636,7 @@ public class ConfigSettings
 
                 data.setType(ConfigData.Type.TOML);
 
-                for (EntityType<?> entityType : RegistryHelper.mapBuiltinRegistryTagList(BuiltInRegistries.ENTITY_TYPE, data.entities()))
+                for (EntityType<?> entityType : RegistryHelper.mapBuiltinRegistryTagList(BuiltInRegistries.ENTITY_TYPE, CSMath.listOrEmpty(data.entityData().entities())))
                 {   dataMap.put(entityType, data);
                 }
             }
@@ -660,7 +657,7 @@ public class ConfigSettings
 
                 data.setType(ConfigData.Type.TOML);
 
-                for (EntityType<?> entityType : RegistryHelper.mapBuiltinRegistryTagList(BuiltInRegistries.ENTITY_TYPE, data.entity().entities().get()))
+                for (EntityType<?> entityType : RegistryHelper.mapBuiltinRegistryTagList(BuiltInRegistries.ENTITY_TYPE, CSMath.listOrEmpty(data.entity().entities())))
                 {   dataMap.put(entityType, data);
                 }
             }

@@ -15,7 +15,9 @@ import com.momosoftworks.coldsweat.data.codec.requirement.ItemComponentsRequirem
 import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
 import com.momosoftworks.coldsweat.data.codec.util.AttributeModifierMap;
 import com.momosoftworks.coldsweat.data.codec.util.CommonStreamCodecs;
+import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -30,7 +32,6 @@ import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 public class InsulatorData extends ConfigData implements RequirementHolder
 {
@@ -40,28 +41,27 @@ public class InsulatorData extends ConfigData implements RequirementHolder
     final EntityRequirement predicate;
     final AttributeModifierMap attributes;
     final Map<ResourceLocation, Double> immuneTempModifiers;
-    final Optional<List<String>> requiredMods;
 
     public InsulatorData(Insulation.Slot slot,
                          Insulation insulation, ItemRequirement data,
                          EntityRequirement predicate, AttributeModifierMap attributes,
                          Map<ResourceLocation, Double> immuneTempModifiers,
-                         Optional<List<String>> requiredMods)
+                         List<String> requiredMods)
     {
+        super(requiredMods);
         this.slot = slot;
         this.insulation = insulation;
         this.data = data;
         this.predicate = predicate;
         this.attributes = attributes;
         this.immuneTempModifiers = immuneTempModifiers;
-        this.requiredMods = requiredMods;
     }
 
     public InsulatorData(Insulation.Slot slot, Insulation insulation, ItemRequirement data,
                          EntityRequirement predicate, AttributeModifierMap attributes,
                          Map<ResourceLocation, Double> immuneTempModifiers)
     {
-        this(slot, insulation, data, predicate, attributes, immuneTempModifiers, Optional.empty());
+        this(slot, insulation, data, predicate, attributes, immuneTempModifiers, ConfigHelper.getModIDs(CSMath.listOrEmpty(data.items()), BuiltInRegistries.ITEM));
     }
 
     public static final Codec<InsulatorData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -71,7 +71,7 @@ public class InsulatorData extends ConfigData implements RequirementHolder
             EntityRequirement.getCodec().optionalFieldOf("entity", EntityRequirement.NONE).forGetter(InsulatorData::predicate),
             com.momosoftworks.coldsweat.data.codec.util.AttributeModifierMap.CODEC.optionalFieldOf("attributes", new AttributeModifierMap()).forGetter(InsulatorData::attributes),
             Codec.unboundedMap(ResourceLocation.CODEC, Codec.DOUBLE).optionalFieldOf("immune_temp_modifiers", new HashMap<>()).forGetter(InsulatorData::immuneTempModifiers),
-            Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(InsulatorData::requiredMods)
+            Codec.STRING.listOf().optionalFieldOf("required_mods", List.of()).forGetter(InsulatorData::requiredMods)
     ).apply(instance, InsulatorData::new));
 
     public static final StreamCodec<RegistryFriendlyByteBuf, InsulatorData> STREAM_CODEC = StreamCodec.of(
@@ -113,9 +113,6 @@ public class InsulatorData extends ConfigData implements RequirementHolder
     public Map<ResourceLocation, Double> immuneTempModifiers()
     {   return immuneTempModifiers;
     }
-    public Optional<List<String>> requiredMods()
-    {   return requiredMods;
-    }
 
     @Override
     public boolean test(ItemStack stack)
@@ -130,17 +127,16 @@ public class InsulatorData extends ConfigData implements RequirementHolder
     @Nullable
     public static InsulatorData fromToml(List<?> entry, Insulation.Slot slot)
     {
-        String[] itemIDs = ((String) entry.get(0)).split(",");
-        List<Either<TagKey<Item>, Item>> items = ConfigHelper.getItems(itemIDs);
-        if (items.isEmpty())
-        {   ColdSweat.LOGGER.error("Error parsing {} insulator config: string \"{}\" does not contain any valid items", slot.getSerializedName(), entry.get(0));
-            return null;
-        }
         if (entry.size() < 3)
         {   ColdSweat.LOGGER.error("Error parsing {} insulator config: not enough arguments", slot.getSerializedName());
             return null;
         }
+        List<Either<TagKey<Item>, Item>> items = ConfigHelper.getItems((String) entry.get(0));
 
+        if (items.isEmpty())
+        {   ColdSweat.LOGGER.error("Error parsing {} insulator config: string {} does not contain any valid items", slot.getSerializedName(), entry);
+            return null;
+        }
         boolean adaptive = entry.size() > 3 && entry.get(3).equals("adaptive");
         ItemComponentsRequirement components = entry.size() > 4 ? ItemComponentsRequirement.parse((String) entry.get(4)) : new ItemComponentsRequirement();
         double insulVal1 = ((Number) entry.get(1)).doubleValue();
@@ -151,7 +147,7 @@ public class InsulatorData extends ConfigData implements RequirementHolder
 
         ItemRequirement requirement = new ItemRequirement(items, components);
 
-        return new InsulatorData(slot, insulation, requirement, EntityRequirement.NONE, new AttributeModifierMap(), new HashMap<>(), Optional.empty());
+        return new InsulatorData(slot, insulation, requirement, EntityRequirement.NONE, new AttributeModifierMap(), new HashMap<>());
     }
 
     @Override
@@ -166,12 +162,12 @@ public class InsulatorData extends ConfigData implements RequirementHolder
         if (obj == null || getClass() != obj.getClass()) return false;
 
         InsulatorData that = (InsulatorData) obj;
-        return slot == that.slot
+        return super.equals(obj)
+            && slot == that.slot
             && insulation.equals(that.insulation)
             && data.equals(that.data)
             && predicate.equals(that.predicate)
             && attributes.equals(that.attributes)
-            && immuneTempModifiers.equals(that.immuneTempModifiers)
-            && requiredMods.equals(that.requiredMods);
+            && immuneTempModifiers.equals(that.immuneTempModifiers);
     }
 }

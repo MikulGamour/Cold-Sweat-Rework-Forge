@@ -17,7 +17,6 @@ import com.momosoftworks.coldsweat.data.codec.configuration.FuelData;
 import com.momosoftworks.coldsweat.data.codec.configuration.InsulatorData;
 import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
-import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.math.FastMap;
 import com.momosoftworks.coldsweat.util.math.FastMultiMap;
 import net.minecraft.core.*;
@@ -38,7 +37,6 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.properties.Property;
 import org.apache.logging.log4j.util.TriConsumer;
 
 import java.io.IOException;
@@ -46,7 +44,6 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -55,18 +52,21 @@ public class ConfigHelper
 {
     private ConfigHelper() {}
 
-    public static <T> List<Holder<T>> parseRegistryItems(ResourceKey<Registry<T>> registry, RegistryAccess registryAccess, String objects)
+    public static <T> List<Either<TagKey<T>, Holder<T>>> parseRegistryItems(ResourceKey<Registry<T>> registry, RegistryAccess registryAccess, String objects)
+    {   return parseRegistryItems(registry, registryAccess, objects.split(","));
+    }
+
+    public static <T> List<Either<TagKey<T>, Holder<T>>> parseRegistryItems(ResourceKey<Registry<T>> registry, RegistryAccess registryAccess, String[] objects)
     {
-        List<Holder<T>> registryList = new ArrayList<>();
+        List<Either<TagKey<T>, Holder<T>>> registryList = new ArrayList<>();
         Registry<T> reg = registryAccess.registryOrThrow(registry);
 
-        for (String objString : objects.split(","))
+        for (String objString : objects)
         {
             if (objString.startsWith("#"))
             {
                 final String tagID = objString.replace("#", "");
-                Optional<HolderSet.Named<T>> tag = reg.getTag(TagKey.create(registry, ResourceLocation.parse(tagID)));
-                tag.ifPresent(tg -> registryList.addAll(tg.stream().toList()));
+                registryList.add(Either.left(TagKey.create(registry, ResourceLocation.parse(tagID))));
             }
             else
             {
@@ -77,58 +77,61 @@ public class ConfigHelper
                     ColdSweat.LOGGER.error("Error parsing config: \"{}\" does not exist", objString);
                     continue;
                 }
-                registryList.add(obj.get());
+                registryList.add(Either.right(obj.get()));
             }
         }
         return registryList;
     }
 
-    public static List<Either<TagKey<Block>, Block>> getBlocks(String... ids)
-    {
-        List<Either<TagKey<Block>, Block>> blocks = new ArrayList<>();
-        for (String id : ids)
-        {
-            if (id.startsWith("#"))
-            {
-                final String tagID = id.replace("#", "");
-                blocks.add(Either.left(TagKey.create(Registries.BLOCK, ResourceLocation.parse(tagID))));
-            }
-            else
-            {
-                ResourceLocation blockId = ResourceLocation.parse(id);
-                if (BuiltInRegistries.BLOCK.containsKey(blockId))
-                {   blocks.add(Either.right(BuiltInRegistries.BLOCK.get(blockId)));
-                }
-                else
-                {   ColdSweat.LOGGER.error("Error parsing block config: block \"{}\" does not exist", id);
-                }
-            }
-        }
-        return blocks;
+    public static <T> List<Either<TagKey<T>, T>> parseBuiltinItems(ResourceKey<Registry<T>> registryKey, Registry<T> registry, String objects)
+    {   return parseBuiltinItems(registryKey, registry, objects.split(","));
     }
 
-    public static List<Either<TagKey<Item>, Item>> getItems(String... ids)
+    public static <T> List<Either<TagKey<T>, T>> parseBuiltinItems(ResourceKey<Registry<T>> registryKey, Registry<T> registry, String[] objects)
     {
-        List<Either<TagKey<Item>, Item>> items = new ArrayList<>();
-        for (String itemId : ids)
+        List<Either<TagKey<T>, T>> registryList = new ArrayList<>();
+
+        for (String objString : objects)
         {
-            if (itemId.startsWith("#"))
+            if (objString.startsWith("#"))
             {
-                final String tagID = itemId.replace("#", "");
-                items.add(Either.left(TagKey.create(Registries.ITEM, ResourceLocation.parse(tagID))));
+                final String tagID = objString.replace("#", "");
+                registryList.add(Either.left(TagKey.create(registryKey, ResourceLocation.parse(tagID))));
             }
             else
             {
-                ResourceLocation itemID = ResourceLocation.parse(itemId);
-                if (BuiltInRegistries.ITEM.containsKey(itemID))
-                {   items.add(Either.right(BuiltInRegistries.ITEM.get(itemID)));
+                ResourceLocation id = ResourceLocation.parse(objString);
+                T obj = registry.get(id);
+                if (obj == null)
+                {
+                    ColdSweat.LOGGER.error("Error parsing config: \"{}\" does not exist", objString);
+                    continue;
                 }
-                else
-                {   ColdSweat.LOGGER.error("Error parsing item config: item \"{}\" does not exist", itemId);
-                }
+                registryList.add(Either.right(obj));
             }
         }
-        return items;
+        return registryList;
+    }
+
+    public static List<Either<TagKey<Block>, Block>> getBlocks(String blocks)
+    {   return getBlocks(blocks.split(","));
+    }
+    public static List<Either<TagKey<Block>, Block>> getBlocks(String[] blocks)
+    {   return parseBuiltinItems(Registries.BLOCK, BuiltInRegistries.BLOCK, blocks);
+    }
+
+    public static List<Either<TagKey<Item>, Item>> getItems(String items)
+    {   return getItems(items.split(","));
+    }
+    public static List<Either<TagKey<Item>, Item>> getItems(String[] items)
+    {   return parseBuiltinItems(Registries.ITEM, BuiltInRegistries.ITEM, items);
+    }
+
+    public static List<Either<TagKey<EntityType<?>>, EntityType<?>>> getEntityTypes(String entities)
+    {   return getEntityTypes(entities.split(","));
+    }
+    public static List<Either<TagKey<EntityType<?>>, EntityType<?>>> getEntityTypes(String[] entities)
+    {   return parseBuiltinItems(Registries.ENTITY_TYPE, BuiltInRegistries.ENTITY_TYPE, entities);
     }
 
     public static <K, V extends ConfigData> Map<Holder<K>, V> getRegistryMap(List<? extends List<?>> source, RegistryAccess registryAccess, ResourceKey<Registry<K>> keyRegistry,
@@ -161,33 +164,6 @@ public class ConfigHelper
             else ColdSweat.LOGGER.error("Error parsing {} config \"{}\"", keyRegistry.location(), entry.toString());
         }
         return map;
-    }
-
-    public static List<EntityType<?>> getEntityTypes(String... entities)
-    {
-        List<EntityType<?>> entityList = new ArrayList<>();
-        for (String entity : entities)
-        {
-            if (entity.startsWith("#"))
-            {
-                final String tagID = entity.replace("#", "");
-                CSMath.doIfNotNull(BuiltInRegistries.ENTITY_TYPE.getTags(), tags ->
-                {   Optional<Pair<TagKey<EntityType<?>>, HolderSet.Named<EntityType<?>>>> optionalTag = tags.filter(tag -> tag != null && tag.getFirst().location().toString().equals(tagID)).findFirst();
-                    optionalTag.ifPresent(entityITag -> entityList.addAll(optionalTag.get().getSecond().stream().map(Holder::value).toList()));
-                });
-            }
-            else
-            {
-                ResourceLocation entityId = ResourceLocation.parse(entity);
-                if (BuiltInRegistries.ENTITY_TYPE.containsKey(entityId))
-                {   entityList.add(BuiltInRegistries.ENTITY_TYPE.get(entityId));
-                }
-                else
-                {   ColdSweat.LOGGER.error("Error parsing entity config: entity \"{}\" does not exist", entity);
-                }
-            }
-        }
-        return entityList;
     }
 
     public static CompoundTag serializeNbtBool(boolean value, String key)
@@ -766,5 +742,45 @@ public class ConfigHelper
         {   strings.add(serializeTagOrRegistryObject(registry, entry, registryAccess));
         }
         return strings;
+    }
+
+    public static List<String> getModIDs(String[] ids)
+    {
+        List<String> modIDs = new ArrayList<>();
+        for (String id : ids)
+        {
+            String[] split = id.split(":");
+            if (split.length > 1)
+            {   modIDs.add(split[0].replace("#", ""));
+            }
+        }
+        return modIDs;
+    }
+
+    public static String getModID(String id)
+    {
+        String[] split = id.split(":");
+        if (split.length > 1)
+        {   return split[0].replace("#", "");
+        }
+        return "";
+    }
+
+    public static <T> List<String> getModIDs(List<Either<TagKey<T>, T>> list, Registry<T> registry)
+    {
+        return list.stream().map(either -> either.map(tag -> tag.location().getNamespace(),
+                                                      obj -> Optional.ofNullable(registry.getKey(obj)).map(ResourceLocation::getNamespace).orElse("")))
+                   .distinct()
+                   .filter(s -> !s.isEmpty())
+                   .toList();
+    }
+
+    public static <T> List<String> getModIDs(List<Either<TagKey<T>, Holder<T>>> list)
+    {
+        return list.stream().map(either -> either.map(tag -> tag.location().getNamespace(),
+                                                      obj -> obj.unwrapKey().map(key -> key.location().getNamespace()).orElse("")))
+                .distinct()
+                .filter(s -> !s.isEmpty())
+                .toList();
     }
 }

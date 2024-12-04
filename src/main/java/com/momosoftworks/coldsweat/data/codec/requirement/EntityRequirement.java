@@ -38,9 +38,9 @@ public record EntityRequirement(Optional<List<Either<TagKey<EntityType<?>>, Enti
         this(type, location, steppingOn, effects, nbt, flags, equipment, typeSpecificData, team, vehicle, passenger, target, Optional.empty());
     }
 
-    public EntityRequirement(List<EntityType<?>> entities)
+    public EntityRequirement(List<Either<TagKey<EntityType<?>>, EntityType<?>>> entities)
     {
-        this(Optional.of(entities.stream().map(Either::<TagKey<EntityType<?>>, EntityType<?>>right).toList()),
+        this(Optional.of(entities),
              Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
              Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
     }

@@ -27,21 +27,26 @@ public class DepthTempData extends ConfigData
 {
     final List<TempRegion> temperatures;
     final List<Either<TagKey<DimensionType>, Holder<DimensionType>>> dimensions;
-    final Optional<List<String>> requiredMods;
 
     public DepthTempData(List<TempRegion> temperatures,
                          List<Either<TagKey<DimensionType>, Holder<DimensionType>>> dimensions,
-                         Optional<List<String>> requiredMods)
+                         List<String> requiredMods)
     {
+        super(requiredMods);
         this.temperatures = temperatures;
         this.dimensions = dimensions;
-        this.requiredMods = requiredMods;
+    }
+
+    public DepthTempData(List<TempRegion> temperatures,
+                         List<Either<TagKey<DimensionType>, Holder<DimensionType>>> dimensions)
+    {
+        this(temperatures, dimensions, ConfigHelper.getModIDs(dimensions));
     }
 
     public static final Codec<DepthTempData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             TempRegion.CODEC.listOf().fieldOf("regions").forGetter(DepthTempData::temperatures),
             ConfigHelper.tagOrHolderCodec(Registries.DIMENSION_TYPE, DimensionType.CODEC).listOf().fieldOf("dimensions").forGetter(DepthTempData::dimensions),
-            Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(DepthTempData::requiredMods)
+            Codec.STRING.listOf().optionalFieldOf("required_mods", List.of()).forGetter(DepthTempData::requiredMods)
     ).apply(instance, DepthTempData::new));
 
     public List<TempRegion> temperatures()
@@ -49,9 +54,6 @@ public class DepthTempData extends ConfigData
     }
     public List<Either<TagKey<DimensionType>, Holder<DimensionType>>> dimensions()
     {   return dimensions;
-    }
-    public Optional<List<String>> requiredMods()
-    {   return requiredMods;
     }
 
     public boolean withinBounds(Level level, BlockPos pos)
@@ -93,9 +95,9 @@ public class DepthTempData extends ConfigData
         if (obj == null || getClass() != obj.getClass()) return false;
 
         DepthTempData that = (DepthTempData) obj;
-        return temperatures.equals(that.temperatures)
-            && dimensions.equals(that.dimensions)
-            && requiredMods.equals(that.requiredMods);
+        return super.equals(obj)
+            && temperatures.equals(that.temperatures)
+            && dimensions.equals(that.dimensions);
     }
 
     public record TempRegion(RampType rampType, VerticalBound top, VerticalBound bottom)

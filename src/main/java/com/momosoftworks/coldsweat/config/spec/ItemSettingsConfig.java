@@ -40,8 +40,6 @@ public class ItemSettingsConfig
 
     public static final ModConfigSpec.ConfigValue<List<? extends List<?>>> INSULATING_CURIOS;
 
-    private static final ItemSettingsConfig INSTANCE = new ItemSettingsConfig();
-
     static
     {
         /*
@@ -327,9 +325,5 @@ public class ItemSettingsConfig
 
     public static void save()
     {   SPEC.save();
-    }
-
-    public static ItemSettingsConfig getInstance()
-    {   return INSTANCE;
     }
 }
