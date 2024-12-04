@@ -556,8 +556,15 @@ public class HearthBlockEntity extends LockableLootTileEntity implements ITickab
     @Override
     public void setChanged()
     {
+        this.setChanged(true);
+    }
+
+    public void setChanged(boolean updateFuel)
+    {
+        if (updateFuel)
+        {   this.checkForFuel();
+        }
         super.setChanged();
-        this.checkForFuel();
     }
 
     public void checkForFuel()
@@ -818,6 +825,8 @@ public class HearthBlockEntity extends LockableLootTileEntity implements ITickab
 
     public void setHotFuel(int amount, boolean update)
     {
+        boolean shouldUpdate = update && this.hotFuel.getAmount() != amount;
+
         if (this.hotFuel.isEmpty())
         {   this.hotFuel = new FluidStack(Fluids.LAVA, amount);
         }
@@ -835,7 +844,7 @@ public class HearthBlockEntity extends LockableLootTileEntity implements ITickab
         }
         else hasHotFuel = true;
 
-        if (update) this.updateFuelState();
+        if (shouldUpdate) this.updateFuelState();
     }
 
     public void setHotFuelAndUpdate(int amount)
@@ -844,6 +853,8 @@ public class HearthBlockEntity extends LockableLootTileEntity implements ITickab
 
     public void setColdFuel(int amount, boolean update)
     {
+        boolean shouldUpdate = update && this.coldFuel.getAmount() != amount;
+
         if (this.coldFuel.isEmpty())
         {   this.coldFuel = new FluidStack(Fluids.WATER, amount);
         }
@@ -863,7 +874,7 @@ public class HearthBlockEntity extends LockableLootTileEntity implements ITickab
         {   hasColdFuel = true;
         }
 
-        if (update) this.updateFuelState();
+        if (shouldUpdate) this.updateFuelState();
     }
 
     public void setColdFuelAndUpdate(int amount)
@@ -885,7 +896,7 @@ public class HearthBlockEntity extends LockableLootTileEntity implements ITickab
     public void updateFuelState()
     {
         if (level != null && !level.isClientSide)
-        {   this.setChanged();
+        {   this.setChanged(false);
             WorldHelper.syncBlockEntityData(this);
             this.lastColdFuel = this.getColdFuel();
             this.lastHotFuel = this.getHotFuel();

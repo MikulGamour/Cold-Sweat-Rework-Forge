@@ -48,7 +48,7 @@ public class TempModifierRegistry
 
     public static ResourceLocation getKey(TempModifier modifier)
     {
-        return TEMP_MODIFIERS.getKey(new TempModifierHolder(() -> modifier));
+        return TEMP_MODIFIERS.getKey(new TempModifierHolder(modifier));
     }
 
     public static class TempModifierHolder
@@ -59,6 +59,10 @@ public class TempModifierRegistry
         public TempModifierHolder(Supplier<TempModifier> supplier)
         {   this.supplier = supplier;
             this.clazz = supplier.get().getClass();
+        }
+        public TempModifierHolder(TempModifier modifier)
+        {   this.supplier = () -> modifier;
+            this.clazz = modifier.getClass();
         }
 
         public TempModifier get()
@@ -72,14 +76,12 @@ public class TempModifierRegistry
         @Override
         public boolean equals(Object obj)
         {
-            return obj instanceof TempModifier
-                   ? obj.getClass().equals(clazz)
-                   : obj instanceof TempModifierHolder && ((TempModifierHolder) obj).getModifierClass().equals(clazz);
+            return obj instanceof TempModifierHolder && ((TempModifierHolder) obj).clazz == clazz;
         }
 
         @Override
         public String toString()
-        {   return clazz.getName();
+        {   return "TempModifierHolder{" + clazz.getName() + "}";
         }
     }
 }
