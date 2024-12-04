@@ -15,7 +15,6 @@ import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.math.InterruptableStreamer;
 import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
@@ -269,7 +268,7 @@ public class Temperature
                 }
                 hits++;
                 // If duplicates are not allowed, break the loop
-                if (duplicatePolicy != Placement.Duplicates.ALLOW || hits >= maxCount)
+                if (hits >= maxCount)
                 {   return true;
                 }
             }
