@@ -35,8 +35,7 @@ public class ThermolithBlockEntity extends TileEntity implements ITickableTileEn
             if (newSignal != signal)
             {
                 signal = newSignal;
-                level.updateNeighborsAt(pos, state.getBlock());
-                level.updateNeighborsAt(pos.relative(facing), this.level.getBlockState(pos.relative(facing)).getBlock());
+                this.updateFacingNeighbors();
             }
 
             // Handle turning on/off
@@ -51,8 +50,26 @@ public class ThermolithBlockEntity extends TileEntity implements ITickableTileEn
         }
     }
 
+    @Override
+    public void setRemoved()
+    {
+        super.setRemoved();
+        this.updateFacingNeighbors();
+    }
+
     public int getSignal()
     {
         return signal;
+    }
+
+    public void updateFacingNeighbors()
+    {
+        if (this.level == null) return;
+
+        BlockPos pos = this.getBlockPos();
+        BlockState state = this.getBlockState();
+        Direction facing = state.getValue(ThermolithBlock.FACING);
+        level.updateNeighborsAt(pos, state.getBlock());
+        level.updateNeighborsAt(pos.relative(facing), this.level.getBlockState(pos.relative(facing)).getBlock());
     }
 }
