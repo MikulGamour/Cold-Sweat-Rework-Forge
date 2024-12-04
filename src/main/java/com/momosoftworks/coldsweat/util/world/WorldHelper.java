@@ -593,15 +593,12 @@ public abstract class WorldHelper
     /**
      * Gets the "raw" temperature for a block, ignoring distance and occlusion
      */
-    public static double getBlockTemperatureAt(Level level, BlockPos pos)
-    {   return getBlockTemperature(level.getBlockState(pos));
-    }
-    public static double getBlockTemperature(BlockState block)
+    public static double getBlockTemperature(Level level, BlockState block)
     {
         Collection<BlockTemp> blockTemps = BlockTempRegistry.getBlockTempsFor(block);
         double temp = 0;
         for (BlockTemp blockTemp : blockTemps)
-        {   temp += blockTemp.getTemperature(null, null, block, BlockPos.ZERO, 0);
+        {   temp += blockTemp.getTemperature(level, null, block, BlockPos.ZERO, 0);
         }
         return temp;
     }
