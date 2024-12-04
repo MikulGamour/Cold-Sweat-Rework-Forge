@@ -3,10 +3,12 @@ package com.momosoftworks.coldsweat.data.codec.configuration;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.data.codec.impl.RequirementHolder;
 import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
 import com.momosoftworks.coldsweat.data.codec.requirement.NbtRequirement;
+import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
 import com.momosoftworks.coldsweat.util.serialization.NBTHelper;
 import net.minecraft.nbt.CompoundTag;
@@ -16,6 +18,7 @@ import net.minecraft.util.StringRepresentable;
 import net.minecraftforge.registries.IForgeRegistryEntry;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -25,25 +28,25 @@ public class FuelData extends ConfigData implements RequirementHolder, IForgeReg
     final FuelType type;
     final Double fuel;
     final ItemRequirement data;
-    final Optional<List<String>> requiredMods;
 
-    public FuelData(FuelType type, Double fuel, ItemRequirement data, Optional<List<String>> requiredMods)
+    public FuelData(FuelType type, Double fuel, ItemRequirement data, List<String> requiredMods)
     {
+        super(requiredMods);
         this.type = type;
         this.fuel = fuel;
         this.data = data;
-        this.requiredMods = requiredMods;
     }
 
     public FuelData(FuelType type, Double fuel, ItemRequirement data)
-    {   this(type, fuel, data, Optional.empty());
+    {
+        this(type, fuel, data, ConfigHelper.getModIDs(CSMath.listOrEmpty(data.items()), ForgeRegistries.ITEMS));
     }
 
     public static final Codec<FuelData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             FuelType.CODEC.fieldOf("type").forGetter(FuelData::type),
             Codec.DOUBLE.fieldOf("fuel").forGetter(FuelData::fuel),
             ItemRequirement.CODEC.fieldOf("data").forGetter(FuelData::data),
-            Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(FuelData::requiredMods)
+            Codec.STRING.listOf().optionalFieldOf("required_mods", List.of()).forGetter(FuelData::requiredMods)
     ).apply(instance, FuelData::new));
 
     public FuelType type()
@@ -55,9 +58,6 @@ public class FuelData extends ConfigData implements RequirementHolder, IForgeReg
     public ItemRequirement data()
     {   return data;
     }
-    public Optional<List<String>> requiredMods()
-    {   return requiredMods;
-    }
 
     @Override
     public boolean test(ItemStack stack)
@@ -68,16 +68,22 @@ public class FuelData extends ConfigData implements RequirementHolder, IForgeReg
     public static FuelData fromToml(List<?> entry, FuelType fuelType)
     {
         if (entry.size() < 2)
-        {   return null;
+        {   ColdSweat.LOGGER.error("Error parsing entity config: not enough arguments");
+            return null;
         }
-        String[] itemIDs = ((String) entry.get(0)).split(",");
-        List<Either<TagKey<Item>, Item>> items = ConfigHelper.getItems(itemIDs);
+        List<Either<TagKey<Item>, Item>> items = ConfigHelper.getItems((String) entry.get(0));
+
+        if (items.isEmpty())
+        {   ColdSweat.LOGGER.error("Error parsing fuel config: {} does not contain any valid items", entry);
+            return null;
+        }
         double fuel = ((Number) entry.get(1)).doubleValue();
         NbtRequirement nbtRequirement = entry.size() > 2
                                         ? new NbtRequirement(NBTHelper.parseCompoundNbt((String) entry.get(3)))
                                         : new NbtRequirement(new CompoundTag());
         ItemRequirement itemRequirement = new ItemRequirement(items, nbtRequirement);
-        return new FuelData(fuelType, fuel, itemRequirement, java.util.Optional.empty());
+
+        return new FuelData(fuelType, fuel, itemRequirement);
     }
 
     @Override
@@ -92,9 +98,9 @@ public class FuelData extends ConfigData implements RequirementHolder, IForgeReg
         if (obj == null || getClass() != obj.getClass()) return false;
 
         FuelData that = (FuelData) obj;
-        return fuel.equals(that.fuel)
-            && data.equals(that.data)
-            && requiredMods.equals(that.requiredMods);
+        return super.equals(obj)
+            && fuel.equals(that.fuel)
+            && data.equals(that.data);
     }
 
     public enum FuelType implements StringRepresentable

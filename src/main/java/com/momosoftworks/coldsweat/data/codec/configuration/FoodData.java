@@ -3,24 +3,26 @@ package com.momosoftworks.coldsweat.data.codec.configuration;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.data.codec.impl.RequirementHolder;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
 import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
 import com.momosoftworks.coldsweat.data.codec.requirement.NbtRequirement;
+import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
 import com.momosoftworks.coldsweat.util.serialization.NBTHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.IForgeRegistryEntry;
-import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Optional;
 
 public class FoodData extends ConfigData implements RequirementHolder, IForgeRegistryEntry<FoodData>
 {
@@ -28,20 +30,21 @@ public class FoodData extends ConfigData implements RequirementHolder, IForgeReg
     final ItemRequirement data;
     final int duration;
     final EntityRequirement entityRequirement;
-    final Optional<List<String>> requiredMods;
 
     public FoodData(Double temperature, ItemRequirement data, int duration,
-                    EntityRequirement entityRequirement, Optional<List<String>> requiredMods)
+                    EntityRequirement entityRequirement, List<String> requiredMods)
     {
+        super(requiredMods);
         this.temperature = temperature;
         this.data = data;
         this.duration = duration;
         this.entityRequirement = entityRequirement;
-        this.requiredMods = requiredMods;
     }
 
-    public FoodData(Double temperature, ItemRequirement data, int duration, EntityRequirement entityRequirement)
-    {   this(temperature, data, duration, entityRequirement, Optional.empty());
+    public FoodData(Double temperature, ItemRequirement data, int duration,
+                    EntityRequirement entityRequirement)
+    {
+        this(temperature, data, duration, entityRequirement, ConfigHelper.getModIDs(CSMath.listOrEmpty(data.items()), ForgeRegistries.ITEMS));
     }
 
     public static final Codec<FoodData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -49,7 +52,7 @@ public class FoodData extends ConfigData implements RequirementHolder, IForgeReg
             ItemRequirement.CODEC.fieldOf("data").forGetter(FoodData::data),
             Codec.INT.optionalFieldOf("duration", -1).forGetter(FoodData::duration),
             EntityRequirement.getCodec().optionalFieldOf("entity", EntityRequirement.NONE).forGetter(FoodData::entityRequirement),
-            Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(FoodData::requiredMods)
+            Codec.STRING.listOf().optionalFieldOf("required_mods", List.of()).forGetter(FoodData::requiredMods)
     ).apply(instance, FoodData::new));
 
     public Double temperature()
@@ -63,9 +66,6 @@ public class FoodData extends ConfigData implements RequirementHolder, IForgeReg
     }
     public EntityRequirement entityRequirement()
     {   return entityRequirement;
-    }
-    public Optional<List<String>> requiredMods()
-    {   return requiredMods;
     }
 
     @Override
@@ -82,14 +82,15 @@ public class FoodData extends ConfigData implements RequirementHolder, IForgeReg
     public static FoodData fromToml(List<?> entry)
     {
         if (entry.size() < 2)
-        {   return null;
+        {   ColdSweat.LOGGER.error("Error parsing entity config: not enough arguments");
+            return null;
         }
-        String[] itemIDs = ((String) entry.get(0)).split(",");
-        List<Either<TagKey<Item>, Item>> items = ConfigHelper.getItems(itemIDs);
-        if (items.isEmpty())
-        {   return null;
-        }
+        List<Either<TagKey<Item>, Item>> items = ConfigHelper.getItems((String) entry.get(0));
 
+        if (items.isEmpty())
+        {   ColdSweat.LOGGER.error("Error parsing food config: {} does not contain any valid items", entry);
+            return null;
+        }
         double temperature = ((Number) entry.get(1)).doubleValue();
         NbtRequirement nbtRequirement = entry.size() > 2
                                         ? new NbtRequirement(NBTHelper.parseCompoundNbt((String) entry.get(2)))
@@ -112,11 +113,11 @@ public class FoodData extends ConfigData implements RequirementHolder, IForgeReg
         if (obj == null || getClass() != obj.getClass()) return false;
 
         FoodData that = (FoodData) obj;
-        return data.equals(that.data)
+        return super.equals(obj)
+            && data.equals(that.data)
             && temperature.equals(that.temperature)
             && duration == that.duration
-            && entityRequirement.equals(that.entityRequirement)
-            && requiredMods.equals(that.requiredMods);
+            && entityRequirement.equals(that.entityRequirement);
     }
 
     @Override

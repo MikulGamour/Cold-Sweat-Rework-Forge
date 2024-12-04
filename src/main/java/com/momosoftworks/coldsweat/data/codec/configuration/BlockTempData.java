@@ -3,6 +3,7 @@ package com.momosoftworks.coldsweat.data.codec.configuration;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.api.temperature.block_temp.BlockTemp;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
@@ -32,13 +33,13 @@ public class BlockTempData extends ConfigData implements IForgeRegistryEntry<Blo
     final double minTemp;
     final Temperature.Units units;
     final List<BlockRequirement> conditions;
-    final Optional<List<String>> requiredMods;
 
     public BlockTempData(List<Either<TagKey<Block>, Block>> blocks, double temperature, double range,
                          double maxEffect, boolean fade, double maxTemp, double minTemp,
                          Temperature.Units units, List<BlockRequirement> conditions,
-                         Optional<List<String>> requiredMods)
+                         List<String> requiredMods)
     {
+        super(requiredMods);
         this.blocks = blocks;
         this.temperature = temperature;
         this.range = range;
@@ -48,24 +49,24 @@ public class BlockTempData extends ConfigData implements IForgeRegistryEntry<Blo
         this.minTemp = minTemp;
         this.units = units;
         this.conditions = conditions;
-        this.requiredMods = requiredMods;
     }
 
-    public BlockTempData(Collection<Block> blocks, double temperature, double range, double maxEffect, boolean fade, double maxTemp,
-                         double minTemp, Temperature.Units units, List<BlockRequirement> conditions)
+    public BlockTempData(List<Either<TagKey<Block>, Block>> blocks, double temperature, double range,
+                         double maxEffect, boolean fade, double maxTemp, double minTemp,
+                         Temperature.Units units, List<BlockRequirement> conditions)
     {
-        this(blocks.stream().map(Either::<TagKey<Block>, Block>right).toList(),
-             temperature, range, maxEffect, fade, maxTemp, minTemp, units, conditions, Optional.empty());
+        this(blocks, temperature, range, maxEffect, fade, maxTemp, minTemp, units, conditions, ConfigHelper.getModIDs(blocks, ForgeRegistries.BLOCKS));
     }
 
     /**
      * Creates a BlockTempData from a Java BlockTemp.<br>
      * <br>
-     * !! The resulting BlockTempData will not have a temperature, as it is defined solely in the BlockTemp's getTemperature() method.
+     * !! The resulting BlockTempData <b>WILL NOT</b> have a temperature, as it is defined solely in the BlockTemp's getTemperature() method.
      */
     public BlockTempData(BlockTemp blockTemp)
     {
-        this(blockTemp.getAffectedBlocks(), 0, blockTemp.range(), blockTemp.maxEffect(),
+        this(blockTemp.getAffectedBlocks().stream().map(Either::<TagKey<Block>, Block>right).toList(),
+             0, blockTemp.range(), blockTemp.maxEffect(),
              true, blockTemp.maxTemperature(), blockTemp.minTemperature(), Temperature.Units.MC,
              List.of());
     }
@@ -80,7 +81,7 @@ public class BlockTempData extends ConfigData implements IForgeRegistryEntry<Blo
             Codec.DOUBLE.optionalFieldOf("min_temp", -Double.MAX_VALUE).forGetter(BlockTempData::minTemp),
             Temperature.Units.CODEC.optionalFieldOf("units", Temperature.Units.MC).forGetter(BlockTempData::units),
             BlockRequirement.CODEC.listOf().optionalFieldOf("conditions", List.of()).forGetter(BlockTempData::conditions),
-            Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(BlockTempData::requiredMods)
+            Codec.STRING.listOf().optionalFieldOf("required_mods", List.of()).forGetter(BlockTempData::requiredMods)
     ).apply(instance, BlockTempData::new));
 
     public List<Either<TagKey<Block>, Block>> blocks()
@@ -110,9 +111,6 @@ public class BlockTempData extends ConfigData implements IForgeRegistryEntry<Blo
     public List<BlockRequirement> conditions()
     {   return conditions;
     }
-    public Optional<List<String>> requiredMods()
-    {   return requiredMods;
-    }
 
     public double getTemperature()
     {   return Temperature.convert(temperature, units, Temperature.Units.MC, false);
@@ -131,20 +129,17 @@ public class BlockTempData extends ConfigData implements IForgeRegistryEntry<Blo
     public static BlockTempData fromToml(List<?> entry)
     {
         if (entry.size() < 3)
-        {   return null;
+        {   ColdSweat.LOGGER.error("Error parsing block config: not enough arguments");
+            return null;
         }
-        // Get IDs associated with this config entry
-        String[] blockIDs = ((String) entry.get(0)).split(",");
+        List<Either<TagKey<Block>, Block>> blocks = ConfigHelper.getBlocks((String) entry.get(0));
 
-        // Parse block IDs into blocks
-        Block[] effectBlocks = Arrays.stream(blockIDs)
-                               .map(ConfigHelper::getBlocks)
-                               .map(blocks -> RegistryHelper.mapForgeRegistryTagList(ForgeRegistries.BLOCKS, blocks))
-                               .flatMap(List::stream)
-                               .toArray(Block[]::new);
-        if (effectBlocks.length == 0)
-        {   return null;
+        if (blocks.isEmpty())
+        {   ColdSweat.LOGGER.error("Error parsing block config: {} does not contain any valid blocks", entry);
+            return null;
         }
+        // Parse block IDs into blocks
+        Block[] effectBlocks = RegistryHelper.mapForgeRegistryTagList(ForgeRegistries.BLOCKS, blocks).toArray(new Block[0]);
 
         // Temp of block
         final double blockTemp = ((Number) entry.get(1)).doubleValue();
@@ -177,7 +172,8 @@ public class BlockTempData extends ConfigData implements IForgeRegistryEntry<Blo
         BlockRequirement blockRequirement = new BlockRequirement(Optional.empty(), blockPredicates, nbtRequirement,
                                                                  Optional.empty(), Optional.empty(), Optional.empty(), false);
 
-        return new BlockTempData(Arrays.asList(effectBlocks), blockTemp, blockRange, maxEffect, true, maxTemperature, minTemperature, Temperature.Units.MC, List.of(blockRequirement));
+        return new BlockTempData(blocks, blockTemp, blockRange, maxEffect, true, maxTemperature,
+                                 minTemperature, Temperature.Units.MC, List.of(blockRequirement));
     }
 
     @Override
@@ -192,15 +188,15 @@ public class BlockTempData extends ConfigData implements IForgeRegistryEntry<Blo
         if (obj == null || getClass() != obj.getClass()) return false;
 
         BlockTempData that = (BlockTempData) obj;
-        return Double.compare(that.temperature, temperature) == 0
+        return super.equals(obj)
+            && Double.compare(that.temperature, temperature) == 0
             && Double.compare(that.range, range) == 0
             && Double.compare(that.maxEffect, maxEffect) == 0
             && Double.compare(that.maxTemp, maxTemp) == 0
             && Double.compare(that.minTemp, minTemp) == 0
             && fade == that.fade
             && blocks.equals(that.blocks)
-            && conditions.equals(that.conditions)
-            && requiredMods.equals(that.requiredMods);
+            && conditions.equals(that.conditions);
     }
 
     @Override

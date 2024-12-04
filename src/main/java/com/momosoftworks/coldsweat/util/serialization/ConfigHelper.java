@@ -51,18 +51,21 @@ public class ConfigHelper
 {
     private ConfigHelper() {}
 
-    public static <T> List<Holder<T>> parseRegistryItems(ResourceKey<Registry<T>> registry, RegistryAccess registryAccess, String objects)
+    public static <T> List<Either<TagKey<T>, Holder<T>>> parseRegistryItems(ResourceKey<Registry<T>> registry, RegistryAccess registryAccess, String objects)
+    {   return parseRegistryItems(registry, registryAccess, objects.split(","));
+    }
+
+    public static <T> List<Either<TagKey<T>, Holder<T>>> parseRegistryItems(ResourceKey<Registry<T>> registry, RegistryAccess registryAccess, String[] objects)
     {
-        List<Holder<T>> registryList = new ArrayList<>();
+        List<Either<TagKey<T>, Holder<T>>> registryList = new ArrayList<>();
         Registry<T> reg = registryAccess.registryOrThrow(registry);
 
-        for (String objString : objects.split(","))
+        for (String objString : objects)
         {
             if (objString.startsWith("#"))
             {
                 final String tagID = objString.replace("#", "");
-                Optional<HolderSet.Named<T>> tag = reg.getTag(TagKey.create(registry, new ResourceLocation(tagID)));
-                tag.ifPresent(tg -> registryList.addAll(tg.stream().toList()));
+                registryList.add(Either.left(TagKey.create(registry, new ResourceLocation(tagID))));
             }
             else
             {
@@ -73,58 +76,61 @@ public class ConfigHelper
                     ColdSweat.LOGGER.error("Error parsing config: \"{}\" does not exist", objString);
                     continue;
                 }
-                registryList.add(obj.get());
+                registryList.add(Either.right(obj.get()));
             }
         }
         return registryList;
     }
 
-    public static List<Either<TagKey<Block>, Block>> getBlocks(String... ids)
-    {
-        List<Either<TagKey<Block>, Block>> blocks = new ArrayList<>();
-        for (String id : ids)
-        {
-            if (id.startsWith("#"))
-            {
-                final String tagID = id.replace("#", "");
-                blocks.add(Either.left(TagKey.create(Registry.BLOCK_REGISTRY, new ResourceLocation(tagID))));
-            }
-            else
-            {
-                ResourceLocation blockId = new ResourceLocation(id);
-                if (ForgeRegistries.BLOCKS.containsKey(blockId))
-                {   blocks.add(Either.right(ForgeRegistries.BLOCKS.getValue(blockId)));
-                }
-                else
-                {   ColdSweat.LOGGER.error("Error parsing block config: block \"{}\" does not exist", id);
-                }
-            }
-        }
-        return blocks;
+    public static <T extends IForgeRegistryEntry<T>> List<Either<TagKey<T>, T>> parseBuiltinItems(ResourceKey<Registry<T>> registryKey, IForgeRegistry<T> registry, String objects)
+    {   return parseBuiltinItems(registryKey, registry, objects.split(","));
     }
 
-    public static List<Either<TagKey<Item>, Item>> getItems(String... ids)
+    public static <T extends IForgeRegistryEntry<T>> List<Either<TagKey<T>, T>> parseBuiltinItems(ResourceKey<Registry<T>> registryKey, IForgeRegistry<T> registry, String[] objects)
     {
-        List<Either<TagKey<Item>, Item>> items = new ArrayList<>();
-        for (String itemId : ids)
+        List<Either<TagKey<T>, T>> registryList = new ArrayList<>();
+
+        for (String objString : objects)
         {
-            if (itemId.startsWith("#"))
+            if (objString.startsWith("#"))
             {
-                final String tagID = itemId.replace("#", "");
-                items.add(Either.left(TagKey.create(Registry.ITEM_REGISTRY, new ResourceLocation(tagID))));
+                final String tagID = objString.replace("#", "");
+                registryList.add(Either.left(TagKey.create(registryKey, new ResourceLocation(tagID))));
             }
             else
             {
-                ResourceLocation itemID = new ResourceLocation(itemId);
-                if (ForgeRegistries.ITEMS.containsKey(itemID))
-                {   items.add(Either.right(ForgeRegistries.ITEMS.getValue(itemID)));
+                ResourceLocation id = new ResourceLocation(objString);
+                T obj = registry.getValue(id);
+                if (obj == null)
+                {
+                    ColdSweat.LOGGER.error("Error parsing config: \"{}\" does not exist", objString);
+                    continue;
                 }
-                else
-                {   ColdSweat.LOGGER.error("Error parsing item config: item \"{}\" does not exist", itemId);
-                }
+                registryList.add(Either.right(obj));
             }
         }
-        return items;
+        return registryList;
+    }
+
+    public static List<Either<TagKey<Block>, Block>> getBlocks(String blocks)
+    {   return getBlocks(blocks.split(","));
+    }
+    public static List<Either<TagKey<Block>, Block>> getBlocks(String[] blocks)
+    {   return parseBuiltinItems(Registry.BLOCK_REGISTRY, ForgeRegistries.BLOCKS, blocks);
+    }
+
+    public static List<Either<TagKey<Item>, Item>> getItems(String items)
+    {   return getItems(items.split(","));
+    }
+    public static List<Either<TagKey<Item>, Item>> getItems(String[] items)
+    {   return parseBuiltinItems(Registry.ITEM_REGISTRY, ForgeRegistries.ITEMS, items);
+    }
+
+    public static List<Either<TagKey<EntityType<?>>, EntityType<?>>> getEntityTypes(String entities)
+    {   return getEntityTypes(entities.split(","));
+    }
+    public static List<Either<TagKey<EntityType<?>>, EntityType<?>>> getEntityTypes(String[] entities)
+    {   return parseBuiltinItems(Registry.ENTITY_TYPE_REGISTRY, ForgeRegistries.ENTITIES, entities);
     }
 
     public static <K, V extends ConfigData> Map<Holder<K>, V> getRegistryMap(List<? extends List<?>> source, RegistryAccess registryAccess, ResourceKey<Registry<K>> keyRegistry,
@@ -157,34 +163,6 @@ public class ConfigHelper
             else ColdSweat.LOGGER.error("Error parsing {} config \"{}\"", keyRegistry.location(), entry.toString());
         }
         return map;
-    }
-
-    public static List<EntityType<?>> getEntityTypes(String... entities)
-    {
-        List<EntityType<?>> entityList = new ArrayList<>();
-        for (String entity : entities)
-        {
-            if (entity.startsWith("#"))
-            {
-                final String tagID = entity.replace("#", "");
-                CSMath.doIfNotNull(ForgeRegistries.ENTITIES.tags(), tags ->
-                {
-                    Optional<ITag<EntityType<?>>> optionalTag = tags.stream().filter(tag -> tag.getKey() != null && tag.getKey().location().toString().equals(tagID)).findFirst();
-                    optionalTag.ifPresent(entityITag -> entityList.addAll(entityITag.stream().toList()));
-                });
-            }
-            else
-            {
-                ResourceLocation entityId = new ResourceLocation(entity);
-                if (ForgeRegistries.ENTITIES.containsKey(entityId))
-                {   entityList.add(ForgeRegistries.ENTITIES.getValue(entityId));
-                }
-                else
-                {   ColdSweat.LOGGER.error("Error parsing entity config: entity \"{}\" does not exist", entity);
-                }
-            }
-        }
-        return entityList;
     }
 
     public static CompoundTag serializeNbtBool(boolean value, String key)
@@ -618,5 +596,45 @@ public class ConfigHelper
         {   strings.add(serializeTagOrRegistryObject(registry, entry, registryAccess));
         }
         return strings;
+    }
+
+    public static List<String> getModIDs(String[] ids)
+    {
+        List<String> modIDs = new ArrayList<>();
+        for (String id : ids)
+        {
+            String[] split = id.split(":");
+            if (split.length > 1)
+            {   modIDs.add(split[0].replace("#", ""));
+            }
+        }
+        return modIDs;
+    }
+
+    public static String getModID(String id)
+    {
+        String[] split = id.split(":");
+        if (split.length > 1)
+        {   return split[0].replace("#", "");
+        }
+        return "";
+    }
+
+    public static <T extends IForgeRegistryEntry<T>> List<String> getModIDs(List<Either<TagKey<T>, T>> list, IForgeRegistry<T> registry)
+    {
+        return list.stream().map(either -> either.map(tag -> tag.location().getNamespace(),
+                                                      obj -> Optional.ofNullable(registry.getKey(obj)).map(ResourceLocation::getNamespace).orElse("")))
+                   .distinct()
+                   .filter(s -> !s.isEmpty())
+                   .toList();
+    }
+
+    public static <T> List<String> getModIDs(List<Either<TagKey<T>, Holder<T>>> list)
+    {
+        return list.stream().map(either -> either.map(tag -> tag.location().getNamespace(),
+                                                      obj -> obj.unwrapKey().map(key -> key.location().getNamespace()).orElse("")))
+                .distinct()
+                .filter(s -> !s.isEmpty())
+                .toList();
     }
 }

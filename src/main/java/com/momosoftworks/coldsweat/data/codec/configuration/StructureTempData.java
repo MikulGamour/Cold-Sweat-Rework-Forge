@@ -17,7 +17,6 @@ import net.minecraftforge.registries.IForgeRegistryEntry;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Optional;
 
 public class StructureTempData extends ConfigData implements IForgeRegistryEntry<StructureTempData>
 {
@@ -25,24 +24,27 @@ public class StructureTempData extends ConfigData implements IForgeRegistryEntry
     double temperature;
     Temperature.Units units;
     boolean isOffset;
-    Optional<List<String>> requiredMods;
 
     public StructureTempData(List<Either<TagKey<ConfiguredStructureFeature<?, ?>>, Holder<ConfiguredStructureFeature<?, ?>>>> structures, double temperature,
-                             Temperature.Units units, boolean isOffset, Optional<List<String>> requiredMods)
+                             Temperature.Units units, boolean isOffset, List<String> requiredMods)
     {
+        super(requiredMods);
         this.structures = structures;
         this.temperature = temperature;
         this.units = units;
         this.isOffset = isOffset;
-        this.requiredMods = requiredMods;
     }
 
-    public StructureTempData(Holder<ConfiguredStructureFeature<?, ?>> structure, double temperature, boolean isOffset, Temperature.Units units)
-    {   this(List.of(Either.right(structure)), temperature, units, !isOffset, Optional.empty());
+    public StructureTempData(List<Either<TagKey<ConfiguredStructureFeature<?, ?>>, Holder<ConfiguredStructureFeature<?, ?>>>> structures, double temperature,
+                             Temperature.Units units, boolean isOffset)
+    {
+        this(structures, temperature, units, isOffset, ConfigHelper.getModIDs(structures));
     }
 
-    public StructureTempData(List<Holder<ConfiguredStructureFeature<?, ?>>> structures, double temperature, boolean isOffset, Temperature.Units units)
-    {   this(structures.stream().map(Either::<TagKey<ConfiguredStructureFeature<?, ?>>, Holder<ConfiguredStructureFeature<?, ?>>>right).toList(), temperature, units, isOffset, Optional.empty());
+    public StructureTempData(Holder<ConfiguredStructureFeature<?, ?>> structure, double temperature,
+                             Temperature.Units units, boolean isOffset)
+    {
+        this(List.of(Either.right(structure)), temperature, units, isOffset);
     }
 
     public static final Codec<StructureTempData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -50,7 +52,7 @@ public class StructureTempData extends ConfigData implements IForgeRegistryEntry
             Codec.DOUBLE.fieldOf("temperature").forGetter(StructureTempData::temperature),
             Temperature.Units.CODEC.optionalFieldOf("units", Temperature.Units.MC).forGetter(StructureTempData::units),
             Codec.BOOL.optionalFieldOf("offset", false).forGetter(StructureTempData::isOffset),
-            Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(StructureTempData::requiredMods)
+            Codec.STRING.listOf().optionalFieldOf("required_mods", List.of()).forGetter(StructureTempData::requiredMods)
     ).apply(instance, StructureTempData::new));
 
     public List<Either<TagKey<ConfiguredStructureFeature<?, ?>>, Holder<ConfiguredStructureFeature<?, ?>>>> structures()
@@ -65,27 +67,27 @@ public class StructureTempData extends ConfigData implements IForgeRegistryEntry
     public boolean isOffset()
     {   return isOffset;
     }
-    public Optional<List<String>> requiredMods()
-    {   return requiredMods;
-    }
 
     public double getTemperature()
     {   return Temperature.convert(temperature, units, Temperature.Units.MC, isOffset);
     }
 
     @Nullable
-    public static StructureTempData fromToml(List<?> entry, boolean absolute, RegistryAccess registryAccess)
+    public static StructureTempData fromToml(List<?> entry, boolean isOffset, RegistryAccess registryAccess)
     {
-        String structureIdString = (String) entry.get(0);
-        List<Holder<ConfiguredStructureFeature<?, ?>>> structures = ConfigHelper.parseRegistryItems(Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY, registryAccess, structureIdString);
+        if (entry.size() < 2)
+        {   ColdSweat.LOGGER.error("Error parsing structure config: {} does not have enough arguments", entry);
+            return null;
+        }
+        List<Either<TagKey<ConfiguredStructureFeature<?, ?>>, Holder<ConfiguredStructureFeature<?, ?>>>> structures = ConfigHelper.parseRegistryItems(Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY, registryAccess, (String) entry.get(0));
         if (structures.isEmpty())
-        {
-            ColdSweat.LOGGER.error("Error parsing structure config: string \"{}\" does not contain valid structures", structureIdString);
+        {   ColdSweat.LOGGER.error("Error parsing structure config: {} does not contain any valid structures", entry);
             return null;
         }
         double temp = ((Number) entry.get(1)).doubleValue();
         Temperature.Units units = entry.size() == 3 ? Temperature.Units.valueOf(((String) entry.get(2)).toUpperCase()) : Temperature.Units.MC;
-        return new StructureTempData(structures, Temperature.convert(temp, units, Temperature.Units.MC, absolute), !absolute, units);
+
+        return new StructureTempData(structures, temp, units, isOffset);
     }
 
     @Override
@@ -100,11 +102,11 @@ public class StructureTempData extends ConfigData implements IForgeRegistryEntry
         if (obj == null || getClass() != obj.getClass()) return false;
 
         StructureTempData that = (StructureTempData) obj;
-        return Double.compare(that.temperature, temperature) == 0
+        return super.equals(obj)
+            && Double.compare(that.temperature, temperature) == 0
             && isOffset == that.isOffset
             && structures.equals(that.structures)
-            && units == that.units
-            && requiredMods.equals(that.requiredMods);
+            && units == that.units;
     }
 
     @Override
