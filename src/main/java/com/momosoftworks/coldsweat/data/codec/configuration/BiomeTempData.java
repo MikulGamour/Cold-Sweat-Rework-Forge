@@ -14,9 +14,7 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.biome.Biome;
 
 import javax.annotation.Nullable;
-import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 public class BiomeTempData extends ConfigData
 {
@@ -25,25 +23,26 @@ public class BiomeTempData extends ConfigData
     final double max;
     final Temperature.Units units;
     final boolean isOffset;
-    final Optional<List<String>> requiredMods;
 
     public BiomeTempData(List<Either<TagKey<Biome>, Holder<Biome>>> biomes, double min, double max,
-                         Temperature.Units units, boolean isOffset, Optional<List<String>> requiredMods)
+                         Temperature.Units units, boolean isOffset, List<String> requiredMods)
     {
+        super(requiredMods);
         this.biomes = biomes;
         this.min = min;
         this.max = max;
         this.units = units;
         this.isOffset = isOffset;
-        this.requiredMods = requiredMods;
     }
 
-    public BiomeTempData(Holder<Biome> biome, double min, double max, Temperature.Units units, boolean absolute)
-    {   this(List.of(Either.right(biome)), min, max, units, !absolute, Optional.empty());
+    public BiomeTempData(List<Either<TagKey<Biome>, Holder<Biome>>> biomes, double min, double max,
+                         Temperature.Units units, boolean isOffset)
+    {
+        this(biomes, min, max, units, isOffset, ConfigHelper.getModIDs(biomes));
     }
 
-    public BiomeTempData(Collection<Holder<Biome>> biomes, double min, double max, Temperature.Units units, boolean absolute)
-    {   this(biomes.stream().map(Either::<TagKey<Biome>, Holder<Biome>>right).toList(), min, max, units, !absolute, Optional.empty());
+    public BiomeTempData(Holder<Biome> biome, double min, double max, Temperature.Units units, boolean isOffset)
+    {   this(List.of(Either.right(biome)), min, max, units, isOffset);
     }
 
     public static final Codec<BiomeTempData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -54,7 +53,7 @@ public class BiomeTempData extends ConfigData
                 either -> either.map(left -> left, right -> right), Either::right).forGetter(BiomeTempData::max),
             com.momosoftworks.coldsweat.api.util.Temperature.Units.CODEC.optionalFieldOf("units", Temperature.Units.MC).forGetter(BiomeTempData::units),
             Codec.BOOL.optionalFieldOf("is_offset", false).forGetter(BiomeTempData::isOffset),
-            Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(BiomeTempData::requiredMods)
+            Codec.STRING.listOf().optionalFieldOf("required_mods", List.of()).forGetter(BiomeTempData::requiredMods)
     ).apply(instance, BiomeTempData::new));
 
     public List<Either<TagKey<Biome>, Holder<Biome>>> biomes()
@@ -72,9 +71,6 @@ public class BiomeTempData extends ConfigData
     public boolean isOffset()
     {   return isOffset;
     }
-    public Optional<List<String>> requiredMods()
-    {   return requiredMods;
-    }
 
     public double minTemp()
     {   return Temperature.convert(min, units, Temperature.Units.MC, !this.isOffset);
@@ -84,17 +80,17 @@ public class BiomeTempData extends ConfigData
     }
 
     @Nullable
-    public static BiomeTempData fromToml(List<?> data, boolean absolute, RegistryAccess registryAccess)
+    public static BiomeTempData fromToml(List<?> data, boolean isOffset, RegistryAccess registryAccess)
     {
-        String biomeIdString = (String) data.get(0);
-        List<Holder<Biome>> biomes = ConfigHelper.parseRegistryItems(Registry.BIOME_REGISTRY, registryAccess, biomeIdString);
-
-        if (biomes.isEmpty())
-        {   ColdSweat.LOGGER.error("Error parsing biome config: string \"{}\" does not contain any valid biomes", biomeIdString);
-            return null;
-        }
         if (data.size() < 3)
         {   ColdSweat.LOGGER.error("Error parsing biome config: not enough arguments");
+            return null;
+        }
+
+        List<Either<TagKey<Biome>, Holder<Biome>>> biomes = ConfigHelper.parseRegistryItems(Registry.BIOME_REGISTRY, registryAccess, (String) data.get(0));
+
+        if (biomes.isEmpty())
+        {   ColdSweat.LOGGER.error("Error parsing biome config: {} does not contain any valid biomes", data);
             return null;
         }
 
@@ -104,7 +100,7 @@ public class BiomeTempData extends ConfigData
         double max = ((Number) data.get(2)).doubleValue();
 
         // Maps the biome ID to the temperature (and variance if present)
-        return new BiomeTempData(biomes, min, max, units, absolute);
+        return new BiomeTempData(biomes, min, max, units, isOffset);
     }
 
     @Override
@@ -119,11 +115,11 @@ public class BiomeTempData extends ConfigData
         if (obj == null || getClass() != obj.getClass()) return false;
 
         BiomeTempData that = (BiomeTempData) obj;
-        return Double.compare(that.min, min) == 0
+        return super.equals(obj)
+            && Double.compare(that.min, min) == 0
             && Double.compare(that.max, max) == 0
             && isOffset == that.isOffset
             && biomes.equals(that.biomes)
-            && units == that.units
-            && requiredMods.equals(that.requiredMods);
+            && units == that.units;
     }
 }

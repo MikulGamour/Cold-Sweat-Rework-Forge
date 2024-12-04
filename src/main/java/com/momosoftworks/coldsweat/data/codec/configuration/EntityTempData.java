@@ -1,7 +1,9 @@
 package com.momosoftworks.coldsweat.data.codec.configuration;
 
+import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.data.codec.impl.RequirementHolder;
@@ -9,8 +11,10 @@ import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
 import com.momosoftworks.coldsweat.data.codec.requirement.PlayerDataRequirement;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -23,18 +27,23 @@ public class EntityTempData extends ConfigData implements RequirementHolder
     final double range;
     final Temperature.Units units;
     final Optional<PlayerDataRequirement> playerRequirement;
-    final Optional<List<String>> requiredMods;
 
     public EntityTempData(EntityRequirement entity, double temperature, double range,
                           Temperature.Units units, Optional<PlayerDataRequirement> playerRequirement,
-                          Optional<List<String>> requiredMods)
+                          List<String> requiredMods)
     {
+        super(requiredMods);
         this.entity = entity;
         this.temperature = temperature;
         this.range = range;
         this.units = units;
         this.playerRequirement = playerRequirement;
-        this.requiredMods = requiredMods;
+    }
+
+    public EntityTempData(EntityRequirement entity, double temperature, double range,
+                          Temperature.Units units, Optional<PlayerDataRequirement> playerRequirement)
+    {
+        this(entity, temperature, range, units, playerRequirement, ConfigHelper.getModIDs(CSMath.listOrEmpty(entity.entities()), ForgeRegistries.ENTITY_TYPES));
     }
 
     public static final Codec<EntityTempData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -43,7 +52,7 @@ public class EntityTempData extends ConfigData implements RequirementHolder
             Codec.DOUBLE.fieldOf("range").forGetter(EntityTempData::temperature),
             Temperature.Units.CODEC.optionalFieldOf("units", Temperature.Units.MC).forGetter(EntityTempData::units),
             PlayerDataRequirement.CODEC.optionalFieldOf("player").forGetter(EntityTempData::playerRequirement),
-            Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(EntityTempData::requiredMods)
+            Codec.STRING.listOf().optionalFieldOf("required_mods", List.of()).forGetter(EntityTempData::requiredMods)
     ).apply(instance, (entity, temperature, range, units, playerRequirement, requiredMods) ->
     {
         double cTemp = Temperature.convert(temperature, units, Temperature.Units.MC, false);
@@ -65,20 +74,19 @@ public class EntityTempData extends ConfigData implements RequirementHolder
     public Optional<PlayerDataRequirement> playerRequirement()
     {   return playerRequirement;
     }
-    public Optional<List<String>> requiredMods()
-    {   return requiredMods;
-    }
 
     @Nullable
     public static EntityTempData fromToml(List<?> entry)
     {
         if (entry.size() < 3)
-        {   return null;
+        {   ColdSweat.LOGGER.error("Error parsing entity config: not enough arguments");
+            return null;
         }
-        String entityID = (String) entry.get(0);
-        List<EntityType<?>> entities = ConfigHelper.getEntityTypes(entityID);
+        List<Either<TagKey<EntityType<?>>, EntityType<?>>> entities = ConfigHelper.getEntityTypes((String) entry.get(0));
+
         if (entities.isEmpty())
-        {   return null;
+        {   ColdSweat.LOGGER.error("Error parsing entity config: {} does not contain any valid entities", entry);
+            return null;
         }
         double temp = ((Number) entry.get(1)).doubleValue();
         double range = ((Number) entry.get(2)).doubleValue();
@@ -88,7 +96,7 @@ public class EntityTempData extends ConfigData implements RequirementHolder
 
         EntityRequirement requirement = new EntityRequirement(entities);
 
-        return new EntityTempData(requirement, temp, range, units, Optional.empty(), Optional.empty());
+        return new EntityTempData(requirement, temp, range, units, Optional.empty());
     }
 
     @Override
@@ -119,11 +127,11 @@ public class EntityTempData extends ConfigData implements RequirementHolder
         if (obj == null || getClass() != obj.getClass()) return false;
 
         EntityTempData that = (EntityTempData) obj;
-        return Double.compare(that.temperature, temperature) == 0
+        return super.equals(obj)
+            && Double.compare(that.temperature, temperature) == 0
             && Double.compare(that.range, range) == 0
             && entity.equals(that.entity)
             && units == that.units
-            && playerRequirement.equals(that.playerRequirement)
-            && requiredMods.equals(that.requiredMods);
+            && playerRequirement.equals(that.playerRequirement);
     }
 }

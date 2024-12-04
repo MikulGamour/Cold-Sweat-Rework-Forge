@@ -3,6 +3,7 @@ package com.momosoftworks.coldsweat.data.codec.configuration;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.data.codec.impl.RequirementHolder;
@@ -11,6 +12,7 @@ import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
 import com.momosoftworks.coldsweat.data.codec.requirement.NbtRequirement;
 import com.momosoftworks.coldsweat.data.codec.util.ExtraCodecs;
 import com.momosoftworks.coldsweat.data.codec.util.IntegerBounds;
+import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
 import com.momosoftworks.coldsweat.util.serialization.NBTHelper;
 import net.minecraft.nbt.CompoundTag;
@@ -19,9 +21,11 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,25 +37,24 @@ public class ItemCarryTempData extends ConfigData implements RequirementHolder
     final Temperature.Trait trait;
     final Double maxEffect;
     final EntityRequirement entityRequirement;
-    final Optional<List<String>> requiredMods;
 
     public ItemCarryTempData(ItemRequirement data, List<Either<IntegerBounds, EquipmentSlot>> slots, double temperature,
                              Temperature.Trait trait, Double maxEffect, EntityRequirement entityRequirement,
-                             Optional<List<String>> requiredMods)
+                             List<String> requiredMods)
     {
+        super(requiredMods);
         this.data = data;
         this.slots = slots;
         this.temperature = temperature;
         this.trait = trait;
         this.maxEffect = maxEffect;
         this.entityRequirement = entityRequirement;
-        this.requiredMods = requiredMods;
     }
 
     public ItemCarryTempData(ItemRequirement data, List<Either<IntegerBounds, EquipmentSlot>> slots, double temperature,
                              Temperature.Trait trait, Double maxEffect, EntityRequirement entityRequirement)
     {
-        this(data, slots, temperature, trait, maxEffect, entityRequirement, Optional.empty());
+        this(data, slots, temperature, trait, maxEffect, entityRequirement, ConfigHelper.getModIDs(CSMath.listOrEmpty(data.items()), ForgeRegistries.ITEMS));
     }
 
     public static final Codec<ItemCarryTempData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -61,7 +64,7 @@ public class ItemCarryTempData extends ConfigData implements RequirementHolder
             Temperature.Trait.CODEC.optionalFieldOf("trait", Temperature.Trait.WORLD).forGetter(ItemCarryTempData::trait),
             Codec.DOUBLE.optionalFieldOf("max_effect", java.lang.Double.MAX_VALUE).forGetter(ItemCarryTempData::maxEffect),
             EntityRequirement.getCodec().optionalFieldOf("entity", EntityRequirement.NONE).forGetter(ItemCarryTempData::entityRequirement),
-            Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(ItemCarryTempData::requiredMods)
+            Codec.STRING.listOf().optionalFieldOf("required_mods", List.of()).forGetter(ItemCarryTempData::requiredMods)
     ).apply(instance, ItemCarryTempData::new));
 
     public ItemRequirement data()
@@ -81,9 +84,6 @@ public class ItemCarryTempData extends ConfigData implements RequirementHolder
     }
     public EntityRequirement entityRequirement()
     {   return entityRequirement;
-    }
-    public Optional<List<String>> requiredMods()
-    {   return requiredMods;
     }
 
     @Override
@@ -121,18 +121,12 @@ public class ItemCarryTempData extends ConfigData implements RequirementHolder
         if (entry.size() < 4)
         {   return null;
         }
-        // item ID
-        String[] itemIDs = ((String) entry.get(0)).split(",");
-        List<String> requiredMods = new ArrayList<>();
-        for (String itemId : itemIDs)
-        {
-            String[] split = itemId.split(":");
-            if (split.length > 1)
-            {   requiredMods.add(split[0].replace("#", ""));
-            }
+        List<Either<TagKey<Item>, Item>> items = ConfigHelper.getItems((String) entry.get(0));
+
+        if (items.isEmpty())
+        {   ColdSweat.LOGGER.error("Error parsing entity config: {} does not contain any valid entities", entry);
+            return null;
         }
-        List<Either<TagKey<Item>, Item>> items = ConfigHelper.getItems(itemIDs);
-        if (items.isEmpty()) return null;
         //temp
         double temp = ((Number) entry.get(1)).doubleValue();
         // slots
@@ -154,7 +148,7 @@ public class ItemCarryTempData extends ConfigData implements RequirementHolder
         // compile item requirement
         ItemRequirement itemRequirement = new ItemRequirement(items, nbtRequirement);
 
-        return new ItemCarryTempData(itemRequirement, slots, temp, trait, maxEffect, EntityRequirement.NONE, Optional.of(requiredMods));
+        return new ItemCarryTempData(itemRequirement, slots, temp, trait, maxEffect, EntityRequirement.NONE);
     }
 
     public String getSlotRangeName()
@@ -190,12 +184,12 @@ public class ItemCarryTempData extends ConfigData implements RequirementHolder
         if (obj == null || getClass() != obj.getClass()) return false;
 
         ItemCarryTempData that = (ItemCarryTempData) obj;
-        return temperature == that.temperature
+        return super.equals(obj)
+            && temperature == that.temperature
             && data.equals(that.data)
             && slots.equals(that.slots)
             && trait.equals(that.trait)
             && maxEffect.equals(that.maxEffect)
-            && entityRequirement.equals(that.entityRequirement)
-            && requiredMods.equals(that.requiredMods);
+            && entityRequirement.equals(that.entityRequirement);
     }
 }

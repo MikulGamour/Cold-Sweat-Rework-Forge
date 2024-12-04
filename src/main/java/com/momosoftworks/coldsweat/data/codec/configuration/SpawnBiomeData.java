@@ -3,6 +3,7 @@ package com.momosoftworks.coldsweat.data.codec.configuration;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
 import net.minecraft.core.Holder;
@@ -16,7 +17,6 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nullable;
 import java.util.List;
-import java.util.Optional;
 
 public class SpawnBiomeData extends ConfigData
 {
@@ -24,25 +24,22 @@ public class SpawnBiomeData extends ConfigData
     final MobCategory category;
     final int weight;
     final List<Either<TagKey<EntityType<?>>, EntityType<?>>> entities;
-    final Optional<List<String>> requiredMods;
 
     public SpawnBiomeData(List<Either<TagKey<Biome>, Holder<Biome>>> biomes, MobCategory category,
                           int weight, List<Either<TagKey<EntityType<?>>, EntityType<?>>> entities,
-                          Optional<List<String>> requiredMods)
+                          List<String> requiredMods)
     {
+        super(requiredMods);
         this.biomes = biomes;
         this.category = category;
         this.weight = weight;
         this.entities = entities;
-        this.requiredMods = requiredMods;
     }
 
-    public SpawnBiomeData(List<Holder<Biome>> biomes, MobCategory category, int weight, List<EntityType<?>> entities)
+    public SpawnBiomeData(List<Either<TagKey<Biome>, Holder<Biome>>> biomes, MobCategory category,
+                          int weight, List<Either<TagKey<EntityType<?>>, EntityType<?>>> entities)
     {
-        this(biomes.stream().map(Either::<TagKey<Biome>, Holder<Biome>>right).toList(),
-             category, weight,
-             entities.stream().map(Either::<TagKey<EntityType<?>>, EntityType<?>>right).toList(),
-             Optional.empty());
+        this(biomes, category, weight, entities, ConfigHelper.getModIDs(biomes));
     }
 
     public static final Codec<SpawnBiomeData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -50,7 +47,7 @@ public class SpawnBiomeData extends ConfigData
             net.minecraft.world.entity.MobCategory.CODEC.fieldOf("category").forGetter(SpawnBiomeData::category),
             Codec.INT.fieldOf("weight").forGetter(SpawnBiomeData::weight),
             ConfigHelper.tagOrBuiltinCodec(Registry.ENTITY_TYPE_REGISTRY, ForgeRegistries.ENTITY_TYPES).listOf().fieldOf("entities").forGetter(SpawnBiomeData::entities),
-            Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(SpawnBiomeData::requiredMods)
+            Codec.STRING.listOf().optionalFieldOf("required_mods", List.of()).forGetter(SpawnBiomeData::requiredMods)
     ).apply(instance, SpawnBiomeData::new));
 
     public List<Either<TagKey<Biome>, Holder<Biome>>> biomes()
@@ -65,23 +62,21 @@ public class SpawnBiomeData extends ConfigData
     public List<Either<TagKey<EntityType<?>>, EntityType<?>>> entities()
     {   return entities;
     }
-    public Optional<List<String>> requiredMods()
-    {   return requiredMods;
-    }
 
     @Nullable
     public static SpawnBiomeData fromToml(List<?> entry, EntityType<?> entityType, RegistryAccess registryAccess)
     {
         if (entry.size() < 2)
-        {   return null;
+        {   ColdSweat.LOGGER.error("Error parsing entity spawn biome config: not enough arguments");
+            return null;
         }
-        String biomeId = ((String) entry.get(0));
-        List<Holder<Biome>> biomes = ConfigHelper.parseRegistryItems(Registry.BIOME_REGISTRY, registryAccess, biomeId);
+        List<Either<TagKey<Biome>, Holder<Biome>>> biomes = ConfigHelper.parseRegistryItems(Registry.BIOME_REGISTRY, registryAccess, (String) entry.get(0));
         if (biomes.isEmpty())
-        {   return null;
+        {   ColdSweat.LOGGER.error("Error parsing entity spawn biome config: {} does not contain any valid biomes", entry);
+            return null;
         }
         return new SpawnBiomeData(biomes, net.minecraft.world.entity.MobCategory.CREATURE, ((Number) entry.get(1)).intValue(),
-                                  java.util.List.of(entityType));
+                                  List.of(Either.right(entityType)));
     }
 
     @Override

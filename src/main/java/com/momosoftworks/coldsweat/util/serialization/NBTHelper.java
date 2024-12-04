@@ -160,6 +160,7 @@ public class NBTHelper
 
     public static CompoundTag parseCompoundNbt(String tag)
     {
+        if (tag.isBlank()) return new CompoundTag();
         try
         {   return TagParser.parseTag(tag);
         }
