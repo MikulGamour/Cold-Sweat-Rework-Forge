@@ -4,6 +4,7 @@ import com.google.common.collect.Multimap;
 import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.api.registry.BlockTempRegistry;
 import com.momosoftworks.coldsweat.api.registry.TempModifierRegistry;
+import com.momosoftworks.coldsweat.api.temperature.block_temp.BlockTemp;
 import com.momosoftworks.coldsweat.api.temperature.modifier.TempModifier;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.compat.kubejs.event.builder.*;
@@ -38,7 +39,10 @@ public class ModRegistriesEventJS extends StartupEventJS
     {
         BlockTempBuilderJS blockTempJS = new BlockTempBuilderJS();
         builder.accept(blockTempJS);
-        BlockTempRegistry.register(blockTempJS.build(function));
+        BlockTemp blockTemp = blockTempJS.build(function);
+        if (blockTemp.getAffectedBlocks().isEmpty()) return;
+
+        BlockTempRegistry.register(blockTemp);
         ColdSweat.LOGGER.info("Registered KubeJS block temperature for blocks: {}", blockTempJS.blocks);
     }
 
@@ -85,10 +89,12 @@ public class ModRegistriesEventJS extends StartupEventJS
     {
         FoodBuilderJS foodJS = new FoodBuilderJS();
         builder.accept(foodJS);
-        FoodData food = foodJS.build();
+        FoodData foodData = foodJS.build();
+        foodData.setType(ConfigData.Type.KUBEJS);
+        if (!foodData.areRequiredModsLoaded()) return;
 
         for (Item item : foodJS.items)
-        {   ConfigSettings.FOOD_TEMPERATURES.get().put(item, food);
+        {   ConfigSettings.FOOD_TEMPERATURES.get().put(item, foodData);
         }
     }
 
@@ -100,10 +106,12 @@ public class ModRegistriesEventJS extends StartupEventJS
     {
         FuelBuilderJS fuelJS = new FuelBuilderJS();
         builder.accept(fuelJS);
-        FuelData fuel = fuelJS.build(fuelType);
+        FuelData fuelData = fuelJS.build(fuelType);
+        fuelData.setType(ConfigData.Type.KUBEJS);
+        if (!fuelData.areRequiredModsLoaded()) return;
 
         for (Item item : fuelJS.items)
-        {   config.get().put(item, fuel);
+        {   config.get().put(item, fuelData);
         }
     }
 
@@ -127,10 +135,12 @@ public class ModRegistriesEventJS extends StartupEventJS
     {
         CarriedItemBuilderJS carriedItemJS = new CarriedItemBuilderJS();
         builder.accept(carriedItemJS);
-        ItemCarryTempData carriedItem = carriedItemJS.build();
+        ItemCarryTempData carryData = carriedItemJS.build();
+        carryData.setType(ConfigData.Type.KUBEJS);
+        if (!carryData.areRequiredModsLoaded()) return;
 
         for (Item item : carriedItemJS.items)
-        {   ConfigSettings.CARRIED_ITEM_TEMPERATURES.get().put(item, carriedItem);
+        {   ConfigSettings.CARRIED_ITEM_TEMPERATURES.get().put(item, carryData);
         }
     }
 
@@ -141,13 +151,16 @@ public class ModRegistriesEventJS extends StartupEventJS
     public void addBiomeTemperature(String biomeId, double minTemp, double maxTemp, String units)
     {
         DynamicRegistries registryAccess = RegistryHelper.getDynamicRegistries();
+        if (registryAccess == null) return;
         Biome biome = RegistryHelper.getBiome(new ResourceLocation(biomeId), registryAccess);
         if (biome == null)
         {   ColdSweat.LOGGER.error("Failed to find biome with ID: {}", biomeId);
             return;
         }
-        BiomeTempData biomeData = new BiomeTempData(biome, minTemp, maxTemp, Temperature.Units.fromID(units), true);
+        BiomeTempData biomeData = new BiomeTempData(biome, minTemp, maxTemp, Temperature.Units.fromID(units), false);
         biomeData.setType(ConfigData.Type.KUBEJS);
+        if (!biomeData.areRequiredModsLoaded()) return;
+
         ConfigSettings.BIOME_TEMPS.get().put(biome, biomeData);
     }
 
@@ -158,13 +171,16 @@ public class ModRegistriesEventJS extends StartupEventJS
     public void addBiomeOffset(String biomeId, double minTemp, double maxTemp, String units)
     {
         DynamicRegistries registryAccess = RegistryHelper.getDynamicRegistries();
+        if (registryAccess == null) return;
         Biome biome = RegistryHelper.getBiome(new ResourceLocation(biomeId), registryAccess);
         if (biome == null)
         {   ColdSweat.LOGGER.error("Failed to find biome with ID: {}", biomeId);
             return;
         }
-        BiomeTempData biomeData = new BiomeTempData(biome, minTemp, maxTemp, Temperature.Units.fromID(units), false);
+        BiomeTempData biomeData = new BiomeTempData(biome, minTemp, maxTemp, Temperature.Units.fromID(units), true);
         biomeData.setType(ConfigData.Type.KUBEJS);
+        if (!biomeData.areRequiredModsLoaded()) return;
+
         ConfigSettings.BIOME_OFFSETS.get().put(biome, biomeData);
     }
 
@@ -179,6 +195,7 @@ public class ModRegistriesEventJS extends StartupEventJS
     public void addDimensionTemperature(String dimensionId, double temperature, String units)
     {
         DynamicRegistries registryAccess = RegistryHelper.getDynamicRegistries();
+        if (registryAccess == null) return;
         DimensionType dimension = RegistryHelper.getDimension(new ResourceLocation(dimensionId), registryAccess);
         if (dimension == null)
         {   ColdSweat.LOGGER.error("Failed to find dimension with ID: {}", dimensionId);
@@ -186,6 +203,8 @@ public class ModRegistriesEventJS extends StartupEventJS
         }
         DimensionTempData dimensionData = new DimensionTempData(dimension, temperature, Temperature.Units.fromID(units), false);
         dimensionData.setType(ConfigData.Type.KUBEJS);
+        if (!dimensionData.areRequiredModsLoaded()) return;
+
         ConfigSettings.DIMENSION_TEMPS.get().put(dimension, dimensionData);
     }
 
@@ -196,6 +215,7 @@ public class ModRegistriesEventJS extends StartupEventJS
     public void addDimensionOffset(String dimensionId, double temperature, String units)
     {
         DynamicRegistries registryAccess = RegistryHelper.getDynamicRegistries();
+        if (registryAccess == null) return;
         DimensionType dimension = RegistryHelper.getDimension(new ResourceLocation(dimensionId), registryAccess);
         if (dimension == null)
         {   ColdSweat.LOGGER.error("Failed to find dimension with ID: {}", dimensionId);
@@ -203,6 +223,8 @@ public class ModRegistriesEventJS extends StartupEventJS
         }
         DimensionTempData dimensionData = new DimensionTempData(dimension, temperature, Temperature.Units.fromID(units), true);
         dimensionData.setType(ConfigData.Type.KUBEJS);
+        if (!dimensionData.areRequiredModsLoaded()) return;
+
         ConfigSettings.DIMENSION_OFFSETS.get().put(dimension, dimensionData);
     }
 
@@ -217,13 +239,16 @@ public class ModRegistriesEventJS extends StartupEventJS
     public void addStructureTemperature(String structureId, double temperature, String units)
     {
         DynamicRegistries registryAccess = RegistryHelper.getDynamicRegistries();
+        if (registryAccess == null) return;
         Structure<?> structure = RegistryHelper.getStructure(new ResourceLocation(structureId), registryAccess);
         if (structure == null)
-        {   ColdSweat.LOGGER.error("Failed to find structure with ID: {}", structure);
+        {   ColdSweat.LOGGER.error("Failed to find structure with ID: {}", structureId);
             return;
         }
         StructureTempData structureData = new StructureTempData(structure, temperature, Temperature.Units.fromID(units), false);
         structureData.setType(ConfigData.Type.KUBEJS);
+        if (!structureData.areRequiredModsLoaded()) return;
+
         ConfigSettings.STRUCTURE_TEMPS.get().put(structure, structureData);
     }
 
@@ -234,13 +259,16 @@ public class ModRegistriesEventJS extends StartupEventJS
     public void addStructureOffset(String structureId, double temperature, String units)
     {
         DynamicRegistries registryAccess = RegistryHelper.getDynamicRegistries();
+        if (registryAccess == null) return;
         Structure<?> structure = RegistryHelper.getStructure(new ResourceLocation(structureId), registryAccess);
         if (structure == null)
-        {   ColdSweat.LOGGER.error("Failed to find structure with ID: {}", structure);
+        {   ColdSweat.LOGGER.error("Failed to find structure with ID: {}", structureId);
             return;
         }
         StructureTempData structureData = new StructureTempData(structure, temperature, Temperature.Units.fromID(units), true);
         structureData.setType(ConfigData.Type.KUBEJS);
+        if (!structureData.areRequiredModsLoaded()) return;
+
         ConfigSettings.STRUCTURE_OFFSETS.get().put(structure, structureData);
     }
 
