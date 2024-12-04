@@ -226,7 +226,7 @@ public class Temperature
         if (!event.isCanceled())
         {
             LazyOptional<ITemperatureCap> optCap = EntityTempManager.getTemperatureCap(entity);
-            if (optCap.isPresent())
+            if (optCap.resolve().isPresent())
             {
                 ITemperatureCap cap = optCap.resolve().get();
                 if (addModifier(cap.getModifiers(trait), event.getModifier(), duplicates, maxCount, placement))
@@ -275,7 +275,7 @@ public class Temperature
                 }
                 hits++;
                 // If duplicates are not allowed, break the loop
-                if (duplicatePolicy != Placement.Duplicates.ALLOW || hits >= maxCount)
+                if (hits >= maxCount)
                 {   return true;
                 }
             }
