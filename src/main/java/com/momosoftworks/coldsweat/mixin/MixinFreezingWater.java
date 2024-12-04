@@ -90,7 +90,7 @@ public abstract class MixinFreezingWater
         IS_CHECKING_FREEZING = false;
     }
 
-    @Mixin(ServerWorld.class)
+    @Mixin(value = ServerWorld.class, priority = 1001)
     public static abstract class FreezeTickSpeed
     {
         ServerWorld self = (ServerWorld) (Object) this;
