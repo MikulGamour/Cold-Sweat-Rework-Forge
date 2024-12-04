@@ -74,7 +74,7 @@ public class KubeBindings
     }
 
     public double getBlockTemperature(BlockContainerJS block)
-    {   return WorldHelper.getBlockTemperature(block.getBlockState());
+    {   return WorldHelper.getBlockTemperature(block.getLevel(), block.getBlockState());
     }
 
     public double getBiomeTemperature(Level level, BlockPos pos)
