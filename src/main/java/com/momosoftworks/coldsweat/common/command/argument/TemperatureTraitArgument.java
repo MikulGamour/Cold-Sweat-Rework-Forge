@@ -1,42 +1,29 @@
 package com.momosoftworks.coldsweat.common.command.argument;
 
 import com.google.gson.JsonObject;
+import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.context.CommandContext;
-import com.mojang.serialization.Codec;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.common.capability.handler.EntityTempManager;
-import com.momosoftworks.coldsweat.util.serialization.ObjectBuilder;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.commands.arguments.StringRepresentableArgument;
+import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.synchronization.ArgumentTypeInfo;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.util.StringRepresentable;
 
-import java.util.Arrays;
-import java.util.Locale;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
-public class TemperatureTraitArgument extends StringRepresentableArgument<Temperature.Trait>
+public class TemperatureTraitArgument implements ArgumentType<Temperature.Trait>
 {
-    private static final Temperature.Trait[] VALID_GETTER_TRAITS = ObjectBuilder.build(() -> {
-        Temperature.Trait[] traits = Arrays.copyOf(EntityTempManager.VALID_TEMPERATURE_TRAITS, EntityTempManager.VALID_TEMPERATURE_TRAITS.length + 1);
-        traits[traits.length - 1] = Temperature.Trait.BODY;
-        return traits;
-    });
-
-    private static final Codec<Temperature.Trait> TEMPERATURES_CODEC_SETTER = StringRepresentable.fromEnum(() -> EntityTempManager.VALID_TEMPERATURE_TRAITS);
-    private static final Codec<Temperature.Trait> TEMPERATURES_CODEC_GETTER = StringRepresentable.fromEnum(() -> {
-        Temperature.Trait[] traits = Arrays.copyOf(EntityTempManager.VALID_TEMPERATURE_TRAITS, EntityTempManager.VALID_TEMPERATURE_TRAITS.length + 1);
-        traits[traits.length - 1] = Temperature.Trait.BODY;
-        return traits;
-    });
-
     private final boolean includeBody;
 
     private TemperatureTraitArgument(boolean includeBody)
     {
-        super(includeBody ? TEMPERATURES_CODEC_GETTER : TEMPERATURES_CODEC_SETTER,
-              includeBody ? () -> VALID_GETTER_TRAITS : () -> EntityTempManager.VALID_TEMPERATURE_TRAITS);
         this.includeBody = includeBody;
     }
 
@@ -52,21 +39,51 @@ public class TemperatureTraitArgument extends StringRepresentableArgument<Temper
     {   return context.getArgument(argument, Temperature.Trait.class);
     }
 
-    protected String convertId(String Id)
-    {   return Id.toLowerCase(Locale.ROOT);
+    @Override
+    public Temperature.Trait parse(StringReader reader)
+    {
+        String s = reader.readUnquotedString();
+        return Temperature.Trait.fromID(s);
+    }
+
+    private List<Temperature.Trait> getTraits()
+    {
+        List<Temperature.Trait> traits = new ArrayList<>(Arrays.asList(EntityTempManager.VALID_TEMPERATURE_TRAITS));
+        if (includeBody)
+        {
+            int coreIndex = traits.indexOf(Temperature.Trait.CORE);
+            if (coreIndex != -1)
+            {   traits.add(coreIndex + 1, Temperature.Trait.BODY);
+            }
+        }
+        return traits;
+    }
+
+    @Override
+    public <S> CompletableFuture<Suggestions> listSuggestions(CommandContext<S> pContext, SuggestionsBuilder pBuilder)
+    {
+        return SharedSuggestionProvider.suggest(this.getTraits().stream()
+                    .map(Temperature.Trait::getSerializedName)
+                    .collect(Collectors.toList()), pBuilder);
+    }
+
+    @Override
+    public Collection<String> getExamples()
+    {
+        return this.getTraits().stream().map(Temperature.Trait::getSerializedName).limit(2L).collect(Collectors.toList());
     }
 
     public static class Info implements ArgumentTypeInfo<TemperatureTraitArgument, Info.Template>
     {
         @Override
         public void serializeToNetwork(Template template, FriendlyByteBuf buffer)
-        {
-            buffer.writeBoolean(template.includeBody);
+        {   buffer.writeByte(template.includeBody ? 1 : 0);
         }
 
         @Override
         public Template deserializeFromNetwork(FriendlyByteBuf buffer)
-        {   return new Template(buffer.readBoolean());
+        {   boolean includeBody = buffer.readByte() == 1;
+            return new Template(includeBody);
         }
 
         @Override
