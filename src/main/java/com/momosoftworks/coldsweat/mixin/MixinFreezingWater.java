@@ -92,7 +92,7 @@ public class MixinFreezingWater
         IS_CHECKING_FREEZING = false;
     }
 
-    @Mixin(ServerLevel.class)
+    @Mixin(value = ServerLevel.class, priority = 1001)
     public static abstract class FreezeTickSpeed
     {
         ServerLevel self = (ServerLevel) (Object) this;
