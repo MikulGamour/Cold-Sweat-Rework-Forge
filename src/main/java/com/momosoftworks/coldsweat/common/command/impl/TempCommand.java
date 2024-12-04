@@ -55,14 +55,7 @@ public class TempCommand extends BaseCommand
                                         .executes(source -> executeSetEntityTemp(source.getSource(),
                                                                                  EntityArgument.getEntities(source, "entities"),
                                                                                  IntegerArgumentType.getInteger(source, "amount"),
-                                                                                 Temperature.Trait.BODY))
-                                )
-                                .then(Commands.argument("trait", TemperatureTraitArgument.temperatureSet())
-                                        .then(Commands.argument("amount", IntegerArgumentType.integer(-150, 150))
-                                                  .executes(source -> executeSetEntityTemp(source.getSource(),
-                                                                                           EntityArgument.getEntities(source, "entities"),
-                                                                                           IntegerArgumentType.getInteger(source, "amount"),
-                                                                                           TemperatureTraitArgument.getTemperature(source, "trait")))
+                                                                                 Temperature.Trait.BODY)
                                         )
                                 )
                         )
@@ -73,11 +66,14 @@ public class TempCommand extends BaseCommand
                         .then(Commands.argument("entities", EntityArgument.entities())
                                 .executes(source -> executeGetEntityTemp(source.getSource(),
                                                                          EntityArgument.getEntities(source, "entities"),
-                                                                         Temperature.Trait.BODY))
+                                                                         Temperature.Trait.BODY)
+                                )
                                 .then(Commands.argument("trait", TemperatureTraitArgument.temperatureGet())
                                         .executes(source -> executeGetEntityTemp(source.getSource(),
                                                                                  EntityArgument.getEntities(source, "entities"),
-                                                                                 TemperatureTraitArgument.getTemperature(source, "trait"))))
+                                                                                 TemperatureTraitArgument.getTemperature(source, "trait"))
+                                        )
+                                )
                         )
                         /* Get from world */
                         .then(Commands.argument("pos", BlockPosArgument.blockPos())
@@ -110,7 +106,6 @@ public class TempCommand extends BaseCommand
                         .then(Commands.argument("entities", EntityArgument.entities())
                                 /* Clear all attributes */
                                 .then(Commands.literal("clear")
-                                              /* Modify attribute of this type */
                                               .then(Commands.argument("type", TempAttributeTraitArgument.attribute())
                                                             .executes(source -> executeClearModifier(
                                                                     source.getSource(), EntityArgument.getEntities(source, "entities"),
@@ -146,7 +141,7 @@ public class TempCommand extends BaseCommand
                                 /* Set attribute to static value */
                                 .then(Commands.literal("set")
                                               .then(Commands.argument("type", TempAttributeTraitArgument.attribute())
-                                                              .then(Commands.argument("amount", DoubleArgumentType.doubleArg())
+                                                            .then(Commands.argument("amount", DoubleArgumentType.doubleArg())
                                                                           .then(Commands.argument("permanent", BoolArgumentType.bool())
                                                                                           .executes(source -> executeModifyEntityTemp(
                                                                                                   source.getSource(), EntityArgument.getEntities(source, "entities"),
@@ -161,7 +156,7 @@ public class TempCommand extends BaseCommand
                                                                                   DoubleArgumentType.getDouble(source, "amount"),
                                                                                   null, false)
                                                                           )
-                                                              )
+                                                            )
                                               )
                                 )
                         )
