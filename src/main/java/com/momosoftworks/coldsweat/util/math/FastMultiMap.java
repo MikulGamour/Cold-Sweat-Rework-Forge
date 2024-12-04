@@ -297,10 +297,7 @@ public class FastMultiMap<K, V> implements Multimap<K, V>
     public FastMap<K, Collection<V>> asMap()
     {
         FastMap<K, Collection<V>> map = new FastMap<>(internal.size());
-        for (Map.Entry<K, LinkedHashSet<V>> entry : internal.entrySet())
-        {
-            map.put(entry.getKey(), entry.getValue());
-        }
+        map.putAll(internal);
         return map;
     }
 
