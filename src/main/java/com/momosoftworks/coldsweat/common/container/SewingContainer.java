@@ -64,7 +64,7 @@ public class SewingContainer extends AbstractContainerMenu
 
         @Override
         public boolean isEmpty()
-        {   return !stackList.stream().anyMatch(stack -> !stack.isEmpty());
+        {   return stackList.stream().allMatch(ItemStack::isEmpty);
         }
 
         @Nonnull
@@ -299,7 +299,7 @@ public class SewingContainer extends AbstractContainerMenu
                 });
             }
             // Item is for insulation
-            else if (ConfigSettings.INSULATION_ITEMS.get().get(insulatorItem.getItem()) != null
+            else if (!ConfigSettings.INSULATION_ITEMS.get().get(insulatorItem.getItem()).isEmpty()
             && (!(insulatorItem.getItem() instanceof Wearable)
             || LivingEntity.getEquipmentSlotForItem(wearableItem) == LivingEntity.getEquipmentSlotForItem(insulatorItem)))
             {
