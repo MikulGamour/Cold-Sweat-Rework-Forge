@@ -1,10 +1,8 @@
 package com.momosoftworks.coldsweat.common.container;
 
-import com.mojang.datafixers.util.Pair;
 import com.momosoftworks.coldsweat.api.event.common.insulation.InsulateItemEvent;
-import com.momosoftworks.coldsweat.api.insulation.StaticInsulation;
-import com.momosoftworks.coldsweat.common.capability.insulation.IInsulatableCap;
 import com.momosoftworks.coldsweat.common.capability.handler.ItemInsulationManager;
+import com.momosoftworks.coldsweat.common.capability.insulation.IInsulatableCap;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.core.advancement.trigger.ModAdvancementTriggers;
 import com.momosoftworks.coldsweat.core.event.TaskScheduler;
@@ -35,8 +33,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.network.PacketDistributor;
 import net.minecraftforge.registries.ForgeRegistries;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Map;
 
 public class SewingContainer extends Container
 {
@@ -60,7 +57,7 @@ public class SewingContainer extends Container
         }
 
         public boolean isEmpty()
-        {   return !stackList.stream().anyMatch(stack -> !stack.isEmpty());
+        {   return stackList.stream().allMatch(ItemStack::isEmpty);
         }
 
         public ItemStack getItem(int index)
@@ -307,7 +304,7 @@ public class SewingContainer extends Container
                 });
             }
             // Item is for insulation
-            else if (ConfigSettings.INSULATION_ITEMS.get().get(insulatorItem.getItem()) != null
+            else if (!ConfigSettings.INSULATION_ITEMS.get().get(insulatorItem.getItem()).isEmpty()
             && (!(insulatorItem.getItem() instanceof IArmorVanishable)
             || MobEntity.getEquipmentSlotForItem(wearableItem) == MobEntity.getEquipmentSlotForItem(insulatorItem)))
             {
