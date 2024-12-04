@@ -53,11 +53,15 @@ public abstract class MixinHeartRender
         int hearts = CSMath.ceil(health / 2d);
         int lastHeartIndex = (int) (healthMax / 2 - hearts);
         boolean half = HEART_INDEX == lastHeartIndex + 1 && health % 2 == 1;
-        double temp = Overlays.BODY_TEMP;
+        if (player == null) return;
+
         boolean isHardcore = player.level.getLevelData().isHardcore();
 
         if (heartsFreezePercentage == 0
         || player.hasEffect(ModEffects.GRACE)) return;
+
+        if (player.hasEffect(ModEffects.ICE_RESISTANCE)) return;
+        double temp = Overlays.BODY_TEMP;
 
         // Get protection from armor underwear
         float unfrozenHealth = CSMath.blend((float) (1 - heartsFreezePercentage), 1, TempEffectsCommon.getColdResistance(player), 0, 4);
@@ -69,8 +73,9 @@ public abstract class MixinHeartRender
 
         // Render frozen hearts
         bind(HEART_TEXTURE);
-        if (HEART_INDEX < frozenHearts + 1)
+        if (HEART_INDEX > 0 && HEART_INDEX < frozenHearts + 1)
         {
+            AbstractGui.blit(ps, x, y, 21, 0, 9, 9, 30, 14);
             AbstractGui.blit(ps, x + 1, y + 1, u, 0, 7, 7, 30, 14);
             if (isHardcore)
             {   AbstractGui.blit(ps, x + 1, y + 1, 23, 10, 7, 4, 30, 14);
