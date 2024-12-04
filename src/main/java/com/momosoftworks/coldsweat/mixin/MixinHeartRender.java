@@ -33,6 +33,8 @@ public class MixinHeartRender
     {
         double heartsFreezePercentage = ConfigSettings.HEARTS_FREEZING_PERCENTAGE.get();
         Player player = Minecraft.getInstance().player;
+        if (player == null) return;
+
         boolean isHardcore = player.level.getLevelData().isHardcore();
 
         if (heartsFreezePercentage == 0
@@ -43,37 +45,34 @@ public class MixinHeartRender
         {   HEART_INDEX += 1;
         }
 
-        if (player != null)
-        {
-            if (player.hasEffect(ModEffects.ICE_RESISTANCE)) return;
-            double temp = Overlays.BODY_TEMP;
+        if (player.hasEffect(ModEffects.ICE_RESISTANCE)) return;
+        double temp = Overlays.BODY_TEMP;
 
-            // Get protection from armor underwear
-            float unfrozenHealth = CSMath.blend((float) (1 - heartsFreezePercentage), 1, TempEffectsCommon.getColdResistance(player), 0, 4);
-            if (unfrozenHealth == 1) return;
+        // Get protection from armor underwear
+        float unfrozenHealth = CSMath.blend((float) (1 - heartsFreezePercentage), 1, TempEffectsCommon.getColdResistance(player), 0, 4);
+        if (unfrozenHealth == 1) return;
 
-            int frozenHealth = (int) (player.getMaxHealth() - player.getMaxHealth() * CSMath.blend(unfrozenHealth, 1, temp, -100, -50));
-            int frozenHearts = frozenHealth / 2;
-            int u = blink || heartType == Gui.HeartType.CONTAINER ? 14 : half ? 7 : 0;
+        int frozenHealth = (int) (player.getMaxHealth() - player.getMaxHealth() * CSMath.blend(unfrozenHealth, 1, temp, -100, -50));
+        int frozenHearts = frozenHealth / 2;
+        int u = blink || heartType == Gui.HeartType.CONTAINER ? 14 : half ? 7 : 0;
 
-            // Render frozen hearts
-            RenderSystem.setShaderTexture(0, HEART_TEXTURE);
+        // Render frozen hearts
+        RenderSystem.setShaderTexture(0, HEART_TEXTURE);
             if (HEART_INDEX > 0 && HEART_INDEX < frozenHearts + 1)
             {
                 GuiComponent.blit(ps, x, y, 21, 0, 9, 9, 30, 14);
-                GuiComponent.blit(ps, x + 1, y + 1, u, 0, 7, 7, 30, 14);
-                if (isHardcore)
-                {   GuiComponent.blit(ps, x + 1, y + 1, 23, 10, 7, 4, 30, 14);
-                }
-                ci.cancel();
+            GuiComponent.blit(ps, x + 1, y + 1, u, 0, 7, 7, 30, 14);
+            if (isHardcore)
+            {   GuiComponent.blit(ps, x + 1, y + 1, 23, 10, 7, 4, 30, 14);
             }
-            // Render half-frozen heart if needed
-            else if (HEART_INDEX == frozenHearts + 1 && frozenHealth % 2 == 1)
-            {
-                GuiComponent.blit(ps, x + 1, y + 1, u, 7, 7, 7, 30, 14);
-                if (isHardcore)
-                {   GuiComponent.blit(ps, x + 4, y + 1, 26, 10, 4, 4, 30, 14);
-                }
+            ci.cancel();
+        }
+        // Render half-frozen heart if needed
+        else if (HEART_INDEX == frozenHearts + 1 && frozenHealth % 2 == 1)
+        {
+            GuiComponent.blit(ps, x + 1, y + 1, u, 7, 7, 7, 30, 14);
+            if (isHardcore)
+            {   GuiComponent.blit(ps, x + 4, y + 1, 26, 10, 4, 4, 30, 14);
             }
         }
         RenderSystem.setShaderTexture(0, ICONS_TEXTURE);
