@@ -14,6 +14,7 @@ import com.momosoftworks.coldsweat.data.ModRegistries;
 import com.momosoftworks.coldsweat.data.codec.configuration.*;
 import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.util.math.CSMath;
+import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.math.FastMap;
 import com.momosoftworks.coldsweat.util.math.FastMultiMap;
 import com.momosoftworks.coldsweat.util.math.Vec2i;
@@ -350,7 +351,7 @@ public class ConfigSettings
         STRUCTURE_TEMPS = addSyncedSettingWithRegistries("structure_temperatures", FastMap::new, (holder, registryAccess) ->
         {
             Map<Structure<?>, StructureTempData> dataMap = ConfigHelper.getRegistryMap(WorldSettingsConfig.STRUCTURE_TEMPERATURES.get(), Registry.STRUCTURE_FEATURE_REGISTRY,
-                                                                                   toml -> StructureTempData.fromToml(toml, true, registryAccess), StructureTempData::structures);
+                                                                                   toml -> StructureTempData.fromToml(toml, false, registryAccess), StructureTempData::structures);
             ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.STRUCTURE_TEMP_DATA);
 
             holder.get(registryAccess).putAll(dataMap);
@@ -363,7 +364,7 @@ public class ConfigSettings
         STRUCTURE_OFFSETS = addSyncedSettingWithRegistries("structure_offsets", FastMap::new, (holder, registryAccess) ->
         {
             Map<Structure<?>, StructureTempData> dataMap = ConfigHelper.getRegistryMap(WorldSettingsConfig.STRUCTURE_TEMP_OFFSETS.get(), Registry.STRUCTURE_FEATURE_REGISTRY,
-                                                                                   toml -> StructureTempData.fromToml(toml, false, registryAccess), StructureTempData::structures);
+                                                                                   toml -> StructureTempData.fromToml(toml, true, registryAccess), StructureTempData::structures);
             ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.STRUCTURE_TEMP_DATA);
 
             holder.get(registryAccess).putAll(dataMap);
@@ -386,7 +387,7 @@ public class ConfigSettings
 
                 data.setType(ConfigData.Type.TOML);
 
-                for (Item item : RegistryHelper.mapTaggableList(data.data().items().get()))
+                for (Item item : RegistryHelper.mapTaggableList(CSMath.listOrEmpty(data.data().items())))
                 {   dataMap.put(item, data);
                 }
             }
@@ -422,7 +423,7 @@ public class ConfigSettings
 
                 data.setType(ConfigData.Type.TOML);
 
-                for (Item item : RegistryHelper.mapTaggableList(data.data().items().get()))
+                for (Item item : RegistryHelper.mapTaggableList(CSMath.listOrEmpty(data.data().items())))
                 {   dataMap.put(item, data);
                 }
             }
@@ -431,17 +432,13 @@ public class ConfigSettings
             // Add entries
             holder.get().putAll(dataMap);
         };
-        INSULATION_ITEMS = addSyncedSetting("insulation_items", FastMultiMap::new, holder ->
-        {   insulatorAdder.accept(ItemSettingsConfig.INSULATION_ITEMS, holder, Insulation.Slot.ITEM);
-        },
+        INSULATION_ITEMS = addSyncedSetting("insulation_items", FastMultiMap::new, holder -> insulatorAdder.accept(ItemSettingsConfig.INSULATION_ITEMS, holder, Insulation.Slot.ITEM),
         (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "InsulationItems", Registry.ITEM_REGISTRY, ModRegistries.INSULATOR_DATA, item -> ForgeRegistries.ITEMS.getKey(item)),
         (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "InsulationItems", ModRegistries.INSULATOR_DATA, rl -> ForgeRegistries.ITEMS.getValue(rl)),
         (saver) -> {},
         SyncType.ONE_WAY);
 
-        INSULATING_ARMORS = addSyncedSetting("insulating_armors", FastMultiMap::new, holder ->
-        {   insulatorAdder.accept(ItemSettingsConfig.INSULATING_ARMOR, holder, Insulation.Slot.ARMOR);
-        },
+        INSULATING_ARMORS = addSyncedSetting("insulating_armors", FastMultiMap::new, holder -> insulatorAdder.accept(ItemSettingsConfig.INSULATING_ARMOR, holder, Insulation.Slot.ARMOR),
         (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "InsulatingArmors", Registry.ITEM_REGISTRY, ModRegistries.INSULATOR_DATA, item -> ForgeRegistries.ITEMS.getKey(item)),
         (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "InsulatingArmors", ModRegistries.INSULATOR_DATA, rl -> ForgeRegistries.ITEMS.getValue(rl)),
         (saver) -> {},
@@ -517,7 +514,7 @@ public class ConfigSettings
                 FoodData data = FoodData.fromToml(list);
                 if (data == null) continue;
 
-                for (Item item : RegistryHelper.mapTaggableList(data.data().items().get()))
+                for (Item item : RegistryHelper.mapTaggableList(CSMath.listOrEmpty(data.data().items())))
                 {   dataMap.put(item, data);
                 }
             }
@@ -540,7 +537,7 @@ public class ConfigSettings
                 ItemCarryTempData data = ItemCarryTempData.fromToml(list);
                 if (data == null) continue;
 
-                for (Item item : RegistryHelper.mapTaggableList(data.data().items().get()))
+                for (Item item : RegistryHelper.mapTaggableList(CSMath.listOrEmpty(data.data().items())))
                 {   dataMap.put(item, data);
                 }
             }
@@ -645,7 +642,7 @@ public class ConfigSettings
 
                 data.setType(ConfigData.Type.TOML);
 
-                for (EntityType<?> entityType : RegistryHelper.mapTaggableList(data.entities()))
+                for (EntityType<?> entityType : RegistryHelper.mapTaggableList(CSMath.listOrEmpty(data.entityData().entities())))
                 {   dataMap.put(entityType, data);
                 }
             }
@@ -666,7 +663,7 @@ public class ConfigSettings
 
                 data.setType(ConfigData.Type.TOML);
 
-                for (EntityType<?> entityType : RegistryHelper.mapTaggableList(data.entity().entities.get()))
+                for (EntityType<?> entityType : RegistryHelper.mapTaggableList(CSMath.listOrEmpty(data.entity().entities())))
                 {   dataMap.put(entityType, data);
                 }
             }

@@ -62,9 +62,9 @@ public class EntityRequirement
         this(type, location, steppingOn, effects, nbt, flags, equipment, playerData, vehicle, passenger, target, Optional.empty());
     }
 
-    public EntityRequirement(List<EntityType<?>> entities)
+    public EntityRequirement(List<Either<ITag<EntityType<?>>, EntityType<?>>> entities)
     {
-        this(Optional.of(entities.stream().map(Either::<ITag<EntityType<?>>, EntityType<?>>right).collect(Collectors.toList())),
+        this(Optional.of(entities),
              Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
              Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
     }

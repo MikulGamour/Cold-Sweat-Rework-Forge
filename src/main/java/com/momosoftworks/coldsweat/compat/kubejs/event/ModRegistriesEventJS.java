@@ -222,7 +222,7 @@ public class ModRegistriesEventJS extends StartupEventJS
         {   ColdSweat.LOGGER.error("Failed to find structure with ID: {}", structure);
             return;
         }
-        StructureTempData structureData = new StructureTempData(structure, temperature, false, Temperature.Units.fromID(units));
+        StructureTempData structureData = new StructureTempData(structure, temperature, Temperature.Units.fromID(units), false);
         structureData.setType(ConfigData.Type.KUBEJS);
         ConfigSettings.STRUCTURE_TEMPS.get().put(structure, structureData);
     }
@@ -239,7 +239,7 @@ public class ModRegistriesEventJS extends StartupEventJS
         {   ColdSweat.LOGGER.error("Failed to find structure with ID: {}", structure);
             return;
         }
-        StructureTempData structureData = new StructureTempData(structure, temperature, true, Temperature.Units.fromID(units));
+        StructureTempData structureData = new StructureTempData(structure, temperature, Temperature.Units.fromID(units), true);
         structureData.setType(ConfigData.Type.KUBEJS);
         ConfigSettings.STRUCTURE_OFFSETS.get().put(structure, structureData);
     }

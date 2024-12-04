@@ -11,6 +11,7 @@ import net.minecraft.nbt.NBTDynamicOps;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.util.registry.Registry;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,6 +22,7 @@ public class RemoveRegistryData<T extends ConfigData> extends ConfigData
 
     public RemoveRegistryData(RegistryKey<Registry<T>> registry, List<CompoundNBT> entries)
     {
+        super(Arrays.asList());
         this.registry = registry;
         this.entries = entries;
     }

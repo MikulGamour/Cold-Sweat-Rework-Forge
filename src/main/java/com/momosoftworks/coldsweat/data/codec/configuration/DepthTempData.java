@@ -16,28 +16,33 @@ import net.minecraft.util.registry.Registry;
 import net.minecraft.world.DimensionType;
 import net.minecraft.world.World;
 
+import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 public class DepthTempData extends ConfigData
 {
     final List<TempRegion> temperatures;
     final List<DimensionType> dimensions;
-    final Optional<List<String>> requiredMods;
 
     public DepthTempData(List<TempRegion> temperatures,
                          List<DimensionType> dimensions,
-                         Optional<List<String>> requiredMods)
+                         List<String> requiredMods)
     {
+        super(requiredMods);
         this.temperatures = temperatures;
         this.dimensions = dimensions;
-        this.requiredMods = requiredMods;
+    }
+
+    public DepthTempData(List<TempRegion> temperatures,
+                         List<DimensionType> dimensions)
+    {
+        this(temperatures, dimensions, ConfigHelper.getModIDs(dimensions, Registry.DIMENSION_TYPE_REGISTRY));
     }
 
     public static final Codec<DepthTempData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             TempRegion.CODEC.listOf().fieldOf("regions").forGetter(data -> data.temperatures),
             ConfigHelper.dynamicCodec(Registry.DIMENSION_TYPE_REGISTRY).listOf().fieldOf("dimensions").forGetter(data -> data.dimensions),
-            Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(data -> data.requiredMods)
+            Codec.STRING.listOf().optionalFieldOf("required_mods", Arrays.asList()).forGetter(DepthTempData::requiredMods)
     ).apply(instance, DepthTempData::new));
 
     public List<TempRegion> temperatures()
@@ -45,9 +50,6 @@ public class DepthTempData extends ConfigData
     }
     public List<DimensionType> dimensions()
     {   return dimensions;
-    }
-    public Optional<List<String>> requiredMods()
-    {   return requiredMods;
     }
 
     public boolean withinBounds(World level, BlockPos pos)
@@ -88,9 +90,9 @@ public class DepthTempData extends ConfigData
         if (obj == null || getClass() != obj.getClass()) return false;
 
         DepthTempData that = (DepthTempData) obj;
-        return temperatures.equals(that.temperatures)
-            && dimensions.equals(that.dimensions)
-            && requiredMods.equals(that.requiredMods);
+        return super.equals(obj)
+            && temperatures.equals(that.temperatures)
+            && dimensions.equals(that.dimensions);
     }
 
     public static class TempRegion

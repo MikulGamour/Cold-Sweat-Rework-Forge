@@ -299,12 +299,8 @@ public class ConfigLoadingHandler
         insulators.forEach(insulator ->
         {
             // Check if the required mods are loaded
-            if (insulator.requiredMods().isPresent())
-            {
-                List<String> requiredMods = insulator.requiredMods().get();
-                if (requiredMods.stream().anyMatch(mod -> !CompatManager.modLoaded(mod)))
-                {   return;
-                }
+            if (!insulator.areRequiredModsLoaded())
+            {   return;
             }
 
             // Add listed items as insulators
@@ -339,12 +335,8 @@ public class ConfigLoadingHandler
         fuels.forEach(fuelData ->
         {
             // Check if the required mods are loaded
-            if (fuelData.requiredMods().isPresent())
-            {
-                List<String> requiredMods = fuelData.requiredMods().get();
-                if (requiredMods.stream().anyMatch(mod -> !CompatManager.modLoaded(mod)))
-                {   return;
-                }
+            if (!fuelData.areRequiredModsLoaded())
+            {   return;
             }
 
             List<Item> items = new ArrayList<>();
@@ -373,12 +365,8 @@ public class ConfigLoadingHandler
         foods.forEach(foodData ->
         {
             // Check if the required mods are loaded
-            if (foodData.requiredMods().isPresent())
-            {
-                List<String> requiredMods = foodData.requiredMods().get();
-                if (requiredMods.stream().anyMatch(mod -> !CompatManager.modLoaded(mod)))
-                {   return;
-                }
+            if (!foodData.areRequiredModsLoaded())
+            {   return;
             }
 
             List<Item> items = new ArrayList<>();
@@ -400,12 +388,8 @@ public class ConfigLoadingHandler
         carryTemps.forEach(carryTempData ->
         {
             // Check if the required mods are loaded
-            if (carryTempData.requiredMods().isPresent())
-            {
-                List<String> requiredMods = carryTempData.requiredMods().get();
-                if (requiredMods.stream().anyMatch(mod -> !CompatManager.modLoaded(mod)))
-                {   return;
-                }
+            if (!carryTempData.areRequiredModsLoaded())
+            {   return;
             }
 
             List<Item> items = new ArrayList<>();
@@ -422,21 +406,13 @@ public class ConfigLoadingHandler
         });
     }
 
-    private static void addBlockTempConfigs(Collection<BlockTempData> holders)
+    private static void addBlockTempConfigs(Collection<BlockTempData> blockTemps)
     {
-        List<BlockTempData> blockTemps = new ArrayList<>(holders);
-        // Handle entries removed by configs
-        removeEntries(blockTemps, ModRegistries.BLOCK_TEMP_DATA);
-
         blockTemps.forEach(blockTempData ->
         {
             // Check if the required mods are loaded
-            if (blockTempData.requiredMods().isPresent())
-            {
-                List<String> requiredMods = blockTempData.requiredMods().get();
-                if (requiredMods.stream().anyMatch(mod -> !CompatManager.modLoaded(mod)))
-                {   return;
-                }
+            if (!blockTempData.areRequiredModsLoaded())
+            {   return;
             }
             Block[] blocks = RegistryHelper.mapTaggableList(blockTempData.blocks()).toArray(new Block[0]);
             BlockTemp blockTemp = new BlockTemp(blockTempData.getTemperature() < 0 ? -blockTempData.getMaxEffect() : -Double.MAX_VALUE,
@@ -476,12 +452,8 @@ public class ConfigLoadingHandler
         biomeTemps.forEach(biomeTempData ->
         {
             // Check if the required mods are loaded
-            if (biomeTempData.requiredMods().isPresent())
-            {
-                List<String> requiredMods = biomeTempData.requiredMods().get();
-                if (requiredMods.stream().anyMatch(mod -> !CompatManager.modLoaded(mod)))
-                {   return;
-                }
+            if (!biomeTempData.areRequiredModsLoaded())
+            {   return;
             }
             for (Biome biome : biomeTempData.biomes())
             {
@@ -500,12 +472,8 @@ public class ConfigLoadingHandler
         dimensionTemps.forEach(dimensionTempData ->
         {
             // Check if the required mods are loaded
-            if (dimensionTempData.requiredMods().isPresent())
-            {
-                List<String> requiredMods = dimensionTempData.requiredMods().get();
-                if (requiredMods.stream().anyMatch(mod -> !CompatManager.modLoaded(mod)))
-                {   return;
-                }
+            if (!dimensionTempData.areRequiredModsLoaded())
+            {   return;
             }
 
             for (DimensionType dimension : dimensionTempData.dimensions())
@@ -525,12 +493,8 @@ public class ConfigLoadingHandler
         structureTemps.forEach(structureTempData ->
         {
             // Check if the required mods are loaded
-            if (structureTempData.requiredMods().isPresent())
-            {
-                List<String> requiredMods = structureTempData.requiredMods().get();
-                if (requiredMods.stream().anyMatch(mod -> !CompatManager.modLoaded(mod)))
-                {   return;
-                }
+            if (!structureTempData.areRequiredModsLoaded())
+            {   return;
             }
             for (Structure<?> structure : structureTempData.structures())
             {
@@ -547,17 +511,13 @@ public class ConfigLoadingHandler
     private static void addDepthTempConfigs(Collection<DepthTempData> depthTemps)
     {
         // Add the depth temps to the config
-        for (DepthTempData depthTemp : depthTemps)
+        for (DepthTempData depthData : depthTemps)
         {
             // Check if the required mods are loaded
-            if (depthTemp.requiredMods().isPresent())
-            {
-                List<String> requiredMods = depthTemp.requiredMods().get();
-                if (requiredMods.stream().anyMatch(mod -> !CompatManager.modLoaded(mod)))
-                {   return;
-                }
+            if (!depthData.areRequiredModsLoaded())
+            {   return;
             }
-            ConfigSettings.DEPTH_REGIONS.get().add(depthTemp);
+            ConfigSettings.DEPTH_REGIONS.get().add(depthData);
         }
     }
 
@@ -566,16 +526,12 @@ public class ConfigLoadingHandler
         mounts.forEach(mountData ->
         {
             // Check if the required mods are loaded
-            if (mountData.requiredMods().isPresent())
-            {
-                List<String> requiredMods = mountData.requiredMods().get();
-                if (requiredMods.stream().anyMatch(mod -> !CompatManager.modLoaded(mod)))
-                {   return;
-                }
+            if (!mountData.areRequiredModsLoaded())
+            {   return;
             }
-            List<EntityType<?>> entities = RegistryHelper.mapTaggableList(mountData.entities());
+            List<EntityType<?>> entities = RegistryHelper.mapTaggableList(mountData.entityData().entities().orElse(Arrays.asList()));
             for (EntityType<?> entity : entities)
-            {   ConfigSettings.INSULATED_MOUNTS.get().put(entity, new MountData(entities, mountData.coldInsulation(), mountData.heatInsulation(), mountData.requirement()));
+            {   ConfigSettings.INSULATED_MOUNTS.get().put(entity, mountData);
             }
         });
     }
@@ -585,12 +541,8 @@ public class ConfigLoadingHandler
         spawnBiomes.forEach(spawnBiomeData ->
         {
             // Check if the required mods are loaded
-            if (spawnBiomeData.requiredMods().isPresent())
-            {
-                List<String> requiredMods = spawnBiomeData.requiredMods().get();
-                if (requiredMods.stream().anyMatch(mod -> !CompatManager.modLoaded(mod)))
-                {   return;
-                }
+            if (!spawnBiomeData.areRequiredModsLoaded())
+            {   return;
             }
             for (Biome biome : spawnBiomeData.biomes())
             {   ConfigSettings.ENTITY_SPAWN_BIOMES.get(registryAccess).put(biome, spawnBiomeData);
@@ -603,12 +555,8 @@ public class ConfigLoadingHandler
         entityTemps.forEach(entityTempData ->
         {
             // Check if the required mods are loaded
-            if (entityTempData.requiredMods().isPresent())
-            {
-                List<String> requiredMods = entityTempData.requiredMods().get();
-                if (requiredMods.stream().anyMatch(mod -> !CompatManager.modLoaded(mod)))
-                {   return;
-                }
+            if (!entityTempData.areRequiredModsLoaded())
+            {   return;
             }
             // Gather entity types and tags
             List<Either<ITag<EntityType<?>>, EntityType<?>>> types = new ArrayList<>();

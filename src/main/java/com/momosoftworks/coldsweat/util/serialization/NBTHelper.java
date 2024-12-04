@@ -159,6 +159,7 @@ public class NBTHelper
 
     public static CompoundNBT parseCompoundNbt(String tag)
     {
+        if (isBlank(tag)) return new CompoundNBT();
         try
         {   return JsonToNBT.parseTag(tag);
         }
@@ -243,5 +244,10 @@ public class NBTHelper
         {   return StringNBT.valueOf((String) obj);
         }
         return null;
+    }
+
+    public static boolean isBlank(String str)
+    {
+        return str == null || str.trim().isEmpty();
     }
 }

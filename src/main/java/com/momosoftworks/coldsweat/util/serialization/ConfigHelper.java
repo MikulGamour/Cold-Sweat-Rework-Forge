@@ -16,7 +16,6 @@ import com.momosoftworks.coldsweat.data.codec.configuration.FuelData;
 import com.momosoftworks.coldsweat.data.codec.configuration.InsulatorData;
 import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
-import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.math.FastMap;
 import com.momosoftworks.coldsweat.util.math.FastMultiMap;
 import com.momosoftworks.coldsweat.util.world.WorldHelper;
@@ -31,13 +30,11 @@ import net.minecraft.nbt.ListNBT;
 import net.minecraft.nbt.NBTDynamicOps;
 import net.minecraft.resources.IResource;
 import net.minecraft.resources.IResourceManager;
-import net.minecraft.state.Property;
 import net.minecraft.tags.*;
 import net.minecraft.util.JSONUtils;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.registry.DynamicRegistries;
-import net.minecraft.util.registry.MutableRegistry;
 import net.minecraft.util.registry.Registry;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.IForgeRegistry;
@@ -56,15 +53,37 @@ public class ConfigHelper
 {
     private ConfigHelper() {}
 
-    public static <T> List<T> parseRegistryItems(RegistryKey<Registry<T>> registry, DynamicRegistries DynamicRegistries, String objects)
+    public static <T> List<T> parseRegistryItems(RegistryKey<Registry<T>> registry, DynamicRegistries registryAccess, String objects)
+    {   return parseRegistryItems(registry, registryAccess, objects.split(","));
+    }
+    public static <T> List<T> parseRegistryItems(RegistryKey<Registry<T>> registry, DynamicRegistries registryAccess, String[] objects)
     {
-        List<T> parsedObjects = new ArrayList<>();
-        Optional<MutableRegistry<T>> optReg = DynamicRegistries.registry(registry);
-        if (!optReg.isPresent()) return parsedObjects;
+        List<T> registryList = new ArrayList<>();
+        Registry<T> reg = registryAccess.registryOrThrow(registry);
 
-        Registry<T> reg = optReg.get();
+        for (String objString : objects)
+        {
+            ResourceLocation id = new ResourceLocation(objString);
+            Optional<T> obj = reg.getOptional(RegistryKey.create(registry, id));
+            if (!obj.isPresent())
+            {
+                ColdSweat.LOGGER.error("Error parsing config: \"{}\" does not exist", objString);
+                continue;
+            }
+            registryList.add(obj.get());
+        }
+        return registryList;
+    }
 
-        for (String objString : objects.split(","))
+    public static <T> List<Either<ITag<T>, T>> parseTaggableRegistryItems(RegistryKey<Registry<T>> registry, DynamicRegistries registryAccess, String objects)
+    {   return parseTaggableRegistryItems(registry, registryAccess, objects.split(","));
+    }
+    public static <T> List<Either<ITag<T>, T>> parseTaggableRegistryItems(RegistryKey<Registry<T>> registry, DynamicRegistries registryAccess, String[] objects)
+    {
+        List<Either<ITag<T>, T>> registryList = new ArrayList<>();
+        Registry<T> reg = registryAccess.registryOrThrow(registry);
+
+        for (String objString : objects)
         {
             if (objString.startsWith("#"))
             {
@@ -72,10 +91,7 @@ public class ConfigHelper
                 if (tags == null) continue;
 
                 final String tagID = objString.replace("#", "");
-                ITag<T> itemTag = tags.getTag(new ResourceLocation(tagID));
-                if (itemTag != null)
-                {   parsedObjects.addAll(itemTag.getValues());
-                }
+                registryList.add(Either.left(getTagsForRegistry(registry).getTag(new ResourceLocation(tagID))));
             }
             else
             {
@@ -86,10 +102,10 @@ public class ConfigHelper
                     ColdSweat.LOGGER.error("Error parsing config: \"{}\" does not exist", objString);
                     continue;
                 }
-                parsedObjects.add(obj.get());
+                registryList.add(Either.right(obj.get()));
             }
         }
-        return parsedObjects;
+        return registryList;
     }
 
     public static <T> ITagCollection<T> getTagsForRegistry(RegistryKey<Registry<T>> registry)
@@ -126,52 +142,55 @@ public class ConfigHelper
         return null;
     }
 
-    public static List<Either<ITag<Block>, Block>> getBlocks(String... ids)
-    {
-        List<Either<ITag<Block>, Block>> blocks = new ArrayList<>();
-        for (String id : ids)
-        {
-            if (id.startsWith("#"))
-            {
-                final String tagID = id.replace("#", "");
-                blocks.add(Either.left(BlockTags.getAllTags().getTag(new ResourceLocation(tagID))));
-            }
-            else
-            {
-                ResourceLocation blockId = new ResourceLocation(id);
-                if (ForgeRegistries.BLOCKS.containsKey(blockId))
-                {   blocks.add(Either.right(ForgeRegistries.BLOCKS.getValue(blockId)));
-                }
-                else
-                {   ColdSweat.LOGGER.error("Error parsing block config: block \"{}\" does not exist", id);
-                }
-            }
-        }
-        return blocks;
+    public static <T extends IForgeRegistryEntry<T>> List<Either<ITag<T>, T>> parseBuiltinItems(RegistryKey<Registry<T>> registryKey, IForgeRegistry<T> registry, String objects)
+    {   return parseBuiltinItems(registryKey, registry, objects.split(","));
     }
 
-    public static List<Either<ITag<Item>, Item>> getItems(String... ids)
+    public static <T extends IForgeRegistryEntry<T>> List<Either<ITag<T>, T>> parseBuiltinItems(RegistryKey<Registry<T>> registryKey, IForgeRegistry<T> registry, String[] objects)
     {
-        List<Either<ITag<Item>, Item>> items = new ArrayList<>();
-        for (String itemId : ids)
+        List<Either<ITag<T>, T>> registryList = new ArrayList<>();
+
+        for (String objString : objects)
         {
-            if (itemId.startsWith("#"))
+            if (objString.startsWith("#"))
             {
-                final String tagID = itemId.replace("#", "");
-                items.add(Either.left(ItemTags.getAllTags().getTag(new ResourceLocation(tagID))));
+                final String tagID = objString.replace("#", "");
+                registryList.add(Either.left(getTagsForRegistry(registryKey).getTag(new ResourceLocation(tagID))));
             }
             else
             {
-                ResourceLocation itemID = new ResourceLocation(itemId);
-                if (ForgeRegistries.ITEMS.containsKey(itemID))
-                {   items.add(Either.right(ForgeRegistries.ITEMS.getValue(itemID)));
+                ResourceLocation id = new ResourceLocation(objString);
+                T obj = registry.getValue(id);
+                if (obj == null)
+                {
+                    ColdSweat.LOGGER.error("Error parsing config: \"{}\" does not exist", objString);
+                    continue;
                 }
-                else
-                {   ColdSweat.LOGGER.error("Error parsing item config: item \"{}\" does not exist", itemId);
-                }
+                registryList.add(Either.right(obj));
             }
         }
-        return items;
+        return registryList;
+    }
+
+    public static List<Either<ITag<Block>, Block>> getBlocks(String blocks)
+    {   return getBlocks(blocks.split(","));
+    }
+    public static List<Either<ITag<Block>, Block>> getBlocks(String[] blocks)
+    {   return parseBuiltinItems(Registry.BLOCK_REGISTRY, ForgeRegistries.BLOCKS, blocks);
+    }
+
+    public static List<Either<ITag<Item>, Item>> getItems(String items)
+    {   return getItems(items.split(","));
+    }
+    public static List<Either<ITag<Item>, Item>> getItems(String[] items)
+    {   return parseBuiltinItems(Registry.ITEM_REGISTRY, ForgeRegistries.ITEMS, items);
+    }
+
+    public static List<Either<ITag<EntityType<?>>, EntityType<?>>> getEntityTypes(String entities)
+    {   return getEntityTypes(entities.split(","));
+    }
+    public static List<Either<ITag<EntityType<?>>, EntityType<?>>> getEntityTypes(String[] entities)
+    {   return parseBuiltinItems(Registry.ENTITY_TYPE_REGISTRY, ForgeRegistries.ENTITIES, entities);
     }
 
     public static <K, V extends ConfigData> Map<K, V> getRegistryMap(List<? extends List<?>> source, DynamicRegistries dynamicRegistries, RegistryKey<Registry<K>> keyRegistry,
@@ -218,33 +237,6 @@ public class ConfigHelper
             else ColdSweat.LOGGER.error("Error parsing {} config \"{}\"", keyRegistry.location(), entry.toString());
         }
         return map;
-    }
-
-    public static List<EntityType<?>> getEntityTypes(String... entities)
-    {
-        List<EntityType<?>> entityList = new ArrayList<>();
-        for (String entity : entities)
-        {
-            if (entity.startsWith("#"))
-            {
-                final String tagID = entity.replace("#", "");
-                CSMath.doIfNotNull(EntityTypeTags.getAllTags().getTag(new ResourceLocation(tagID)), tag ->
-                {
-                    entityList.addAll(tag.getValues());
-                });
-            }
-            else
-            {
-                ResourceLocation entityId = new ResourceLocation(entity);
-                if (ForgeRegistries.ENTITIES.containsKey(entityId))
-                {   entityList.add(ForgeRegistries.ENTITIES.getValue(entityId));
-                }
-                else
-                {   ColdSweat.LOGGER.error("Error parsing entity config: entity \"{}\" does not exist", entity);
-                }
-            }
-        }
-        return entityList;
     }
 
     public static CompoundNBT serializeNbtBool(boolean value, String key)
@@ -644,5 +636,56 @@ public class ConfigHelper
         {   strings.add(serializeTagOrRegistryObject(registry, entry, DynamicRegistries));
         }
         return strings;
+    }
+
+    public static List<String> getModIDs(String[] ids)
+    {
+        List<String> modIDs = new ArrayList<>();
+        for (String id : ids)
+        {
+            String[] split = id.split(":");
+            if (split.length > 1)
+            {   modIDs.add(split[0].replace("#", ""));
+            }
+        }
+        return modIDs;
+    }
+
+    public static String getModID(String id)
+    {
+        String[] split = id.split(":");
+        if (split.length > 1)
+        {   return split[0].replace("#", "");
+        }
+        return "";
+    }
+
+    public static <T extends IForgeRegistryEntry<T>> List<String> getModIDs(List<Either<ITag<T>, T>> list, IForgeRegistry<T> registry)
+    {
+        return list.stream().map(either -> either.map(tag -> ((ITag.INamedTag<T>) tag).getName().getNamespace(),
+                                                      obj -> Optional.ofNullable(registry.getKey(obj)).map(ResourceLocation::getNamespace).orElse("")))
+                .distinct()
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList());
+    }
+
+    public static <T> List<String> getModIDs(List<T> list, RegistryKey<Registry<T>> registry)
+    {
+        DynamicRegistries dynamicRegistries = RegistryHelper.getDynamicRegistries();
+        if (dynamicRegistries == null) return Arrays.asList();
+        Registry<T> reg = dynamicRegistries.registryOrThrow(registry);
+        return list.stream().map(obj -> Optional.ofNullable(reg.getKey(obj)).map(ResourceLocation::getNamespace).orElse(""))
+                .distinct()
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList());
+    }
+
+    public static <T extends IForgeRegistryEntry<T>> List<String> getTaggableModIDs(List<Either<ITag.INamedTag<T>, T>> list, IForgeRegistry<T> registry)
+    {
+        return list.stream().map(either -> either.map(tag -> tag.getName().getNamespace(),
+                                                      obj -> Optional.ofNullable(registry.getKey(obj)).map(ResourceLocation::getNamespace).orElse("")))
+                   .distinct()
+                   .filter(s -> !s.isEmpty())
+                   .collect(Collectors.toList());
     }
 }

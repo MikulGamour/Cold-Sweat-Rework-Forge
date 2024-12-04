@@ -1,6 +1,5 @@
 package com.momosoftworks.coldsweat.data.codec.configuration;
 
-import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.ColdSweat;
@@ -14,7 +13,6 @@ import net.minecraft.world.DimensionType;
 import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 public class DimensionTempData extends ConfigData
 {
@@ -22,25 +20,26 @@ public class DimensionTempData extends ConfigData
     final double temperature;
     final Temperature.Units units;
     final boolean isOffset;
-    final Optional<List<String>> requiredMods;
 
     public DimensionTempData(List<DimensionType> dimensions,
                              double temperature, Temperature.Units units, boolean isOffset,
-                             Optional<List<String>> requiredMods)
+                             List<String> requiredMods)
     {
+        super(requiredMods);
         this.dimensions = dimensions;
         this.temperature = temperature;
         this.units = units;
         this.isOffset = isOffset;
-        this.requiredMods = requiredMods;
+    }
+
+    public DimensionTempData(List<DimensionType> dimensions,
+                             double temperature, Temperature.Units units, boolean isOffset)
+    {
+        this(dimensions, temperature, units, isOffset, ConfigHelper.getModIDs(dimensions, Registry.DIMENSION_TYPE_REGISTRY));
     }
 
     public DimensionTempData(DimensionType dimension, double temperature, Temperature.Units units, boolean isOffset)
-    {   this(Arrays.asList(dimension), temperature, units, isOffset, Optional.empty());
-    }
-
-    public DimensionTempData(List<DimensionType> dimensions, double temperature, Temperature.Units units, boolean isOffset)
-    {   this(dimensions, temperature, units, isOffset, Optional.empty());
+    {   this(Arrays.asList(dimension), temperature, units, isOffset);
     }
 
     public static final Codec<DimensionTempData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -48,7 +47,7 @@ public class DimensionTempData extends ConfigData
             Codec.DOUBLE.fieldOf("temperature").forGetter(data -> data.temperature),
             Temperature.Units.CODEC.optionalFieldOf("units", Temperature.Units.MC).forGetter(data -> data.units),
             Codec.BOOL.optionalFieldOf("is_offset", false).forGetter(data -> data.isOffset),
-            Codec.STRING.listOf().optionalFieldOf("required_mods").forGetter(data -> data.requiredMods)
+            Codec.STRING.listOf().optionalFieldOf("required_mods", Arrays.asList()).forGetter(DimensionTempData::requiredMods)
     ).apply(instance, DimensionTempData::new));
 
     public List<DimensionType> dimensions()
@@ -63,9 +62,6 @@ public class DimensionTempData extends ConfigData
     public boolean isOffset()
     {   return isOffset;
     }
-    public Optional<List<String>> requiredMods()
-    {   return requiredMods;
-    }
 
     public double getTemperature()
     {   return Temperature.convert(temperature, units, Temperature.Units.MC, !isOffset);
@@ -74,15 +70,13 @@ public class DimensionTempData extends ConfigData
     @Nullable
     public static DimensionTempData fromToml(List<?> entry, boolean isOffset, DynamicRegistries registryAccess)
     {
-        String dimensionIdString = (String) entry.get(0);
-        List<DimensionType> dimensions = ConfigHelper.parseRegistryItems(Registry.DIMENSION_TYPE_REGISTRY, registryAccess, dimensionIdString);
-        if (dimensions.isEmpty())
-        {   ColdSweat.LOGGER.error("Error parsing dimension config: string \"{}\" does not contain valid dimensions", dimensionIdString);
+        if (entry.size() < 2)
+        {   ColdSweat.LOGGER.error("Error parsing dimension config: not enough arguments");
             return null;
         }
-        if (entry.size() < 2)
-        {
-            ColdSweat.LOGGER.error("Error parsing dimension config: not enough arguments");
+        List<DimensionType> dimensions = ConfigHelper.parseRegistryItems(Registry.DIMENSION_TYPE_REGISTRY, registryAccess, (String) entry.get(0));
+        if (dimensions.isEmpty())
+        {   ColdSweat.LOGGER.error("Error parsing dimension config: {} does not contain valid dimensions", entry);
             return null;
         }
         double temp = ((Number) entry.get(1)).doubleValue();
@@ -102,10 +96,10 @@ public class DimensionTempData extends ConfigData
         if (obj == null || getClass() != obj.getClass()) return false;
 
         DimensionTempData that = (DimensionTempData) obj;
-        return Double.compare(that.temperature, temperature) == 0
+        return super.equals(obj)
+            && Double.compare(that.temperature, temperature) == 0
             && isOffset == that.isOffset
             && dimensions.equals(that.dimensions)
-            && units == that.units
-            && requiredMods.equals(that.requiredMods);
+            && units == that.units;
     }
 }
