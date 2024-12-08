@@ -2692,6 +2692,7 @@ Fixes:
 * Fixed "NegativeArraySizeException: -1" error when connecting to a server with OP permissions
 * Fixed chestplates not being insulatable & other abnormal sewing table behaviors
 * Fixed blocks configured via TOML not emitting temperature
+* Fixed goats not regrowing their fur after being sheared
 - Fixed powered blocks in front of the thermolith not updating when it is destroyed
 
 Technical Changes:
