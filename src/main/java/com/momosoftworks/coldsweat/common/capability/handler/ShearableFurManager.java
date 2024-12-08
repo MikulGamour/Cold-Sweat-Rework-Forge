@@ -5,6 +5,7 @@ import com.momosoftworks.coldsweat.common.capability.shearing.IShearableCap;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.core.event.TaskScheduler;
 import com.momosoftworks.coldsweat.core.network.message.SyncShearableDataMessage;
+import com.momosoftworks.coldsweat.data.codec.configuration.EntityDropData;
 import com.momosoftworks.coldsweat.data.loot.ModLootTables;
 import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import net.minecraft.core.particles.ParticleTypes;
@@ -122,8 +123,7 @@ public class ShearableFurManager
 
             // Set sheared
             cap.setSheared(true);
-            cap.setLastSheared(living.tickCount);
-            entity.getPersistentData().putInt("FurGrowthCooldown", ConfigSettings.FUR_TIMINGS.get().getB());
+            cap.setFurGrowthCooldown(ConfigSettings.FUR_TIMINGS.get().cooldown());
             syncData(living, null);
             event.setCancellationResult(InteractionResult.SUCCESS);
         }
@@ -137,26 +137,28 @@ public class ShearableFurManager
         if (!(entity instanceof LivingEntity living)) return;
         IShearableCap cap = getFurCap(entity);
         {
-            Triplet<Integer, Integer, Double> furConfig = ConfigSettings.FUR_TIMINGS.get();
+            EntityDropData furConfig = ConfigSettings.FUR_TIMINGS.get();
             // Tick fur growth cooldown
-            if (entity.getPersistentData().getInt("FurGrowthCooldown") > 0)
-            {   entity.getPersistentData().putInt("FurGrowthCooldown", entity.getPersistentData().getInt("FurGrowthCooldown") - 1);
+            if (cap.furGrowthCooldown() > 0)
+            {   cap.setFurGrowthCooldown(Math.min(cap.furGrowthCooldown() - 1, furConfig.cooldown()));
             }
-            // Entity is goat, current tick is a multiple of the regrow time, and random chance succeeds
-            if (!entity.level().isClientSide && entity instanceof AgeableMob ageable && ageable.getAge() % Math.max(1, furConfig.getA()) == 0 && Math.random() < furConfig.getC())
-            {
-                // Growth cooldown has passed and goat is sheared
-                if (entity.getPersistentData().getInt("FurGrowthCooldown") <= 0 && cap.isSheared())
-                {
-                    WorldHelper.playEntitySound(SoundEvents.WOOL_HIT, entity, entity.getSoundSource(), 0.5f, 0.6f);
-                    WorldHelper.playEntitySound(SoundEvents.LLAMA_SWAG.value(), entity, entity.getSoundSource(), 0.5f, 0.8f);
+            cap.setAge(cap.age() + 1);
 
-                    // Spawn particles
-                    WorldHelper.spawnParticleBatch(entity.level(), ParticleTypes.SPIT, entity.getX(), entity.getY() + entity.getBbHeight() / 2, entity.getZ(), 0.5f, 0.5f, 0.5f, 10, 0.05f);
-                    // Set not sheared
-                    cap.setSheared(false);
-                    syncData(living, null);
-                }
+            // Entity is goat, current tick is a multiple of the regrow time, and random chance succeeds
+            if (!entity.level().isClientSide
+            && cap.isSheared()
+            && cap.age() % Math.max(1, furConfig.interval()) == 0
+            && cap.furGrowthCooldown() == 0
+            && entity.getRandom().nextDouble() < furConfig.chance())
+            {
+                WorldHelper.playEntitySound(SoundEvents.WOOL_HIT, entity, entity.getSoundSource(), 0.5f, 0.6f);
+                WorldHelper.playEntitySound(SoundEvents.LLAMA_SWAG.value(), entity, entity.getSoundSource(), 0.5f, 0.8f);
+
+                // Spawn particles
+                WorldHelper.spawnParticleBatch(entity.level(), ParticleTypes.SPIT, entity.getX(), entity.getY() + entity.getBbHeight() / 2, entity.getZ(), 0.5f, 0.5f, 0.5f, 10, 0.05f);
+                // Set not sheared
+                cap.setSheared(false);
+                syncData(living, null);
             }
         }
     }
@@ -175,10 +177,10 @@ public class ShearableFurManager
         {
             IShearableCap cap = getFurCap(entity);
             if (player != null)
-            {   PacketDistributor.sendToPlayer(player, new SyncShearableDataMessage(cap.isSheared(), cap.lastSheared(), entity.getId()));
+            {   PacketDistributor.sendToPlayer(player, new SyncShearableDataMessage(entity.getId(), cap.serializeNBT()));
             }
             else
-            {   PacketDistributor.sendToPlayersTrackingEntity(entity, new SyncShearableDataMessage(cap.isSheared(), cap.lastSheared(), entity.getId()));
+            {   PacketDistributor.sendToPlayersTrackingEntity(entity, new SyncShearableDataMessage(entity.getId(), cap.serializeNBT()));
             }
         }
     }
