@@ -6,8 +6,12 @@ public interface IShearableCap
 {
     boolean isSheared();
     void setSheared(boolean sheared);
-    int lastSheared();
-    void setLastSheared(int lastSheared);
+
+    int furGrowthCooldown();
+    void setFurGrowthCooldown(int cooldown);
+
+    int age();
+    void setAge(int ticks);
 
     CompoundTag serializeNBT();
 

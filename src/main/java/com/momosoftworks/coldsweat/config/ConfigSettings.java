@@ -152,8 +152,8 @@ public class ConfigSettings
     public static final DynamicHolder<List<MobEffect>> HEARTH_POTION_BLACKLIST;
 
     // Entity Settings
-    public static final DynamicHolder<Triplet<Integer, Integer, Double>> FUR_TIMINGS;
-    public static final DynamicHolder<Triplet<Integer, Integer, Double>> SHED_TIMINGS;
+    public static final DynamicHolder<EntityDropData> FUR_TIMINGS;
+    public static final DynamicHolder<EntityDropData> SHED_TIMINGS;
     public static final DynamicHolder<Multimap<Holder<Biome>, SpawnBiomeData>> ENTITY_SPAWN_BIOMES;
     public static final DynamicHolder<Multimap<EntityType<?>, MountData>> INSULATED_MOUNTS;
     public static final DynamicHolder<Multimap<EntityType<?>, EntityTempData>> ENTITY_TEMPERATURES;
@@ -562,55 +562,43 @@ public class ConfigSettings
                                                                            .map(entry -> registryAccess.registryOrThrow(Registry.DIMENSION_TYPE_REGISTRY).get(new ResourceLocation(entry)))
                                                                            .collect(ArrayList::new, List::add, List::addAll))));
 
-        FUR_TIMINGS = addSyncedSetting("fur_timings", () -> new Triplet<>(0, 0, 0d), holder ->
+        FUR_TIMINGS = addSyncedSetting("fur_timings", () -> new EntityDropData(0, 0, 0d), holder ->
         {   List<?> entry = EntitySettingsConfig.GOAT_FUR_GROWTH_STATS.get();
-            holder.set(new Triplet<>(((Number) entry.get(0)).intValue(), ((Number) entry.get(1)).intValue(), ((Number) entry.get(2)).doubleValue()));
+            holder.set(new EntityDropData(((Number) entry.get(0)).intValue(), ((Number) entry.get(1)).intValue(), ((Number) entry.get(2)).doubleValue()));
         },
         (encoder) ->
-        {   CompoundTag tag = new CompoundTag();
-            tag.put("Interval", IntTag.valueOf(encoder.getA()));
-            tag.put("Cooldown", IntTag.valueOf(encoder.getB()));
-            tag.put("Chance", DoubleTag.valueOf(encoder.getC()));
+        {
+            CompoundTag tag = new CompoundTag();
+            tag.put("FurTimings", encoder.serialize());
             return tag;
         },
-        (decoder) ->
-        {   int interval = decoder.getInt("Interval");
-            int cooldown = decoder.getInt("Cooldown");
-            double chance = decoder.getDouble("Chance");
-            return new Triplet<>(interval, cooldown, chance);
-        },
+        (decoder) -> EntityDropData.deserialize(decoder.getCompound("FurTimings")),
         (saver) ->
         {   List<Number> list = new ArrayList<>();
-            list.add(saver.getA());
-            list.add(saver.getB());
-            list.add(saver.getC());
+            list.add(saver.interval());
+            list.add(saver.cooldown());
+            list.add(saver.chance());
             EntitySettingsConfig.GOAT_FUR_GROWTH_STATS.set(list);
         },
         SyncType.BOTH_WAYS);
 
-        SHED_TIMINGS = addSyncedSetting("shed_timings", () -> new Triplet<>(0, 0, 0d), holder ->
+        SHED_TIMINGS = addSyncedSetting("shed_timings", () -> new EntityDropData(0, 0, 0d), holder ->
         {
             List<?> entry = EntitySettingsConfig.CHAMELEON_SHED_STATS.get();
-            holder.set(new Triplet<>(((Number) entry.get(0)).intValue(), ((Number) entry.get(1)).intValue(), ((Number) entry.get(2)).doubleValue()));
+            holder.set(new EntityDropData(((Number) entry.get(0)).intValue(), ((Number) entry.get(1)).intValue(), ((Number) entry.get(2)).doubleValue()));
         },
         (encoder) ->
-        {   CompoundTag tag = new CompoundTag();
-            tag.put("Interval", IntTag.valueOf(encoder.getA()));
-            tag.put("Cooldown", IntTag.valueOf(encoder.getB()));
-            tag.put("Chance", DoubleTag.valueOf(encoder.getC()));
+        {
+            CompoundTag tag = new CompoundTag();
+            tag.put("ShedTimings", encoder.serialize());
             return tag;
         },
-        (decoder) ->
-        {   int interval = decoder.getInt("Interval");
-            int cooldown = decoder.getInt("Cooldown");
-            double chance = decoder.getDouble("Chance");
-            return new Triplet<>(interval, cooldown, chance);
-        },
+        (decoder) -> EntityDropData.deserialize(decoder.getCompound("ShedTimings")),
         (saver) ->
         {   List<Number> list = new ArrayList<>();
-            list.add(saver.getA());
-            list.add(saver.getB());
-            list.add(saver.getC());
+            list.add(saver.interval());
+            list.add(saver.cooldown());
+            list.add(saver.chance());
             EntitySettingsConfig.CHAMELEON_SHED_STATS.set(list);
         },
         SyncType.BOTH_WAYS);
