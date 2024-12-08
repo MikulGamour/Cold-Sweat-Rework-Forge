@@ -7,6 +7,7 @@ import com.momosoftworks.coldsweat.api.temperature.block_temp.BlockTemp;
 import com.momosoftworks.coldsweat.api.temperature.modifier.TempModifier;
 import com.momosoftworks.coldsweat.api.util.Placement;
 import com.momosoftworks.coldsweat.api.util.Temperature;
+import com.momosoftworks.coldsweat.common.block.SmokestackBlock;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.data.codec.configuration.BiomeTempData;
 import com.momosoftworks.coldsweat.util.entity.DummyPlayer;
@@ -167,8 +168,11 @@ public abstract class WorldHelper
     public static boolean isSpreadBlocked(LevelAccessor level, BlockState state, BlockPos pos, Direction toDir, Direction fromDir)
     {
         Block block = state.getBlock();
-        if (state.isAir() || ConfigSettings.THERMAL_SOURCE_SPREAD_WHITELIST.get().contains(block)
-        || block == ModBlocks.HEARTH_BOTTOM || block == ModBlocks.HEARTH_TOP)
+
+        if (block instanceof SmokestackBlock && toDir.getAxis() == Direction.Axis.Y)
+        {   return true;
+        }
+        if (state.isAir() || ConfigSettings.THERMAL_SOURCE_SPREAD_WHITELIST.get().contains(block))
         {   return false;
         }
         if (ConfigSettings.THERMAL_SOURCE_SPREAD_BLACKLIST.get().contains(block)) return true;
