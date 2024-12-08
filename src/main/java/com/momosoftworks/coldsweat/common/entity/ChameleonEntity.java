@@ -361,10 +361,10 @@ public class ChameleonEntity extends AnimalEntity
         if (!this.level.isClientSide)
         {
             boolean shedding = this.isShedding();
-            int shedCheckIncrement = ConfigSettings.SHED_TIMINGS.get().getA();
-            int shedCooldown = ConfigSettings.SHED_TIMINGS.get().getB();
-            double shedChance = ConfigSettings.SHED_TIMINGS.get().getC();
-            if (this.tickCount % shedCheckIncrement == 0 && !shedding
+            int shedCheckInterval = ConfigSettings.SHED_TIMINGS.get().interval();
+            int shedCooldown = ConfigSettings.SHED_TIMINGS.get().cooldown();
+            double shedChance = ConfigSettings.SHED_TIMINGS.get().chance();
+            if (this.tickCount % shedCheckInterval == 0 && !shedding
             && this.random.nextDouble() < shedChance && this.getAgeSecs() * 20 - this.getLastShed() > shedCooldown)
             {
                 this.setShedding(true);

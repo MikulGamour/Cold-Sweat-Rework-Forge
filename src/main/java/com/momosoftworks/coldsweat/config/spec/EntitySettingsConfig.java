@@ -76,7 +76,7 @@ public class EntitySettingsConfig
 
         GOAT_FUR_GROWTH_STATS = BUILDER
                 .comment("Defines how often a goat will try to grow its fur, the growth cooldown after shearing, and the chance of it succeeding",
-                        "Format: [ticks, cooldown, chance]")
+                        "Format: [interval, cooldown, chance]")
                 .defineList("Goat Fur Growth Timings", Arrays.asList(
                         1200, 2400, 0.20
                 ),
@@ -84,9 +84,9 @@ public class EntitySettingsConfig
 
         CHAMELEON_SHED_STATS = BUILDER
                 .comment("Defines how often a chameleon will try to shed its skin, the cooldown after shedding, and the chance of it succeeding",
-                        "Format: [ticks, cooldown, chance]")
+                        "Format: [interval, cooldown, chance]")
                 .defineList("Chameleon Shedding Timings", Arrays.asList(
-                        100, 36000, 0.10
+                        400, 36000, 0.10
                 ),
                 it -> it instanceof Number);
 

@@ -5,7 +5,8 @@ import net.minecraft.nbt.CompoundNBT;
 public class ShearableFurCap implements IShearableCap
 {
     boolean sheared = false;
-    int lastSheared = 0;
+    int furGrowthCooldown = 0;
+    int age = 0;
 
     @Override
     public boolean isSheared()
@@ -18,26 +19,38 @@ public class ShearableFurCap implements IShearableCap
     }
 
     @Override
-    public int lastSheared()
-    {   return lastSheared;
+    public int furGrowthCooldown()
+    {   return furGrowthCooldown;
     }
 
     @Override
-    public void setLastSheared(int lastSheared)
-    {   this.lastSheared = lastSheared;
+    public void setFurGrowthCooldown(int cooldown)
+    {   furGrowthCooldown = cooldown;
+    }
+
+    @Override
+    public int age()
+    {   return age;
+    }
+
+    @Override
+    public void setAge(int age)
+    {   this.age = age;
     }
 
     @Override
     public CompoundNBT serializeNBT()
     {   CompoundNBT nbt = new CompoundNBT();
         nbt.putBoolean("Sheared", sheared);
-        nbt.putInt("LastSheared", lastSheared);
+        nbt.putInt("FurGrowthCooldown", furGrowthCooldown);
+        nbt.putInt("Age", age);
         return nbt;
     }
 
     @Override
     public void deserializeNBT(CompoundNBT nbt)
     {   sheared = nbt.getBoolean("Sheared");
-        lastSheared = nbt.getInt("LastSheared");
+        furGrowthCooldown = nbt.getInt("FurGrowthCooldown");
+        age = nbt.getInt("Age");
     }
 }
