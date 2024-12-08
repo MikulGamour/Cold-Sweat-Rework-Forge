@@ -9,18 +9,18 @@ import com.momosoftworks.coldsweat.core.network.ColdSweatPacketHandler;
 import com.momosoftworks.coldsweat.core.network.message.SyncShearableDataMessage;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.data.loot.ModLootTables;
-import com.momosoftworks.coldsweat.compat.CompatManager;
 import com.momosoftworks.coldsweat.util.serialization.Triplet;
 import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import net.minecraft.entity.AgeableEntity;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.passive.horse.AbstractChestedHorseEntity;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.particles.ParticleTypes;
 import net.minecraft.util.*;
+import net.minecraft.world.Difficulty;
 import net.minecraftforge.common.Tags;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
@@ -48,7 +48,7 @@ public class ShearableFurManager
     @SubscribeEvent
     public static void attachCapabilityToEntityHandler(AttachCapabilitiesEvent<Entity> event)
     {
-        if (isShearable(event.getObject()))
+        if (event.getObject() instanceof GoatEntity)
         {
             // Make a new capability instance to attach to the entity
             IShearableCap cap = new ShearableFurCap();
@@ -93,76 +93,71 @@ public class ShearableFurManager
         });
     }
 
-    // Regrow fur
+    @SubscribeEvent
+    public static void onShearGoat(PlayerInteractEvent.EntityInteract event)
+    {
+        Entity entity = event.getTarget();
+        PlayerEntity player = event.getPlayer();
+        ItemStack stack = event.getItemStack();
+
+        if (entity instanceof LivingEntity && (!(entity instanceof AgeableEntity) || !((AgeableEntity) entity).isBaby())
+        && !entity.level.isClientSide && Tags.Items.SHEARS.contains(stack.getItem()))
+        {
+            getFurCap(entity).ifPresent(cap ->
+            {
+                if (cap.isSheared())
+                {   event.setResult(PlayerInteractEvent.Result.DENY);
+                    return;
+                }
+
+                // Use shears
+                player.swing(event.getHand(), true);
+                stack.hurtAndBreak(1, event.getPlayer(), (p) -> p.broadcastBreakEvent(event.getHand()));
+                // Play sound
+                entity.level.playSound(null, entity, SoundEvents.SHEEP_SHEAR, SoundCategory.NEUTRAL, 1.0F, 1.0F);
+
+                // Spawn item(s)
+                for (ItemStack item : ModLootTables.getEntityDropsLootTable(entity, player, ModLootTables.GOAT_SHEARING))
+                {   WorldHelper.entityDropItem(entity, item);
+                }
+
+                // Set sheared
+                cap.setSheared(true);
+                cap.setLastSheared(entity.tickCount);
+                entity.getPersistentData().putInt("FurGrowthCooldown", ConfigSettings.FUR_TIMINGS.get().getB());
+                syncData((LivingEntity) entity, null);
+                event.setResult(PlayerInteractEvent.Result.ALLOW);
+            });
+        }
+    }
+
+    // Regrow goat fur
     @SubscribeEvent
     public static void onShearableEntityTick(LivingEvent.LivingUpdateEvent event)
     {
-        if (!isShearable(event.getEntityLiving())) return;
-        if (event.getEntityLiving() instanceof AgeableEntity)
+        LivingEntity entity = event.getEntityLiving();
+        getFurCap(entity).ifPresent(cap ->
         {
-            AgeableEntity entity = (AgeableEntity) event.getEntityLiving();
             Triplet<Integer, Integer, Double> furConfig = ConfigSettings.FUR_TIMINGS.get();
             // Tick fur growth cooldown
             if (entity.getPersistentData().getInt("FurGrowthCooldown") > 0)
             {   entity.getPersistentData().putInt("FurGrowthCooldown", entity.getPersistentData().getInt("FurGrowthCooldown") - 1);
             }
-            // Entity is shearable, current tick is a multiple of the regrow time, and random chance succeeds
-            if (!entity.level.isClientSide && entity.getAge() % Math.max(1, furConfig.getA()) == 0 && Math.random() < furConfig.getC())
+            // Entity is goat, current tick is a multiple of the regrow time, and random chance succeeds
+            if (!entity.level.isClientSide && entity instanceof AgeableEntity && ((AgeableEntity) entity).getAge() % Math.max(1, furConfig.getA()) == 0 && Math.random() < furConfig.getC())
             {
-                getFurCap(entity).ifPresent(cap ->
+                // Growth cooldown has passed and goat is sheared
+                if (entity.getPersistentData().getInt("FurGrowthCooldown") <= 0 && cap.isSheared())
                 {
-                    // Growth cooldown has passed and llama is sheared
-                    if (entity.getPersistentData().getInt("FurGrowthCooldown") <= 0 && cap.isSheared())
-                    {
-                        WorldHelper.playEntitySound(SoundEvents.WOOL_HIT, entity, entity.getSoundSource(), 0.5f, 0.6f);
-                        WorldHelper.playEntitySound(SoundEvents.LLAMA_SWAG, entity, entity.getSoundSource(), 0.5f, 0.8f);
-                        // Spawn particles
-                        WorldHelper.spawnParticleBatch(entity.level, ParticleTypes.SPIT, entity.getX(), entity.getY() + entity.getBbHeight() / 2, entity.getZ(), 0.5f, 0.5f, 0.5f, 10, 0.05f);
-                        // Set not sheared
-                        cap.setSheared(false);
-                        syncData(entity, null);
-                    }
-                });
-            }
-        }
-    }
+                    WorldHelper.playEntitySound(SoundEvents.WOOL_HIT, entity, entity.getSoundSource(), 0.5f, 0.6f);
+                    WorldHelper.playEntitySound(SoundEvents.LLAMA_SWAG, entity, entity.getSoundSource(), 0.5f, 0.8f);
 
-    /**
-     * Handles shearing behavior for non-llama entities
-     */
-    @SubscribeEvent
-    public static void onEntitySheared(PlayerInteractEvent.EntityInteractSpecific event)
-    {
-        Entity entity = event.getTarget();
-        PlayerEntity player = event.getPlayer();
-        Hand hand = event.getHand();
-        if (!entity.level.isClientSide && isShearable(entity) && !(entity instanceof AbstractChestedHorseEntity))
-        {   shearEntity(entity, player, hand);
-        }
-    }
-
-    public static void shearEntity(Entity entity, PlayerEntity player, Hand hand)
-    {
-        ItemStack stack = player.getItemInHand(hand);
-        if (Tags.Items.SHEARS.contains(stack.getItem()))
-        getFurCap(entity).ifPresent(cap ->
-        {
-            if (!cap.isSheared())
-            {   // Use shears
-                player.swing(hand, true);
-                stack.hurtAndBreak(1, player, (p) -> p.broadcastBreakEvent(hand));
-                // Play sound
-                entity.level.playSound(null, entity, SoundEvents.SHEEP_SHEAR, SoundCategory.NEUTRAL, 1.0F, 1.0F);
-                // Spawn item
-                // Spawn item(s)
-                for (ItemStack item : ModLootTables.getEntityDropsLootTable(entity, player, ModLootTables.GOAT_SHEARING))
-                {   WorldHelper.entityDropItem(entity, item);
+                    // Spawn particles
+                    WorldHelper.spawnParticleBatch(entity.level, ParticleTypes.SPIT, entity.getX(), entity.getY() + entity.getBbHeight() / 2, entity.getZ(), 0.5f, 0.5f, 0.5f, 10, 0.05f);
+                    // Set not sheared
+                    cap.setSheared(false);
+                    syncData(entity, null);
                 }
-                // Set sheared
-                cap.setSheared(true);
-                cap.setLastSheared(entity.tickCount);
-                entity.getPersistentData().putInt("FurGrowthCooldown", ConfigSettings.FUR_TIMINGS.get().getB());
-                ShearableFurManager.syncData(entity, null);
             }
         });
     }
@@ -170,23 +165,19 @@ public class ShearableFurManager
     @SubscribeEvent
     public static void onEntityLoaded(PlayerEvent.StartTracking event)
     {
-        if (event.getEntity() instanceof ServerPlayerEntity && isShearable(event.getTarget()))
-        {   syncData(event.getTarget(), (ServerPlayerEntity) event.getEntity());
+        if (event.getEntity() instanceof ServerPlayerEntity && event.getTarget() instanceof GoatEntity)
+        {   syncData((LivingEntity) event.getTarget(), (ServerPlayerEntity) event.getEntity());
         }
     }
 
-    public static void syncData(Entity llama, ServerPlayerEntity player)
+    public static void syncData(LivingEntity entity, ServerPlayerEntity player)
     {
-        if (!llama.level.isClientSide)
-        {   getFurCap(llama).ifPresent(cap ->
+        if (!entity.level.isClientSide)
+        {   getFurCap(entity).ifPresent(cap ->
             {   ColdSweatPacketHandler.INSTANCE.send(player != null ? PacketDistributor.PLAYER.with(() -> player)
-                                                                    : PacketDistributor.TRACKING_ENTITY.with(() -> llama),
-                                                     new SyncShearableDataMessage(cap.isSheared(), cap.lastSheared(), llama.getId()));
+                                                                    : PacketDistributor.TRACKING_ENTITY.with(() -> entity),
+                                                     new SyncShearableDataMessage(cap.isSheared(), cap.lastSheared(), entity.getId()));
             });
         }
-    }
-
-    public static boolean isShearable(Entity entity)
-    {   return entity instanceof GoatEntity || CompatManager.isGoat(entity);
     }
 }
