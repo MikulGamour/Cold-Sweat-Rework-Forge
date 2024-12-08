@@ -16,7 +16,9 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.AgeableMob;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.behavior.BehaviorUtils;
 import net.minecraft.world.entity.ai.goal.WrappedGoal;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
@@ -55,9 +57,10 @@ public class ShearableFurManager
         Player player = event.getEntity();
         ItemStack stack = event.getItemStack();
 
-        if (entity instanceof Goat goat && !goat.isBaby() && !goat.level().isClientSide && stack.is(Tags.Items.TOOLS_SHEAR))
+        if (entity instanceof LivingEntity living && (!(living instanceof AgeableMob ageable) || !ageable.isBaby())
+        && !entity.level().isClientSide && stack.is(Tags.Items.TOOLS_SHEAR))
         {
-            IShearableCap cap = getFurCap(goat);
+            IShearableCap cap = getFurCap(living);
             if (cap.isSheared())
             {   event.setCancellationResult(InteractionResult.PASS);
                 return;
@@ -67,16 +70,16 @@ public class ShearableFurManager
             player.swing(event.getHand(), true);
             stack.hurtAndBreak(1, ((ServerLevel) event.getEntity().level()), event.getEntity(), (item) -> {});
             // Play sound
-            goat.level().playSound(null, goat, SoundEvents.SHEEP_SHEAR, SoundSource.NEUTRAL, 1.0F, 1.0F);
+            living.level().playSound(null, living, SoundEvents.SHEEP_SHEAR, SoundSource.NEUTRAL, 1.0F, 1.0F);
 
             // Spawn item(s)
-            for (ItemStack item : ModLootTables.getEntityDropsLootTable(goat, player, ModLootTables.GOAT_SHEARING))
-            {   WorldHelper.entityDropItem(goat, item);
+            for (ItemStack item : ModLootTables.getEntityDropsLootTable(living, player, ModLootTables.GOAT_SHEARING))
+            {   WorldHelper.entityDropItem(living, item);
             }
 
             // Random chance to ram the player when sheared
             stopGoals:
-            if (!player.isCreative() && goat.level().getDifficulty() != Difficulty.PEACEFUL
+            if (living instanceof Goat goat && !player.isCreative() && goat.level().getDifficulty() != Difficulty.PEACEFUL
             && !goat.level().isClientSide && goat.getRandom().nextDouble() < 0.4)
             {
                 // Set ram cooldown ticks
@@ -119,9 +122,9 @@ public class ShearableFurManager
 
             // Set sheared
             cap.setSheared(true);
-            cap.setLastSheared(goat.tickCount);
+            cap.setLastSheared(living.tickCount);
             entity.getPersistentData().putInt("FurGrowthCooldown", ConfigSettings.FUR_TIMINGS.get().getB());
-            syncData(goat, null);
+            syncData(living, null);
             event.setCancellationResult(InteractionResult.SUCCESS);
         }
     }
@@ -131,28 +134,29 @@ public class ShearableFurManager
     public static void onGoatTick(EntityTickEvent.Post event)
     {
         Entity entity = event.getEntity();
-        if (!(entity instanceof Goat goat)) return;
-
-        Triplet<Integer, Integer, Double> furConfig = ConfigSettings.FUR_TIMINGS.get();
-        // Tick fur growth cooldown
-        if (entity.getPersistentData().getInt("FurGrowthCooldown") > 0)
-        {   entity.getPersistentData().putInt("FurGrowthCooldown", entity.getPersistentData().getInt("FurGrowthCooldown") - 1);
-        }
-        // Entity is goat, current tick is a multiple of the regrow time, and random chance succeeds
-        if (!goat.level().isClientSide && goat.getAge() % Math.max(1, furConfig.getA()) == 0 && Math.random() < furConfig.getC())
+        if (!(entity instanceof LivingEntity living)) return;
+        IShearableCap cap = getFurCap(entity);
         {
-            IShearableCap cap = getFurCap(goat);
-            // Growth cooldown has passed and goat is sheared
-            if (entity.getPersistentData().getInt("FurGrowthCooldown") <= 0 && cap.isSheared())
+            Triplet<Integer, Integer, Double> furConfig = ConfigSettings.FUR_TIMINGS.get();
+            // Tick fur growth cooldown
+            if (entity.getPersistentData().getInt("FurGrowthCooldown") > 0)
+            {   entity.getPersistentData().putInt("FurGrowthCooldown", entity.getPersistentData().getInt("FurGrowthCooldown") - 1);
+            }
+            // Entity is goat, current tick is a multiple of the regrow time, and random chance succeeds
+            if (!entity.level().isClientSide && entity instanceof AgeableMob ageable && ageable.getAge() % Math.max(1, furConfig.getA()) == 0 && Math.random() < furConfig.getC())
             {
-                WorldHelper.playEntitySound(SoundEvents.WOOL_HIT, goat, goat.getSoundSource(), 0.5f, 0.6f);
-                WorldHelper.playEntitySound(SoundEvents.LLAMA_SWAG.value(), goat, goat.getSoundSource(), 0.5f, 0.8f);
+                // Growth cooldown has passed and goat is sheared
+                if (entity.getPersistentData().getInt("FurGrowthCooldown") <= 0 && cap.isSheared())
+                {
+                    WorldHelper.playEntitySound(SoundEvents.WOOL_HIT, entity, entity.getSoundSource(), 0.5f, 0.6f);
+                    WorldHelper.playEntitySound(SoundEvents.LLAMA_SWAG.value(), entity, entity.getSoundSource(), 0.5f, 0.8f);
 
-                // Spawn particles
-                WorldHelper.spawnParticleBatch(goat.level(), ParticleTypes.SPIT, goat.getX(), goat.getY() + goat.getBbHeight() / 2, goat.getZ(), 0.5f, 0.5f, 0.5f, 10, 0.05f);
-                // Set not sheared
-                cap.setSheared(false);
-                syncData(goat, null);
+                    // Spawn particles
+                    WorldHelper.spawnParticleBatch(entity.level(), ParticleTypes.SPIT, entity.getX(), entity.getY() + entity.getBbHeight() / 2, entity.getZ(), 0.5f, 0.5f, 0.5f, 10, 0.05f);
+                    // Set not sheared
+                    cap.setSheared(false);
+                    syncData(living, null);
+                }
             }
         }
     }
@@ -165,16 +169,16 @@ public class ShearableFurManager
         }
     }
 
-    public static void syncData(Goat goat, ServerPlayer player)
+    public static void syncData(LivingEntity entity, ServerPlayer player)
     {
-        if (!goat.level().isClientSide)
+        if (!entity.level().isClientSide)
         {
-            IShearableCap cap = getFurCap(goat);
+            IShearableCap cap = getFurCap(entity);
             if (player != null)
-            {   PacketDistributor.sendToPlayer(player, new SyncShearableDataMessage(cap.isSheared(), cap.lastSheared(), goat.getId()));
+            {   PacketDistributor.sendToPlayer(player, new SyncShearableDataMessage(cap.isSheared(), cap.lastSheared(), entity.getId()));
             }
             else
-            {   PacketDistributor.sendToPlayersTrackingEntity(goat, new SyncShearableDataMessage(cap.isSheared(), cap.lastSheared(), goat.getId()));
+            {   PacketDistributor.sendToPlayersTrackingEntity(entity, new SyncShearableDataMessage(cap.isSheared(), cap.lastSheared(), entity.getId()));
             }
         }
     }
