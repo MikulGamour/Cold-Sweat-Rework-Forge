@@ -38,17 +38,6 @@ public class HearthTopBlock extends Block
         this.registerDefaultState(this.defaultBlockState().setValue(FACING, Direction.NORTH));
     }
 
-    @Override
-    public boolean propagatesSkylightDown(BlockState state, IBlockReader world, BlockPos pos)
-    {
-        return true;
-    }
-
-    @Override
-    public VoxelShape getShape(BlockState state, IBlockReader world, BlockPos pos, ISelectionContext context)
-    {   return Block.box(4, 0, 4, 12, 16, 12);
-    }
-
     @SuppressWarnings("deprecation")
     @Override
     public ActionResultType use(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockRayTraceResult rayTraceResult)

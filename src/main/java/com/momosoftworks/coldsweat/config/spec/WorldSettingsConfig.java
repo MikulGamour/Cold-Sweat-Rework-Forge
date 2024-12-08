@@ -79,7 +79,7 @@ public class WorldSettingsConfig
         DIMENSION_TEMP_OFFSETS = BUILDER
                 .comment("Applies an offset to the world's temperature across an entire dimension")
             .defineListAllowEmpty(Arrays.asList("Dimension Temperature Offsets"), () -> Arrays.asList(
-                    Arrays.asList("minecraft:the_nether", 1.0),
+                    Arrays.asList("minecraft:the_nether", 0.7),
                     Arrays.asList("minecraft:the_end", -0.1)
             ), it ->
             {
@@ -363,6 +363,7 @@ public class WorldSettingsConfig
                 .comment("List of additional blocks that thermal sources can spread through",
                          "Use this list if thermal sources aren't spreading through particular blocks that they should")
                 .defineListAllowEmpty(Arrays.asList("Thermal Source Spread Whitelist"), () -> ListBuilder.begin(
+                                              "cold_sweat:hearth_bottom",
                                               "minecraft:iron_bars",
                                               "#minecraft:leaves")
                                           .addIf(CompatManager.isCreateLoaded(),
