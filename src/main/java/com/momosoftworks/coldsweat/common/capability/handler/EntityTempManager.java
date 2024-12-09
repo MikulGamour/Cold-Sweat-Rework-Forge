@@ -13,11 +13,11 @@ import com.momosoftworks.coldsweat.api.util.Placement;
 import com.momosoftworks.coldsweat.api.util.Placement.Mode;
 import com.momosoftworks.coldsweat.api.util.Placement.Order;
 import com.momosoftworks.coldsweat.common.capability.ModCapabilities;
+import com.momosoftworks.coldsweat.common.capability.SidedCapabilityCache;
 import com.momosoftworks.coldsweat.common.capability.temperature.EntityTempCap;
 import com.momosoftworks.coldsweat.common.capability.temperature.ITemperatureCap;
 import com.momosoftworks.coldsweat.common.capability.temperature.PlayerTempCap;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
-import com.momosoftworks.coldsweat.config.type.InsulatingMount;
 import com.momosoftworks.coldsweat.core.event.TaskScheduler;
 import com.momosoftworks.coldsweat.data.codec.configuration.FoodData;
 import com.momosoftworks.coldsweat.data.codec.configuration.InsulatorData;
@@ -88,20 +88,10 @@ public class EntityTempManager
 
     public static final Set<EntityType<? extends LivingEntity>> TEMPERATURE_ENABLED_ENTITIES = new HashSet<>(Arrays.asList(EntityType.PLAYER));
 
-    public static final Map<Entity, LazyOptional<ITemperatureCap>> SERVER_CAP_CACHE = new HashMap<>();
-    public static final Map<Entity, LazyOptional<ITemperatureCap>> CLIENT_CAP_CACHE = new HashMap<>();
+    public static SidedCapabilityCache<ITemperatureCap, Entity> CAP_CACHE = new SidedCapabilityCache<>(ModCapabilities.ENTITY_TEMPERATURE);
 
     public static LazyOptional<ITemperatureCap> getTemperatureCap(Entity entity)
-    {
-        Map<Entity, LazyOptional<ITemperatureCap>> cache = entity.level.isClientSide ? CLIENT_CAP_CACHE : SERVER_CAP_CACHE;
-        return cache.computeIfAbsent(entity, e ->
-        {
-            LazyOptional<ITemperatureCap> cap = e.getCapability(ModCapabilities.ENTITY_TEMPERATURE);
-            if (cache == SERVER_CAP_CACHE)
-            {   cap.addListener((opt) -> SERVER_CAP_CACHE.remove(e));
-            }
-            return cap;
-        });
+    {   return CAP_CACHE.get(entity);
     }
 
     /**
@@ -317,7 +307,7 @@ public class EntityTempManager
         if (event.side == LogicalSide.CLIENT && event.phase == TickEvent.Phase.END
         && ClientOnlyHelper.getClientWorld() != null
         && ClientOnlyHelper.getClientWorld().getGameTime() % 5 == 0)
-        {   CLIENT_CAP_CACHE.clear();
+        {   CAP_CACHE.clearClient();
         }
     }
 
@@ -349,8 +339,7 @@ public class EntityTempManager
         PlayerEntity oldPlayer = event.getOriginal();
         PlayerEntity newPlayer = event.getPlayer();
 
-        SERVER_CAP_CACHE.remove(oldPlayer);
-        CLIENT_CAP_CACHE.remove(oldPlayer);
+        CAP_CACHE.ifLazyPresent(oldPlayer, LazyOptional::invalidate);
 
         getTemperatureCap(newPlayer).ifPresent(cap ->
         {

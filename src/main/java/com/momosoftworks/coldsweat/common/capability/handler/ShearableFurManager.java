@@ -1,6 +1,8 @@
 package com.momosoftworks.coldsweat.common.capability.handler;
 
 import com.momosoftworks.coldsweat.ColdSweat;
+import com.momosoftworks.coldsweat.common.capability.SidedCapabilityCache;
+import com.momosoftworks.coldsweat.common.capability.shearing.IShearableCap;
 import com.momosoftworks.coldsweat.common.capability.ModCapabilities;
 import com.momosoftworks.coldsweat.common.capability.shearing.IShearableCap;
 import com.momosoftworks.coldsweat.common.capability.shearing.ShearableFurCap;
@@ -39,14 +41,11 @@ import net.minecraftforge.fml.network.PacketDistributor;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.HashMap;
-import java.util.Map;
 
 @Mod.EventBusSubscriber
 public class ShearableFurManager
 {
-    public static Map<Entity, LazyOptional<IShearableCap>> SERVER_CAP_CACHE = new HashMap<>();
-    public static Map<Entity, LazyOptional<IShearableCap>> CLIENT_CAP_CACHE = new HashMap<>();
+    public static SidedCapabilityCache<IShearableCap, Entity> CAP_CACHE = new SidedCapabilityCache<>(ModCapabilities.SHEARABLE_FUR);
 
     @SubscribeEvent
     public static void attachCapabilityToEntityHandler(AttachCapabilitiesEvent<Entity> event)
@@ -87,13 +86,7 @@ public class ShearableFurManager
     }
 
     public static LazyOptional<IShearableCap> getFurCap(Entity entity)
-    {
-        Map<Entity, LazyOptional<IShearableCap>> cache = entity.level.isClientSide ? CLIENT_CAP_CACHE : SERVER_CAP_CACHE;
-        return cache.computeIfAbsent(entity, e ->
-        {   LazyOptional<IShearableCap> cap = e.getCapability(ModCapabilities.SHEARABLE_FUR);
-            cap.addListener((opt) -> cache.remove(e));
-            return cap;
-        });
+    {   return CAP_CACHE.get(entity);
     }
 
     @SubscribeEvent
