@@ -5,6 +5,7 @@ import com.mojang.datafixers.util.Pair;
 import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.api.insulation.Insulation;
 import com.momosoftworks.coldsweat.common.capability.ModCapabilities;
+import com.momosoftworks.coldsweat.common.capability.SidedCapabilityCache;
 import com.momosoftworks.coldsweat.common.capability.insulation.IInsulatableCap;
 import com.momosoftworks.coldsweat.common.capability.insulation.ItemInsulationCap;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
@@ -41,7 +42,7 @@ import java.util.*;
 @Mod.EventBusSubscriber
 public class ItemInsulationManager
 {
-    public static Map<ItemStack, LazyOptional<IInsulatableCap>> ITEM_INSULATION_CAPS = new WeakHashMap<>();
+    public static SidedCapabilityCache<IInsulatableCap, ItemStack> CAP_CACHE = new SidedCapabilityCache<>(ModCapabilities.ITEM_INSULATION);
 
     @SubscribeEvent
     public static void attachCapabilityToItemHandler(AttachCapabilitiesEvent<ItemStack> event)
@@ -101,8 +102,7 @@ public class ItemInsulationManager
     }
 
     public static LazyOptional<IInsulatableCap> getInsulationCap(ItemStack stack)
-    {
-        return ITEM_INSULATION_CAPS.computeIfAbsent(stack, s -> stack.getCapability(ModCapabilities.ITEM_INSULATION));
+    {   return CAP_CACHE.get(stack);
     }
 
     @SubscribeEvent
