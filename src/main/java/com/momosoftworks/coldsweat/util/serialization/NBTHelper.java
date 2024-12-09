@@ -40,7 +40,7 @@ public class NBTHelper
         ResourceLocation modifierId = TempModifierRegistry.getKey(modifier);
         if (modifierId == null)
         {
-            ColdSweat.LOGGER.error("Failed to get key for TempModifier: {}", modifier);
+            ColdSweat.LOGGER.error("Failed to get key for TempModifier: {}", modifier.getClass().getSimpleName());
             return modifierTag;
         }
         modifierTag.putString("Id", modifierId.toString());
