@@ -92,21 +92,21 @@ public class MixinFreezingWater
         IS_CHECKING_FREEZING = false;
     }
 
-    @Mixin(value = ServerLevel.class, priority = 1001)
+    @Mixin(value = ServerLevel.class, priority = 900)
     public static abstract class FreezeTickSpeed
     {
         ServerLevel self = (ServerLevel) (Object) this;
 
-        @Redirect(method = "tickChunk", at = @At(target = "Ljava/util/Random;nextInt(I)I", value = "INVOKE"),
+        @ModifyArg(method = "tickChunk", index = 0, at = @At(target = "Ljava/util/Random;nextInt(I)I", value = "INVOKE"),
                   slice = @Slice(from = @At(target = "Lnet/minecraft/util/profiling/ProfilerFiller;popPush(Ljava/lang/String;)V", value = "INVOKE", ordinal = 0),
                                  to = @At(target = "Lnet/minecraft/util/profiling/ProfilerFiller;popPush(Ljava/lang/String;)V", value = "INVOKE", ordinal = 1)))
-        private int tickFreezeSpeed(Random instance, int bound)
+        private int tickFreezeSpeed(int bound)
         {
-            if (!ConfigSettings.USE_CUSTOM_WATER_FREEZE_BEHAVIOR.get()) return instance.nextInt(bound);
+            if (!ConfigSettings.USE_CUSTOM_WATER_FREEZE_BEHAVIOR.get()) return bound;
 
             int tickSpeed = self.getGameRules().getInt(GameRules.RULE_RANDOMTICKING);
-            if (tickSpeed == 0) return 1;
-            return instance.nextInt(Math.max(1, bound / (tickSpeed / 3)));
+            if (tickSpeed == 0) return 999999;
+            return Math.max(1, bound / (tickSpeed / 3));
         }
     }
 }
