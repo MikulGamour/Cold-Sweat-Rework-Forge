@@ -22,6 +22,7 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent;
+import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.event.entity.RegisterSpawnPlacementsEvent;
@@ -93,6 +94,10 @@ public class ColdSweat
             event.dataPackRegistry(ModRegistries.ENTITY_TEMP_DATA, EntityTempData.CODEC);
             event.dataPackRegistry(ModRegistries.REMOVE_REGISTRY_DATA, RemoveRegistryData.CODEC);
         });
+    }
+
+    public static String getVersion()
+    {   return FMLLoader.getLoadingModList().getModFileById(ColdSweat.MOD_ID).versionString();
     }
 
     public void commonSetup(final FMLCommonSetupEvent event)
