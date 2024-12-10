@@ -146,22 +146,26 @@ public class BlockTempData extends ConfigData implements IForgeRegistryEntry<Blo
         // Range of effect
         final double blockRange = ((Number) entry.get(2)).doubleValue();
 
+        final Temperature.Units units = entry.size() > 3 && entry.get(3) instanceof Temperature.Units
+                                         ? Temperature.Units.fromID((String) entry.get(3))
+                                         : Temperature.Units.MC;
+
         // Get min/max effect
-        final double maxChange = entry.size() > 3 && entry.get(3) instanceof Number
+        final double maxChange = entry.size() > 4 && entry.get(4) instanceof Number
                                  ? ((Number) entry.get(3)).doubleValue()
                                  : Double.MAX_VALUE;
 
         // Get block predicate
-        Optional<BlockRequirement.StateRequirement> blockPredicates = entry.size() > 4 && entry.get(4) instanceof String str && !str.isEmpty()
+        Optional<BlockRequirement.StateRequirement> blockPredicates = entry.size() > 5 && entry.get(5) instanceof String str && !str.isEmpty()
                                                                       ? Optional.of(BlockRequirement.StateRequirement.fromToml(str.split(","), effectBlocks[0]))
                                                                       : Optional.empty();
 
-        Optional<NbtRequirement> nbtRequirement = entry.size() > 5 && entry.get(5) instanceof String str && !str.isEmpty()
+        Optional<NbtRequirement> nbtRequirement = entry.size() > 6 && entry.get(6) instanceof String str && !str.isEmpty()
                                                   ? Optional.of(new NbtRequirement(NBTHelper.parseCompoundNbt(str)))
                                                   : Optional.empty();
 
-        double tempLimit = entry.size() > 6
-                           ? ((Number) entry.get(6)).doubleValue()
+        double tempLimit = entry.size() > 7
+                           ? ((Number) entry.get(7)).doubleValue()
                            : Double.MAX_VALUE;
 
         double maxEffect = blockTemp > 0 ?  maxChange :  Double.MAX_VALUE;
@@ -173,7 +177,7 @@ public class BlockTempData extends ConfigData implements IForgeRegistryEntry<Blo
                                                                  Optional.empty(), Optional.empty(), Optional.empty(), false);
 
         return new BlockTempData(blocks, blockTemp, blockRange, maxEffect, true, maxTemperature,
-                                 minTemperature, Temperature.Units.MC, List.of(blockRequirement));
+                                 minTemperature, units, List.of(blockRequirement));
     }
 
     @Override
