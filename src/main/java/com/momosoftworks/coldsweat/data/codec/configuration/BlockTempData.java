@@ -151,7 +151,7 @@ public class BlockTempData extends ConfigData
 
         // Get min/max effect
         final double maxChange = entry.size() > 4 && entry.get(4) instanceof Number
-                                 ? ((Number) entry.get(3)).doubleValue()
+                                 ? ((Number) entry.get(4)).doubleValue()
                                  : Double.MAX_VALUE;
 
         // Get block predicate

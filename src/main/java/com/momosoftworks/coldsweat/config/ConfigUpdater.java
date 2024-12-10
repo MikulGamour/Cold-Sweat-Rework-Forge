@@ -20,8 +20,8 @@ public class ConfigUpdater
 {
     public static void updateConfigs()
     {
-        String version = getVersionString(ModList.get().getModContainerById(ColdSweat.MOD_ID).get().getModInfo().getVersion());
-        if (version.equals("0.0-NONE")) return;
+        String version = ColdSweat.getVersion();
+        //if (version.equals("0.0NONE")) return;
 
         String configVersion = MainSettingsConfig.VERSION.get();
 
@@ -168,16 +168,21 @@ public class ConfigUpdater
             addConfigSetting(WorldSettingsConfig.BLOCK_TEMPERATURES, Arrays.asList("#minecraft:campfires", 0.476, 7, 0.9, "lit=true", " ", 8));
         }
 
+        /*
+         2.3.10
+         */
         if (isBehind(configVersion, "2.3.10"))
         {
-            List<? extends List<?>> blockTemps = WorldSettingsConfig.BLOCK_TEMPERATURES.get();
-            for (int i = 0; i < WorldSettingsConfig.BLOCK_TEMPERATURES.get().size(); i++)
+            List blockTemps = WorldSettingsConfig.BLOCK_TEMPERATURES.get();
+            for (int i = 0; i < blockTemps.size(); i++)
             {
-                List blockTemp = new ArrayList<>(blockTemps.get(i));
-                if (blockTemp.size() >= 4)
-                {   blockTemp.add(4, "mc");
+                List blockTemp = new ArrayList<>((List) blockTemps.get(i));
+                if (blockTemp.size() > 3 && !(blockTemp.get(3) instanceof String))
+                {   blockTemp.add(3, "mc");
+                    blockTemps.set(i, blockTemp);
                 }
             }
+            WorldSettingsConfig.BLOCK_TEMPERATURES.set(blockTemps);
         }
 
         // Update config version

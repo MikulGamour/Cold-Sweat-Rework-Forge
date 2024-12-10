@@ -242,32 +242,31 @@ public class WorldSettingsConfig
         BUILDER.push("Blocks");
 
         BLOCK_TEMPERATURES = BUILDER
-                .comment("Allows for adding simple BlockTemps without the use of Java mods",
-                         "Format (All temperatures are in Minecraft units):",
-                         "[[\"block-ids\", <temperature>, <range>, <*units>, <*max effect>, <*predicates>, <*nbt>, <*temperature-limit>], [etc...], [etc...]]",
-                         "(* = optional) (1 \u00B0MC = 42 \u00B0F/ 23.33 \u00B0C)",
-                         "",
-                         "Arguments:",
-                         "block-ids: Multiple IDs can be used by separating them with commas (i.e: \"minecraft:torch,minecraft:wall_torch\")",
-                         "temperature: The temperature of the block, in Minecraft units",
-                         "*falloff: The block is less effective as distance increases",
-                         "*max effect: The maximum temperature change this block can cause to a player (even with multiple blocks)",
-                         "*predicates: The state that the block has to be in for the temperature to be applied (i.e. lit=true).",
-                         "- (Multiple predicates can be used by separating them with commas [i.e. \"lit=true,waterlogged=false\"])",
-                         "*nbt: The NBT data that the block must have for the temperature to be applied.",
-                         "*temperature-limit: The maximum world temperature at which this block temp will be effective.",
-                         "- (Represents the minimum temp if the block temp is negative)")
+                .comment(" Format:",
+                         " [[\"block-ids\", <temperature>, <range>, <*units>, <*max effect>, <*predicates>, <*nbt>, <*temperature-limit>], [etc...], [etc...]]",
+                         " * = Optional",
+                         " ",
+                         " Arguments:",
+                         " block-ids: Multiple IDs can be used by separating them with commas (i.e: \"minecraft:torch,minecraft:wall_torch\")",
+                         " temperature: The temperature of the block, in Minecraft units",
+                         " *falloff: The block is less effective as distance increases",
+                         " *max effect: The maximum temperature change this block can cause to a player (even with multiple blocks)",
+                         " *predicates: The state that the block has to be in for the temperature to be applied (i.e. lit=true).",
+                         " - (Multiple predicates can be used by separating them with commas [i.e. \"lit=true,waterlogged=false\"])",
+                         " *nbt: The NBT data that the block must have for the temperature to be applied.",
+                         " *temperature-limit: The maximum world temperature at which this block temp will be effective.",
+                         " - (Represents the minimum temp if the block temp is negative)")
                 .defineListAllowEmpty(Arrays.asList("Block Temperatures"), () -> Arrays.asList(
-                                            Arrays.asList("cold_sweat:boiler",         0.27, 7, "MC", 0.88, "lit=true", "", 4),
-                                            Arrays.asList("cold_sweat:icebox",        -0.27, 7, "MC", 0.88, "frosted=true", "", 0),
-                                            Arrays.asList("minecraft:fire",           0.476, 7, "MC", 0.9, "", "", 8),
-                                            Arrays.asList("#minecraft:campfires",     0.476, 7, "MC", 0.9, "lit=true", " ", 8),
-                                            Arrays.asList("minecraft:magma_block",     0.25, 3, "MC", 1.0),
-                                            Arrays.asList("minecraft:lava_cauldron",    0.5, 7, "MC", 1.5),
-                                            Arrays.asList("minecraft:ice",            -0.15, 4, "MC", 0.6, "", "", -0.7),
-                                            Arrays.asList("minecraft:packed_ice",     -0.25, 4, "MC", 1.0, "", "", -0.7),
-                                            Arrays.asList("minecraft:blue_ice",       -0.35, 4, "MC", 1.4, "", "", -0.7),
-                                            Arrays.asList("#minecraft:ice",           -0.15, 4, "MC", 0.6, "", "", -0.7)
+                                            Arrays.asList("cold_sweat:boiler",         0.27, 7, "mc", 0.88, "lit=true", "", 4),
+                                            Arrays.asList("cold_sweat:icebox",        -0.27, 7, "mc", 0.88, "frosted=true", "", 0),
+                                            Arrays.asList("minecraft:fire",           0.476, 7, "mc", 0.9, "", "", 8),
+                                            Arrays.asList("#minecraft:campfires",     0.476, 7, "mc", 0.9, "lit=true", " ", 8),
+                                            Arrays.asList("minecraft:magma_block",     0.25, 3, "mc", 1.0),
+                                            Arrays.asList("minecraft:lava_cauldron",    0.5, 7, "mc", 1.5),
+                                            Arrays.asList("minecraft:ice",            -0.15, 4, "mc", 0.6, "", "", -0.7),
+                                            Arrays.asList("minecraft:packed_ice",     -0.25, 4, "mc", 1.0, "", "", -0.7),
+                                            Arrays.asList("minecraft:blue_ice",       -0.35, 4, "mc", 1.4, "", "", -0.7),
+                                            Arrays.asList("#minecraft:ice",           -0.15, 4, "mc", 0.6, "", "", -0.7)
                                       ),
                                       it -> {
                                           if (!(it instanceof List<?>)) return false;

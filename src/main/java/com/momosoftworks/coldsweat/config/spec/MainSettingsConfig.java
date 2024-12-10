@@ -55,7 +55,7 @@ public class MainSettingsConfig
                 .defineInRange("Difficulty", defaultDiff.ordinal(), 0, ConfigSettings.Difficulty.values().length - 1);
 
         VERSION = BUILDER
-                .define("Version", "");
+                .define("Version", ColdSweat.getVersion());
 
         BUILDER.pop();
 
