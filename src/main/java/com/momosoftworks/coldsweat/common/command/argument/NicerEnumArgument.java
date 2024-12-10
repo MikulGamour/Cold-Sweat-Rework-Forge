@@ -16,6 +16,7 @@ import net.minecraft.network.chat.Component;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -48,12 +49,12 @@ public class NicerEnumArgument<T extends Enum<T>> implements ArgumentType<T>
 
     @Override
     public <S> CompletableFuture<Suggestions> listSuggestions(final CommandContext<S> context, final SuggestionsBuilder builder)
-    {   return SharedSuggestionProvider.suggest(Stream.of(enumClass.getEnumConstants()).map(en -> en.name().toLowerCase()), builder);
+    {   return SharedSuggestionProvider.suggest(Stream.of(enumClass.getEnumConstants()).map(en -> en.name().toLowerCase(Locale.ROOT)), builder);
     }
 
     @Override
     public Collection<String> getExamples()
-    {   return Stream.of(enumClass.getEnumConstants()).map(en -> en.name().toLowerCase()).collect(Collectors.toList());
+    {   return Stream.of(enumClass.getEnumConstants()).map(en -> en.name().toLowerCase(Locale.ROOT)).collect(Collectors.toList());
     }
 
     public static class Info<T extends Enum<T>> implements ArgumentTypeInfo<NicerEnumArgument<T>, NicerEnumArgument.Info<T>.Template>
