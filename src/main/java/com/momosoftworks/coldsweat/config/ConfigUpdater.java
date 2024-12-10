@@ -166,6 +166,18 @@ public class ConfigUpdater
             addConfigSetting(WorldSettingsConfig.BLOCK_TEMPERATURES, List.of("#minecraft:campfires", 0.476, 7, 0.9, "lit=true", " ", 8));
         }
 
+        if (isBehind(configVersion, "2.3.10"))
+        {
+            List<? extends List<?>> blockTemps = WorldSettingsConfig.BLOCK_TEMPERATURES.get();
+            for (int i = 0; i < WorldSettingsConfig.BLOCK_TEMPERATURES.get().size(); i++)
+            {
+                List blockTemp = new ArrayList<>(blockTemps.get(i));
+                if (blockTemp.size() >= 4)
+                {   blockTemp.add(4, "mc");
+                }
+            }
+        }
+
         // Update config version
         MainSettingsConfig.VERSION.set(version);
 

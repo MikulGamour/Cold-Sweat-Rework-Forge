@@ -513,9 +513,10 @@ public class Temperature
 
         public static Units fromID(String id)
         {
+            String lowercase = id.toLowerCase(Locale.ROOT);
             for (Units unit : values())
             {
-                if (unit.getSerializedName().equals(id))
+                if (unit.getSerializedName().equals(lowercase))
                     return unit;
             }
             return null;
