@@ -89,10 +89,10 @@ public class ConfigSettings
     public static final DynamicHolder<Map<Structure<?>, StructureTempData>> STRUCTURE_OFFSETS;
     public static final DynamicHolder<List<DepthTempData>> DEPTH_REGIONS;
     public static final DynamicHolder<Boolean> CHECK_SLEEP_CONDITIONS;
-    public static final DynamicHolder<Double[]> SUMMER_TEMPS;
-    public static final DynamicHolder<Double[]> AUTUMN_TEMPS;
-    public static final DynamicHolder<Double[]> WINTER_TEMPS;
-    public static final DynamicHolder<Double[]> SPRING_TEMPS;
+    public static final DynamicHolder<SeasonalTempData> SUMMER_TEMPS;
+    public static final DynamicHolder<SeasonalTempData> AUTUMN_TEMPS;
+    public static final DynamicHolder<SeasonalTempData> WINTER_TEMPS;
+    public static final DynamicHolder<SeasonalTempData> SPRING_TEMPS;
 
     // Block settings
     public static final DynamicHolder<Integer> BLOCK_RANGE;
@@ -882,10 +882,10 @@ public class ConfigSettings
         SHOW_WATER_EFFECT = addClientSetting("show_water_effect", () -> true, holder -> holder.set(ClientSettingsConfig.SHOW_WATER_EFFECT.get()));
 
         boolean ssLoaded = CompatManager.isSereneSeasonsLoaded();
-        SUMMER_TEMPS = addSetting("summer_temps", () -> new Double[]{0d, 0d, 0d}, holder -> holder.set(ssLoaded ? WorldSettingsConfig.getSummerTemps() : new Double[3]));
-        AUTUMN_TEMPS = addSetting("autumn_temps", () -> new Double[]{0d, 0d, 0d}, holder -> holder.set(ssLoaded ? WorldSettingsConfig.getAutumnTemps() : new Double[3]));
-        WINTER_TEMPS = addSetting("winter_temps", () -> new Double[]{0d, 0d, 0d}, holder -> holder.set(ssLoaded ? WorldSettingsConfig.getWinterTemps() : new Double[3]));
-        SPRING_TEMPS = addSetting("spring_temps", () -> new Double[]{0d, 0d, 0d}, holder -> holder.set(ssLoaded ? WorldSettingsConfig.getSpringTemps() : new Double[3]));
+        SUMMER_TEMPS = addSetting("summer_temps", SeasonalTempData::new, holder -> holder.set(ssLoaded ? SeasonalTempData.fromToml(WorldSettingsConfig.getSummerTemps()) : new SeasonalTempData()));
+        AUTUMN_TEMPS = addSetting("autumn_temps", SeasonalTempData::new, holder -> holder.set(ssLoaded ? SeasonalTempData.fromToml(WorldSettingsConfig.getAutumnTemps()) : new SeasonalTempData()));
+        WINTER_TEMPS = addSetting("winter_temps", SeasonalTempData::new, holder -> holder.set(ssLoaded ? SeasonalTempData.fromToml(WorldSettingsConfig.getWinterTemps()) : new SeasonalTempData()));
+        SPRING_TEMPS = addSetting("spring_temps", SeasonalTempData::new, holder -> holder.set(ssLoaded ? SeasonalTempData.fromToml(WorldSettingsConfig.getSpringTemps()) : new SeasonalTempData()));
     }
 
     public static String getKey(DynamicHolder<?> setting)

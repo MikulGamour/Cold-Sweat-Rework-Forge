@@ -1,5 +1,6 @@
 package com.momosoftworks.coldsweat.config.spec;
 
+import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.compat.CompatManager;
 import com.momosoftworks.coldsweat.util.serialization.ListBuilder;
 import net.minecraft.util.ResourceLocation;
@@ -31,10 +32,10 @@ public class WorldSettingsConfig
 
     public static final ForgeConfigSpec.ConfigValue<Boolean> IS_SOUL_FIRE_COLD;
 
-    public static ForgeConfigSpec.ConfigValue<List<? extends Number>> SUMMER_TEMPERATURES;
-    public static ForgeConfigSpec.ConfigValue<List<? extends Number>> AUTUMN_TEMPERATURES;
-    public static ForgeConfigSpec.ConfigValue<List<? extends Number>> WINTER_TEMPERATURES;
-    public static ForgeConfigSpec.ConfigValue<List<? extends Number>> SPRING_TEMPERATURES;
+    public static ForgeConfigSpec.ConfigValue<List<?>> SUMMER_TEMPERATURES;
+    public static ForgeConfigSpec.ConfigValue<List<?>> AUTUMN_TEMPERATURES;
+    public static ForgeConfigSpec.ConfigValue<List<?>> WINTER_TEMPERATURES;
+    public static ForgeConfigSpec.ConfigValue<List<?>> SPRING_TEMPERATURES;
 
     public static final ForgeConfigSpec.ConfigValue<Boolean> ENABLE_SMART_HEARTH;
     public static final ForgeConfigSpec.ConfigValue<Boolean> ENABLE_SMART_BOILER;
@@ -456,29 +457,31 @@ public class WorldSettingsConfig
         /* Serene Seasons config */
         if (CompatManager.isSereneSeasonsLoaded())
         {
-            BUILDER.comment("Format: [season-start, season-mid, season-end]",
+            BUILDER.comment("Format: [season-start, season-mid, season-end, *units]",
+                            "First 3 parameters: The temperature offset at the start, middle, and end of the season",
+                            "units: (Optional) The unit of temperature (C, F, or MC)",
                             "Applied as an offset to the world's temperature")
                    .push("Season Temperatures");
 
             SUMMER_TEMPERATURES = BUILDER
                     .defineList("Summer", Arrays.asList(
                             0.4, 0.6, 0.4
-                    ), it -> it instanceof Number);
+                    ), it -> it instanceof Number || it instanceof String);
 
             AUTUMN_TEMPERATURES = BUILDER
                     .defineList("Autumn", Arrays.asList(
                             0.2, 0, -0.2
-                    ), it -> it instanceof Number);
+                    ), it -> it instanceof Number || it instanceof String);
 
             WINTER_TEMPERATURES = BUILDER
                     .defineList("Winter", Arrays.asList(
                             -0.4, -0.6, -0.4
-                    ), it -> it instanceof Number);
+                    ), it -> it instanceof Number || it instanceof String);
 
             SPRING_TEMPERATURES = BUILDER
                     .defineList("Spring", Arrays.asList(
                             -0.2, 0, 0.2
-                    ), it -> it instanceof Number);
+                    ), it -> it instanceof Number || it instanceof String);
 
             BUILDER.pop();
         }
@@ -504,17 +507,30 @@ public class WorldSettingsConfig
     {   SPEC.save();
     }
 
-    public static Double[] getSummerTemps()
-    {   return SUMMER_TEMPERATURES.get().stream().map(Number::doubleValue).toArray(Double[]::new);
+    public static List<?> getSummerTemps()
+    {   return getSeasonalTemperature(SUMMER_TEMPERATURES);
     }
-    public static Double[] getAutumnTemps()
-    {   return AUTUMN_TEMPERATURES.get().stream().map(Number::doubleValue).toArray(Double[]::new);
+    public static List<?> getAutumnTemps()
+    {   return getSeasonalTemperature(AUTUMN_TEMPERATURES);
     }
-    public static Double[] getWinterTemps()
-    {   return WINTER_TEMPERATURES.get().stream().map(Number::doubleValue).toArray(Double[]::new);
+    public static List<?> getWinterTemps()
+    {   return getSeasonalTemperature(WINTER_TEMPERATURES);
     }
-    public static Double[] getSpringTemps()
-    {   return SPRING_TEMPERATURES.get().stream().map(Number::doubleValue).toArray(Double[]::new);
+    public static List<?> getSpringTemps()
+    {   return getSeasonalTemperature(SPRING_TEMPERATURES);
+    }
+    private static List<?> getSeasonalTemperature(ForgeConfigSpec.ConfigValue<List<?>> setting)
+    {
+        return setting.get().stream().map(o ->
+        {
+            if (o instanceof Number)
+            {   return ((Number) o).doubleValue();
+            }
+            else if (o instanceof String)
+            {   return Temperature.Units.fromID(((String) o).toLowerCase(Locale.ROOT));
+            }
+            throw new IllegalArgumentException(String.format("Invalid argument \"%s\" for seasonal temperature", o));
+        }).collect(Collectors.toList());
     }
 
     public static synchronized void setSourceSpreadWhitelist(List<ResourceLocation> whitelist)
