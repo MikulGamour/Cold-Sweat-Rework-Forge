@@ -1,5 +1,6 @@
 package com.momosoftworks.coldsweat.config.spec;
 
+import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import net.minecraftforge.common.ForgeConfigSpec;
@@ -53,7 +54,7 @@ public class MainSettingsConfig
                 .defineInRange("Difficulty", defaultDiff.ordinal(), 0, ConfigSettings.Difficulty.values().length - 1);
 
         VERSION = BUILDER
-                .define("Version", "");
+                .define("Version", ColdSweat.getVersion());
 
         BUILDER.pop();
 
