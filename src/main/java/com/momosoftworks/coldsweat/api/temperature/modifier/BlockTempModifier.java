@@ -7,7 +7,6 @@ import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.core.advancement.trigger.ModAdvancementTriggers;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.serialization.Triplet;
-import com.momosoftworks.coldsweat.util.math.FastMap;
 import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.material.Material;
@@ -32,14 +31,17 @@ public class BlockTempModifier extends TempModifier
     {   this.getNBT().putInt("RangeOverride", range);
     }
 
-    Map<ChunkPos, IChunk> chunks = new FastMap<>(16);
+    Map<ChunkPos, IChunk> chunks = new HashMap<>(16);
+    Map<BlockTemp, Double> blockTempEffects = new HashMap<>(128);
+    Map<BlockPos, BlockState> stateCache = new HashMap<>(4096);
+    List<Triplet<BlockPos, BlockTemp, Double>> triggers = new ArrayList<>(128);
 
     @Override
     public Function<Double, Double> calculate(LivingEntity entity, Temperature.Trait trait)
     {
-        Map<BlockTemp, Double> blockTempEffects = new FastMap<>(128);
-        Map<BlockPos, BlockState> stateCache = new FastMap<>(4096);
-        List<Triplet<BlockPos, BlockTemp, Double>> triggers = new ArrayList<>(128);
+        blockTempEffects.clear();
+        stateCache.clear();
+        triggers.clear();
 
         World world = entity.level;
         int range = this.getNBT().contains("RangeOverride", 3) ? this.getNBT().getInt("RangeOverride") : ConfigSettings.BLOCK_RANGE.get();
