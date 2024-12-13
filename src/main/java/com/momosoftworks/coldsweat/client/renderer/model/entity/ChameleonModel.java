@@ -468,11 +468,11 @@ public class ChameleonModel<T extends ChameleonEntity> extends AgeableModel<T> i
 		// Don't do this if alpha is overridden
 		if (!isOverlay && chameleon.isAlive())
 		{
-			if (CSMath.betweenInclusive(tickCount - hurtTime, 10, 120) && hurtTime != 0)
-			{	chameleon.opacity += (alpha * 0.15f - chameleon.opacity) * Minecraft.getInstance().getDeltaFrameTime() / 10;
+			if (CSMath.betweenInclusive(tickCount - hurtTime, 0, 40) && hurtTime != 0)
+			{	chameleon.opacity = CSMath.blend(alpha, alpha * 0.15f, tickCount + partialTick - hurtTime, 0, 40);
 			}
 			else if (chameleon.opacity < alpha)
-			{	chameleon.opacity = CSMath.blend(alpha * 0.15f, alpha, tickCount - hurtTime + partialTick, 120, 180);
+			{	chameleon.opacity = CSMath.blend(alpha * 0.15f, alpha, tickCount + partialTick - hurtTime, 120, 180);
 			}
 		}
 

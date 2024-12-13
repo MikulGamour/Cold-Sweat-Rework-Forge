@@ -39,6 +39,7 @@ import net.minecraft.network.datasync.EntityDataManager;
 import net.minecraft.particles.ParticleTypes;
 import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.EntityRayTraceResult;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.world.GameRules;
@@ -46,6 +47,7 @@ import net.minecraft.world.World;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.util.ITeleporter;
 import net.minecraftforge.event.entity.EntityEvent;
+import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -269,6 +271,19 @@ public class ChameleonEntity extends AnimalEntity
             if (chameleon.getVehicle() != null && chameleon.getVehicle() == event.getSource().getEntity())
             {   event.setCanceled(true);
             }
+        }
+    }
+
+    @SubscribeEvent
+    public static void cancelProjectileHit(ProjectileImpactEvent event)
+    {
+        if (!(event.getRayTraceResult() instanceof EntityRayTraceResult)) return;
+        EntityRayTraceResult hitResult = (EntityRayTraceResult) event.getRayTraceResult();
+        if (hitResult.getEntity() instanceof ChameleonEntity && hitResult.getEntity().getVehicle() instanceof PlayerEntity)
+        {
+            ChameleonEntity chameleon = ((ChameleonEntity) hitResult.getEntity());
+            event.setCanceled(true);
+            chameleon.setHurtTimestamp(chameleon.tickCount - 20);
         }
     }
 
