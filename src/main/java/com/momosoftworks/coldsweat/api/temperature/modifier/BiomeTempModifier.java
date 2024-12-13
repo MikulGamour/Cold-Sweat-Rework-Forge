@@ -55,7 +55,7 @@ public class BiomeTempModifier extends TempModifier
             for (BlockPos blockPos : level.dimensionType().hasCeiling() ? WorldHelper.getPositionCube(entPos, 6, 10) : WorldHelper.getPositionGrid(entPos, 64, 10))
             {
                 // Check if this position is valid
-                if (!level.isInWorldBounds(blockPos) || blockPos.distSqr(entPos) > 30*30) continue;
+                if (blockPos.distSqr(entPos) > 30*30) continue;
                 // Get the holder for the biome
                 Holder<Biome> holder = level.getBiomeManager().getBiome(blockPos);
                 if (holder.is(Tags.Biomes.IS_UNDERGROUND)) continue;
@@ -64,26 +64,18 @@ public class BiomeTempModifier extends TempModifier
                 // Tally number of biomes
                 biomeCount++;
 
-                // Get min/max temperature of the biome
-                Pair<Double, Double> configTemp = WorldHelper.getBiomeTemperatureRange(level, holder);
-
-                // Biome temp at midnight (bottom of the sine wave)
-                double min = configTemp.getFirst();
-                // Biome temp at noon (top of the sine wave)
-                double max = configTemp.getSecond();
-
                 DimensionType dimension = level.dimensionType();
                 if (!dimension.hasCeiling())
                 {
                     // Biome temp with time of day
-                    double biomeTemp = WorldHelper.getBiomeTemperatureAt(level, holder, entity.blockPosition());
+                    double biomeTemp = WorldHelper.getBiomeTemperature(level, holder);
                     if (CompatManager.isPrimalWinterLoaded() && holder.is(Tags.Biomes.IS_OVERWORLD))
                     {   biomeTemp = Math.min(biomeTemp, biomeTemp / 2) - Math.max(biomeTemp / 2, 0);
                     }
                     worldTemp += biomeTemp;
                 }
                 // If dimension has ceiling (don't use time or altitude)
-                else worldTemp += CSMath.average(max, min);
+                else worldTemp += CSMath.averagePair(WorldHelper.getBiomeTemperatureRange(level, holder));
             }
 
             worldTemp /= Math.max(1, biomeCount);
