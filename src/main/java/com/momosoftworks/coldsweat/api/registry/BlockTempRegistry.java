@@ -14,7 +14,7 @@ import java.util.*;
 
 public class BlockTempRegistry
 {
-    public static final LinkedList<BlockTemp> BLOCK_TEMPS = new LinkedList<>();
+    public static final List<BlockTemp> BLOCK_TEMPS = new ArrayList<>();
     public static final FastMultiMap<Block, BlockTemp> MAPPED_BLOCKS = new FastMultiMap<>();
     public static final BlockTemp DEFAULT_BLOCK_TEMP = new BlockTemp()
     {
@@ -63,7 +63,8 @@ public class BlockTempRegistry
             }
             else blockTemps.add(blockTemp);
         });
-        BLOCK_TEMPS.add(blockTemp);
+        if (front) BLOCK_TEMPS.add(0, blockTemp);
+        else BLOCK_TEMPS.add(blockTemp);
     }
 
     public static synchronized void flush()
