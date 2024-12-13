@@ -757,9 +757,9 @@ public abstract class WorldHelper
     public static boolean nextToSoulFire(LevelAccessor level, BlockPos pos)
     {
         BlockPos.MutableBlockPos pos2 = pos.mutable();
-        for (int x = -1; x < 1; x++)
-        for (int y = -1; y < 1; y++)
-        for (int z = -1; z < 1; z++)
+        for (int x = -1; x <= 1; x++)
+        for (int y =  0; y <= 1; y++)
+        for (int z = -1; z <= 1; z++)
         {
             BlockState state = level.getBlockState(pos2.setWithOffset(pos, x, y, z));
             if (state.is(Blocks.SOUL_FIRE) || state.is(Blocks.SOUL_CAMPFIRE) && state.getValue(CampfireBlock.LIT))
