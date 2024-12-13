@@ -777,10 +777,12 @@ public class ConfigHelper
 
     public static <T> List<String> getModIDs(List<Either<TagKey<T>, Holder<T>>> list)
     {
-        return list.stream().map(either -> either.map(tag -> tag.location().getNamespace(),
-                                                      obj -> obj.unwrapKey().map(key -> key.location().getNamespace()).orElse("")))
-                .distinct()
-                .filter(s -> !s.isEmpty())
-                .toList();
+        List<String> mods = new ArrayList<>();
+        for (Either<TagKey<T>, Holder<T>> either : list)
+        {
+            mods.add(either.map(tag -> tag.location().getNamespace(),
+                                obj -> obj.unwrapKey().map(key -> key.location().getNamespace()).orElse("")));
+        }
+        return mods;
     }
 }
