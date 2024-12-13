@@ -11,7 +11,7 @@ import net.minecraft.world.level.block.state.BlockState;
 public class SoulFireBlockTemp extends BlockTemp
 {
     public SoulFireBlockTemp()
-    {   super(-Double.MAX_VALUE, Double.MAX_VALUE, -Double.MAX_VALUE, Double.MAX_VALUE, 7, true, Blocks.SOUL_FIRE, Blocks.SOUL_CAMPFIRE);
+    {   super(-0.9, 0.9, -3, Double.MAX_VALUE, 7, true, Blocks.SOUL_FIRE, Blocks.SOUL_CAMPFIRE);
     }
 
     @Override
