@@ -7,6 +7,7 @@ import com.momosoftworks.coldsweat.data.tag.ModBlockTags;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.registries.ModBlocks;
 import com.momosoftworks.coldsweat.util.registries.ModItems;
+import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -32,7 +33,6 @@ import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.IPlantable;
 
-import java.util.List;
 import java.util.Random;
 
 public class SoulStalkBlock extends Block implements IPlantable
@@ -74,7 +74,7 @@ public class SoulStalkBlock extends Block implements IPlantable
             for(i = 1; level.getBlockState(pos.below(i)).getBlock() == this; ++i)
             {}
 
-            if (i < 6 && rand.nextDouble() < 0.05 + CSMath.blend(ConfigSettings.MIN_TEMP.get(), ConfigSettings.MAX_TEMP.get(), Temperature.getTemperatureAt(pos.below(i - 1), level), 0, 0.95))
+            if (i < 6 && rand.nextDouble() < 0.05 + CSMath.blend(ConfigSettings.MIN_TEMP.get(), ConfigSettings.MAX_TEMP.get(), WorldHelper.getRoughTemperatureAt(level, pos.below(i - 1)), 0, 0.95))
             {
                 int j = state.getValue(AGE);
                 if (ForgeHooks.onCropsGrowPre(level, pos, state, true))

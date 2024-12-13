@@ -82,7 +82,7 @@ public class KubeBindings
     {   return WorldHelper.getBiomeTemperature(level.minecraftLevel, level.minecraftLevel.getBiome(pos));
     }
 
-    public double getTemperatureAt(WorldJS level, BlockPos pos)
-    {   return Temperature.getTemperatureAt(pos, level.minecraftLevel);
+    public double getTemperatureAt(World level, BlockPos pos)
+    {   return WorldHelper.getTemperatureAt(level, pos);
     }
 }

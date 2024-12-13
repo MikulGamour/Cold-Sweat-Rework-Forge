@@ -21,8 +21,10 @@ public class Placement
     public static final Placement BEFORE_FIRST = Placement.of(Mode.BEFORE, Order.FIRST, mod -> true);
 
     public static Placement of(Mode mode, Order order, Predicate<TempModifier> predicate)
-    {
-        return new Placement(mode, order, predicate);
+    {   return new Placement(mode, order, predicate);
+    }
+    public static Placement of(Mode mode, Order order, Class<? extends TempModifier> clazz)
+    {   return new Placement(mode, order, clazz::isInstance);
     }
 
     public enum Mode implements StringRepresentable

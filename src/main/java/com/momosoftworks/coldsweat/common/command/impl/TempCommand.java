@@ -15,6 +15,7 @@ import com.momosoftworks.coldsweat.common.capability.handler.EntityTempManager;
 import com.momosoftworks.coldsweat.common.command.argument.TemperatureTraitArgument;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.util.math.CSMath;
+import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import net.minecraft.command.CommandSource;
 import net.minecraft.command.Commands;
 import net.minecraft.command.arguments.BlockPosArgument;
@@ -221,9 +222,8 @@ public class TempCommand extends BaseCommand
     private int executeGetWorldTemp(CommandSource source, int x , int y, int z, ServerWorld level)
     {   //Compose & send message
         Temperature.Units units = CSMath.getIfNotNull(source.getEntity(), ent -> EntityTempManager.getTemperatureCap(ent).map(ITemperatureCap::getPreferredUnits).orElse(Temperature.Units.F), Temperature.Units.F);
-        int worldTemp = (int) Temperature.convert(Temperature.getTemperatureAt(new BlockPos(x, y, z), level != null
-                                                                                                           ? level
-                                                                                                           : source.getLevel()),
+        int worldTemp = (int) Temperature.convert(WorldHelper.getTemperatureAt(level != null ? level : source.getLevel(),
+                                                                                   new BlockPos(x, y, z)),
                                                        Temperature.Units.MC, units, true);
         source.sendSuccess(new TranslationTextComponent("commands.cold_sweat.temperature.get.world.result", x, y, z, worldTemp, units.getFormattedName()), true);
         return Command.SINGLE_SUCCESS;

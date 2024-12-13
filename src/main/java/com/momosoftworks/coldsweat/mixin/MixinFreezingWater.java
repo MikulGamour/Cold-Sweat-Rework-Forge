@@ -1,15 +1,11 @@
 package com.momosoftworks.coldsweat.mixin;
 
 import com.momosoftworks.coldsweat.config.ConfigSettings;
-import com.momosoftworks.coldsweat.util.serialization.RegistryHelper;
 import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.CampfireBlock;
-import net.minecraft.fluid.FluidState;
+import net.minecraft.block.IceBlock;
 import net.minecraft.fluid.Fluids;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.registry.DynamicRegistries;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.IWorldReader;
 import net.minecraft.world.World;
@@ -17,77 +13,51 @@ import net.minecraft.world.biome.Biome;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.fluids.IFluidBlock;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.*;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.Slice;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Random;
 
-@Mixin(Biome.class)
+@Mixin(value = Biome.class, priority = 900)
 public abstract class MixinFreezingWater
 {
-    private static IWorldReader LEVEL = null;
-    private static Boolean IS_CHECKING_FREEZING = false;
-
-    Biome self = (Biome) (Object) this;
-
     @Inject(method = "shouldFreeze(Lnet/minecraft/world/IWorldReader;Lnet/minecraft/util/math/BlockPos;Z)Z",
             at = @At(value = "HEAD"), cancellable = true)
     private void shouldFreezeBlock(IWorldReader levelReader, BlockPos pos, boolean mustBeAtEdge, CallbackInfoReturnable<Boolean> cir)
     {
         if (!ConfigSettings.USE_CUSTOM_WATER_FREEZE_BEHAVIOR.get()) return;
-        if (levelReader instanceof ServerWorld && ((ServerWorld) levelReader).getGameRules().getInt(GameRules.RULE_RANDOMTICKING) == 0)
+        if (!(levelReader instanceof ServerWorld)) return;
+        ServerWorld level = (ServerWorld) levelReader;
+
+        if (level.getGameRules().getInt(GameRules.RULE_RANDOMTICKING) == 0)
         {   cir.setReturnValue(false);
             return;
         }
 
-        LEVEL = levelReader;
-        IS_CHECKING_FREEZING = true;
-
-        if (!ConfigSettings.COLD_SOUL_FIRE.get())
+        BlockState state = level.getBlockState(pos);
+        if (!(state.getFluidState().getType() == Fluids.WATER && state.getBlock() instanceof IFluidBlock))
         {   return;
         }
-        BlockState blockstate = levelReader.getBlockState(pos);
-        FluidState fluidstate = levelReader.getFluidState(pos);
-        if (!(fluidstate.getType() == Fluids.WATER && blockstate.getBlock() instanceof IFluidBlock))
-        {   return;
-        }
-        BlockPos.Mutable mutable = new BlockPos.Mutable();
-        for (int x = -1; x <= 1; x++)
-        {
-            for (int y = -1; y <= 1; y++)
-            {
-                for (int z = -1; z <= 1; z++)
-                {
-                    mutable.set(pos).move(x, y, z);
-                    BlockState state = levelReader.getBlockState(mutable);
-                    if (ConfigSettings.COLD_SOUL_FIRE.get() && (state.is(Blocks.SOUL_FIRE) || state.is(Blocks.SOUL_CAMPFIRE) && state.getValue(CampfireBlock.LIT)))
-                    {   cir.setReturnValue(true);
-                    }
-                }
-            }
-        }
-    }
 
-    @Inject(method = "getTemperature", at = @At("HEAD"), cancellable = true)
-    private void getTemperature(BlockPos pos, CallbackInfoReturnable<Float> cir)
-    {
-        if (!ConfigSettings.USE_CUSTOM_WATER_FREEZE_BEHAVIOR.get() || LEVEL == null) return;
-
-        DynamicRegistries registries = RegistryHelper.getDynamicRegistries();
-        if (registries != null)
+        if (ConfigSettings.COLD_SOUL_FIRE.get())
         {
-            if (self.getBiomeCategory() == Biome.Category.OCEAN
-            && pos.getY() <= LEVEL.getSeaLevel())
-            {   return;
+            if (WorldHelper.nextToSoulFire(level, pos))
+            {   cir.setReturnValue(true);
+                return;
             }
         }
 
-        if (IS_CHECKING_FREEZING && LEVEL instanceof World)
-        {
-            double biomeTemp = WorldHelper.getWorldTemperatureAt((World) LEVEL, pos);
-            cir.setReturnValue((float) biomeTemp);
+        if (WorldHelper.shouldFreeze(level, pos, mustBeAtEdge))
+        {   cir.setReturnValue(true);
+            return;
         }
-        IS_CHECKING_FREEZING = false;
+
+        cir.setReturnValue(false);
     }
 
     @Mixin(value = ServerWorld.class, priority = 900)
@@ -105,6 +75,25 @@ public abstract class MixinFreezingWater
             int tickSpeed = self.getGameRules().getInt(GameRules.RULE_RANDOMTICKING);
             if (tickSpeed == 0) return 999999;
             return Math.max(1, bound / (tickSpeed / 3));
+        }
+    }
+
+    @Mixin(IceBlock.class)
+    public static abstract class IceMelt
+    {
+        @Shadow
+        protected abstract void melt(BlockState pState, World pLevel, BlockPos pPos);
+
+        @Inject(method = "randomTick", at = @At("HEAD"), cancellable = true)
+        private void randomTick(BlockState state, ServerWorld level, BlockPos pos, Random random, CallbackInfo ci)
+        {
+            if (!ConfigSettings.USE_CUSTOM_WATER_FREEZE_BEHAVIOR.get()) return;
+
+            if (WorldHelper.shouldMelt(level, pos, true)
+            && !(ConfigSettings.COLD_SOUL_FIRE.get() && WorldHelper.nextToSoulFire(level, pos)))
+            {   this.melt(state, level, pos);
+                ci.cancel();
+            }
         }
     }
 }
