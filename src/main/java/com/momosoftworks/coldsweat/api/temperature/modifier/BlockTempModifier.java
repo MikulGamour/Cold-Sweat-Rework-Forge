@@ -31,14 +31,17 @@ public class BlockTempModifier extends TempModifier
     {   this.getNBT().putInt("RangeOverride", range);
     }
 
-    Map<ChunkPos, ChunkAccess> chunks = new FastMap<>(16);
+    Map<ChunkPos, ChunkAccess> chunks = new HashMap<>(16);
+    Map<BlockTemp, Double> blockTempEffects = new HashMap<>(128);
+    Map<BlockPos, BlockState> stateCache = new HashMap<>(4096);
+    List<Triplet<BlockPos, BlockTemp, Double>> triggers = new ArrayList<>(128);
 
     @Override
     public Function<Double, Double> calculate(LivingEntity entity, Temperature.Trait trait)
     {
-        Map<BlockTemp, Double> blockTempEffects = new FastMap<>(128);
-        Map<BlockPos, BlockState> stateCache = new FastMap<>(4096);
-        List<Triplet<BlockPos, BlockTemp, Double>> triggers = new ArrayList<>(128);
+        blockTempEffects.clear();
+        stateCache.clear();
+        triggers.clear();
 
         Level level = entity.level();
         int range = this.getNBT().contains("RangeOverride", 3) ? this.getNBT().getInt("RangeOverride") : ConfigSettings.BLOCK_RANGE.get();
