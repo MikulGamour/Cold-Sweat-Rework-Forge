@@ -5,7 +5,10 @@ import com.momosoftworks.coldsweat.api.temperature.modifier.TempModifier;
 import com.momosoftworks.coldsweat.api.util.Placement;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.common.capability.handler.EntityTempManager;
+import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.data.codec.configuration.InsulatorData;
+import com.momosoftworks.coldsweat.util.serialization.DynamicHolder;
+import com.momosoftworks.coldsweat.util.serialization.RegistryHelper;
 import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import dev.latvian.kubejs.world.BlockContainerJS;
 import dev.latvian.kubejs.world.WorldJS;
@@ -13,12 +16,21 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.registry.DynamicRegistries;
 import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
 
 public class KubeBindings
 {
+    public DynamicHolder<?> getConfigSetting(String id)
+    {   return ConfigSettings.getSetting(id);
+    }
+
+    public DynamicRegistries getRegistryAccess()
+    {   return RegistryHelper.getDynamicRegistries();
+    }
+
     public double getTemperature(Entity entity, String trait)
     {
         if (entity instanceof LivingEntity)
