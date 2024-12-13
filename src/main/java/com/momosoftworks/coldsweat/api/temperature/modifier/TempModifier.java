@@ -74,7 +74,7 @@ public abstract class TempModifier
      * @param temp the Temperature to calculate with
      * @return The result of this TempModifier's unique stored function. Stores the input and output.
      */
-    public final double apply(double temp)
+    public double apply(double temp)
     {
         lastInput = temp;
         return lastOutput = function.apply(temp);
