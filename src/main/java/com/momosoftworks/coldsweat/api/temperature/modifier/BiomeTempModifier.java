@@ -53,33 +53,25 @@ public class BiomeTempModifier extends TempModifier
             for (BlockPos blockPos : WorldHelper.getPositionGrid(entPos, 64, 10))
             {
                 // Check if this position is valid
-                if (!World.isInWorldBounds(blockPos) || blockPos.distSqr(entPos) > 30*30) continue;
+                if (blockPos.distSqr(entPos) > 30*30) continue;
                 // Get the holder for the biome
                 Biome biome = level.getBiomeManager().getBiome(blockPos);
 
                 // Tally number of biomes
                 biomeCount++;
 
-                // Get min/max temperature of the biome
-                Pair<Double, Double> configTemp = WorldHelper.getBiomeTemperatureRange(level, biome);
-
-                // Biome temp at midnight (bottom of the sine wave)
-                double min = configTemp.getFirst();
-                // Biome temp at noon (top of the sine wave)
-                double max = configTemp.getSecond();
-
                 DimensionType dimension = level.dimensionType();
                 if (!dimension.hasCeiling())
                 {
                     // Biome temp with time of day
-                    double biomeTemp = WorldHelper.getBiomeTemperatureAt(level, biome, entity.blockPosition());
-                    if (CompatManager.isPrimalWinterLoaded() && level.dimension().location().equals(DimensionType.OVERWORLD_LOCATION.location()))
+                    double biomeTemp = WorldHelper.getBiomeTemperature(level, biome);
+                    if (CompatManager.isPrimalWinterLoaded())
                     {   biomeTemp = Math.min(biomeTemp, biomeTemp / 2) - Math.max(biomeTemp / 2, 0);
                     }
                     worldTemp += biomeTemp;
                 }
                 // If dimension has ceiling (don't use time or altitude)
-                else worldTemp += CSMath.average(max, min);
+                else worldTemp += CSMath.averagePair(WorldHelper.getBiomeTemperatureRange(level, biome));
             }
 
             worldTemp /= Math.max(1, biomeCount);
