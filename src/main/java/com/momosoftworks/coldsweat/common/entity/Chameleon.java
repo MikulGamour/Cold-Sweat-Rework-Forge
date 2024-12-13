@@ -47,9 +47,11 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec2;
 import net.minecraftforge.common.util.ITeleporter;
 import net.minecraftforge.event.entity.EntityEvent;
+import net.minecraftforge.event.entity.ProjectileImpactEvent;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -275,6 +277,17 @@ public class Chameleon extends Animal
             if (chameleon.getVehicle() != null && chameleon.getVehicle() == event.getSource().getEntity())
             {   event.setCanceled(true);
             }
+        }
+    }
+
+    @SubscribeEvent
+    public static void cancelProjectileHit(ProjectileImpactEvent event)
+    {
+        if (!(event.getRayTraceResult() instanceof EntityHitResult hitResult)) return;
+        if (hitResult.getEntity() instanceof Chameleon chameleon && chameleon.getVehicle() instanceof Player)
+        {
+            event.setCanceled(true);
+            chameleon.setHurtTimestamp(chameleon.tickCount - 20);
         }
     }
 
