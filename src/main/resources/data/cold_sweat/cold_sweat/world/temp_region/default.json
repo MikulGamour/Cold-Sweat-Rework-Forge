@@ -9,17 +9,21 @@
         "anchor": "world_top",
         "depth": 1,
         "temperature": {
-          "strength": 0
+          "value": -273.15,
+          "units": "C",
+          "strength": 0.005
         }
       }
     },
     {
-      "type": "constant",
+      "type": "linear",
       "top": {
         "anchor": "world_top",
         "depth": 0,
         "temperature": {
-          "strength": 0
+          "value": -273.15,
+          "units": "C",
+          "strength": 0.005
         }
       },
       "bottom": {
