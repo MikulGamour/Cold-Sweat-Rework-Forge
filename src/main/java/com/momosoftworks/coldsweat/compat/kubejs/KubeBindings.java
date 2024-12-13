@@ -82,6 +82,6 @@ public class KubeBindings
     }
 
     public double getTemperatureAt(Level level, BlockPos pos)
-    {   return Temperature.getTemperatureAt(pos, level);
+    {   return WorldHelper.getTemperatureAt(level, pos);
     }
 }

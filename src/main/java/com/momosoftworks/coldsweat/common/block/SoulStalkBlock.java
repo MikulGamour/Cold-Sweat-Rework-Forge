@@ -1,10 +1,10 @@
 package com.momosoftworks.coldsweat.common.block;
 
-import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.core.init.ModBlocks;
 import com.momosoftworks.coldsweat.data.tag.ModBlockTags;
 import com.momosoftworks.coldsweat.util.math.CSMath;
+import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -66,7 +66,7 @@ public class SoulStalkBlock extends Block
             for(i = 1; level.getBlockState(pos.below(i)).getBlock() == this; ++i)
             {}
 
-            if (i < 6 && rand.nextDouble() < 0.05 + CSMath.blend(ConfigSettings.MIN_TEMP.get(), ConfigSettings.MAX_TEMP.get(), Temperature.getTemperatureAt(pos.below(i - 1), level), 0, 0.95))
+            if (i < 6 && rand.nextDouble() < 0.05 + CSMath.blend(ConfigSettings.MIN_TEMP.get(), ConfigSettings.MAX_TEMP.get(), WorldHelper.getRoughTemperatureAt(level, pos.below(i - 1)), 0, 0.95))
             {
                 int j = state.getValue(AGE);
                 if (CommonHooks.canCropGrow(level, pos, state, true))

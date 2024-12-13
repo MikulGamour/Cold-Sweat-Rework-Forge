@@ -3,6 +3,7 @@ package com.momosoftworks.coldsweat.compat.create;
 import com.google.common.collect.ImmutableList;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.common.blockentity.ThermolithBlockEntity;
+import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -21,7 +22,7 @@ public class ColdSweatDisplayBehaviors
         {
             if (displayLinkContext.getSourceBlockEntity() instanceof ThermolithBlockEntity thermolith)
             {
-                double temperature = Temperature.getTemperatureAt(thermolith.getBlockPos(), thermolith.getLevel());
+                double temperature = WorldHelper.getTemperatureAt(thermolith.getLevel(), thermolith.getBlockPos());
 
                 String unitsString = displayLinkContext.sourceConfig().getString("Units");
                 Temperature.Units units = Optional.ofNullable(Temperature.Units.fromID(unitsString)).orElse(Temperature.Units.MC);
