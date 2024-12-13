@@ -28,7 +28,7 @@ public class ThermolithBlockEntity extends TileEntity implements ITickableTileEn
             BlockPos pos = this.getBlockPos();
             BlockState state = this.getBlockState();
             // Handle signal output / neighbor updates
-            double temperature = WorldHelper.getRoughTemperatureAt(level, pos);
+            double temperature = WorldHelper.getTemperatureAt(level, pos);
             int newSignal = (int) CSMath.blend(0, 15, temperature, ConfigSettings.MIN_TEMP.get(), ConfigSettings.MAX_TEMP.get());
             Direction facing = this.getBlockState().getValue(ThermolithBlock.FACING);
 
