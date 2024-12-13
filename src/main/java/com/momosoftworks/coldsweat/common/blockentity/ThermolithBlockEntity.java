@@ -33,7 +33,7 @@ public class ThermolithBlockEntity extends BlockEntity
         if (level.getGameTime() % 20 == 0 && !level.isClientSide)
         {
             // Handle signal output / neighbor updates
-            double temperature = WorldHelper.getRoughTemperatureAt(level, pos);
+            double temperature = WorldHelper.getTemperatureAt(level, pos);
             int newSignal = (int) CSMath.blend(0, 15, temperature, ConfigSettings.MIN_TEMP.get(), ConfigSettings.MAX_TEMP.get());
             Direction facing = this.getBlockState().getValue(ThermolithBlock.FACING);
 
