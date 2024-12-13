@@ -48,13 +48,8 @@ public class ModRegistriesEventJS extends StartupEventJS
 
     public void addBlockTemperature(double temperature, String units, Consumer<BlockTempBuilderJS> builder)
     {
-        double convertedTemp = Temperature.convert(temperature, Temperature.Units.fromID(units), Temperature.Units.MC, false);
-        addBlockTemperature(builder, (level, entity, state, pos, distance) -> convertedTemp);
-    }
-
-    public void addBlockTemperature(double temperature, Consumer<BlockTempBuilderJS> builder)
-    {
-        addBlockTemperature(temperature, "mc", builder);
+        builder = ((Consumer<BlockTempBuilderJS>) blockTemp -> blockTemp.units(Temperature.Units.fromID(units))).andThen(builder);
+        addBlockTemperature(builder, (level, entity, state, pos, distance) -> temperature);
     }
 
     /*
