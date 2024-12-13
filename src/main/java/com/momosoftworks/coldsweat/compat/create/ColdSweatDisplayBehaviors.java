@@ -2,6 +2,7 @@ package com.momosoftworks.coldsweat.compat.create;
 
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.common.blockentity.ThermolithBlockEntity;
+import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import com.simibubi.create.content.redstone.displayLink.DisplayBehaviour;
 import com.simibubi.create.content.redstone.displayLink.DisplayLinkContext;
 import com.simibubi.create.content.redstone.displayLink.source.SingleLineDisplaySource;
@@ -24,7 +25,7 @@ public class ColdSweatDisplayBehaviors
         {
             if (displayLinkContext.getSourceBlockEntity() instanceof ThermolithBlockEntity thermolith)
             {
-                double temperature = Temperature.getTemperatureAt(thermolith.getBlockPos(), thermolith.getLevel());
+                double temperature = WorldHelper.getTemperatureAt(thermolith.getLevel(), thermolith.getBlockPos());
 
                 Temperature.Units units = Temperature.Units.values()[displayLinkContext.sourceConfig().getInt("Units")];
 
