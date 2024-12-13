@@ -48,11 +48,13 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
+import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.phys.Vec2;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.EntityEvent;
+import net.neoforged.neoforge.event.entity.ProjectileImpactEvent;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
@@ -262,6 +264,17 @@ public class Chameleon extends Animal
             if (chameleon.getVehicle() != null && chameleon.getVehicle() == event.getSource().getEntity())
             {   event.setCanceled(true);
             }
+        }
+    }
+
+    @SubscribeEvent
+    public static void cancelProjectileHit(ProjectileImpactEvent event)
+    {
+        if (!(event.getRayTraceResult() instanceof EntityHitResult hitResult)) return;
+        if (hitResult.getEntity() instanceof Chameleon chameleon && chameleon.getVehicle() instanceof Player)
+        {
+            event.setCanceled(true);
+            chameleon.setHurtTimestamp(chameleon.tickCount - 20);
         }
     }
 
