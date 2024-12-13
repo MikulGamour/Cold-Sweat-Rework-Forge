@@ -11,9 +11,8 @@ import com.momosoftworks.coldsweat.common.capability.temperature.PlayerTempCap;
 import com.momosoftworks.coldsweat.core.network.ColdSweatPacketHandler;
 import com.momosoftworks.coldsweat.core.network.message.SyncTempModifiersMessage;
 import com.momosoftworks.coldsweat.core.network.message.SyncTemperatureMessage;
-import com.momosoftworks.coldsweat.util.entity.DummyPlayer;
 import com.momosoftworks.coldsweat.util.math.CSMath;
-import com.momosoftworks.coldsweat.util.math.InterruptableStreamer;
+import com.momosoftworks.coldsweat.util.math.InterruptibleIterator;
 import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.StringRepresentable;
@@ -135,12 +134,12 @@ public class Temperature
     {   return apply(temp, entity, trait, modifiers.toArray(new TempModifier[0]));
     }
 
+    /**
+     * Deprecated. Moved to {@link WorldHelper}
+     */
+    @Deprecated(since = "2.3.10", forRemoval = true)
     public static double getTemperatureAt(BlockPos pos, Level level)
-    {
-        DummyPlayer dummy = WorldHelper.getDummyPlayer(level);
-        // Move the dummy to the position being tested
-        dummy.setPos(CSMath.getCenterPos(pos));
-        return apply(0, dummy, Trait.WORLD, getModifiers(dummy, Trait.WORLD));
+    {   return WorldHelper.getTemperatureAt(level, pos);
     }
 
     /**
@@ -368,7 +367,7 @@ public class Temperature
         });
     }
 
-    public static void forEachModifier(LivingEntity entity, Trait trait, BiConsumer<TempModifier, InterruptableStreamer<TempModifier>> action)
+    public static void forEachModifier(LivingEntity entity, Trait trait, BiConsumer<TempModifier, InterruptibleIterator<TempModifier>> action)
     {
         EntityTempManager.getTemperatureCap(entity).ifPresent(cap ->
         {

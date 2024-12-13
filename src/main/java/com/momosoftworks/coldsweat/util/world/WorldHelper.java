@@ -4,13 +4,17 @@ import com.mojang.datafixers.util.Pair;
 import com.momosoftworks.coldsweat.api.event.core.init.GatherDefaultTempModifiersEvent;
 import com.momosoftworks.coldsweat.api.registry.BlockTempRegistry;
 import com.momosoftworks.coldsweat.api.temperature.block_temp.BlockTemp;
+import com.momosoftworks.coldsweat.api.temperature.modifier.BiomeTempModifier;
+import com.momosoftworks.coldsweat.api.temperature.modifier.BlockTempModifier;
 import com.momosoftworks.coldsweat.api.temperature.modifier.TempModifier;
+import com.momosoftworks.coldsweat.api.temperature.modifier.UndergroundTempModifier;
 import com.momosoftworks.coldsweat.api.util.Placement;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.common.block.SmokestackBlock;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.data.codec.configuration.BiomeTempData;
 import com.momosoftworks.coldsweat.util.entity.DummyPlayer;
+import com.momosoftworks.coldsweat.util.math.FastMap;
 import com.momosoftworks.coldsweat.util.serialization.DynamicHolder;
 import com.momosoftworks.coldsweat.core.network.ColdSweatPacketHandler;
 import com.momosoftworks.coldsweat.core.network.message.BlockDataUpdateMessage;
@@ -20,10 +24,10 @@ import com.momosoftworks.coldsweat.core.network.message.SyncForgeDataMessage;
 import com.momosoftworks.coldsweat.util.ClientOnlyHelper;
 import com.momosoftworks.coldsweat.compat.CompatManager;
 import com.momosoftworks.coldsweat.util.math.CSMath;
-import com.momosoftworks.coldsweat.util.registries.ModBlocks;
 import it.unimi.dsi.fastutil.longs.LongSet;
 import net.minecraft.core.*;
 import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -35,13 +39,11 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
-import net.minecraft.world.level.StructureFeatureManager;
+import net.minecraft.world.level.*;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.CampfireBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -64,12 +66,12 @@ import net.minecraftforge.server.ServerLifecycleHooks;
 import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.util.*;
-import java.util.function.BiConsumer;
-import java.util.function.Predicate;
+import java.util.function.*;
 
 public abstract class WorldHelper
 {
     static Map<ResourceLocation, DummyPlayer> DUMMIES = new HashMap<>();
+    static Map<ResourceKey<Level>, List<TempSnapshot>> TEMPERATURE_CHECKS = new FastMap<>();
 
     public static int getHeight(BlockPos pos, Level level)
     {
@@ -612,32 +614,47 @@ public abstract class WorldHelper
         return CSMath.blend(temps.getFirst(), temps.getSecond(), Math.sin(level.dayTime() / (12000 / Math.PI)), -1, 1);
     }
 
-    /**
-     * Gets the temperature of the biome at the specified position; including biome temperature, time of day, and the altitude of the given BlockPos.
-     * @return The temperature of the biome at the specified position
-     */
-    public static double getBiomeTemperatureAt(LevelAccessor level, Holder<Biome> biome, BlockPos pos)
-    {
-        Pair<Double, Double> temps = getBiomeTemperatureRange(level, biome);
-        double min = temps.getFirst();
-        double max = temps.getSecond();
-        double mid = (min + max) / 2;
-        return CSMath.blend(min, max, Math.sin(level.dayTime() / (12000 / Math.PI)), -1, 1)
-             + CSMath.blend(0, Math.min(-0.6, (min - mid) * 2), pos.getY(), level.getSeaLevel(), level.getMaxBuildHeight());
-    }
 
     /**
-     * Gets the temperature of the world at the specified position, including non-biome temperature sources.<br>
-     * Does not include block temperature!
-     * @return The temperature at the specified position
+     * Returns a cached temperature value
      */
-    public static double getWorldTemperatureAt(LevelAccessor level, BlockPos pos)
+    public static double getRoughTemperatureAt(Level level, BlockPos pos)
     {
-        ChunkAccess chunk = getChunk(level, pos);
-        if (chunk == null) return 0;
-        Holder<Biome> biome = chunk.getNoiseBiome(pos.getX(), pos.getY(), pos.getZ());
-        // Get biome temperature
-        return getBiomeTemperatureAt(level, biome, pos);
+        List<TempSnapshot> snapshots = TEMPERATURE_CHECKS.computeIfAbsent(level.dimension(), dim -> new ArrayList<>());
+        int tickSpeedMultiplier = Math.max(1, level.getGameRules().getInt(GameRules.RULE_RANDOMTICKING) / 20);
+
+        for (int i = 0; i < snapshots.size(); i++)
+        {
+            TempSnapshot snapshot = snapshots.get(i);
+            if (level == snapshot.level() && CSMath.withinCubeDistance(pos, snapshot.pos(), 10))
+            {
+                if (level.getGameTime() - snapshot.timestamp < 200 / tickSpeedMultiplier)
+                {   return snapshot.temperature();
+                }
+                else
+                {   snapshots.remove(i);
+                    i--;
+                }
+            }
+        }
+        DummyPlayer dummy = getDummyPlayer(level);
+        // Move the dummy to the position being tested
+        dummy.setPos(CSMath.getCenterPos(pos));
+
+        List<TempModifier> modifiers = new ArrayList<>(Temperature.getModifiers(dummy, Temperature.Trait.WORLD));
+        for (int i = 0; i < modifiers.size(); i++)
+        {
+            TempModifier modifier = modifiers.get(i);
+            if (modifier instanceof BlockTempModifier) modifiers.set(i, new BlockTempModifier(3));
+            else if (modifier instanceof BiomeTempModifier) modifiers.set(i, new BiomeTempModifier(9));
+            else if (modifier instanceof UndergroundTempModifier) modifiers.set(i, new UndergroundTempModifier(9));
+        }
+
+        double tempAt = Temperature.apply(0, dummy, Temperature.Trait.WORLD, modifiers);
+
+        snapshots.add(new TempSnapshot(level, pos, level.getGameTime(), tempAt));
+
+        return tempAt;
     }
 
     /**
@@ -651,6 +668,14 @@ public abstract class WorldHelper
         {   temp += blockTemp.getTemperature(level, null, block, BlockPos.ZERO, 0);
         }
         return temp;
+    }
+
+    public static double getTemperatureAt(Level level, BlockPos pos)
+    {
+        DummyPlayer dummy = getDummyPlayer(level);
+        // Move the dummy to the position being tested
+        dummy.setPos(CSMath.getCenterPos(pos));
+        return Temperature.apply(0, dummy, Temperature.Trait.WORLD, Temperature.getModifiers(dummy, Temperature.Trait.WORLD));
     }
 
     public static DummyPlayer getDummyPlayer(Level level)
@@ -678,9 +703,71 @@ public abstract class WorldHelper
         BlockPos.MutableBlockPos pos2 = pos.mutable();
         for (int i = 0; i < Direction.values().length; i++)
         {
-            BlockPos offset = pos2.set(pos).move(Direction.values()[i]);
+            BlockPos offset = pos2.setWithOffset(pos, Direction.values()[i]);
             if (!predicate.test(offset)) return false;
         }
         return true;
     }
+
+    public static boolean shouldFreeze(LevelAccessor levelReader, BlockPos pos, boolean mustBeAtEdge)
+    {
+        if (pos.getY() >= levelReader.getMinBuildHeight() && pos.getY() < levelReader.getMaxBuildHeight()
+        && levelReader instanceof ServerLevel serverLevel)
+        {
+            if (surroundedByIce(levelReader, pos))
+            {   return true;
+            }
+            DynamicHolder<Boolean> freezingTemp = DynamicHolder.create(() -> getRoughTemperatureAt(serverLevel, pos) < 0.15F);
+
+            if (!mustBeAtEdge)
+            {   return freezingTemp.get();
+            }
+
+            boolean surroundedByWater = levelReader.isWaterAt(pos.north())
+                                     && levelReader.isWaterAt(pos.south())
+                                     && levelReader.isWaterAt(pos.east())
+                                     && levelReader.isWaterAt(pos.west());
+
+            return !surroundedByWater && freezingTemp.get();
+        }
+        return false;
+    }
+
+    public static boolean shouldMelt(LevelAccessor levelReader, BlockPos pos, boolean mustBeAtEdge)
+    {
+        if (pos.getY() >= levelReader.getMinBuildHeight() && pos.getY() < levelReader.getMaxBuildHeight()
+        && levelReader instanceof ServerLevel serverLevel)
+        {
+            if (mustBeAtEdge && surroundedByIce(levelReader, pos))
+            {   return false;
+            }
+            return getRoughTemperatureAt(serverLevel, pos) >= 0.15F;
+        }
+        return false;
+    }
+
+    public static boolean surroundedByIce(LevelAccessor level, BlockPos pos)
+    {
+        return level.getBlockState(pos.north()).is(Blocks.ICE)
+            && level.getBlockState(pos.south()).is(Blocks.ICE)
+            && level.getBlockState(pos.east()).is(Blocks.ICE)
+            && level.getBlockState(pos.west()).is(Blocks.ICE);
+    }
+
+    public static boolean nextToSoulFire(LevelAccessor level, BlockPos pos)
+    {
+        BlockPos.MutableBlockPos pos2 = pos.mutable();
+        for (int x = -1; x < 1; x++)
+        for (int y = -1; y < 1; y++)
+        for (int z = -1; z < 1; z++)
+        {
+            BlockState state = level.getBlockState(pos2.setWithOffset(pos, x, y, z));
+            if (state.is(Blocks.SOUL_FIRE) || state.is(Blocks.SOUL_CAMPFIRE) && state.getValue(CampfireBlock.LIT))
+            {   return true;
+            }
+        }
+        return false;
+    }
+
+    public record TempSnapshot(Level level, BlockPos pos, long timestamp, double temperature) {}
 }

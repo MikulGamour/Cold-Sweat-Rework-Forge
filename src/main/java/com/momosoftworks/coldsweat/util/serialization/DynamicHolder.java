@@ -44,16 +44,16 @@ public class DynamicHolder<T>
     public static <T> DynamicHolder<T> createWithRegistries(Supplier<T> valueCreator, Loader<T> loader)
     {
         DynamicHolder<T> holder = new DynamicHolder<>(valueCreator, loader);
-        holder.value = valueCreator.get();
         holder.requireRegistries = true;
         return holder;
     }
 
     public static <T> DynamicHolder<T> create(Supplier<T> valueCreator, Consumer<DynamicHolder<T>> loader)
-    {
-        DynamicHolder<T> holder = new DynamicHolder<>(valueCreator, loader);
-        holder.value = valueCreator.get();
-        return holder;
+    {   return new DynamicHolder<>(valueCreator, loader);
+    }
+
+    public static <T> DynamicHolder<T> create(Supplier<T> valueCreator)
+    {   return new DynamicHolder<>(valueCreator, holder -> {});
     }
 
     /**
@@ -71,7 +71,6 @@ public class DynamicHolder<T>
         {   throw new IllegalArgumentException("SyncType cannot be NONE for a synced DynamicHolder.");
         }
         DynamicHolder<T> holder = new DynamicHolder<>(valueCreator, loader);
-        holder.value = valueCreator.get();
         holder.encoder = encoder;
         holder.decoder = decoder;
         holder.saver = saver;
@@ -86,7 +85,6 @@ public class DynamicHolder<T>
         {   throw new IllegalArgumentException("SyncType cannot be NONE for a synced DynamicHolder.");
         }
         DynamicHolder<T> holder = new DynamicHolder<>(valueCreator, loader);
-        holder.value = valueCreator.get();
         holder.encoder = (val, registryAccess) -> encoder.apply(val);
         holder.decoder = (tag, registryAccess) -> decoder.apply(tag);
         holder.saver = (val, registryAccess) -> saver.accept(val);

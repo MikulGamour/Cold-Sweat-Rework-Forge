@@ -450,8 +450,8 @@ public class CSMath
     {   return getDirectionFrom(to.getX() - from.getX(), to.getY() - from.getY(), to.getZ() - from.getZ());
     }
 
-    public static <T> void breakableForEach(Collection<T> collection, BiConsumer<T, InterruptableStreamer<T>> consumer)
-    {   new InterruptableStreamer<T>(collection).run(consumer);
+    public static <T> void breakableForEach(Collection<T> collection, BiConsumer<T, InterruptibleIterator<T>> consumer)
+    {   new InterruptibleIterator<T>(collection).run(consumer);
     }
 
     /**

@@ -1,10 +1,10 @@
 package com.momosoftworks.coldsweat.common.blockentity;
 
-import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.common.block.ThermolithBlock;
 import com.momosoftworks.coldsweat.core.init.BlockEntityInit;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.util.math.CSMath;
+import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
@@ -33,7 +33,7 @@ public class ThermolithBlockEntity extends BlockEntity
         if (level.getGameTime() % 20 == 0 && !level.isClientSide)
         {
             // Handle signal output / neighbor updates
-            double temperature = Temperature.getTemperatureAt(pos, level);
+            double temperature = WorldHelper.getRoughTemperatureAt(level, pos);
             int newSignal = (int) CSMath.blend(0, 15, temperature, ConfigSettings.MIN_TEMP.get(), ConfigSettings.MAX_TEMP.get());
             Direction facing = this.getBlockState().getValue(ThermolithBlock.FACING);
 

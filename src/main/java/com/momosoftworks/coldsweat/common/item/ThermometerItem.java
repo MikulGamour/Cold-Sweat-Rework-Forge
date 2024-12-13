@@ -3,6 +3,7 @@ package com.momosoftworks.coldsweat.common.item;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.common.capability.handler.EntityTempManager;
 import com.momosoftworks.coldsweat.compat.CompatManager;
+import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextComponent;
 import net.minecraft.world.InteractionHand;
@@ -25,7 +26,7 @@ public class ThermometerItem extends Item
         {
             // Get the temperature, in the player's preferred units
             Temperature.Units units = EntityTempManager.getTemperatureCap(player).map(cap -> cap.getPreferredUnits()).orElse(Temperature.Units.F);
-            int temperature = (int) Temperature.convert(Temperature.getTemperatureAt(player.blockPosition(), player.level), Temperature.Units.MC, units, true);
+            int temperature = (int) Temperature.convert(WorldHelper.getTemperatureAt(player.level, player.blockPosition()), Temperature.Units.MC, units, true);
             // Display the temperature to the player
             player.displayClientMessage(new TextComponent(temperature + " " + units.getFormattedName()), true);
             player.swing(hand, true);

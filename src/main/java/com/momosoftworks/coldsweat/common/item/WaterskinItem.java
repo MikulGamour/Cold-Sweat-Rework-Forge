@@ -1,6 +1,5 @@
 package com.momosoftworks.coldsweat.common.item;
 
-import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.core.itemgroup.ColdSweatGroup;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.compat.CompatManager;
@@ -97,7 +96,7 @@ public class WaterskinItem extends Item
         filledWaterskin.setTag(stack.getTag());
         // Set temperature based on temperature of the biome
         filledWaterskin.getOrCreateTag().putDouble(FilledWaterskinItem.NBT_TEMPERATURE,
-                                                   CSMath.clamp((Temperature.getTemperatureAt(pos, level)
+                                                   CSMath.clamp((WorldHelper.getTemperatureAt(level, pos)
                                                            - (CSMath.average(ConfigSettings.MAX_TEMP.get(), ConfigSettings.MIN_TEMP.get()))) * 15, -50, 50));
         // Set purity of water based on water source, if Thirst Was Taken is loaded
         if (CompatManager.isThirstLoaded())
