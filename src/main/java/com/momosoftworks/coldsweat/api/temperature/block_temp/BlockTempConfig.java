@@ -24,7 +24,14 @@ public abstract class BlockTempConfig extends BlockTemp
 
     @Override
     public boolean isValid(Level level, BlockPos pos, BlockState state)
-    {   return predicates.stream().allMatch(predicate -> predicate.test(level, pos));
+    {
+        for (int i = 0; i < this.predicates.size(); i++)
+        {
+            if (!this.predicates.get(i).test(level, pos, state))
+            {   return false;
+            }
+        }
+        return true;
     }
 
     public boolean comparePredicates(BlockTempConfig other)

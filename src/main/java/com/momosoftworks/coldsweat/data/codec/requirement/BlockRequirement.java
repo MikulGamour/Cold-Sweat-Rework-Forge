@@ -44,38 +44,45 @@ public record BlockRequirement(Optional<List<Either<TagKey<Block>, Block>>> bloc
             Codec.BOOL.optionalFieldOf("negate", false).forGetter(predicate -> predicate.negate)
     ).apply(instance, BlockRequirement::new));
 
-    public boolean test(Level pLevel, BlockPos pPos)
+    public boolean test(Level level, BlockPos pos, BlockState state)
     {
-        if (!pLevel.isLoaded(pPos))
+        if (!level.isLoaded(pos))
         {   return false;
         }
         else
         {
-            BlockState blockstate = pLevel.getBlockState(pPos);
-            if (this.blocks.isPresent() && this.blocks.get().stream().noneMatch(either -> either.map(blockstate::is, blockstate::is)))
+            if (this.blocks.isPresent() && this.blocks.get().stream().noneMatch(either -> either.map(state::is, state::is)))
             {   return false ^ this.negate;
             }
-            else if (this.state.isPresent() && !this.state.get().test(blockstate))
+            else if (this.state.isPresent() && !this.state.get().test(state))
             {   return false ^ this.negate;
             }
             else if (this.nbt.isPresent())
             {
-                BlockEntity blockentity = pLevel.getBlockEntity(pPos);
+                BlockEntity blockentity = level.getBlockEntity(pos);
                 return (blockentity != null && this.nbt.get().test(blockentity.saveWithFullMetadata())) ^ this.negate;
             }
             else if (this.sturdyFace.isPresent())
-            {   return blockstate.isFaceSturdy(pLevel, pPos, this.sturdyFace.get()) ^ this.negate;
+            {   return state.isFaceSturdy(level, pos, this.sturdyFace.get()) ^ this.negate;
             }
             else if (this.withinWorldBounds.isPresent())
-            {   return pLevel.getWorldBorder().isWithinBounds(pPos) ^ this.negate;
+            {   return level.getWorldBorder().isWithinBounds(pos) ^ this.negate;
             }
             else if (this.replaceable.isPresent())
-            {   return blockstate.isAir() || blockstate.canBeReplaced(new DirectionalPlaceContext(pLevel, pPos, Direction.DOWN, ItemStack.EMPTY, Direction.UP)) ^ this.negate;
+            {   return state.isAir() || state.canBeReplaced(new DirectionalPlaceContext(level, pos, Direction.DOWN, ItemStack.EMPTY, Direction.UP)) ^ this.negate;
             }
             else
             {   return true ^ this.negate;
             }
         }
+    }
+
+    public boolean test(Level level, BlockPos pos)
+    {
+        if (!level.isLoaded(pos))
+        {   return false;
+        }
+        return this.test(level, pos, level.getBlockState(pos));
     }
 
     @Override
