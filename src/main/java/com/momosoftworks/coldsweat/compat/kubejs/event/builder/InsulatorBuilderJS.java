@@ -1,8 +1,11 @@
 package com.momosoftworks.coldsweat.compat.kubejs.event.builder;
 
+import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.api.insulation.AdaptiveInsulation;
 import com.momosoftworks.coldsweat.api.insulation.Insulation;
 import com.momosoftworks.coldsweat.api.insulation.StaticInsulation;
+import com.momosoftworks.coldsweat.api.registry.TempModifierRegistry;
+import com.momosoftworks.coldsweat.compat.kubejs.util.KubeHelper;
 import com.momosoftworks.coldsweat.data.codec.configuration.InsulatorData;
 import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
@@ -10,13 +13,15 @@ import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
 import com.momosoftworks.coldsweat.data.codec.util.AttributeModifierMap;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
+import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
+import com.momosoftworks.coldsweat.util.serialization.RegistryHelper;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -36,13 +41,7 @@ public class InsulatorBuilderJS
 
     public InsulatorBuilderJS items(String... items)
     {
-        this.items.addAll(Arrays.stream(items).map(key -> BuiltInRegistries.ITEM.get(ResourceLocation.parse(key))).toList());
-        return this;
-    }
-
-    public InsulatorBuilderJS itemTag(String tag)
-    {
-        items.addAll(BuiltInRegistries.ITEM.getTag(TagKey.create(Registries.ITEM, ResourceLocation.parse(tag))).orElseThrow().stream().map(Holder::value).toList());
+        this.items.addAll(RegistryHelper.mapBuiltinRegistryTagList(BuiltInRegistries.ITEM, ConfigHelper.getItems(items)));
         return this;
     }
 
@@ -76,15 +75,24 @@ public class InsulatorBuilderJS
         return this;
     }
 
-    public InsulatorBuilderJS attribute(String attribute, double amount, String operation)
+    public InsulatorBuilderJS attribute(String attributeId, double amount, String operation)
     {
-        attributes.put(BuiltInRegistries.ATTRIBUTE.get(ResourceLocation.parse(attribute)),
-                       new AttributeModifier(ResourceLocation.fromNamespaceAndPath("kubejs", "script"), amount, AttributeModifier.Operation.valueOf(operation.toUpperCase(Locale.ROOT))));
+        Holder<Attribute> attribute = BuiltInRegistries.ATTRIBUTE.getHolder(ResourceLocation.parse(attributeId)).orElse(null);
+        if (!KubeHelper.expect(attributeId, attribute, Holder.class))
+        {   return this;
+        }
+        attributes.put(attribute, new AttributeModifier(ResourceLocation.fromNamespaceAndPath(ColdSweat.MOD_ID, "kubejs"), amount, AttributeModifier.Operation.valueOf(operation.toUpperCase(Locale.ROOT))));
         return this;
     }
 
     public InsulatorBuilderJS immuneToModifier(String modifierId, double immunity)
     {
+        ResourceLocation location = ResourceLocation.parse(modifierId);
+        if (!TempModifierRegistry.getEntries().containsKey(location))
+        {
+            ColdSweat.LOGGER.warn("Tried to add immunity to non-existent temperature modifier: {}", location);
+            return this;
+        }
         immuneTempModifiers.put(ResourceLocation.parse(modifierId), immunity);
         return this;
     }
