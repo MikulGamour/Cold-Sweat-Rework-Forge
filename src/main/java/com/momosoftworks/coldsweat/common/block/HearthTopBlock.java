@@ -56,21 +56,8 @@ public class HearthTopBlock extends SmokestackBlock
     public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block, BlockPos fromPos, boolean isMoving)
     {   super.neighborChanged(state, level, pos, block, fromPos, isMoving);
         if (level.getBlockState(pos.below()).getBlock() != ModBlocks.HEARTH_BOTTOM)
-        {   this.destroy(level, pos, state);
+        {   level.destroyBlock(pos, false);
         }
-    }
-
-    @SuppressWarnings("deprecation")
-    @Override
-    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving)
-    {
-        if (state.getBlock() != newState.getBlock())
-        {
-            if (level.getBlockState(pos.below()).getBlock() == ModBlocks.HEARTH_BOTTOM)
-            {   level.destroyBlock(pos.below(), false);
-            }
-        }
-        super.onRemove(state, level, pos, newState, isMoving);
     }
 
     @Override

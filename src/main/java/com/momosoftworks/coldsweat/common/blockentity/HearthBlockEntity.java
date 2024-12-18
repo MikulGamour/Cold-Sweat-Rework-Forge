@@ -75,6 +75,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.MinecraftForge;
@@ -286,7 +287,8 @@ public class HearthBlockEntity extends RandomizableContainerBlockEntity implemen
             players.clear();
             for (Player player : this.level.players())
             {
-                if (player.blockPosition().closerThan(pos, this.getMaxRange()))
+                Vec3 playerPos = CompatManager.Valkyrien.transformIfShipPos(level, player.position());
+                if (playerPos.closerThan(CSMath.getCenterPos(pos), this.getMaxRange()))
                 {   players.add(player);
                     this.isPlayerNearby = true;
                 }
@@ -374,7 +376,8 @@ public class HearthBlockEntity extends RandomizableContainerBlockEntity implemen
                     {
                         Player player = players.get(i);
                         if (player == null) continue;
-                        if (WorldHelper.allAdjacentBlocksMatch(new BlockPos(player.getEyePosition()), bpos -> pathLookup.contains(bpos)))
+                        Vec3 playerEyePos = CompatManager.Valkyrien.transformIfShipPos(level, player.getEyePosition());
+                        if (WorldHelper.allAdjacentBlocksMatch(new BlockPos(playerEyePos), bpos -> pathLookup.contains(bpos)))
                         {   this.insulatePlayer(player);
                         }
                     }
