@@ -10,7 +10,7 @@ public class IntegerBounds
 {
     public int min;
     public int max;
-    
+
     public IntegerBounds(Integer min, Integer max)
     {   this.min = min;
         this.max = max;
@@ -24,6 +24,10 @@ public class IntegerBounds
 
     public boolean test(int value)
     {   return value >= min && value <= max;
+    }
+
+    public boolean contains(IntegerBounds bounds)
+    {   return bounds.min >= min && bounds.max <= max;
     }
 
     public CompoundNBT serialize()

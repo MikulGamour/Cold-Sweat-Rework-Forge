@@ -381,6 +381,10 @@ public class Temperature
         });
     }
 
+    public static double getNeutralWorldTemp(LivingEntity entity)
+    {   return (get(entity, Trait.BURNING_POINT) + get(entity, Trait.FREEZING_POINT)) / 2;
+    }
+
     public static void updateTemperature(LivingEntity entity, ITemperatureCap cap, boolean instant)
     {
         if (!entity.level.isClientSide)

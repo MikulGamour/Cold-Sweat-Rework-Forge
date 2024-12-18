@@ -10,38 +10,39 @@ import com.momosoftworks.coldsweat.data.codec.impl.RequirementHolder;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
 import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
 import com.momosoftworks.coldsweat.data.codec.requirement.NbtRequirement;
+import com.momosoftworks.coldsweat.data.codec.util.AttributeModifierMap;
 import com.momosoftworks.coldsweat.data.codec.util.IntegerBounds;
 import com.momosoftworks.coldsweat.util.math.CSMath;
+import com.momosoftworks.coldsweat.util.math.FastMap;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
-import com.momosoftworks.coldsweat.data.codec.util.ExtraCodecs;
 import com.momosoftworks.coldsweat.util.serialization.NBTHelper;
-import com.momosoftworks.coldsweat.util.serialization.NbtSerializable;
+import com.momosoftworks.coldsweat.util.serialization.StringRepresentable;
 import net.minecraft.entity.Entity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.NBTDynamicOps;
 import net.minecraft.tags.ITag;
+import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class ItemCarryTempData extends ConfigData implements RequirementHolder
 {
     final ItemRequirement data;
-    final List<Either<IntegerBounds, EquipmentSlotType>> slots;
+    final List<Either<IntegerBounds, SlotType>> slots;
     final double temperature;
     final Temperature.Trait trait;
     final Double maxEffect;
     final EntityRequirement entityRequirement;
+    final AttributeModifierMap attributeModifiers;
+    final Map<ResourceLocation, Double> immuneTempModifiers;
 
-    public ItemCarryTempData(ItemRequirement data, List<Either<IntegerBounds, EquipmentSlotType>> slots, double temperature,
-                             Temperature.Trait trait, Double maxEffect, EntityRequirement entityRequirement,
-                             List<String> requiredMods)
+    public ItemCarryTempData(ItemRequirement data, List<Either<IntegerBounds, SlotType>> slots, double temperature,
+                             Temperature.Trait trait, Double maxEffect, EntityRequirement entityRequirement, AttributeModifierMap attributeModifiers,
+                             Map<ResourceLocation, Double> immuneTempModifiers, List<String> requiredMods)
     {
         super(requiredMods);
         this.data = data;
@@ -50,28 +51,34 @@ public class ItemCarryTempData extends ConfigData implements RequirementHolder
         this.trait = trait;
         this.maxEffect = maxEffect;
         this.entityRequirement = entityRequirement;
+        this.attributeModifiers = attributeModifiers;
+        this.immuneTempModifiers = immuneTempModifiers;
     }
 
-    public ItemCarryTempData(ItemRequirement data, List<Either<IntegerBounds, EquipmentSlotType>> slots, double temperature,
-                             Temperature.Trait trait, Double maxEffect, EntityRequirement entityRequirement)
-    {   this(data, slots, temperature, trait, maxEffect, entityRequirement, ConfigHelper.getModIDs(CSMath.listOrEmpty(data.items()), ForgeRegistries.ITEMS));
+    public ItemCarryTempData(ItemRequirement data, List<Either<IntegerBounds, SlotType>> slots, double temperature,
+                             Temperature.Trait trait, Double maxEffect, EntityRequirement entityRequirement, AttributeModifierMap attributeModifiers,
+                             Map<ResourceLocation, Double> immuneTempModifiers)
+    {
+        this(data, slots, temperature, trait, maxEffect, entityRequirement, attributeModifiers, immuneTempModifiers, ConfigHelper.getModIDs(CSMath.listOrEmpty(data.items()), ForgeRegistries.ITEMS));
     }
 
     public static final Codec<ItemCarryTempData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             ItemRequirement.CODEC.fieldOf("data").forGetter(data -> data.data),
-            Codec.either(IntegerBounds.CODEC, ExtraCodecs.EQUIPMENT_SLOT)
+            Codec.either(IntegerBounds.CODEC, SlotType.CODEC)
                  .listOf().fieldOf("slots").forGetter(data -> data.slots),
             Codec.DOUBLE.fieldOf("temperature").forGetter(data -> data.temperature),
             Temperature.Trait.CODEC.optionalFieldOf("trait", Temperature.Trait.WORLD).forGetter(data -> data.trait),
             Codec.DOUBLE.optionalFieldOf("max_effect", java.lang.Double.MAX_VALUE).forGetter(data -> data.maxEffect),
             EntityRequirement.getCodec().optionalFieldOf("entity", EntityRequirement.NONE).forGetter(data -> data.entityRequirement),
+            AttributeModifierMap.CODEC.optionalFieldOf("attributes", new AttributeModifierMap()).forGetter(ItemCarryTempData::attributeModifiers),
+            Codec.unboundedMap(ResourceLocation.CODEC, Codec.DOUBLE).optionalFieldOf("immune_temp_modifiers", new HashMap<>()).forGetter(ItemCarryTempData::immuneTempModifiers),
             Codec.STRING.listOf().optionalFieldOf("required_mods", Arrays.asList()).forGetter(ItemCarryTempData::requiredMods)
     ).apply(instance, ItemCarryTempData::new));
 
     public ItemRequirement data()
     {   return data;
     }
-    public List<Either<IntegerBounds, EquipmentSlotType>> slots()
+    public List<Either<IntegerBounds, SlotType>> slots()
     {   return slots;
     }
     public double temperature()
@@ -86,6 +93,12 @@ public class ItemCarryTempData extends ConfigData implements RequirementHolder
     public EntityRequirement entityRequirement()
     {   return entityRequirement;
     }
+    public AttributeModifierMap attributeModifiers()
+    {   return attributeModifiers;
+    }
+    public Map<ResourceLocation, Double> immuneTempModifiers()
+    {   return immuneTempModifiers;
+    }
 
     @Override
     public boolean test(Entity entity)
@@ -96,6 +109,19 @@ public class ItemCarryTempData extends ConfigData implements RequirementHolder
     {   return test(stack, slot, equipmentSlot) && test(entity);
     }
 
+    public boolean test(Entity entity, ItemStack stack, SlotType slot)
+    {
+        if (!test(entity) || !data().test(stack, true)) return false;
+        for (int i = 0; i < this.slots().size(); i++)
+        {
+            Optional<SlotType> slotType = this.slots().get(i).right();
+            if (slotType.isPresent() && slotType.get().equals(slot))
+            {   return true;
+            }
+        }
+        return false;
+    }
+
     public boolean test(ItemStack stack, @Nullable Integer slot, @Nullable EquipmentSlotType equipmentSlot)
     {
         if (!data.test(stack, true))
@@ -104,13 +130,20 @@ public class ItemCarryTempData extends ConfigData implements RequirementHolder
         if (slot == null && equipmentSlot == null)
         {   return false;
         }
-        for (Either<IntegerBounds, EquipmentSlotType> either : slots)
+        for (Either<IntegerBounds, SlotType> either : slots)
         {
-            if (slot != null && either.left().isPresent() && either.left().get().test(slot))
-            {   return true;
+            if (either.left().isPresent())
+            {
+                if (slot != null && either.left().get().test(slot))
+                {   return true;
+                }
             }
-            else if (equipmentSlot != null && either.right().isPresent() && either.right().get().equals(equipmentSlot))
-            {   return true;
+            else if (either.right().isPresent())
+            {
+                if (equipmentSlot != null && either.right().get().matches(equipmentSlot)
+                || slot != null && either.right().get().matches(slot))
+                {   return true;
+                }
             }
         }
         return false;
@@ -125,19 +158,16 @@ public class ItemCarryTempData extends ConfigData implements RequirementHolder
         List<Either<ITag<Item>, Item>> items = ConfigHelper.getItems((String) entry.get(0));
 
         if (items.isEmpty())
-        {   ColdSweat.LOGGER.error("Error parsing entity config: {} does not contain any valid entities", entry);
+        {   ColdSweat.LOGGER.error("Error parsing carried item temp config: {} does not contain any valid items", entry);
             return null;
         }
         //temp
         double temp = ((Number) entry.get(1)).doubleValue();
         // slots
-        List<Either<IntegerBounds, EquipmentSlotType>> slots;
-        switch ((String) entry.get(2))
-        {
-            case "inventory" : slots = Arrays.asList(Either.left(IntegerBounds.NONE)); break;
-            case "hotbar"    : slots = Arrays.asList(Either.left(new IntegerBounds(36, 44))); break;
-            case "hand" : slots = Arrays.asList(Either.right(EquipmentSlotType.MAINHAND), Either.right(EquipmentSlotType.OFFHAND)); break;
-            default : slots = Arrays.asList(Either.left(new IntegerBounds(-1, -1))); break;
+        SlotType slotType = SlotType.byName((String) entry.get(2));
+        if (slotType == null)
+        {   ColdSweat.LOGGER.error("Error parsing carried item temp config: \"{}\" is not a valid slot type", entry.get(2));
+            return null;
         }
         // trait
         Temperature.Trait trait = Temperature.Trait.fromID((String) entry.get(3));
@@ -150,28 +180,15 @@ public class ItemCarryTempData extends ConfigData implements RequirementHolder
         // compile item requirement
         ItemRequirement itemRequirement = new ItemRequirement(items, nbtRequirement);
 
-        return new ItemCarryTempData(itemRequirement, slots, temp, trait, maxEffect, EntityRequirement.NONE);
+        return new ItemCarryTempData(itemRequirement, Arrays.asList(Either.right(slotType)), temp, trait, maxEffect, EntityRequirement.NONE, new AttributeModifierMap(), new FastMap<>());
     }
 
     public String getSlotRangeName()
     {
-        String[] strictType = {""};
-        if (this.slots.size() == 1) this.slots.get(0).ifLeft(left ->
-        {
-            if (left.equals(IntegerBounds.NONE))
-            {  strictType[0] = "inventory";
-            }
-            if (left.min == 36 && left.max == 44)
-            {  strictType[0] = "hotbar";
-            }
-        });
-        else if (this.slots.size() == 2
-        && this.slots.get(0).right().map(right -> right == EquipmentSlotType.MAINHAND).orElse(false)
-        && this.slots.get(1).right().map(right -> right == EquipmentSlotType.OFFHAND).orElse(false))
-        {  strictType[0] = "hand";
+        if (slots.size() != 1 || slots.get(0).left().isPresent())
+        {   return "";
         }
-
-        return strictType[0];
+        return slots.get(0).right().get().getSerializedName();
     }
 
     @Override
@@ -193,5 +210,83 @@ public class ItemCarryTempData extends ConfigData implements RequirementHolder
             && trait.equals(that.trait)
             && maxEffect.equals(that.maxEffect)
             && entityRequirement.equals(that.entityRequirement);
+    }
+
+    public enum SlotType implements StringRepresentable
+    {
+        HEAD("head", Arrays.asList(Either.right(EquipmentSlotType.HEAD))),
+        CHEST("chest", Arrays.asList(Either.right(EquipmentSlotType.CHEST))),
+        LEGS("legs", Arrays.asList(Either.right(EquipmentSlotType.LEGS))),
+        FEET("feet", Arrays.asList(Either.right(EquipmentSlotType.FEET))),
+        INVENTORY("inventory", Arrays.asList(Either.left(IntegerBounds.NONE))),
+        HOTBAR("hotbar", Arrays.asList(Either.left(new IntegerBounds(36, 44)))),
+        CURIO("curio", Arrays.asList()),
+        HAND("hand", Arrays.asList(Either.right(EquipmentSlotType.MAINHAND), Either.right(EquipmentSlotType.OFFHAND)));
+
+        public static final Codec<SlotType> CODEC = StringRepresentable.fromEnum(SlotType::values);
+
+        private final String name;
+        private final List<Either<IntegerBounds, EquipmentSlotType>> slots;
+
+        SlotType(String name, List<Either<IntegerBounds, EquipmentSlotType>> slots)
+        {   this.name = name;
+            this.slots = slots;
+        }
+
+        public List<Either<IntegerBounds, EquipmentSlotType>> getSlots()
+        {   return slots;
+        }
+
+        public boolean matches(int slotId)
+        {
+            for (int i = 0; i < slots.size(); i++)
+            {
+                Either<IntegerBounds, EquipmentSlotType> either = slots.get(i);
+                if (either.left().isPresent() && either.left().get().test(slotId))
+                {   return true;
+                }
+            }
+            return false;
+        }
+
+        public boolean matches(EquipmentSlotType slot)
+        {
+            for (int i = 0; i < slots.size(); i++)
+            {
+                Either<IntegerBounds, EquipmentSlotType> either = slots.get(i);
+                if (either.right().isPresent() && either.right().get().equals(slot))
+                {   return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public String getSerializedName()
+        {   return name;
+        }
+
+        public static SlotType byName(String name)
+        {
+            for (SlotType type : values())
+            {
+                if (type.name.equals(name))
+                {   return type;
+                }
+            }
+            return null;
+        }
+
+        public static SlotType fromEquipment(EquipmentSlotType slot)
+        {
+            switch (slot)
+            {
+                case HEAD  : return HEAD;
+                case CHEST : return CHEST;
+                case LEGS  : return LEGS;
+                case FEET  : return FEET;
+                default : return HAND;
+            }
+        }
     }
 }

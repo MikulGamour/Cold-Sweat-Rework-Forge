@@ -281,7 +281,7 @@ public class CompatManager
                 @SubscribeEvent
                 public void onCurioChange(CurioChangeEvent event)
                 {
-                    EntityTempManager.updateInsulationAttributeModifiers(event.getEntityLiving());
+                    EntityTempManager.updateInsulationAttributeModifiers(event.getEntityLiving(), event.getFrom(), event.getTo());
                 }
             });
         }
