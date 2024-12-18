@@ -41,14 +41,14 @@
     }
   },
   "attributes": {
-    "cold_sweat:heat_resistance": [
+    "cold_sweat:heat_dampening": [
       {
         "name": "cold_sweat:diving_suit_bonus",
         "amount": 0.25,
         "operation": "add_value"
       }
     ],
-    "cold_sweat:cold_resistance": [
+    "cold_sweat:cold_dampening": [
       {
         "name": "cold_sweat:diving_suit_bonus",
         "amount": 0.25,
