@@ -174,10 +174,9 @@ public record BlockRequirement(Optional<List<Either<TagKey<Block>, Block>>> bloc
                 {
                     // Parse the desired value for this property
                     property.getValue(value).ifPresent(propertyValue ->
-                                                       {
-                                                           // Add a new predicate to the list
-                                                           blockPredicates.put(key, propertyValue);
-                                                       });
+                    {   // Add a new predicate to the list
+                        blockPredicates.put(key, propertyValue);
+                    });
                 }
             }
             return new StateRequirement(blockPredicates);

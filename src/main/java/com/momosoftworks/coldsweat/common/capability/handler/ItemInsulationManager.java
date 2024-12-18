@@ -156,6 +156,8 @@ public class ItemInsulationManager
 
     public static List<InsulatorData> getInsulatorsForStack(ItemStack stack)
     {
+        if (stack.isEmpty()) return new ArrayList<>();
+
         List<InsulatorData> insulators = new ArrayList<>();
         if (isInsulatable(stack))
         {
