@@ -881,9 +881,15 @@ public class EntityTempManager
 
     public static boolean isTemperatureAttribute(Attribute attribute)
     {
-        return CSMath.containsAny(BuiltInRegistries.ATTRIBUTE.getKey(attribute).toString(),
-                                  Arrays.stream(EntityTempManager.VALID_ATTRIBUTE_TRAITS)
-                                        .map(Temperature.Trait::getSerializedName).toArray(String[]::new));
+        return BuiltInRegistries.ATTRIBUTE.getKey(attribute).getNamespace().equals(ColdSweat.MOD_ID);
+    }
+
+    public static List<AttributeInstance> getAllTemperatureAttributes(LivingEntity entity)
+    {
+        return Arrays.stream(VALID_ATTRIBUTE_TRAITS)
+                     .map(trait -> getAttribute(trait, entity))
+                     .filter(Objects::nonNull)
+                     .toList();
     }
 
     public static List<TempModifier> getAllModifiers(LivingEntity entity)
