@@ -483,10 +483,11 @@ public class WorldSettingsConfig
                                     && list.get(0) instanceof String
                                     && list.get(1) instanceof Number
                                     && list.get(2) instanceof Number
-                                    && (list.size() < 4 || list.get(3) instanceof Number)
-                                    && (list.size() < 5 || list.get(4) instanceof String)
+                                    && (list.size() < 4 || list.get(3) instanceof String)
+                                    && (list.size() < 5 || list.get(4) instanceof Number)
                                     && (list.size() < 6 || list.get(5) instanceof String)
-                                    && (list.size() < 7 || list.get(6) instanceof Number));
+                                    && (list.size() < 7 || list.get(6) instanceof String)
+                                    && (list.size() < 8 || list.get(7) instanceof Number));
 
         MAX_BLOCK_TEMP_RANGE = BUILDER
                 .comment("The maximum range of blocks' area of effect",
