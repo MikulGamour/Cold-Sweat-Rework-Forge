@@ -30,6 +30,7 @@
     "MixinInventoryOpenServer",
     "MixinLivingLoad",
     "MixinLoadItemStack",
+    "MixinMenuChanged",
     "MixinMinecart",
     "MixinPreServerLoad",
     "MixinSoulCampfire",

@@ -2,49 +2,47 @@ package com.momosoftworks.coldsweat.compat.kubejs.event.builder;
 
 import com.google.common.collect.ImmutableList;
 import com.mojang.datafixers.util.Either;
+import com.momosoftworks.coldsweat.ColdSweat;
+import com.momosoftworks.coldsweat.api.registry.TempModifierRegistry;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.data.codec.configuration.ItemCarryTempData;
 import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
 import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
+import com.momosoftworks.coldsweat.data.codec.util.AttributeModifierMap;
 import com.momosoftworks.coldsweat.data.codec.util.IntegerBounds;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
+import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
+import com.momosoftworks.coldsweat.util.serialization.RegistryHelper;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.ai.attributes.Attribute;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 
 public class CarriedItemBuilderJS
 {
     public final Set<Item> items = new HashSet<>();
-    public final Set<Either<IntegerBounds, EquipmentSlot>> slots = new HashSet<>();
+    public final Set<Either<IntegerBounds, ItemCarryTempData.SlotType>> slots = new HashSet<>();
     public double temperature = 0;
     public double maxEffect = 0;
     public Temperature.Trait trait = Temperature.Trait.WORLD;
     public Predicate<ItemStack> itemPredicate = item -> true;
     public Predicate<Entity> entityPredicate = entity -> true;
+    public AttributeModifierMap attributes = new AttributeModifierMap();
+    public Map<ResourceLocation, Double> immuneTempModifiers = new HashMap<>();
 
     public CarriedItemBuilderJS()
     {}
 
     public CarriedItemBuilderJS items(String... items)
     {
-        this.items.addAll(Arrays.stream(items).map(key -> BuiltInRegistries.ITEM.get(ResourceLocation.parse(key))).toList());
-        return this;
-    }
-
-    public CarriedItemBuilderJS itemTag(String tag)
-    {
-        items.addAll(BuiltInRegistries.ITEM.getTag(TagKey.create(Registries.ITEM, ResourceLocation.parse(tag))).orElseThrow().stream().map(Holder::value).toList());
+        this.items.addAll(RegistryHelper.mapBuiltinRegistryTagList(BuiltInRegistries.ITEM, ConfigHelper.getItems(items)));
         return this;
     }
 
@@ -83,7 +81,7 @@ public class CarriedItemBuilderJS
     public CarriedItemBuilderJS equipmentSlots(String... slots)
     {
         for (String slot : slots)
-        {   this.slots.add(Either.right(EquipmentSlot.byName(slot)));
+        {   this.slots.add(Either.right(ItemCarryTempData.SlotType.byName(slot)));
         }
         return this;
     }
@@ -100,10 +98,34 @@ public class CarriedItemBuilderJS
         return this;
     }
 
+    public CarriedItemBuilderJS attribute(String attributeId, double amount, String operation)
+    {
+        Holder<Attribute> attribute = BuiltInRegistries.ATTRIBUTE.getHolder(ResourceLocation.parse(attributeId)).orElse(null);
+        if (!KubeHelper.expect(attributeId, attribute, Holder.class))
+        {   return this;
+        }
+        attributes.put(attribute, new AttributeModifier(ResourceLocation.fromNamespaceAndPath(ColdSweat.MOD_ID, "kubejs"), amount,
+                                                        AttributeModifier.Operation.valueOf(operation.toUpperCase(Locale.ROOT))));
+        return this;
+    }
+
+    public CarriedItemBuilderJS immuneToModifier(String modifierId, double immunity)
+    {
+        ResourceLocation location = ResourceLocation.parse(modifierId);
+        if (!TempModifierRegistry.getEntries().containsKey(location))
+        {
+            ColdSweat.LOGGER.warn("Tried to add immunity to non-existent temperature modifier: {}", location);
+            return this;
+        }
+        immuneTempModifiers.put(ResourceLocation.parse(modifierId), immunity);
+        return this;
+    }
+
     public ItemCarryTempData build()
     {
         ItemCarryTempData data = new ItemCarryTempData(new ItemRequirement(this.itemPredicate), ImmutableList.copyOf(this.slots),
-                                                       this.temperature, this.trait, maxEffect, new EntityRequirement(this.entityPredicate));
+                                                       this.temperature, this.trait, maxEffect, new EntityRequirement(this.entityPredicate),
+                                                       this.attributes, this.immuneTempModifiers);
         data.setType(ConfigData.Type.KUBEJS);
         return data;
     }

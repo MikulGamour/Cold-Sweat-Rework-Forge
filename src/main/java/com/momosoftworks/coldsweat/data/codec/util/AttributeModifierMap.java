@@ -4,6 +4,7 @@ import com.google.common.collect.Multimap;
 import com.mojang.serialization.Codec;
 import com.momosoftworks.coldsweat.util.math.FastMultiMap;
 import com.momosoftworks.coldsweat.util.serialization.NbtSerializable;
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
@@ -16,7 +17,7 @@ import java.util.*;
 
 public class AttributeModifierMap implements NbtSerializable
 {
-    public static final Codec<AttributeModifierMap> CODEC = Codec.unboundedMap(AttributeCodecs.ATTRIBUTE_CODEC, AttributeCodecs.MODIFIER_CODEC.listOf())
+    public static final Codec<AttributeModifierMap> CODEC = Codec.unboundedMap(Attribute.CODEC, AttributeCodecs.MODIFIER_CODEC.listOf())
             .xmap(AttributeModifierMap::new,
                   map -> map.getMap().asMap().entrySet()
                             .stream()
@@ -28,19 +29,19 @@ public class AttributeModifierMap implements NbtSerializable
             (buf, map) ->
             {
                 buf.writeVarInt(map.getMap().size());
-                for (Attribute attribute : map.getMap().keySet())
+                for (Holder<Attribute> attribute : map.getMap().keySet())
                 {
-                    buf.writeResourceLocation(BuiltInRegistries.ATTRIBUTE.getKey(attribute));
+                    buf.writeResourceLocation(attribute.getKey().location());
                     buf.writeCollection(map.get(attribute), AttributeCodecs.MODIFIER_STREAM_CODEC);
                 }
             },
             (buf) ->
             {
-                Multimap<Attribute, AttributeModifier> map = new FastMultiMap<>();
+                Multimap<Holder<Attribute>, AttributeModifier> map = new FastMultiMap<>();
                 int size = buf.readVarInt();
                 for (int i = 0; i < size; i++)
                 {
-                    Attribute attribute = BuiltInRegistries.ATTRIBUTE.get(buf.readResourceLocation());
+                    Holder<Attribute> attribute = BuiltInRegistries.ATTRIBUTE.getHolder(buf.readResourceLocation()).orElseThrow();
                     List<AttributeModifier> list = buf.readCollection(ArrayList::new, AttributeCodecs.MODIFIER_STREAM_CODEC);
                     map.putAll(attribute, list);
                 }
@@ -48,13 +49,13 @@ public class AttributeModifierMap implements NbtSerializable
             }
     );
 
-    private final Multimap<Attribute, AttributeModifier> map = new FastMultiMap<>();
+    private final Multimap<Holder<Attribute>, AttributeModifier> map = new FastMultiMap<>();
 
     public AttributeModifierMap()
     {
     }
 
-    public AttributeModifierMap(Map<Attribute, ?> attributeListMap)
+    public AttributeModifierMap(Map<Holder<Attribute>, ?> attributeListMap)
     {   attributeListMap.forEach((attribute, list) ->
         {   if (list instanceof Collection)
             {   map.putAll(attribute, (Collection<AttributeModifier>) list);
@@ -65,19 +66,19 @@ public class AttributeModifierMap implements NbtSerializable
         });
     }
 
-    public AttributeModifierMap(Multimap<Attribute, AttributeModifier> map)
+    public AttributeModifierMap(Multimap<Holder<Attribute>, AttributeModifier> map)
     {   this.map.putAll(map);
     }
 
-    public void put(Attribute attribute, AttributeModifier modifier)
+    public void put(Holder<Attribute> attribute, AttributeModifier modifier)
     {   map.put(attribute, modifier);
     }
 
-    public Collection<AttributeModifier> get(Attribute attribute)
+    public Collection<AttributeModifier> get(Holder<Attribute> attribute)
     {   return map.get(attribute);
     }
 
-    public Multimap<Attribute, AttributeModifier> getMap()
+    public Multimap<Holder<Attribute>, AttributeModifier> getMap()
     {   return map;
     }
 
@@ -86,13 +87,17 @@ public class AttributeModifierMap implements NbtSerializable
         return this;
     }
 
-    public AttributeModifierMap putAll(Attribute attribute, Collection<AttributeModifier> modifiers)
+    public AttributeModifierMap putAll(Holder<Attribute> attribute, Collection<AttributeModifier> modifiers)
     {   map.putAll(attribute, modifiers);
         return this;
     }
 
     public boolean isEmpty()
     {   return map.isEmpty();
+    }
+
+    public void clear()
+    {   map.clear();
     }
 
     @Override
@@ -113,7 +118,7 @@ public class AttributeModifierMap implements NbtSerializable
         if (obj == null || getClass() != obj.getClass()) return false;
 
         AttributeModifierMap that = (AttributeModifierMap) obj;
-        for (Map.Entry<Attribute, Collection<AttributeModifier>> entry : map.asMap().entrySet())
+        for (Map.Entry<Holder<Attribute>, Collection<AttributeModifier>> entry : map.asMap().entrySet())
         {
             if (!that.map.containsKey(entry.getKey())) return false;
 
