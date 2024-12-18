@@ -125,6 +125,16 @@ public class FastMultiMap<K, V> implements Multimap<K, V>
         return changed;
     }
 
+    public boolean putAll(Collection<Map.Entry<K, V>> entries)
+    {
+        boolean changed = false;
+        for (Map.Entry<K, V> entry : entries)
+        {
+            changed |= put(entry.getKey(), entry.getValue());
+        }
+        return changed;
+    }
+
     @Override
     public Set<V> replaceValues(K key, Iterable<? extends V> values)
     {

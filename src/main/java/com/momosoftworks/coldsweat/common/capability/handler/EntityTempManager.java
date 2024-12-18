@@ -342,15 +342,14 @@ public class EntityTempManager
         }
     }
 
-    /**
-     * Used to grant the player the sewing table recipe when they get an insulation item
-     */
     @SubscribeEvent
-    public static void addSewingIngredientListener(EntityJoinLevelEvent event)
+    public static void addInventoryListeners(EntityJoinLevelEvent event)
     {
-        // Add listener for granting the sewing table recipe when the player gets an insulation item
         if (event.getEntity() instanceof Player player)
         {
+            /*
+            Add listener for granting the sewing table recipe when the player gets an insulation item
+            */
             player.containerMenu.addSlotListener(new ContainerListener()
             {
                 public void slotChanged(AbstractContainerMenu menu, int slotIndex, ItemStack stack)
@@ -371,7 +370,7 @@ public class EntityTempManager
     }
 
     @SubscribeEvent
-    public static void cancelImmuneModifiers(TempModifierEvent.Calculate.Pre event)
+    public static void cancelDisabledModifiers(TempModifierEvent.Calculate.Pre event)
     {
         TempModifier modifier = event.getModifier();
         LivingEntity entity = event.getEntity();
@@ -857,7 +856,7 @@ public class EntityTempManager
             if (!slot.isArmor()) continue;
             ItemStack stack = entity.getItemBySlot(slot);
             if (!stack.isEmpty())
-            {   modifiers.addAll(ItemInsulationManager.getAttributeModifiersForSlot(stack, attribute.getAttribute().value(), slot, operation, entity));
+            {   modifiers.addAll(ItemInsulationManager.getAttributeModifiersForSlot(stack, attribute.getAttribute(), slot, operation, entity));
             }
         }
         return modifiers;

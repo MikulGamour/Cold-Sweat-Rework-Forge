@@ -758,6 +758,7 @@ public class FastMap<K, V> implements Map<K, V>, Cloneable, Serializable
     private static int keyHash( Object key )
     {
         // From HashMap.hash(Object) function.
+        if (key == null) return 0;
         int hashCode = key.hashCode();
         hashCode += ~( hashCode << 9 );
         hashCode ^= ( hashCode >>> 14 );

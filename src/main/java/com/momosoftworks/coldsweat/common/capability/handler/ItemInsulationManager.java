@@ -59,6 +59,8 @@ public class ItemInsulationManager
 
     public static List<InsulatorData> getInsulatorsForStack(ItemStack stack)
     {
+        if (stack.isEmpty()) return new ArrayList<>();
+
         List<InsulatorData> insulators = new ArrayList<>();
         if (isInsulatable(stack))
         {
@@ -86,7 +88,7 @@ public class ItemInsulationManager
                .flatMap(Collection::stream).toList();
     }
 
-    public static List<AttributeModifier> getInsulationAttributeModifiers(ItemStack stack, Attribute attribute, @Nullable AttributeModifier.Operation operation, @Nullable Entity owner)
+    public static List<AttributeModifier> getInsulationAttributeModifiers(ItemStack stack, Holder<Attribute> attribute, @Nullable AttributeModifier.Operation operation, @Nullable Entity owner)
     {
         List<AttributeModifier> modifiers = new ArrayList<>();
         for (InsulatorData insulator : getInsulatorsForStack(stack))
@@ -102,7 +104,7 @@ public class ItemInsulationManager
         return modifiers;
     }
 
-    public static List<AttributeModifier> getAttributeModifiersForSlot(ItemStack stack, Attribute attribute, EquipmentSlot slot, @Nullable AttributeModifier.Operation operation, @Nullable Entity owner)
+    public static List<AttributeModifier> getAttributeModifiersForSlot(ItemStack stack, Holder<Attribute> attribute, EquipmentSlot slot, @Nullable AttributeModifier.Operation operation, @Nullable Entity owner)
     {
         List<AttributeModifier> modifiers = new ArrayList<>((operation != null
                                                              ? ItemStackHelper.getAttributeModifiers(stack, slot)
@@ -116,7 +118,7 @@ public class ItemInsulationManager
         return modifiers;
     }
 
-    public static List<AttributeModifier> getAttributeModifiersForSlot(ItemStack stack, Attribute attribute, EquipmentSlot slot)
+    public static List<AttributeModifier> getAttributeModifiersForSlot(ItemStack stack, Holder<Attribute> attribute, EquipmentSlot slot)
     {   return getAttributeModifiersForSlot(stack, attribute, slot, null, null);
     }
 }

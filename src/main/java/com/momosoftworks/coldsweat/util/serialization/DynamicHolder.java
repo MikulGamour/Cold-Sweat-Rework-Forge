@@ -154,20 +154,20 @@ public class DynamicHolder<T>
     public void decode(CompoundTag tag, RegistryAccess registryAccess)
     {
         if (!isSynced())
-        {  throw ColdSweat.LOGGER.throwing(new SerializationException("Tried to decode non-synced DynamicHolder", null));
+        {  throw ColdSweat.LOGGER.throwing(new SerializationException("Tried to decode non-synced DynamicHolder"));
         }
         try
         {   this.value = decoder.read(tag, registryAccess);
         }
         catch (Exception e)
-        {   throw ColdSweat.LOGGER.throwing(new SerializationException("Failed to decode DynamicHolder for type " + this.value.getClass().getSimpleName(), e));
+        {   throw ColdSweat.LOGGER.throwing(new SerializationException("Failed to decode DynamicHolder", e));
         }
     }
 
     public void save(RegistryAccess registryAccess)
     {
         if (!isSynced())
-        {  throw ColdSweat.LOGGER.throwing(new SerializationException("Tried to save non-synced DynamicHolder", null));
+        {  throw ColdSweat.LOGGER.throwing(new SerializationException("Tried to save non-synced DynamicHolder"));
         }
         try
         {   saver.save(this.get(registryAccess), registryAccess);

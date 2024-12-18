@@ -452,8 +452,7 @@ public class ConfigLoadingHandler
             {   items.addAll(BuiltInRegistries.ITEM.getTag(tag).stream().flatMap(HolderSet.Named::stream).map(Holder::value).toList());
             });
             for (Item item : items)
-            {
-                ConfigSettings.CARRIED_ITEM_TEMPERATURES.get().put(item, carryTempData);
+            {   ConfigSettings.CARRIED_ITEM_TEMPERATURES.get().put(item, carryTempData);
             }
         });
     }

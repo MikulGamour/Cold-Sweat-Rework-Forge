@@ -10,7 +10,7 @@ public class ExtraCodecs
 {
     public static final Codec<EquipmentSlot> EQUIPMENT_SLOT = Codec.STRING.xmap(EquipmentSlot::byName, EquipmentSlot::getName);
 
-    public static Codec<Object> anyOf(Codec... codecs)
+    public static Codec<Object> anyOf(Codec<?>... codecs)
     {
         return new Codec<>()
         {
