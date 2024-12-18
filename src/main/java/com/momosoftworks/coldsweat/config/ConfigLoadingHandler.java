@@ -450,8 +450,7 @@ public class ConfigLoadingHandler
             {   items.addAll(ForgeRegistries.ITEMS.tags().getTag(tag).stream().toList());
             });
             for (Item item : items)
-            {
-                ConfigSettings.CARRIED_ITEM_TEMPERATURES.get().put(item, carryTempData);
+            {   ConfigSettings.CARRIED_ITEM_TEMPERATURES.get().put(item, carryTempData);
             }
         });
     }
