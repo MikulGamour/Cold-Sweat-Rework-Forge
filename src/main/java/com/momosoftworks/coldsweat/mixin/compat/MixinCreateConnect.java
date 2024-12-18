@@ -1,5 +1,6 @@
 package com.momosoftworks.coldsweat.mixin.compat;
 
+import com.momosoftworks.coldsweat.common.block.SmokestackBlock;
 import com.momosoftworks.coldsweat.util.registries.ModBlocks;
 import com.simibubi.create.content.contraptions.fluids.pipes.FluidPipeBlock;
 import net.minecraft.block.BlockState;
@@ -20,11 +21,8 @@ public class MixinCreateConnect
     @Inject(method = "canConnectTo", at = @At("HEAD"), cancellable = true, remap = false)
     private static void shouldPipesConnectTo(IBlockDisplayReader world, BlockPos neighborPos, BlockState neighbor, Direction direction, CallbackInfoReturnable<Boolean> cir)
     {
-        if (direction == Direction.DOWN)
-        {
-            if (neighbor.is(ModBlocks.HEARTH_TOP))
-            {   cir.setReturnValue(true);
-            }
+        if (direction == Direction.DOWN && neighbor.getBlock() instanceof SmokestackBlock)
+        {   cir.setReturnValue(true);
         }
     }
 }
