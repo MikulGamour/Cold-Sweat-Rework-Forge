@@ -49,7 +49,7 @@ public class PlayerTempCap extends AbstractTempCap
                 || player.isCreative()
                 || player.inventory.items.stream().limit(9).anyMatch(stack -> stack.getItem() == ModItems.THERMOMETER)
                 || player.getOffhandItem().getItem() == ModItems.THERMOMETER
-                || CompatManager.isCuriosLoaded() && CuriosApi.getCuriosHelper().findFirstCurio(player, ModItems.THERMOMETER).isPresent();
+                || CompatManager.Curios.hasCurio(player, ModItems.THERMOMETER);
         showBodyTemp = !player.isCreative() && !player.isSpectator();
     }
 }

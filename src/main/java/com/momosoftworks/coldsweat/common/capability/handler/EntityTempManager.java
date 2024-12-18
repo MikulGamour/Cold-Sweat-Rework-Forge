@@ -732,7 +732,7 @@ public class EntityTempManager
                 });
             }
         }
-        for (ItemStack curio : CompatManager.getCurios(entity))
+        for (ItemStack curio : CompatManager.Curios.getCurios(entity))
         {   ConfigSettings.INSULATING_CURIOS.get().get(curio.getItem()).forEach(insul -> insulators.put(curio, insul));
         }
         return insulators;

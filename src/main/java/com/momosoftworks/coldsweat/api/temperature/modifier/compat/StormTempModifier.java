@@ -19,8 +19,12 @@ public class StormTempModifier extends TempModifier
         /*if (!entity.level.isClientSide())
         {
             WeatherManagerServer weatherManager = ServerTickHandler.getWeatherManagerFor(entity.level.dimension());
-            WeatherObjectParticleStorm snowStorm = weatherManager.getClosestParticleStormByIntensity(entity.position(), WeatherObjectParticleStorm.StormType.SNOWSTORM);
-            if (snowStorm != null)
+            float windSpeed = weatherManager.getWindManager().getWindSpeed();
+
+            WeatherObject weather = (WeatherObject) CompatManager.Weather2.getClosestStorm(entity.level, entity.blockPosition());
+            double stormTemp;
+            // If there is a blizzard/sandstorm, apply the temperature and wind speed modifiers
+            if (weather instanceof WeatherObjectParticleStorm storm)
             {
                 double distance = snowStorm.pos.distanceTo(entity.position());
                 if (distance > snowStorm.getSize())

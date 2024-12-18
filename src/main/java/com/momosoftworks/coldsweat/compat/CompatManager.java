@@ -165,27 +165,31 @@ public class CompatManager
     {   return SUPPLEMENTARIES_LOADED;
     }
 
-    public static boolean hasCurio(PlayerEntity player, Item curio)
-    {   return CURIOS_LOADED && getCurios(player).stream().map(ItemStack::getItem).anyMatch(item -> item == curio);
-    }
-
-    public static List<ItemStack> getCurios(LivingEntity entity)
+    public static abstract class Curios
     {
-        if (!CURIOS_LOADED) return new ArrayList<>();
-        return entity.getCapability(CuriosCapability.INVENTORY)
-                     .map(handler -> handler.getCurios().values()).map(handlers -> handlers.stream()
+        public static boolean hasCurio(PlayerEntity player, Item curio)
+        {   return CURIOS_LOADED && getCurios(player).stream().map(ItemStack::getItem).anyMatch(item -> item == curio);
+        }
+
+        public static List<ItemStack> getCurios(LivingEntity entity)
+        {
+            if (!CURIOS_LOADED) return new ArrayList<>();
+            return entity.getCapability(CuriosCapability.INVENTORY)
+                         .map(handler -> handler.getCurios().values()).map(handlers -> handlers.stream()
                      .map(ICurioStacksHandler::getStacks)
-                     .map(stacks ->
-                     {
-                         List<ItemStack> list = new ArrayList<>();
-                         for (int i = 0; i < stacks.getSlots(); i++)
-                         {   list.add(stacks.getStackInSlot(i));
-                         }
-                         return list;
-                     }).flatMap(List::stream).collect(Collectors.toList())).orElse(new ArrayList<>());
+                         .map(stacks ->
+                         {
+                             List<ItemStack> list = new ArrayList<>();
+                             for (int i = 0; i < stacks.getSlots(); i++)
+                             {   list.add(stacks.getStackInSlot(i));
+                             }
+                             return list;
+                         }).flatMap(List::stream).collect(Collectors.toList())).orElse(new ArrayList<>());
+        }
     }
 
-    public static boolean hasOzzyLiner(ItemStack stack)
+    public static class ArmorUnderwear
+    {public static boolean hasOzzyLiner(ItemStack stack)
     {
         return ARMOR_UNDERWEAR_LOADED && Armory.getXLining(stack).has(Armory.XLining.TEMPERATURE_REGULATOR);
     }
@@ -196,33 +200,15 @@ public class CompatManager
     public static boolean hasOllieLiner(ItemStack stack)
     {
         return false;//ARMOR_UNDERWEAR_LOADED && Armory.getXLining(stack).has(Armory.XLining.ANTIBURN_SHIELD);
+        }
     }
 
-    public static boolean isWerewolf(PlayerEntity player)
+    public static abstract class SereneSeasons
     {
-        return WEREWOLVES_LOADED && WerewolfPlayer.getOpt(player).filter(w -> w.getLevel() > 0).map(w -> w.getForm().isTransformed()).orElse(false);
-    }
-
-    public static boolean isRainstormAt(World level, BlockPos pos)
-    {
-        /*if (WEATHER_LOADED)
+        public static boolean isColdEnoughToSnow(World level, BlockPos pos)
         {
-            WeatherManagerServer weatherManager = ServerTickHandler.getWeatherManagerFor(level.dimension());
-            if (weatherManager == null) return false;
-            StormObject rainStorm = weatherManager.getClosestStormAny(new Vec3(pos.getX(), pos.getY(), pos.getZ()), 250);
-            if (rainStorm == null) return false;
-
-            if (WorldHelper.canSeeSky(level, pos, 60) && rainStorm.isPrecipitating() && rainStorm.levelTemperature > 0.0f
-            && Math.sqrt(Math.pow(pos.getX() - rainStorm.pos.x, 2) + Math.pow(pos.getX() - rainStorm.pos.x, 2)) < rainStorm.getSize())
-            {   return true;
-            }
-        }*/
-        return false;
-    }
-
-    public static boolean isColdEnoughToSnow(World level, BlockPos pos)
-    {
-        return SEASONS_LOADED && SeasonHooks.getBiomeTemperature(level, level.getBiome(pos), pos) < 0.15f;
+            return SEASONS_LOADED && SeasonHooks.getBiomeTemperature(level, level.getBiome(pos), pos) < 0.15f;
+        }
     }
 
     public static boolean isGoat(Entity entity)
@@ -234,7 +220,7 @@ public class CompatManager
         if (isCavesAndCliffsLoaded())
         {
             return new Object()
-            {
+                {
                 public AnimalEntity create()
                 {
                     GoatEntity entity = new GoatEntity(CCBEntityTypes.GOAT.get(), goat.level);
@@ -249,7 +235,7 @@ public class CompatManager
                         entity.setCustomNameVisible(goat.isCustomNameVisible());
                     }
                     entity.setDeltaMovement(goat.getDeltaMovement());
-                    entity.setAbsorptionAmount(goat.getAbsorptionAmount());
+                        entity.setAbsorptionAmount(goat.getAbsorptionAmount());
                     entity.setAirSupply(goat.getAirSupply());
                     entity.setRemainingFireTicks(goat.getRemainingFireTicks());
                     entity.setNoGravity(goat.isNoGravity());
@@ -320,7 +306,7 @@ public class CompatManager
                 int liners = 0;
                 for (ItemStack stack : event.getEntityLiving().getArmorSlots())
                 {
-                    if (isDamageCold ? hasOttoLiner(stack) : hasOllieLiner(stack))
+                    if (isDamageCold ? ArmorUnderwear.hasOttoLiner(stack) : ArmorUnderwear.hasOllieLiner(stack))
                         liners++;
                 }
                 // Cancel the event if full liners
