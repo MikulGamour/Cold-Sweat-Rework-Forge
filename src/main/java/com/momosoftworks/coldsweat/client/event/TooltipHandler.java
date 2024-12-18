@@ -132,7 +132,7 @@ public class TooltipHandler
                 {   value += modifier.amount();
                 }
                 if (value != 0)
-                {   tooltip.add(getFormattedAttributeModifier(Holder.direct(attribute), value, operation, false, strikethrough));
+                {   tooltip.add(getFormattedAttributeModifier(attribute, value, operation, false, strikethrough));
                 }
             }
         });
@@ -147,8 +147,7 @@ public class TooltipHandler
         if (operation == AttributeModifier.Operation.ADD_VALUE
         && (attribute == ModAttributes.FREEZING_POINT.value()
         || attribute == ModAttributes.BURNING_POINT.value()
-        || attribute == ModAttributes.WORLD_TEMPERATURE.value()
-        || attribute == ModAttributes.BASE_BODY_TEMPERATURE.value()))
+        || attribute == ModAttributes.WORLD_TEMPERATURE.value()))
         {
             value = Temperature.convert(value, Temperature.Units.MC, ConfigSettings.CELSIUS.get() ? Temperature.Units.C : Temperature.Units.F, false);
         }
@@ -177,14 +176,32 @@ public class TooltipHandler
         {   percent = "";
         }
         List<String> params = new ArrayList<>(List.of(sign + CSMath.formatDoubleOrInt(CSMath.round(value, 2)) + percent));
-        if (forTooltip)
-        {   params.add("show_icon");
+        MutableComponent component = Component.translatable(String.format("attribute.cold_sweat.modifier.%s.%s", operationString, attributeName),
+                                                            params.toArray()).withStyle(color);
+        component = addTooltipFlags(component, forTooltip, strikethrough);
+        return component;
+    }
+
+    public static MutableComponent addTooltipFlags(MutableComponent component, boolean showIcon, boolean strikethrough)
+    {
+        if (component.getContents() instanceof TranslatableContents translatable)
+        {
+            List<Object> params = new ArrayList<>(Arrays.asList(translatable.getArgs()));
+            if (showIcon)
+            {   params.add("show_icon");
+            }
+            if (strikethrough)
+            {   params.add("strikethrough");
+            }
+            Style style = component.getStyle();
+            if (strikethrough)
+            {   style = style.withColor(7561572);
+            }
+            MutableComponent newComponent = Component.translatable(translatable.getKey(), params.toArray()).setStyle(style);
+            component.getSiblings().forEach(newComponent::append);
+            return newComponent;
         }
-        if (strikethrough)
-        {   params.add("strikethrough");
-        }
-        return Component.translatable(String.format("attribute.cold_sweat.modifier.%s.%s", operationString, attributeName),
-                                      params.toArray()).withStyle(color);
+        return component;
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -393,6 +410,7 @@ public class TooltipHandler
         /*
          Custom tooltips for attributes from insulation
          */
+        boolean foundUnmetAttribute = false;
         for (int i = 0; i < elements.size(); i++)
         {
             Either<FormattedText, TooltipComponent> element = elements.get(i);
@@ -405,6 +423,13 @@ public class TooltipHandler
                     if (args.contains("show_icon"))
                     {
                         boolean strikethrough = args.contains("strikethrough");
+                        if (strikethrough && !foundUnmetAttribute)
+                        {
+                            MutableComponent unmetAttributesTooltip = Component.translatable("tooltip.cold_sweat.unmet_attributes").withStyle(ChatFormatting.RED);
+                            elements.add(i, Either.right(new InsulationAttributeTooltip(unmetAttributesTooltip, Minecraft.getInstance().font, false)));
+                            foundUnmetAttribute = true;
+                            i++;
+                        }
                         elements.set(i, Either.right(new InsulationAttributeTooltip(component, Minecraft.getInstance().font, strikethrough)));
                     }
                 }

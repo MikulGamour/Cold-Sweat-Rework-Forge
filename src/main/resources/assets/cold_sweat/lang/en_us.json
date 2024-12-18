@@ -38,9 +38,9 @@
 
 
   "tooltip.cold_sweat.config.must_be_in_game": "Must be in-game to edit configs",
-  "tooltip.cold_sweat.insulated": "Insulated",
   "tooltip.cold_sweat.hotbar": "When in Hotbar:",
   "tooltip.cold_sweat.consumed": "When Consumed:",
+  "tooltip.cold_sweat.unmet_attributes": "Unmet Requirements:",
   "tooltip.cold_sweat.temperature_effect": "%d Temperature",
   "tooltip.cold_sweat.per_second": "/sec",
   "tooltip.cold_sweat.waterskin.drink": "Hold [%s] to drink",

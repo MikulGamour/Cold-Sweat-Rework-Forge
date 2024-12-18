@@ -49,10 +49,11 @@ public class ClientInsulationAttributeTooltip implements ClientTooltipComponent
         graphics.blit(TOOLTIP_LOCATION.get(), x, y + 1, 0, 24, 8, 8, 8, 32, 24);
         // Text
         int color = Optional.ofNullable(this.original.getStyle().getColor()).map(TextColor::getValue).orElse(16777215);
-        graphics.drawString(font, this.original, x + 10, y + 1, color);
+        int xOffs = strikethrough ? 12: 10;
+        graphics.drawString(font, this.original, x + xOffs, y + 1, color);
         if (strikethrough)
-        {   graphics.fill(x + 10, y + 4, x + this.getWidth(font) + 1, y + 5, 401, 0xFFF63232);
-            graphics.fill(x + 11, y + 5, x + this.getWidth(font) + 2, y + 6, 401, 0xFFF63232);
+        {   graphics.fill(x - 2, y + 4, x + 9, y + 5, 401, 0xFFF63232);
+            graphics.fill(x - 1, y + 5, x + 10, y + 6, 401, 0xFFF63232);
         }
     }
 }
