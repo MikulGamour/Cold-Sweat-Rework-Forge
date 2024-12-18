@@ -61,9 +61,9 @@ public class InsulatorData extends ConfigData implements RequirementHolder
     public static final Codec<InsulatorData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Insulation.Slot.CODEC.fieldOf("type").forGetter(InsulatorData::slot),
             Insulation.getCodec().fieldOf("insulation").forGetter(InsulatorData::insulation),
-            com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement.CODEC.fieldOf("data").forGetter(InsulatorData::data),
+            ItemRequirement.CODEC.fieldOf("data").forGetter(InsulatorData::data),
             EntityRequirement.getCodec().optionalFieldOf("entity", EntityRequirement.NONE).forGetter(InsulatorData::predicate),
-            com.momosoftworks.coldsweat.data.codec.util.AttributeModifierMap.CODEC.optionalFieldOf("attributes", new AttributeModifierMap()).forGetter(InsulatorData::attributes),
+            AttributeModifierMap.CODEC.optionalFieldOf("attributes", new AttributeModifierMap()).forGetter(InsulatorData::attributes),
             Codec.unboundedMap(ResourceLocation.CODEC, Codec.DOUBLE).optionalFieldOf("immune_temp_modifiers", new HashMap<>()).forGetter(InsulatorData::immuneTempModifiers),
             Codec.STRING.listOf().optionalFieldOf("required_mods", List.of()).forGetter(InsulatorData::requiredMods)
     ).apply(instance, InsulatorData::new));
