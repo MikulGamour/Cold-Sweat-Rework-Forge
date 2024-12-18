@@ -73,7 +73,12 @@ public class SyncConfigSettingsMessage implements CustomPacketPayload
             }
             else
             {
-                ConfigSettings.decode(message.configValues, registryAccess);
+                try
+                {   ConfigSettings.decode(message.configValues, registryAccess);
+                }
+                catch (Exception e)
+                {   ColdSweat.LOGGER.error("Failed to decode config settings from server: ", e);
+                }
                 if (message.menuOpener.equals(ClientOnlyHelper.getClientPlayer().getUUID()))
                 {   ClientOnlyHelper.openConfigScreen();
                 }
