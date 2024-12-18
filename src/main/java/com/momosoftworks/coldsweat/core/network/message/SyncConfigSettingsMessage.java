@@ -1,5 +1,6 @@
 package com.momosoftworks.coldsweat.core.network.message;
 
+import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.config.spec.EntitySettingsConfig;
 import com.momosoftworks.coldsweat.config.spec.ItemSettingsConfig;
 import com.momosoftworks.coldsweat.config.spec.MainSettingsConfig;
@@ -71,7 +72,12 @@ public class SyncConfigSettingsMessage
             }
             else if (context.getDirection().getReceptionSide().isClient())
             {
-                ConfigSettings.decode(message.configValues, registryAccess);
+                try
+                {   ConfigSettings.decode(message.configValues, registryAccess);
+                }
+                catch (Exception e)
+                {   ColdSweat.LOGGER.error("Failed to decode config settings from server: ", e);
+                }
                 if (message.menuOpener.equals(ClientOnlyHelper.getClientPlayer().getUUID()))
                 {   ClientOnlyHelper.openConfigScreen();
                 }
