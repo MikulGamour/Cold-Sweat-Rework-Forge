@@ -53,13 +53,14 @@ public class ClientInsulationAttributeTooltip implements ClientTooltipComponent
         Screen.blit(ps, x, y + 1, 0, 24, 8, 8, 8, 32, 24);
         // Text
         int color = Optional.ofNullable(this.original.getStyle().getColor()).map(TextColor::getValue).orElse(16777215);
+        int xOffs = strikethrough ? 12: 10;
         ps.pushPose();
         ps.translate(0, 0, 400);
-        font.drawShadow(ps, this.original, x + 10, y + 1, color);
+        font.drawShadow(ps, this.original, x + xOffs, y + 1, color);
         if (strikethrough)
         {   ps.translate(0, 0, 401);
-            Screen.fill(ps, x - 1, y + 4, x + this.getWidth(font) + 1, y + 5, 0xFFF63232);
-            Screen.fill(ps, x, y + 5, x + this.getWidth(font) + 2, y + 6, 0xFFF63232);
+            Screen.fill(ps, x - 2, y + 4, x + 9, y + 5, 0xFFF63232);
+            Screen.fill(ps, x - 1, y + 5, x + 10, y + 6, 0xFFF63232);
         }
         ps.popPose();
     }
