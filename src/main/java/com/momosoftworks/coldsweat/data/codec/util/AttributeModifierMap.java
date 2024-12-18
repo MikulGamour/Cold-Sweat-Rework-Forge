@@ -74,6 +74,10 @@ public class AttributeModifierMap implements NbtSerializable
     {   return map.isEmpty();
     }
 
+    public void clear()
+    {   map.clear();
+    }
+
     @Override
     public CompoundTag serialize()
     {

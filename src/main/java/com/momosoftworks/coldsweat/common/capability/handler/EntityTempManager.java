@@ -1,8 +1,10 @@
 package com.momosoftworks.coldsweat.common.capability.handler;
 
 import com.google.common.collect.ImmutableSet;
+import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
 import com.momosoftworks.coldsweat.ColdSweat;
+import com.momosoftworks.coldsweat.api.event.vanilla.ContainerChangedEvent;
 import com.momosoftworks.coldsweat.api.event.vanilla.LivingEntityLoadAdditionalEvent;
 import com.momosoftworks.coldsweat.api.event.common.temperautre.TempModifierEvent;
 import com.momosoftworks.coldsweat.api.event.core.init.GatherDefaultTempModifiersEvent;
@@ -18,7 +20,6 @@ import com.momosoftworks.coldsweat.common.capability.temperature.EntityTempCap;
 import com.momosoftworks.coldsweat.common.capability.temperature.ITemperatureCap;
 import com.momosoftworks.coldsweat.common.capability.temperature.PlayerTempCap;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
-import com.momosoftworks.coldsweat.config.type.InsulatingMount;
 import com.momosoftworks.coldsweat.core.event.TaskScheduler;
 import com.momosoftworks.coldsweat.data.codec.configuration.FoodData;
 import com.momosoftworks.coldsweat.data.codec.configuration.InsulatorData;
@@ -46,10 +47,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.Minecart;
-import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ContainerListener;
-import net.minecraft.world.inventory.ResultSlot;
-import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
@@ -77,7 +75,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 @Mod.EventBusSubscriber
 public class EntityTempManager
@@ -89,6 +86,7 @@ public class EntityTempManager
     public static final Set<EntityType<? extends LivingEntity>> TEMPERATURE_ENABLED_ENTITIES = new HashSet<>(List.of(EntityType.PLAYER));
 
     public static SidedCapabilityCache<ITemperatureCap, Entity> CAP_CACHE = new SidedCapabilityCache<>(ModCapabilities.ENTITY_TEMPERATURE);
+    public static Map<Entity, Map<ResourceLocation, Double>> TEMP_MODIFIER_IMMUNITIES = new WeakHashMap<>();
 
     public static LazyOptional<ITemperatureCap> getTemperatureCap(Entity entity)
     {   return CAP_CACHE.get(entity);
@@ -459,6 +457,40 @@ public class EntityTempManager
         }
     }
 
+    @SubscribeEvent
+    public static void calculateModifierImmunity(LivingEvent.LivingUpdateEvent event)
+    {
+        LivingEntity entity = event.getEntityLiving();
+        if (!entity.level.isClientSide() && entity.tickCount % 20 == 0 && isTemperatureEnabled(entity.getType()))
+        {
+            Map<ResourceLocation, Double> immunities = new FastMap<>();
+            for (Map.Entry<ItemStack, InsulatorData> entry : getInsulatorsOnEntity(entity).entrySet())
+            {
+                InsulatorData insulator = entry.getValue();
+                ItemStack stack = entry.getKey();
+
+                if (insulator.test(entity, stack))
+                {   immunities.putAll(insulator.immuneTempModifiers());
+                }
+            }
+
+            if (entity instanceof Player player)
+            {
+                for (var entry : getInventoryTemperaturesOnEntity(player).entrySet())
+                {
+                    ItemCarryTempData invTemp = entry.getValue().getFirst();
+                    ItemStack stack = entry.getKey();
+
+                    if (entry.getValue().getSecond().map(slot -> invTemp.test(player, stack, slot, null),
+                                                         slot -> invTemp.test(entity, stack, slot)))
+                    {   immunities.putAll(invTemp.immuneTempModifiers());
+                    }
+                }
+            }
+            TEMP_MODIFIER_IMMUNITIES.put(entity, immunities);
+        }
+    }
+
     /**
      * Check the player's immunity level to temperature modifiers when they tick
      */
@@ -472,22 +504,17 @@ public class EntityTempManager
         ResourceLocation modifierKey = TempModifierRegistry.getKey(modifier);
         LivingEntity entity = event.getEntity();
 
-        double lastInput = modifier instanceof BiomeTempModifier
-                           ? (Temperature.get(entity, Temperature.Trait.FREEZING_POINT) + Temperature.get(entity, Temperature.Trait.BURNING_POINT)) / 2
-                           : modifier.getLastInput();
-
         // Calculate modifier immunity from equipped insulators
-        for (Map.Entry<ItemStack, InsulatorData> entry : getInsulatorsOnEntity(entity).entrySet())
+        double immunity = TEMP_MODIFIER_IMMUNITIES.getOrDefault(entity, Collections.emptyMap()).getOrDefault(modifierKey, 0.0);
+        if (immunity > 0)
         {
-            InsulatorData insulator = entry.getValue();
-            ItemStack stack = entry.getKey();
-
-            Double immunity = insulator.immuneTempModifiers().get(modifierKey);
-            if (immunity != null && insulator.test(entity, stack))
+            Function<Double, Double> oldFunction = event.getFunction();
+            event.setFunction(temp ->
             {
-                Function<Double, Double> func = event.getFunction();
-                event.setFunction(temp -> CSMath.blend(func.apply(temp), lastInput, immunity, 0, 1));
-            }
+                double lastInput = modifier instanceof BiomeTempModifier ? Temperature.getNeutralWorldTemp(entity)
+                                                                         : temp;
+                return CSMath.blend(oldFunction.apply(temp), lastInput, immunity, 0, 1);
+            });
         }
     }
 
@@ -538,45 +565,69 @@ public class EntityTempManager
     }
 
     @SubscribeEvent
-    public static void updateAttributeModifiersOnSlotChange(LivingEquipmentChangeEvent event)
+    public static void tickInventoryAttributeChanges(TickEvent.PlayerTickEvent event)
     {
-        updateInsulationAttributeModifiers(event.getEntityLiving());
+        if (event.phase == TickEvent.Phase.START && event.player.tickCount % 20 == 0)
+        {
+            for (ItemStack item : event.player.getInventory().items)
+            {   updateInventoryTempAttributes(item, item, event.player);
+            }
+        }
     }
 
-    public static void updateInsulationAttributeModifiers(LivingEntity entity)
+    @SubscribeEvent
+    public static void updateInventoryAttributesOnSlotChange(ContainerChangedEvent event)
     {
-        Stream.of(ConfigSettings.INSULATION_ITEMS.get().values(),
-                  ConfigSettings.INSULATING_ARMORS.get().values(),
-                  ConfigSettings.INSULATING_CURIOS.get().values())
-        .flatMap(Collection::stream)
-        .forEach(insulator ->
+        if (event.getContainer() instanceof InventoryMenu inventory)
+        {   updateInventoryTempAttributes(event.getOldStack(), event.getNewStack(), inventory.owner);
+        }
+    }
+
+    private static void updateInventoryTempAttributes(ItemStack oldStack, ItemStack newStack, LivingEntity entity)
+    {
+        for (ItemCarryTempData carryTempData : ConfigSettings.CARRIED_ITEM_TEMPERATURES.get().get(oldStack.getItem()))
+        {   entity.getAttributes().removeAttributeModifiers(carryTempData.attributeModifiers().getMap());
+        }
+        for (ItemCarryTempData carryTempData : ConfigSettings.CARRIED_ITEM_TEMPERATURES.get().get(newStack.getItem()))
+        {   entity.getAttributes().addTransientAttributeModifiers(carryTempData.attributeModifiers().getMap());
+        }
+    }
+
+    @SubscribeEvent
+    public static void tickInsulationAttributeChanges(LivingEvent.LivingUpdateEvent event)
+    {
+        LivingEntity entity = event.getEntityLiving();
+        if (entity.tickCount % 20 == 0)
         {
-            for (Map.Entry<Attribute, AttributeModifier> entry : insulator.attributes().getMap().entries())
+            for (ItemStack armor : entity.getArmorSlots())
             {
-                Attribute attribute = entry.getKey();
-                AttributeModifier modifier = entry.getValue();
-                AttributeInstance instance = entity.getAttribute(attribute);
-                if (instance != null)
-                {   instance.removeModifier(modifier);
+                if (!armor.isEmpty())
+                {   updateInsulationAttributeModifiers(entity, armor, armor);
                 }
             }
-        });
+        }
+    }
 
-        for (Map.Entry<ItemStack, InsulatorData> insulationItem : getInsulatorsOnEntity(entity).entrySet())
+    @SubscribeEvent
+    public static void updateInsulationAttributesOnEquipmentChange(LivingEquipmentChangeEvent event)
+    {
+        for (ItemStack armor : event.getEntity().getArmorSlots())
         {
-            InsulatorData insulator = insulationItem.getValue();
-            ItemStack stack = insulationItem.getKey();
-            if (insulator.test(entity, stack))
-            {
-                for (Map.Entry<Attribute, AttributeModifier> entry : insulator.attributes().getMap().entries())
-                {
-                    Attribute attribute = entry.getKey();
-                    AttributeModifier modifier = entry.getValue();
-                    AttributeInstance instance = entity.getAttribute(attribute);
-                    if (instance != null)
-                    {   instance.addTransientModifier(modifier);
-                    }
-                }
+            if (!armor.isEmpty())
+            {   updateInsulationAttributeModifiers(event.getEntityLiving(), armor, armor);
+            }
+        }
+    }
+
+    public static void updateInsulationAttributeModifiers(LivingEntity entity, ItemStack from, ItemStack to)
+    {
+        for (InsulatorData insulatorData : ItemInsulationManager.getInsulatorsForStack(from))
+        {   entity.getAttributes().removeAttributeModifiers(insulatorData.attributes().getMap());
+        }
+        for (InsulatorData insulatorData : ItemInsulationManager.getInsulatorsForStack(to))
+        {
+            if (insulatorData.test(entity, to))
+            {   entity.getAttributes().addTransientAttributeModifiers(insulatorData.attributes().getMap());
             }
         }
     }
@@ -608,20 +659,8 @@ public class EntityTempManager
             int warming = isWarmth ? effect.getAmplifier() + 1 : 0;
             int cooling = !isWarmth ? effect.getAmplifier() + 1 : 0;
             // Add TempModifier on potion effect added
-            Optional<BlockInsulationTempModifier> oldMod = Temperature.getModifier(entity, Temperature.Trait.WORLD, BlockInsulationTempModifier.class);
-            if (oldMod.isPresent())
-            {
-                CompoundTag nbt = oldMod.get().getNBT();
-                nbt.putInt("Warming", Math.max(nbt.getInt("Warming"), warming));
-                nbt.putInt("Cooling", Math.max(nbt.getInt("Cooling"), cooling));
-                oldMod.get().setTicksExisted(0);
-                oldMod.get().expires(effect.getDuration());
-            }
-            else
-            {
-                TempModifier newMod = new BlockInsulationTempModifier(cooling, warming).expires(effect.getDuration());
-                Temperature.addOrReplaceModifier(entity, newMod, Temperature.Trait.WORLD, Placement.Duplicates.BY_CLASS);
-            }
+            TempModifier newMod = new BlockInsulationTempModifier(cooling, warming).expires(effect.getDuration());
+            Temperature.addOrReplaceModifier(entity, newMod, Temperature.Trait.WORLD, Placement.Duplicates.BY_CLASS);
         }
     }
 
@@ -768,10 +807,61 @@ public class EntityTempManager
                 });
             }
         }
-        for (ItemStack curio : CompatManager.getCurios(entity))
+        for (ItemStack curio : CompatManager.Curios.getCurios(entity))
         {   ConfigSettings.INSULATING_CURIOS.get().get(curio.getItem()).forEach(insul -> insulators.put(curio, insul));
         }
         return insulators;
+    }
+
+    public static Map<ItemStack, Pair<ItemCarryTempData, Either<Integer, ItemCarryTempData.SlotType>>> getInventoryTemperaturesOnEntity(Player player)
+    {
+        Map<ItemStack, Pair<ItemCarryTempData, Either<Integer, ItemCarryTempData.SlotType>>> tempItems = new HashMap<>();
+        /*
+         Inventory items
+         */
+        for (int i = 0; i < player.getInventory().items.size(); i++)
+        {
+            ItemStack stack = player.getInventory().items.get(i);
+            if (stack.isEmpty()) continue;
+            int slotIndex = i;
+            ConfigSettings.CARRIED_ITEM_TEMPERATURES.get().get(stack.getItem()).forEach(temp ->
+            {   tempItems.put(stack, Pair.of(temp, Either.left(slotIndex)));
+            });
+        }
+        /*
+         Armor items
+         */
+        for (EquipmentSlot slot : EquipmentSlot.values())
+        {
+            if (slot.getType() != EquipmentSlot.Type.ARMOR) continue;
+            ItemStack stack = player.getItemBySlot(slot);
+            if (stack.isEmpty()) continue;
+            ItemCarryTempData.SlotType slotType = ItemCarryTempData.SlotType.fromEquipment(slot);
+
+            ConfigSettings.CARRIED_ITEM_TEMPERATURES.get().get(stack.getItem()).forEach(temp ->
+            {   tempItems.put(stack, Pair.of(temp, Either.right(slotType)));
+            });
+        }
+        /*
+         Curios
+         */
+        for (ItemStack curio : CompatManager.Curios.getCurios(player))
+        {
+            ConfigSettings.CARRIED_ITEM_TEMPERATURES.get().get(curio.getItem()).forEach(temp ->
+            {   tempItems.put(curio, Pair.of(temp, Either.right(ItemCarryTempData.SlotType.CURIO)));
+            });
+        }
+        /*
+         Offhand
+         */
+        ItemStack offhand = player.getOffhandItem();
+        if (!offhand.isEmpty())
+        {
+            ConfigSettings.CARRIED_ITEM_TEMPERATURES.get().get(offhand.getItem()).forEach(temp ->
+            {   tempItems.put(offhand, Pair.of(temp, Either.right(ItemCarryTempData.SlotType.HAND)));
+            });
+        }
+        return tempItems;
     }
 
     /**

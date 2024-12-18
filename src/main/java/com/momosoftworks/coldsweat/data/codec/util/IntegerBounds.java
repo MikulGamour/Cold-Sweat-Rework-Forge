@@ -19,6 +19,10 @@ public record IntegerBounds(int min, int max)
     {   return value >= min && value <= max;
     }
 
+    public boolean contains(IntegerBounds bounds)
+    {   return bounds.min >= min && bounds.max <= max;
+    }
+
     public CompoundTag serialize()
     {
         CompoundTag tag = new CompoundTag();
