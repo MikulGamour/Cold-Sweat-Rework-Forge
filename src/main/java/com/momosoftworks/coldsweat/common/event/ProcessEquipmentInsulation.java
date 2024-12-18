@@ -146,7 +146,7 @@ public class ProcessEquipmentInsulation
 
             /* Get insulation from curios */
 
-            for (ItemStack curio : CompatManager.getCurios(player))
+            for (ItemStack curio : CompatManager.Curios.getCurios(player))
             {
                 for (InsulatorData insulator : ConfigSettings.INSULATING_CURIOS.get().get(curio.getItem()))
                 {

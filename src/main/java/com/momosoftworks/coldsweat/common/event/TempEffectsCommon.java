@@ -139,7 +139,7 @@ public class TempEffectsCommon
         if (CompatManager.isArmorUnderwearLoaded())
         {
             strength += ((Collection<ItemStack>) player.getArmorSlots()).stream()
-                    .map(stack -> cold ? CompatManager.hasOttoLiner(stack) : CompatManager.hasOllieLiner(stack))
+                    .map(stack -> cold ? CompatManager.ArmorUnderwear.hasOttoLiner(stack) : CompatManager.ArmorUnderwear.hasOllieLiner(stack))
                     .filter(Boolean::booleanValue)
                     .mapToInt(i -> 1).sum();
         }

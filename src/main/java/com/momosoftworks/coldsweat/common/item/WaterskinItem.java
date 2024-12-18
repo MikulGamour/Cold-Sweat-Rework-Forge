@@ -100,7 +100,7 @@ public class WaterskinItem extends Item
                                                            - (CSMath.average(ConfigSettings.MAX_TEMP.get(), ConfigSettings.MIN_TEMP.get()))) * 15, -50, 50));
         // Set purity of water based on water source, if Thirst Was Taken is loaded
         if (CompatManager.isThirstLoaded())
-        {   filledWaterskin = CompatManager.setWaterPurity(filledWaterskin, pos, level);
+        {   filledWaterskin = CompatManager.Thirst.setWaterPurity(filledWaterskin, pos, level);
         }
         return filledWaterskin;
     }
