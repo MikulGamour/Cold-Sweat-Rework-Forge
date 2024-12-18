@@ -41,14 +41,14 @@
     }
   },
   "attributes": {
-    "cold_sweat:heat_resistance": [
+    "cold_sweat:heat_dampening": [
       {
         "name": "cs:netherite_diving_set_bonus",
         "amount": 0.25,
         "operation": "addition"
       }
     ],
-    "cold_sweat:cold_resistance": [
+    "cold_sweat:cold_dampening": [
       {
         "name": "cs:netherite_diving_set_bonus",
         "amount": 0.1,
