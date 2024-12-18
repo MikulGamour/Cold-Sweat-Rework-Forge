@@ -32,6 +32,7 @@ import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.living.LivingAttackEvent;
@@ -45,6 +46,10 @@ import net.minecraftforge.fml.loading.FMLLoader;
 import net.minecraftforge.fml.loading.moddiscovery.ModFileInfo;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
+import org.joml.Vector3d;
+import org.valkyrienskies.core.api.ships.Ship;
+import org.valkyrienskies.mod.common.VSGameUtilsKt;
+import org.valkyrienskies.mod.common.util.VectorConversionsMCKt;
 import sereneseasons.season.SeasonHooks;
 import top.theillusivec4.curios.api.CuriosCapability;
 import top.theillusivec4.curios.api.event.CurioChangeEvent;
@@ -178,27 +183,31 @@ public class CompatManager
     {   return VALKYRIEN_SKIES_LOADED;
     }
 
-    public static boolean hasCurio(Player player, Item curio)
-    {   return CURIOS_LOADED && getCurios(player).stream().map(ItemStack::getItem).anyMatch(item -> item == curio);
-    }
-
-    public static List<ItemStack> getCurios(LivingEntity entity)
+    public static abstract class Curios
     {
-        if (!CURIOS_LOADED) return new ArrayList<>();
-        return entity.getCapability(CuriosCapability.INVENTORY)
-                     .map(handler -> handler.getCurios().values()).stream().flatMap(Collection::stream)
+        public static boolean hasCurio(Player player, Item curio)
+        {   return CURIOS_LOADED && getCurios(player).stream().map(ItemStack::getItem).anyMatch(item -> item == curio);
+        }
+
+        public static List<ItemStack> getCurios(LivingEntity entity)
+        {
+            if (!CURIOS_LOADED) return new ArrayList<>();
+            return entity.getCapability(CuriosCapability.INVENTORY)
+                         .map(handler -> handler.getCurios().values()).stream().flatMap(Collection::stream)
                      .map(ICurioStacksHandler::getStacks)
-                     .map(stacks ->
-                     {
-                         List<ItemStack> list = new ArrayList<>();
-                         for (int i = 0; i < stacks.getSlots(); i++)
-                         {   list.add(stacks.getStackInSlot(i));
-                         }
-                         return list;
-                     }).flatMap(List::stream).toList();
+                         .map(stacks ->
+                         {
+                             List<ItemStack> list = new ArrayList<>();
+                             for (int i = 0; i < stacks.getSlots(); i++)
+                             {   list.add(stacks.getStackInSlot(i));
+                             }
+                             return list;
+                         }).flatMap(List::stream).toList();
+        }
     }
 
-    public static boolean hasOzzyLiner(ItemStack stack)
+    public static class ArmorUnderwear
+    {public static boolean hasOzzyLiner(ItemStack stack)
     {
         return false;
         //return ARMOR_UNDERWEAR_LOADED && Armory.getXLining(stack).has(Armory.XLining.TEMPERATURE_REGULATOR);
@@ -211,60 +220,113 @@ public class CompatManager
     public static boolean hasOllieLiner(ItemStack stack)
     {
         return false;
-        //return ARMOR_UNDERWEAR_LOADED && Armory.getXLining(stack).has(Armory.XLining.ANTIBURN_SHIELD);
-    }
-
-    public static boolean isWerewolf(Player player)
-    {
-        return WEREWOLVES_LOADED && WerewolfPlayer.getOpt(player).filter(w -> w.getLevel() > 0).map(w -> w.getForm().isTransformed()).orElse(false);
-    }
-
-    public static boolean isColdEnoughToSnow(Level level, BlockPos pos)
-    {
-        return SEASONS_LOADED && SeasonHooks.coldEnoughToSnowHook(level.getBiome(pos).get(), pos, level);
-    }
-
-    public static boolean hasWaterPurity(ItemStack stack)
-    {
-        if (THIRST_LOADED)
-        {   return WaterPurity.hasPurity(stack);
+            //return ARMOR_UNDERWEAR_LOADED && Armory.getXLining(stack).has(Armory.XLining.ANTIBURN_SHIELD);
         }
-        return false;
     }
 
-    public static int getWaterPurity(ItemStack stack)
+    public static abstract class Werewolves
     {
-        if (THIRST_LOADED)
-        {   return WaterPurity.getPurity(stack);
+        public static boolean isWerewolf(Player player)
+        {   return WEREWOLVES_LOADED && WerewolfPlayer.getOpt(player).filter(w -> w.getLevel() > 0).map(w -> w.getForm().isTransformed()).orElse(false);
         }
-        return 0;
     }
 
-    public static ItemStack setWaterPurity(ItemStack stack, int purity)
+    public static abstract class SereneSeasons
     {
-        if (THIRST_LOADED)
-        {   return WaterPurity.addPurity(stack, purity);
-        }
-        return stack;
-    }
-
-    public static ItemStack setWaterPurity(ItemStack item, BlockPos pos, Level level)
-    {
-        if (THIRST_LOADED)
-        {   return WaterPurity.addPurity(item, pos, level);
-        }
-        return item;
-    }
-
-    public static int getLegendaryTTStartIndex(List<Either<FormattedText, TooltipComponent>> tooltip)
-    {
-        if (isIcebergLoaded())
+        public static boolean isColdEnoughToSnow(Level level, BlockPos pos)
         {
-            int index = CSMath.getIndexOf(tooltip, element -> element.right().map(component -> component instanceof Tooltips.TitleBreakComponent).orElse(false));
-            if (index == -1) return 0;
-            return index;
+            return SEASONS_LOADED && SeasonHooks.coldEnoughToSnowHook(level.getBiome(pos).get(), pos, level);
         }
-        return 0;
+    }
+
+    public static abstract class Thirst
+    {
+        public static boolean hasWaterPurity(ItemStack stack)
+        {
+            if (THIRST_LOADED)
+            {   return WaterPurity.hasPurity(stack);
+            }
+            return false;
+        }
+
+        public static int getWaterPurity(ItemStack stack)
+        {
+            if (THIRST_LOADED)
+            {   return WaterPurity.getPurity(stack);
+            }
+            return 0;
+        }
+
+        public static ItemStack setWaterPurity(ItemStack stack, int purity)
+        {
+            if (THIRST_LOADED)
+            {   return WaterPurity.addPurity(stack, purity);
+            }
+            return stack;
+        }
+
+        public static ItemStack setWaterPurity(ItemStack item, BlockPos pos, Level level)
+        {
+            if (THIRST_LOADED)
+            {   return WaterPurity.addPurity(item, pos, level);
+            }
+            return item;
+        }
+    }
+
+    public static abstract class LegendaryTooltips
+    {
+        public static int getTooltipStartIndex(List<Either<FormattedText, TooltipComponent>> tooltip)
+        {
+            if (isIcebergLoaded())
+            {
+                int index = CSMath.getIndexOf(tooltip, element -> element.right().map(component -> component instanceof Tooltips.TitleBreakComponent).orElse(false));
+                if (index == -1) return 0;
+                return index;
+            }
+            return 0;
+        }
+    }
+
+    public static abstract class Valkyrien
+    {
+        public static Vec3 translateToShipCoords(Vec3 pos, Ship ship)
+        {
+            if (ship != null)
+            {
+                Vector3d posVec = VectorConversionsMCKt.toJOML(pos);
+                ship.getWorldToShip().transformPosition(posVec);
+                return VectorConversionsMCKt.toMinecraft(posVec);
+            }
+            return pos;
+        }
+
+        /**
+         * If any ship is managing the given position, translate the position to the corresponding coordinates in the shipyard
+         */
+        public static Vec3 transformIfShipPos(Level level, Vec3 pos)
+        {
+            if (VALKYRIEN_SKIES_LOADED)
+            {
+                List<Vector3d> shipTransforms = VSGameUtilsKt.transformToNearbyShipsAndWorld(level, pos.x, pos.y, pos.z, 1);
+                if (shipTransforms.isEmpty()) return pos;
+                Vector3d shipCoords = shipTransforms.get(0);
+                return VectorConversionsMCKt.toMinecraft(shipCoords);
+            }
+            return pos;
+        }
+
+        public static BlockPos transformIfShipPos(Level level, BlockPos pos)
+        {
+            if (VALKYRIEN_SKIES_LOADED)
+            {
+                List<Vector3d> shipTransforms = VSGameUtilsKt.transformToNearbyShipsAndWorld(level, pos.getX(), pos.getY(), pos.getZ(), 1);
+                if (shipTransforms.isEmpty()) return pos;
+                Vector3d shipCoords = shipTransforms.get(0);
+                return new BlockPos(VectorConversionsMCKt.toMinecraft(shipCoords));
+            }
+            return pos;
+        }
     }
 
     /* Compat Events */
@@ -303,7 +365,7 @@ public class CompatManager
                 int liners = 0;
                 for (ItemStack stack : event.getEntity().getArmorSlots())
                 {
-                    if (isDamageCold ? hasOttoLiner(stack) : hasOllieLiner(stack))
+                    if (isDamageCold ? ArmorUnderwear.hasOttoLiner(stack) : ArmorUnderwear.hasOllieLiner(stack))
                         liners++;
                 }
                 // Cancel the event if full liners

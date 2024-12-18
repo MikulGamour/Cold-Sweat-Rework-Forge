@@ -16,17 +16,38 @@ public class StormTempModifier extends TempModifier
     @Override
     protected Function<Double, Double> calculate(LivingEntity entity, Temperature.Trait trait)
     {
-        /*if (!entity.level.isClientSide())
+        /*if (!entity.level().isClientSide())
         {
-            WeatherManagerServer weatherManager = ServerTickHandler.getWeatherManagerFor(entity.level.dimension());
-            WeatherObjectParticleStorm snowStorm = weatherManager.getClosestParticleStormByIntensity(entity.position(), WeatherObjectParticleStorm.StormType.SNOWSTORM);
-            if (snowStorm != null)
+            WeatherManagerServer weatherManager = ServerTickHandler.getWeatherManagerFor(entity.level().dimension());
+            float windSpeed = weatherManager.getWindManager().getWindSpeedPositional(entity.blockPosition());
+
+            WeatherObject weather = (WeatherObject) CompatManager.Weather2.getClosestStorm(entity.level(), entity.blockPosition());
+            double stormTemp;
+            // If there is a blizzard/sandstorm, apply the temperature and wind speed modifiers
+            if (weather instanceof WeatherObjectParticleStorm storm)
             {
-                double distance = snowStorm.pos.distanceTo(entity.position());
-                if (distance > snowStorm.getSize())
-                    return temp -> temp;
-                return temp -> temp - CSMath.blend(0.5, 0, distance, 100, snowStorm.getSize()) * snowStorm.getIntensity();
+                double distance = storm.posGround.distanceTo(entity.position());
+
+                if (storm.type == WeatherObjectParticleStorm.StormType.SANDSTORM)
+                {   stormTemp = -CSMath.blend(0, storm.getIntensity() / 3, distance, storm.getSize(), 0);
+                }
+                else if (storm.type == WeatherObjectParticleStorm.StormType.SNOWSTORM)
+                {   stormTemp = CSMath.blend(0, storm.getIntensity(), distance, storm.getSize(), 0);
+                }
+                else
+                {   stormTemp = 0;
+                }
             }
+            else if (weather instanceof StormObject storm
+            && storm.levelCurIntensityStage >= StormObject.STATE_FORMING)
+            {
+                double distance = storm.posGround.distanceTo(entity.position());
+                stormTemp = CSMath.blend(0, storm.strength / 300, distance, storm.getSize(), 0);
+            }
+            else
+            {   stormTemp = 0;
+            }
+            return temp -> temp - stormTemp - windSpeed / 5;
         }*/
         return temp -> temp;
     }

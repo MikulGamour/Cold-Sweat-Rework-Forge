@@ -86,7 +86,7 @@ public class TooltipHandler
         String hoverName = stack.getHoverName().getString();
 
         if (CompatManager.isIcebergLoaded())
-        {   tooltipStartIndex = CompatManager.getLegendaryTTStartIndex(tooltip) + 1;
+        {   tooltipStartIndex = CompatManager.LegendaryTooltips.getTooltipStartIndex(tooltip) + 1;
         }
         else for (tooltipStartIndex = 0; tooltipStartIndex < tooltip.size(); tooltipStartIndex++)
         {

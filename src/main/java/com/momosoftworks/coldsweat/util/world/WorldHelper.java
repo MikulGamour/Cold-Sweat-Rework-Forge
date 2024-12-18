@@ -293,7 +293,7 @@ public abstract class WorldHelper
 
         return level.isRaining() && biome.get().getPrecipitation() == Biome.Precipitation.RAIN
             && canSeeSky(level, pos.above(), level.getMaxBuildHeight())
-            && !CompatManager.isColdEnoughToSnow(level, pos);
+            && !CompatManager.SereneSeasons.isColdEnoughToSnow(level, pos);
     }
 
     /**
