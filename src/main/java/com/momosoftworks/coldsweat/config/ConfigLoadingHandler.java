@@ -400,8 +400,7 @@ public class ConfigLoadingHandler
             {   items.addAll(tag.getValues());
             });
             for (Item item : items)
-            {
-                ConfigSettings.CARRIED_ITEM_TEMPERATURES.get().put(item, carryTempData);
+            {   ConfigSettings.CARRIED_ITEM_TEMPERATURES.get().put(item, carryTempData);
             }
         });
     }

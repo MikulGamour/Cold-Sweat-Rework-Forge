@@ -97,7 +97,7 @@ public class ConfigHelper
             {
                 ResourceLocation id = new ResourceLocation(objString);
                 Optional<T> obj = reg.getOptional(RegistryKey.create(registry, id));
-                if (!obj.isPresent())
+                if (!reg.containsKey(id) || !obj.isPresent())
                 {
                     ColdSweat.LOGGER.error("Error parsing config: \"{}\" does not exist", objString);
                     continue;
@@ -160,12 +160,12 @@ public class ConfigHelper
             else
             {
                 ResourceLocation id = new ResourceLocation(objString);
-                T obj = registry.getValue(id);
-                if (obj == null)
+                if (!registry.containsKey(id))
                 {
                     ColdSweat.LOGGER.error("Error parsing config: \"{}\" does not exist", objString);
                     continue;
                 }
+                T obj = registry.getValue(id);
                 registryList.add(Either.right(obj));
             }
         }

@@ -404,16 +404,15 @@ public class EntityTempManager
         }
     }
 
-    /**
-     * Used to grant the player the sewing table recipe when they get an insulation item
-     */
     @SubscribeEvent
-    public static void addSewingIngredientListener(EntityJoinWorldEvent event)
+    public static void addInventoryListeners(EntityJoinWorldEvent event)
     {
-        // Add listener for granting the sewing table recipe when the player gets an insulation item
         if (event.getEntity() instanceof PlayerEntity)
         {
             PlayerEntity player = ((PlayerEntity) event.getEntity());
+            /*
+            Add listener for granting the sewing table recipe when the player gets an insulation item
+            */
             player.containerMenu.addSlotListener(new IContainerListener()
             {
                 public void slotChanged(Container menu, int slotIndex, ItemStack stack)
@@ -437,7 +436,7 @@ public class EntityTempManager
     }
 
     @SubscribeEvent
-    public static void cancelImmuneModifiers(TempModifierEvent.Calculate.Pre event)
+    public static void cancelDisabledModifiers(TempModifierEvent.Calculate.Pre event)
     {
         TempModifier modifier = event.getModifier();
         LivingEntity entity = event.getEntity();

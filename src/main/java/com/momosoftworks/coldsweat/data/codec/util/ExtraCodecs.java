@@ -38,7 +38,7 @@ public class ExtraCodecs
         });
     }
 
-    public static Codec<Object> anyOf(Codec... codecs)
+    public static Codec<Object> anyOf(Codec<?>... codecs)
     {
         return new Codec<Object>()
         {
