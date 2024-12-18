@@ -1,23 +1,23 @@
 package com.momosoftworks.coldsweat.compat.kubejs.event.builder;
 
+import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.api.temperature.block_temp.BlockTemp;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
+import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
+import com.momosoftworks.coldsweat.util.serialization.RegistryHelper;
 import dev.latvian.kubejs.world.BlockContainerJS;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.tags.BlockTags;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.state.Property;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraftforge.registries.ForgeRegistries;
 
-import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 public class BlockTempBuilderJS
 {
@@ -35,13 +35,7 @@ public class BlockTempBuilderJS
 
     public BlockTempBuilderJS blocks(String... blocks)
     {
-        this.blocks.addAll(Arrays.stream(blocks).map(key -> ForgeRegistries.BLOCKS.getValue(new ResourceLocation(key))).collect(Collectors.toList()));
-        return this;
-    }
-
-    public BlockTempBuilderJS blockTag(String tag)
-    {
-        blocks.addAll(BlockTags.getAllTags().getTag(new ResourceLocation(tag)).getValues());
+        this.blocks.addAll(RegistryHelper.mapTaggableList(ConfigHelper.getBlocks(blocks)));
         return this;
     }
 
@@ -78,6 +72,26 @@ public class BlockTempBuilderJS
     public BlockTempBuilderJS blockPredicate(Predicate<BlockContainerJS> predicate)
     {
         this.predicate = predicate;
+        return this;
+    }
+
+    public BlockTempBuilderJS state(String name, Object value)
+    {
+        Optional<Block> block = this.blocks.stream().findFirst();
+        if (!block.isPresent())
+        {   ColdSweat.LOGGER.error("No blocks have been added to this KubeJS block temp yet. Cannot add state check {{} = {}}", name, value);
+            return this;
+        }
+        // Get the property with the given name
+        Property<?> property = block.get().getStateDefinition().getProperty(name);
+        if (property != null)
+        {
+            // Parse the desired value for this property
+            property.getValue(value.toString()).ifPresent(propertyValue ->
+            {   // Append the new predicate to the existing one
+                predicate = predicate.and(blockJS -> blockJS.getBlockState().getValue(property) == propertyValue);
+            });
+        }
         return this;
     }
 

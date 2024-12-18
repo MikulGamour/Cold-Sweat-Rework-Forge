@@ -4,17 +4,15 @@ import com.momosoftworks.coldsweat.data.codec.configuration.FoodData;
 import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
 import com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement;
+import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
+import com.momosoftworks.coldsweat.util.serialization.RegistryHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.tags.ItemTags;
-import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.registries.ForgeRegistries;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 public class FoodBuilderJS
 {
@@ -29,13 +27,7 @@ public class FoodBuilderJS
 
     public FoodBuilderJS items(String... items)
     {
-        this.items.addAll(Arrays.stream(items).map(key -> ForgeRegistries.ITEMS.getValue(new ResourceLocation(key))).collect(Collectors.toList()));
-        return this;
-    }
-
-    public FoodBuilderJS itemTag(String tag)
-    {
-        items.addAll(ItemTags.getAllTags().getTag(new ResourceLocation(tag)).getValues());
+        this.items.addAll(RegistryHelper.mapTaggableList(ConfigHelper.getItems(items)));
         return this;
     }
 
