@@ -348,31 +348,23 @@ public class ConfigSettings
         (saver, registryAccess) -> {},
         SyncType.ONE_WAY);
 
-        STRUCTURE_TEMPS = addSyncedSettingWithRegistries("structure_temperatures", FastMap::new, (holder, registryAccess) ->
+        STRUCTURE_TEMPS = addSettingWithRegistries("structure_temperatures", FastMap::new, (holder, registryAccess) ->
         {
             Map<Structure<?>, StructureTempData> dataMap = ConfigHelper.getRegistryMap(WorldSettingsConfig.STRUCTURE_TEMPERATURES.get(), Registry.STRUCTURE_FEATURE_REGISTRY,
                                                                                    toml -> StructureTempData.fromToml(toml, false, registryAccess), StructureTempData::structures);
             ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.STRUCTURE_TEMP_DATA);
 
             holder.get(registryAccess).putAll(dataMap);
-        },
-        (encoder, registryAccess) -> ConfigHelper.serializeHolderRegistry(encoder, "StructureTemperatures", Registry.STRUCTURE_FEATURE_REGISTRY, ModRegistries.STRUCTURE_TEMP_DATA, registryAccess),
-        (decoder, registryAccess) -> ConfigHelper.deserializeRegistry(decoder, "StructureTemperatures", Registry.STRUCTURE_FEATURE_REGISTRY, ModRegistries.STRUCTURE_TEMP_DATA, registryAccess),
-        (saver, registryAccess) -> {},
-        SyncType.ONE_WAY);
+        });
 
-        STRUCTURE_OFFSETS = addSyncedSettingWithRegistries("structure_offsets", FastMap::new, (holder, registryAccess) ->
+        STRUCTURE_OFFSETS = addSettingWithRegistries("structure_offsets", FastMap::new, (holder, registryAccess) ->
         {
             Map<Structure<?>, StructureTempData> dataMap = ConfigHelper.getRegistryMap(WorldSettingsConfig.STRUCTURE_TEMP_OFFSETS.get(), Registry.STRUCTURE_FEATURE_REGISTRY,
                                                                                    toml -> StructureTempData.fromToml(toml, true, registryAccess), StructureTempData::structures);
             ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.STRUCTURE_TEMP_DATA);
 
             holder.get(registryAccess).putAll(dataMap);
-        },
-        (encoder, registryAccess) -> ConfigHelper.serializeHolderRegistry(encoder, "StructureOffsets", Registry.STRUCTURE_FEATURE_REGISTRY, ModRegistries.STRUCTURE_TEMP_DATA, registryAccess),
-        (decoder, registryAccess) -> ConfigHelper.deserializeRegistry(decoder, "StructureOffsets", Registry.STRUCTURE_FEATURE_REGISTRY, ModRegistries.STRUCTURE_TEMP_DATA, registryAccess),
-        (saver, registryAccess) -> {},
-        SyncType.ONE_WAY);
+        });
 
         DEPTH_REGIONS = addSetting("depth_regions", ArrayList::new, holder -> {});
 
