@@ -168,15 +168,33 @@ public class TooltipHandler
         {   percent = "";
         }
         List<String> params = new ArrayList<>(Arrays.asList(sign + CSMath.formatDoubleOrInt(CSMath.round(value, 2)) + percent));
-        if (forTooltip)
-        {   params.add("show_icon");
+        IFormattableTextComponent component = new TranslationTextComponent(String.format("attribute.cold_sweat.modifier.%s.%s", operationString, attributeName),
+                                                            params.toArray()).withStyle(color);
+        component = addTooltipFlags(component, forTooltip, strikethrough);
+        return component;
+    }
+
+    public static IFormattableTextComponent addTooltipFlags(IFormattableTextComponent component, boolean showIcon, boolean strikethrough)
+    {
+        if (component instanceof TranslationTextComponent)
+        {
+            TranslationTextComponent translatable = (TranslationTextComponent) component;
+            List<Object> params = new ArrayList<>(Arrays.asList(translatable.getArgs()));
+            if (showIcon)
+            {   params.add("show_icon");
+            }
+            if (strikethrough)
+            {   params.add("strikethrough");
+            }
+            Style style = component.getStyle();
+            if (strikethrough)
+            {   style = style.withColor(Color.fromRgb(7561572));
+            }
+            IFormattableTextComponent newComponent = new TranslationTextComponent(translatable.getKey(), params.toArray()).setStyle(style);
+            component.getSiblings().forEach(newComponent::append);
+            return newComponent;
         }
-        if (strikethrough)
-        {   params.add("strikethrough");
-        }
-        return new TranslationTextComponent(String.format("attribute.cold_sweat.modifier.%s.%s", operationString, attributeName),
-                                         params.toArray())
-                .withStyle(color);
+        return component;
     }
 
     @SubscribeEvent
@@ -414,6 +432,7 @@ public class TooltipHandler
         /*
          Custom tooltips for attributes from insulation
          */
+        boolean foundUnmetAttribute = false;
         for (int i = 0; i < elements.size(); i++)
         {
             ITextComponent element = elements.get(i);
@@ -426,6 +445,13 @@ public class TooltipHandler
                     if (args.contains("show_icon"))
                     {
                         boolean strikethrough = args.contains("strikethrough");
+                        if (strikethrough && !foundUnmetAttribute)
+                        {
+                            IFormattableTextComponent unmetAttributesTooltip = new TranslationTextComponent("tooltip.cold_sweat.unmet_attributes").withStyle(TextFormatting.RED);
+                            addTooltip(i, new ClientInsulationAttributeTooltip(unmetAttributesTooltip, Minecraft.getInstance().font, false), elements);
+                            foundUnmetAttribute = true;
+                            i++;
+                        }
                         setTooltip(i, new ClientInsulationAttributeTooltip(component, Minecraft.getInstance().font, strikethrough), elements);
                     }
                 }

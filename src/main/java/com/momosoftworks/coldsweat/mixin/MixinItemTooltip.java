@@ -86,21 +86,24 @@ public class MixinItemTooltip
         CURRENT_SLOT_QUERY = slot;
     }
 
+    private static Multimap<Attribute, AttributeModifier> INSULATION_MODIFIERS = new FastMultiMap<>();
     private static Multimap<Attribute, AttributeModifier> UNMET_MODIFIERS = new FastMultiMap<>();
 
     @ModifyVariable(method = "getTooltipLines", at = @At(value = "STORE", ordinal = 0), ordinal = 0)
     private Multimap<Attribute, AttributeModifier> modifyAttributeModifiers(Multimap<Attribute, AttributeModifier> original, PlayerEntity player, ITooltipFlag advanced)
     {
+        INSULATION_MODIFIERS.clear();
+        UNMET_MODIFIERS.clear();
         Multimap<Attribute, AttributeModifier> modifiers = MultimapBuilder.linkedHashKeys().arrayListValues().build(original);
-        Multimap<Attribute, AttributeModifier> unmetModifiers = new FastMultiMap<>();
         if (player != null && MobEntity.getEquipmentSlotForItem(stack) == CURRENT_SLOT_QUERY)
         {
             for (InsulatorData insulator : ConfigSettings.INSULATING_ARMORS.get().get(stack.getItem()))
             {
                 modifiers.putAll(insulator.attributes().getMap());
-                if (!TooltipHandler.passesRequirement(insulator))
-                {   unmetModifiers.putAll(insulator.attributes().getMap());
+                if (TooltipHandler.passesRequirement(insulator))
+                {   INSULATION_MODIFIERS.putAll(insulator.attributes().getMap());
                 }
+                else UNMET_MODIFIERS.putAll(insulator.attributes().getMap());
             }
             ItemInsulationManager.getInsulationCap(stack).ifPresent(cap ->
             {
@@ -109,14 +112,14 @@ public class MixinItemTooltip
                     for (InsulatorData insulator : ConfigSettings.INSULATION_ITEMS.get().get(item.getItem()))
                     {
                         modifiers.putAll(insulator.attributes().getMap());
-                        if (!TooltipHandler.passesRequirement(insulator))
-                        {   unmetModifiers.putAll(insulator.attributes().getMap());
+                        if (TooltipHandler.passesRequirement(insulator))
+                        {   INSULATION_MODIFIERS.putAll(insulator.attributes().getMap());
                         }
+                        else UNMET_MODIFIERS.putAll(insulator.attributes().getMap());
                     }
                 });
             });
         }
-        UNMET_MODIFIERS = unmetModifiers;
         return modifiers;
     }
 
@@ -156,15 +159,22 @@ public class MixinItemTooltip
         {
             IFormattableTextComponent component = ((IFormattableTextComponent) obj);
             List<ITextComponent> siblings = component.getSiblings();
-            if (TOOLTIP != null && ENTRY != null && MODIFIER != null
-            && EntityTempManager.isTemperatureAttribute(ENTRY.getKey()))
+
+            if (TOOLTIP != null && ENTRY != null && MODIFIER != null)
             {
-                boolean unmet = UNMET_MODIFIERS.remove(ENTRY.getKey(), ENTRY.getValue());
-                IFormattableTextComponent newline = TooltipHandler.getFormattedAttributeModifier(ENTRY.getKey(), MODIFIER.getAmount(), MODIFIER.getOperation(), true, unmet);
-                for (ITextComponent sibling : siblings)
-                {   newline = newline.append(sibling);
+                boolean hasUnmetRequirements = UNMET_MODIFIERS.remove(ENTRY.getKey(), ENTRY.getValue());
+                boolean isFromInsulation = INSULATION_MODIFIERS.remove(ENTRY.getKey(), ENTRY.getValue()) || hasUnmetRequirements;
+
+                if (EntityTempManager.isTemperatureAttribute(ENTRY.getKey()))
+                {
+                    IFormattableTextComponent newline = TooltipHandler.getFormattedAttributeModifier(ENTRY.getKey(), MODIFIER.getAmount(), MODIFIER.getOperation(), true, hasUnmetRequirements);
+
+                    for (ITextComponent sibling : siblings)
+                    {   newline = newline.append(sibling);
+                    }
+                    return (E) newline;
                 }
-                return (E) newline;
+                else return (E) TooltipHandler.addTooltipFlags(component, isFromInsulation, hasUnmetRequirements);
             }
         }
         return obj;
