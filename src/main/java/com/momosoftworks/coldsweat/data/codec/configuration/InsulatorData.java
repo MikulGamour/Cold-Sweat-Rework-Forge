@@ -16,18 +16,19 @@ import com.momosoftworks.coldsweat.data.codec.util.AttributeModifierMap;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
 import com.momosoftworks.coldsweat.util.serialization.NBTHelper;
-import com.momosoftworks.coldsweat.util.serialization.NbtSerializable;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.NBTDynamicOps;
 import net.minecraft.tags.ITag;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nullable;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class InsulatorData extends ConfigData implements RequirementHolder
 {
@@ -63,9 +64,9 @@ public class InsulatorData extends ConfigData implements RequirementHolder
     public static final Codec<InsulatorData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Insulation.Slot.CODEC.fieldOf("type").forGetter(data -> data.slot),
             Insulation.getCodec().fieldOf("insulation").forGetter(data -> data.insulation),
-            com.momosoftworks.coldsweat.data.codec.requirement.ItemRequirement.CODEC.fieldOf("data").forGetter(data -> data.data),
+            ItemRequirement.CODEC.fieldOf("data").forGetter(data -> data.data),
             EntityRequirement.getCodec().optionalFieldOf("entity", EntityRequirement.NONE).forGetter(data -> data.predicate),
-            com.momosoftworks.coldsweat.data.codec.util.AttributeModifierMap.CODEC.optionalFieldOf("attributes", new AttributeModifierMap()).forGetter(data -> data.attributes),
+            AttributeModifierMap.CODEC.optionalFieldOf("attributes", new AttributeModifierMap()).forGetter(data -> data.attributes),
             Codec.unboundedMap(ResourceLocation.CODEC, Codec.DOUBLE).optionalFieldOf("immune_temp_modifiers", new HashMap<>()).forGetter(data -> data.immuneTempModifiers),
             Codec.STRING.listOf().optionalFieldOf("required_mods", Arrays.asList()).forGetter(InsulatorData::requiredMods)
     ).apply(instance, InsulatorData::new));
