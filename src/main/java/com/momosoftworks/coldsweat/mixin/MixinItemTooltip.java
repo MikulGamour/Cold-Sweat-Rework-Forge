@@ -52,8 +52,8 @@ public class MixinItemTooltip
         {
             tooltip.add(new StringTextComponent(""));
             tooltip.add(new TranslationTextComponent("item.modifiers.insulation").withStyle(TextFormatting.GRAY));
-            TooltipHandler.addModifierTooltipLines(tooltip, insulatorAttributes, false);
-            TooltipHandler.addModifierTooltipLines(tooltip, unmetInsulatorAttributes, true);
+            TooltipHandler.addModifierTooltipLines(tooltip, insulatorAttributes, true, false);
+            TooltipHandler.addModifierTooltipLines(tooltip, unmetInsulatorAttributes, true, true);
         }
 
         // Add curio attributes to tooltip
@@ -70,8 +70,8 @@ public class MixinItemTooltip
         {
             tooltip.add(new StringTextComponent(""));
             tooltip.add(new TranslationTextComponent("item.modifiers.curio").withStyle(TextFormatting.GRAY));
-            TooltipHandler.addModifierTooltipLines(tooltip, curioAttributes, false);
-            TooltipHandler.addModifierTooltipLines(tooltip, unmetCurioAttributes, true);
+            TooltipHandler.addModifierTooltipLines(tooltip, curioAttributes, true, false);
+            TooltipHandler.addModifierTooltipLines(tooltip, unmetCurioAttributes, true, true);
         }
     }
 

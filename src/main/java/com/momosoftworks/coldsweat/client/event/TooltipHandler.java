@@ -69,7 +69,7 @@ public class TooltipHandler
 
     private static int HOVERED_ITEM_UPDATE_COOLDOWN = 0;
     private static ItemStack HOVERED_STACK = ItemStack.EMPTY;
-    public static FastMap<UUID, Boolean> HOVERED_STACK_PREDICATES = new FastMap<>();
+    public static HashMap<UUID, Boolean> HOVERED_STACK_PREDICATES = new HashMap<>();
 
     public static <T extends ConfigData> boolean passesRequirement(T element)
     {   return HOVERED_STACK_PREDICATES.getOrDefault(element.getId(), true);
@@ -113,7 +113,7 @@ public class TooltipHandler
         return tooltipEndIndex;
     }
 
-    public static void addModifierTooltipLines(List<ITextComponent> tooltip, AttributeModifierMap map, boolean strikethrough)
+    public static void addModifierTooltipLines(List<ITextComponent> tooltip, AttributeModifierMap map, boolean showIcon, boolean strikethrough)
     {
         map.getMap().asMap().forEach((attribute, modifiers) ->
         {
@@ -124,7 +124,7 @@ public class TooltipHandler
                 {   value += modifier.getAmount();
                 }
                 if (value != 0)
-                {   tooltip.add(getFormattedAttributeModifier(attribute, value, operation, false, strikethrough));
+                {   tooltip.add(getFormattedAttributeModifier(attribute, value, operation, showIcon, strikethrough));
                 }
             }
         });
