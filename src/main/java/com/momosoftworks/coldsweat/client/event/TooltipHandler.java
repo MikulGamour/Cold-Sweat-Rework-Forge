@@ -11,6 +11,7 @@ import com.momosoftworks.coldsweat.client.gui.tooltip.ClientSoulspringTooltip;
 import com.momosoftworks.coldsweat.client.gui.tooltip.InsulationAttributeTooltip;
 import com.momosoftworks.coldsweat.client.gui.tooltip.InsulationTooltip;
 import com.momosoftworks.coldsweat.client.gui.tooltip.SoulspringTooltip;
+import com.momosoftworks.coldsweat.common.capability.handler.EntityTempManager;
 import com.momosoftworks.coldsweat.common.capability.handler.ItemInsulationManager;
 import com.momosoftworks.coldsweat.common.item.SoulspringLampItem;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
@@ -30,6 +31,7 @@ import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.math.FastMap;
 import com.momosoftworks.coldsweat.util.serialization.DynamicHolder;
 import net.minecraft.ChatFormatting;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
@@ -37,21 +39,20 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.Tag;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.FormattedText;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.*;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.util.StringUtil;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -62,6 +63,8 @@ import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.ApiStatus;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.*;
 
 @EventBusSubscriber(Dist.CLIENT)
@@ -71,6 +74,9 @@ public class TooltipHandler
     public static final Style HOT = Style.EMPTY.withColor(16736574);
     public static final Component EXPAND_TOOLTIP = Component.literal("?").withStyle(Style.EMPTY.withColor(ChatFormatting.BLUE).withUnderlined(true))
                                            .append(Component.literal(" 'Shift'").withStyle(Style.EMPTY.withColor(ChatFormatting.GRAY).withUnderlined(false)));
+    public static final DecimalFormat ATTRIBUTE_MODIFIER_FORMAT = Util.make(new DecimalFormat("#.##"), (format) -> {
+        format.setDecimalFormatSymbols(DecimalFormatSymbols.getInstance(Locale.ROOT));
+    });
 
     private static int HOVERED_ITEM_UPDATE_COOLDOWN = 0;
     private static ItemStack HOVERED_STACK = ItemStack.EMPTY;
@@ -175,11 +181,56 @@ public class TooltipHandler
         else
         {   percent = "";
         }
-        List<String> params = new ArrayList<>(List.of(sign + CSMath.formatDoubleOrInt(CSMath.round(value, 2)) + percent));
-        MutableComponent component = Component.translatable(String.format("attribute.cold_sweat.modifier.%s.%s", operationString, attributeName),
-                                                            params.toArray()).withStyle(color);
+        List<Object> params = new ArrayList<>(List.of(sign + CSMath.formatDoubleOrInt(CSMath.round(value, 2)) + percent));
+        MutableComponent component;
+        if (EntityTempManager.isTemperatureAttribute(attribute))
+        {   component = Component.translatable(String.format("attribute.cold_sweat.modifier.%s.%s", operationString, attributeName), params.toArray());
+        }
+        else
+        {
+            component = getFormattedVanillaAttributeModifier(attribute, value, operation);
+            TranslatableContents contents = (TranslatableContents) component.getContents();
+            params.addAll(0, Arrays.asList(contents.getArgs()));
+            component = setComponentContents(getFormattedVanillaAttributeModifier(attribute, value, operation), new TranslatableContents(contents.getKey(), contents.getFallback(), params.toArray()));
+        }
+        component = component.withStyle(color);
         component = addTooltipFlags(component, forTooltip, strikethrough);
         return component;
+    }
+
+    public static MutableComponent getFormattedVanillaAttributeModifier(Holder<Attribute> attribute, double amount, AttributeModifier.Operation operation)
+    {
+        double adjustedAmount;
+        if (operation == AttributeModifier.Operation.ADD_VALUE)
+        {
+            if (attribute.equals(Attributes.KNOCKBACK_RESISTANCE))
+            {   adjustedAmount = amount * 10.0D;
+            }
+            else
+            {   adjustedAmount = amount;
+            }
+        }
+        else
+        {   adjustedAmount = amount * 100.0D;
+        }
+
+        if (amount >= 0.0D)
+        {
+            return Component.translatable("attribute.modifier.plus." + operation.getSerializedName(), ATTRIBUTE_MODIFIER_FORMAT.format(adjustedAmount),
+                                          Component.translatable(attribute.value().getDescriptionId())).withStyle(ChatFormatting.BLUE);
+        }
+        else
+        {   adjustedAmount *= -1;
+            return Component.translatable("attribute.modifier.take." + operation.getSerializedName(), ATTRIBUTE_MODIFIER_FORMAT.format(adjustedAmount),
+                                            Component.translatable(attribute.value().getDescriptionId())).withStyle(ChatFormatting.RED);
+        }
+    }
+
+    public static MutableComponent setComponentContents(MutableComponent component, ComponentContents newContents)
+    {
+        MutableComponent newComponent = MutableComponent.create(newContents).setStyle(component.getStyle());
+        component.getSiblings().forEach(newComponent::append);
+        return newComponent;
     }
 
     public static MutableComponent addTooltipFlags(MutableComponent component, boolean showIcon, boolean strikethrough)
@@ -193,12 +244,10 @@ public class TooltipHandler
             if (strikethrough)
             {   params.add("strikethrough");
             }
-            Style style = component.getStyle();
+            MutableComponent newComponent = setComponentContents(component, new TranslatableContents(translatable.getKey(), "_", params.toArray()));
             if (strikethrough)
-            {   style = style.withColor(7561572);
+            {   newComponent.setStyle(Style.EMPTY.withColor(7561572));
             }
-            MutableComponent newComponent = Component.translatable(translatable.getKey(), params.toArray()).setStyle(style);
-            component.getSiblings().forEach(newComponent::append);
             return newComponent;
         }
         return component;
@@ -253,8 +302,6 @@ public class TooltipHandler
         int tooltipStartIndex = getTooltipTitleIndex(elements, stack);
         // Get the index of the end of the tooltip, before the debug info (if enabled)
         int tooltipEndIndex = getTooltipEndIndex(elements, stack);
-
-        Player player = Minecraft.getInstance().player;
 
         /*
          Tooltips for soulspring lamp
@@ -419,18 +466,23 @@ public class TooltipHandler
                 if (component.getContents() instanceof TranslatableContents translatableContents
                 && translatableContents.getArgs() != null)
                 {
+                    // Indicates the start of a new section; reset the flag
+                    if (translatableContents.getKey().contains("item.modifiers"))
+                    {   foundUnmetAttribute = false;
+                    }
                     List<Object> args = Arrays.asList(translatableContents.getArgs());
-                    if (args.contains("show_icon"))
+                    boolean strikethrough = args.contains("strikethrough");
+                    // At the first unmet attribute modifier for each section, insert the "Unmet Requirements" tooltip line
+                    if (strikethrough && !foundUnmetAttribute)
                     {
-                        boolean strikethrough = args.contains("strikethrough");
-                        if (strikethrough && !foundUnmetAttribute)
-                        {
-                            MutableComponent unmetAttributesTooltip = Component.translatable("tooltip.cold_sweat.unmet_attributes").withStyle(ChatFormatting.RED);
-                            elements.add(i, Either.right(new InsulationAttributeTooltip(unmetAttributesTooltip, Minecraft.getInstance().font, false)));
-                            foundUnmetAttribute = true;
-                            i++;
-                        }
-                        elements.set(i, Either.right(new InsulationAttributeTooltip(component, Minecraft.getInstance().font, strikethrough)));
+                        MutableComponent unmetAttributesTooltip = Component.translatable("tooltip.cold_sweat.unmet_attributes").withStyle(ChatFormatting.RED);
+                        elements.add(i, Either.right(new InsulationAttributeTooltip(unmetAttributesTooltip, Minecraft.getInstance().font, false)));
+                        foundUnmetAttribute = true;
+                        i++;
+                    }
+                    // If the insulation icon should be shown, convert the tooltip into an InsulationAttributeTooltip
+                    if (args.contains("show_icon"))
+                    {   elements.set(i, Either.right(new InsulationAttributeTooltip(component, Minecraft.getInstance().font, strikethrough)));
                     }
                 }
             }

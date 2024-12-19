@@ -879,9 +879,9 @@ public class EntityTempManager
         };
     }
 
-    public static boolean isTemperatureAttribute(Attribute attribute)
+    public static boolean isTemperatureAttribute(Holder<Attribute> attribute)
     {
-        return BuiltInRegistries.ATTRIBUTE.getKey(attribute).getNamespace().equals(ColdSweat.MOD_ID);
+        return attribute.getKey().location().getNamespace().equals(ColdSweat.MOD_ID);
     }
 
     public static List<AttributeInstance> getAllTemperatureAttributes(LivingEntity entity)
