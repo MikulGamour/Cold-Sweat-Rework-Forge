@@ -362,7 +362,7 @@ public class EntityTempManager
         {
             if (event.getTrait() == Temperature.Trait.WORLD)
             {
-                event.addModifier(new BiomeTempModifier(25).tickRate(10), Placement.Duplicates.BY_CLASS, Placement.BEFORE_FIRST);
+                event.addModifier(new BiomeTempModifier(49).tickRate(10), Placement.Duplicates.BY_CLASS, Placement.BEFORE_FIRST);
                 event.addModifier(new UndergroundTempModifier().tickRate(10), Placement.Duplicates.BY_CLASS, Placement.of(Mode.AFTER, Order.FIRST, mod -> mod instanceof BiomeTempModifier));
                 event.addModifier(new BlockTempModifier().tickRate(4), Placement.Duplicates.BY_CLASS, Placement.AFTER_LAST);
                 event.addModifier(new EntitiesTempModifier().tickRate(10), Placement.Duplicates.BY_CLASS, Placement.AFTER_LAST);
