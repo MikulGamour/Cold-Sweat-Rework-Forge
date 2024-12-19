@@ -31,6 +31,7 @@ public class BiomeTempModifier extends TempModifier
     @Override
     public Function<Double, Double> calculate(LivingEntity entity, Temperature.Trait trait)
     {
+        int samples = this.getNBT().getInt("Samples");
         try
         {
             World level = entity.level;
@@ -50,10 +51,8 @@ public class BiomeTempModifier extends TempModifier
             }
 
             int biomeCount = 0;
-            for (BlockPos blockPos : WorldHelper.getPositionGrid(entPos, 64, 10))
+            for (BlockPos blockPos : WorldHelper.getPositionGrid(entPos, samples, 10))
             {
-                // Check if this position is valid
-                if (blockPos.distSqr(entPos) > 30*30) continue;
                 // Get the holder for the biome
                 Biome biome = level.getBiomeManager().getBiome(blockPos);
 
