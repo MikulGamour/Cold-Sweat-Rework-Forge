@@ -3,6 +3,7 @@ package com.momosoftworks.coldsweat.client.event;
 import com.google.common.collect.Multimap;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
 import com.momosoftworks.coldsweat.api.insulation.Insulation;
 import com.momosoftworks.coldsweat.api.util.Temperature;
@@ -10,6 +11,7 @@ import com.momosoftworks.coldsweat.client.gui.tooltip.ClientInsulationAttributeT
 import com.momosoftworks.coldsweat.client.gui.tooltip.ClientInsulationTooltip;
 import com.momosoftworks.coldsweat.client.gui.tooltip.ClientSoulspringTooltip;
 import com.momosoftworks.coldsweat.client.gui.tooltip.Tooltip;
+import com.momosoftworks.coldsweat.common.capability.handler.EntityTempManager;
 import com.momosoftworks.coldsweat.common.capability.handler.ItemInsulationManager;
 import com.momosoftworks.coldsweat.common.item.SoulspringLampItem;
 import com.momosoftworks.coldsweat.compat.CompatManager;
@@ -34,6 +36,7 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.inventory.ContainerScreen;
 import net.minecraft.entity.ai.attributes.Attribute;
 import net.minecraft.entity.ai.attributes.AttributeModifier;
+import net.minecraft.entity.ai.attributes.Attributes;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.EquipmentSlotType;
 import net.minecraft.inventory.container.Slot;
@@ -50,7 +53,6 @@ import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -167,10 +169,60 @@ public class TooltipHandler
         else
         {   percent = "";
         }
-        List<String> params = new ArrayList<>(Arrays.asList(sign + CSMath.formatDoubleOrInt(CSMath.round(value, 2)) + percent));
-        IFormattableTextComponent component = new TranslationTextComponent(String.format("attribute.cold_sweat.modifier.%s.%s", operationString, attributeName),
-                                                            params.toArray()).withStyle(color);
+        List<Object> params = new ArrayList<>(Arrays.asList(sign + CSMath.formatDoubleOrInt(CSMath.round(value, 2)) + percent));
+        IFormattableTextComponent component;
+        if (EntityTempManager.isTemperatureAttribute(attribute))
+        {   component = new TranslationTextComponent(String.format("attribute.cold_sweat.modifier.%s.%s", operationString, attributeName), params.toArray());
+        }
+        else
+        {
+            component = getFormattedVanillaAttributeModifier(attribute, amount, operation);
+            Object[] contents = ((TranslationTextComponent) component).getArgs();
+            params.addAll(0, Arrays.asList(contents));
+            component = setComponentContents(getFormattedVanillaAttributeModifier(attribute, amount, operation), contents);
+        }
+        component = component.withStyle(color);
         component = addTooltipFlags(component, forTooltip, strikethrough);
+        return component;
+    }
+
+    public static IFormattableTextComponent getFormattedVanillaAttributeModifier(Attribute attribute, double amount, AttributeModifier.Operation operation)
+    {
+        double adjustedAmount;
+        if (operation == AttributeModifier.Operation.ADDITION)
+        {
+            if (attribute.equals(Attributes.KNOCKBACK_RESISTANCE))
+            {   adjustedAmount = amount * 10.0D;
+            }
+            else
+            {   adjustedAmount = amount;
+            }
+        }
+        else
+        {   adjustedAmount = amount * 100.0D;
+        }
+
+        if (amount >= 0.0D)
+        {
+            return new TranslationTextComponent("attribute.modifier.plus." + operation.toValue(), ItemStack.ATTRIBUTE_MODIFIER_FORMAT.format(adjustedAmount),
+                                          new TranslationTextComponent(attribute.getDescriptionId())).withStyle(TextFormatting.BLUE);
+        }
+        else
+        {   adjustedAmount *= -1;
+            return new TranslationTextComponent("attribute.modifier.take." + operation.toValue(), ItemStack.ATTRIBUTE_MODIFIER_FORMAT.format(adjustedAmount),
+                                            new TranslationTextComponent(attribute.getDescriptionId())).withStyle(TextFormatting.RED);
+        }
+    }
+
+    public static IFormattableTextComponent setComponentContents(IFormattableTextComponent component, Object[] newContents)
+    {
+        if (component instanceof TranslationTextComponent)
+        {
+            TranslationTextComponent translatable = (TranslationTextComponent) component;
+            IFormattableTextComponent newComponent = new TranslationTextComponent(translatable.getKey(), newContents).setStyle(component.getStyle());
+            component.getSiblings().forEach(newComponent::append);
+            return newComponent;
+        }
         return component;
     }
 
@@ -186,12 +238,10 @@ public class TooltipHandler
             if (strikethrough)
             {   params.add("strikethrough");
             }
-            Style style = component.getStyle();
+            IFormattableTextComponent newComponent = setComponentContents(component, params.toArray());
             if (strikethrough)
-            {   style = style.withColor(Color.fromRgb(7561572));
+            {   newComponent.setStyle(Style.EMPTY.withColor(Color.fromRgb(7561572)));
             }
-            IFormattableTextComponent newComponent = new TranslationTextComponent(translatable.getKey(), params.toArray()).setStyle(style);
-            component.getSiblings().forEach(newComponent::append);
             return newComponent;
         }
         return component;
@@ -269,9 +319,6 @@ public class TooltipHandler
         int tooltipStartIndex = getTooltipTitleIndex(elements, stack);
         // Get the index of the end of the tooltip, before the debug info (if enabled)
         int tooltipEndIndex = getTooltipEndIndex(elements, stack);
-
-        PlayerEntity player = event.getPlayer();
-        if (player == null) return;
 
         /*
          Tooltips for soulspring lamp
@@ -441,18 +488,23 @@ public class TooltipHandler
                 TranslationTextComponent component = ((TranslationTextComponent) element);
                 if (component.getArgs() != null)
                 {
+                    // Indicates the start of a new section; reset the flag
+                    if (component.getKey().contains("item.modifiers"))
+                    {   foundUnmetAttribute = false;
+                    }
                     List<Object> args = Arrays.asList(component.getArgs());
-                    if (args.contains("show_icon"))
+                    boolean strikethrough = args.contains("strikethrough");
+                    // At the first unmet attribute modifier for each section, insert the "Unmet Requirements" tooltip line
+                    if (strikethrough && !foundUnmetAttribute)
                     {
-                        boolean strikethrough = args.contains("strikethrough");
-                        if (strikethrough && !foundUnmetAttribute)
-                        {
-                            IFormattableTextComponent unmetAttributesTooltip = new TranslationTextComponent("tooltip.cold_sweat.unmet_attributes").withStyle(TextFormatting.RED);
-                            addTooltip(i, new ClientInsulationAttributeTooltip(unmetAttributesTooltip, Minecraft.getInstance().font, false), elements);
-                            foundUnmetAttribute = true;
-                            i++;
-                        }
-                        setTooltip(i, new ClientInsulationAttributeTooltip(component, Minecraft.getInstance().font, strikethrough), elements);
+                        IFormattableTextComponent unmetAttributesTooltip = new TranslationTextComponent("tooltip.cold_sweat.unmet_attributes").withStyle(TextFormatting.RED);
+                        addTooltip(i, new ClientInsulationAttributeTooltip(unmetAttributesTooltip, Minecraft.getInstance().font, false), elements);
+                        foundUnmetAttribute = true;
+                        i++;
+                    }
+                    // If the insulation icon should be shown, convert the tooltip into an InsulationAttributeTooltip
+                    if (args.contains("show_icon"))
+                    {   setTooltip(i, new ClientInsulationAttributeTooltip(component, Minecraft.getInstance().font, strikethrough), elements);
                     }
                 }
             }

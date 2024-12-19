@@ -77,6 +77,7 @@ import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Mod.EventBusSubscriber
 public class EntityTempManager
@@ -920,12 +921,12 @@ public class EntityTempManager
         return ForgeRegistries.ATTRIBUTES.getKey(attribute).getNamespace().equals(ColdSweat.MOD_ID);
     }
 
-    public static List<AttributeInstance> getAllTemperatureAttributes(LivingEntity entity)
+    public static List<ModifiableAttributeInstance> getAllTemperatureAttributes(LivingEntity entity)
     {
         return Arrays.stream(VALID_ATTRIBUTE_TRAITS)
                      .map(trait -> getAttribute(trait, entity))
                      .filter(Objects::nonNull)
-                     .toList();
+                     .collect(Collectors.toList());
     }
 
     public static List<TempModifier> getAllModifiers(LivingEntity entity)
