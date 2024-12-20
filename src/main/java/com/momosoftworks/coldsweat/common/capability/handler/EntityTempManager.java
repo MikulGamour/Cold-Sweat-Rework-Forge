@@ -621,7 +621,7 @@ public class EntityTempManager
         EffectInstance effect = event.getPotionEffect();
 
         if (!entity.level.isClientSide && isTemperatureEnabled(entity.getType())
-        && (effect.getEffect() == ModEffects.CHILL || effect.getEffect() == ModEffects.WARMTH))
+        && (effect.getEffect() == ModEffects.FRIGIDNESS || effect.getEffect() == ModEffects.WARMTH))
         {
             boolean isWarmth = effect.getEffect() == ModEffects.WARMTH;
             int warming = isWarmth ? effect.getAmplifier() + 1 : 0;
@@ -639,7 +639,7 @@ public class EntityTempManager
         EffectInstance effect = event.getPotionEffect();
 
         if (effect != null && !entity.level.isClientSide && isTemperatureEnabled(entity.getType())
-        && (effect.getEffect() == ModEffects.CHILL || effect.getEffect() == ModEffects.WARMTH))
+        && (effect.getEffect() == ModEffects.FRIGIDNESS || effect.getEffect() == ModEffects.WARMTH))
         {
             Optional<BlockInsulationTempModifier> modifier = Temperature.getModifier(entity, Temperature.Trait.WORLD, BlockInsulationTempModifier.class);
             if (modifier.isPresent())
@@ -653,7 +653,7 @@ public class EntityTempManager
                 else
                 {   nbt.putInt("Cooling", 0);
                 }
-                if (isWarmth ? !entity.hasEffect(ModEffects.CHILL) : !entity.hasEffect(ModEffects.WARMTH))
+                if (isWarmth ? !entity.hasEffect(ModEffects.FRIGIDNESS) : !entity.hasEffect(ModEffects.WARMTH))
                 {   Temperature.removeModifiers(entity, Temperature.Trait.WORLD, mod -> mod instanceof BlockInsulationTempModifier);
                 }
             }

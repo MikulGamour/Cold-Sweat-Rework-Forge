@@ -678,7 +678,7 @@ public class HearthBlockEntity extends LockableLootTileEntity implements ITickab
             int maxEffect = this.getMaxInsulationLevel() - 1;
             int effectLevel = (int) Math.min(maxEffect, (insulationLevel / (double) this.getInsulationTime()) * maxEffect);
             if (shouldUseColdFuel)
-            {   player.addEffect(new EffectInstance(ModEffects.CHILL, 120, effectLevel, false, false, true));
+            {   player.addEffect(new EffectInstance(ModEffects.FRIGIDNESS, 120, effectLevel, false, false, true));
             }
             if (shouldUseHotFuel)
             {   player.addEffect(new EffectInstance(ModEffects.WARMTH, 120, effectLevel, false, false, true));

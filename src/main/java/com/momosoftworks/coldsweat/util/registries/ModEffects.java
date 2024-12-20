@@ -5,7 +5,7 @@ import net.minecraft.potion.Effect;
 
 public class ModEffects
 {
-    public static Effect CHILL = EffectInit.CHILL.get();
+    public static Effect FRIGIDNESS = EffectInit.FRIGIDNESS.get();
     public static Effect WARMTH = EffectInit.WARMTH.get();
     public static Effect ICE_RESISTANCE = EffectInit.ICE_RESISTANCE.get();
     public static Effect GRACE = EffectInit.GRACE.get();

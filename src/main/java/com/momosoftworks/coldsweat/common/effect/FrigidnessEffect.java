@@ -5,15 +5,15 @@ import net.minecraft.potion.EffectType;
 
 import javax.annotation.Nonnull;
 
-public class ChillEffect extends Effect
+public class FrigidnessEffect extends Effect
 {
-    public ChillEffect()
+    public FrigidnessEffect()
     {   super(EffectType.BENEFICIAL, 8961252);
     }
 
     @Nonnull
     public String getName()
-    {   return "effect.chill";
+    {   return "effect.frigidness";
     }
 
     public boolean isInstant()
