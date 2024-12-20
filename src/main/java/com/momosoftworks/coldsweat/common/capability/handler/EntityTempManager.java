@@ -589,7 +589,10 @@ public class EntityTempManager
         {   entity.getAttributes().removeAttributeModifiers(carryTempData.attributeModifiers().getMap());
         }
         for (ItemCarryTempData carryTempData : ConfigSettings.CARRIED_ITEM_TEMPERATURES.get().get(newStack.getItem()))
-        {   entity.getAttributes().addTransientAttributeModifiers(carryTempData.attributeModifiers().getMap());
+        {
+            if (carryTempData.test(entity, newStack))
+            {   entity.getAttributes().addTransientAttributeModifiers(carryTempData.attributeModifiers().getMap());
+            }
         }
     }
 
