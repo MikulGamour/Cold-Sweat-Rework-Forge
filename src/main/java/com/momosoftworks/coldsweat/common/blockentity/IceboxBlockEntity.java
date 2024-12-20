@@ -5,10 +5,8 @@ import com.momosoftworks.coldsweat.common.block.IceboxBlock;
 import com.momosoftworks.coldsweat.common.container.IceboxContainer;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.core.init.*;
-import com.momosoftworks.coldsweat.core.network.message.BlockDataUpdateMessage;
 import com.momosoftworks.coldsweat.data.codec.configuration.FuelData;
 import com.momosoftworks.coldsweat.data.tag.ModItemTags;
-import com.momosoftworks.coldsweat.compat.CompatManager;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.ParticleStatus;
@@ -17,11 +15,8 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.MenuProvider;
-import net.minecraft.world.WorldlyContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -35,19 +30,14 @@ import net.minecraft.world.level.block.entity.LidBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Random;
 
 public class IceboxBlockEntity extends HearthBlockEntity implements LidBlockEntity
 {
     public static int[] WATERSKIN_SLOTS = {1, 2, 3, 4, 5, 6, 7, 8, 9};
     public static int[] FUEL_SLOT = {0};
-
-    List<ServerPlayer> usingPlayers = new ArrayList<>();
 
     private final ContainerOpenersCounter openersCounter = new ContainerOpenersCounter()
     {
@@ -100,17 +90,6 @@ public class IceboxBlockEntity extends HearthBlockEntity implements LidBlockEnti
     protected void signalOpenCount(Level level, BlockPos pos, BlockState state, int eventId, int eventParam)
     {   Block block = state.getBlock();
         level.blockEvent(pos, block, eventId, eventParam);
-    }
-
-    private void sendUpdatePacket()
-    {
-        // Remove the players that aren't interacting with this block anymore
-        usingPlayers.removeIf(player -> !(player.containerMenu instanceof IceboxContainer iceboxContainer && iceboxContainer.te == this));
-
-        // Send data to all players with this block's menu open
-        for (ServerPlayer player : usingPlayers)
-        {   PacketDistributor.sendToPlayer(player, new BlockDataUpdateMessage(this));
-        }
     }
 
     @Override
@@ -260,12 +239,6 @@ public class IceboxBlockEntity extends HearthBlockEntity implements LidBlockEnti
     }
 
     @Override
-    public void setColdFuel(int amount, boolean update)
-    {   super.setColdFuel(amount, update);
-        this.sendUpdatePacket();
-    }
-
-    @Override
     public void addFuel(int amount)
     {   this.setColdFuelAndUpdate(this.getColdFuel() + amount);
     }
@@ -285,10 +258,6 @@ public class IceboxBlockEntity extends HearthBlockEntity implements LidBlockEnti
     {
         super.startOpen(player);
         this.openersCounter.incrementOpeners(player, this.level, this.getBlockPos(), this.getBlockState());
-        if (player instanceof ServerPlayer serverPlayer)
-        {   this.usingPlayers.add(serverPlayer);
-            this.sendUpdatePacket();
-        }
     }
 
     @Override
@@ -296,9 +265,6 @@ public class IceboxBlockEntity extends HearthBlockEntity implements LidBlockEnti
     {
         super.stopOpen(player);
         this.openersCounter.decrementOpeners(player, this.level, this.getBlockPos(), this.getBlockState());
-        if (player instanceof ServerPlayer serverPlayer)
-        {   this.usingPlayers.remove(serverPlayer);
-        }
     }
 
     @Override

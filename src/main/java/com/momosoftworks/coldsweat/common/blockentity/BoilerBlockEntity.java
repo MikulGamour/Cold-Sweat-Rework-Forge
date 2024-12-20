@@ -9,7 +9,6 @@ import com.momosoftworks.coldsweat.core.init.ModBlockEntities;
 import com.momosoftworks.coldsweat.core.init.ModItemComponents;
 import com.momosoftworks.coldsweat.core.init.ModItems;
 import com.momosoftworks.coldsweat.core.init.ModSounds;
-import com.momosoftworks.coldsweat.core.network.message.BlockDataUpdateMessage;
 import com.momosoftworks.coldsweat.data.codec.configuration.FuelData;
 import com.momosoftworks.coldsweat.data.tag.ModItemTags;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
@@ -19,7 +18,6 @@ import net.minecraft.core.HolderLookup;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -27,18 +25,12 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class BoilerBlockEntity extends HearthBlockEntity
 {
     public static int[] WATERSKIN_SLOTS = {1, 2, 3, 4, 5, 6, 7, 8, 9};
     public static int[] FUEL_SLOT = {0};
-
-    List<ServerPlayer> usingPlayers = new ArrayList<>();
 
     public BoilerBlockEntity(BlockPos pos, BlockState state)
     {   super(ModBlockEntities.BOILER.value(), pos, state);
@@ -52,17 +44,6 @@ public class BoilerBlockEntity extends HearthBlockEntity
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket()
     {   return ClientboundBlockEntityDataPacket.create(this);
-    }
-
-    private void sendUpdatePacket()
-    {
-        // Remove the players that aren't interacting with this block anymore
-        usingPlayers.removeIf(player -> !(player.containerMenu instanceof BoilerContainer boilerContainer && boilerContainer.te == this));
-
-        // Send data to all players with this block's menu open
-        for (ServerPlayer player : usingPlayers)
-        {   PacketDistributor.sendToPlayer(player, new BlockDataUpdateMessage(this));
-        }
     }
 
     @Override
@@ -216,7 +197,6 @@ public class BoilerBlockEntity extends HearthBlockEntity
     @Override
     public void setHotFuel(int amount, boolean update)
     {   super.setHotFuel(amount, update);
-        this.sendUpdatePacket();
     }
 
     @Override
@@ -231,12 +211,7 @@ public class BoilerBlockEntity extends HearthBlockEntity
 
     @Override
     protected AbstractContainerMenu createMenu(int id, Inventory playerInv)
-    {
-        // Track the players using this block
-        if (playerInv.player instanceof ServerPlayer serverPlayer)
-        {   usingPlayers.add(serverPlayer);
-        }
-        return new BoilerContainer(id, playerInv, this);
+    {   return new BoilerContainer(id, playerInv, this);
     }
 
     @Override
