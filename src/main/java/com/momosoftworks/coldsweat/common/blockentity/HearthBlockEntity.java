@@ -667,7 +667,7 @@ public class HearthBlockEntity extends RandomizableContainerBlockEntity implemen
             int maxEffect = this.getMaxInsulationLevel() - 1;
             int effectLevel = (int) Math.min(maxEffect, (insulationLevel / (double) this.getInsulationTime()) * maxEffect);
             if (shouldUseColdFuel)
-            {   player.addEffect(new MobEffectInstance(ModEffects.CHILL, 120, effectLevel, false, false, true));
+            {   player.addEffect(new MobEffectInstance(ModEffects.FRIGIDNESS, 120, effectLevel, false, false, true));
             }
             if (shouldUseHotFuel)
             {   player.addEffect(new MobEffectInstance(ModEffects.WARMTH, 120, effectLevel, false, false, true));

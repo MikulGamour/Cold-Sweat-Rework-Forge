@@ -12,7 +12,7 @@
   "item.cold_sweat.soulspring_lamp":     "魂泉燈",
   "item.cold_sweat.thermometer":         "溫度計",
   "item.cold_sweat.waterskin":           "水袋",
-  "item.cold_sweat.goat_fur":                 "毛皮",
+  "item.cold_sweat.goat_fur":            "毛皮",
   "item.cold_sweat.hoglin_hide":         "豬布林獸皮",
   "item.cold_sweat.waterskin.filled":    "裝滿的",
   "item.cold_sweat.insulated_minecart":  "裝有隔熱材料的礦車",
@@ -23,10 +23,10 @@
   "item.cold_sweat.hoglin_tunic":        "豬布林外套",
   "item.cold_sweat.hoglin_trousers":     "豬布林褲子",
   "item.cold_sweat.hoglin_hooves":       "豬布林蹄",
-  "item.cold_sweat.goat_fur_cap":             "毛皮帽",
-  "item.cold_sweat.goat_fur_parka":           "毛皮大衣",
-  "item.cold_sweat.goat_fur_pants":           "毛皮褲",
-  "item.cold_sweat.goat_fur_boots":           "毛皮靴",
+  "item.cold_sweat.goat_fur_cap":        "毛皮帽",
+  "item.cold_sweat.goat_fur_parka":      "毛皮大衣",
+  "item.cold_sweat.goat_fur_pants":      "毛皮褲",
+  "item.cold_sweat.goat_fur_boots":      "毛皮靴",
 
   "item.minecraft.potion.effect.ice_resistance":           "抗凍藥水",
   "item.minecraft.lingering_potion.effect.ice_resistance": "抗凍滯留藥水",
@@ -50,7 +50,7 @@
 
 
   "effect.cold_sweat.warmth":           "溫暖",
-  "effect.cold_sweat.chill":            "寒冷",
+  "effect.cold_sweat.frigidness":       "寒冷",
   "effect.cold_sweat.ice_resistance":   "抗凍",
   "effect.cold_sweat.grace":            "緩衝",
 

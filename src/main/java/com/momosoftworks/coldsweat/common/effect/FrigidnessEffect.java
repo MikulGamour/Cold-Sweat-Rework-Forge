@@ -5,15 +5,15 @@ import net.minecraft.world.effect.MobEffectCategory;
 
 import javax.annotation.Nonnull;
 
-public class ChillEffect extends MobEffect
+public class FrigidnessEffect extends MobEffect
 {
-    public ChillEffect()
+    public FrigidnessEffect()
     {   super(MobEffectCategory.BENEFICIAL, 8961252);
     }
 
     @Nonnull
     public String getName()
-    {   return "effect.chill";
+    {   return "effect.frigidness";
     }
 
     public boolean isInstant()
