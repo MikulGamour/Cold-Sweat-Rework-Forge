@@ -65,8 +65,6 @@ public class IceboxBlockEntity extends HearthBlockEntity implements LidBlockEnti
     LazyOptional<? extends IItemHandler>[] slotHandlers =
             SidedInvWrapper.create(this, Direction.UP, Direction.DOWN, Direction.NORTH);
 
-    List<ServerPlayer> usingPlayers = new ArrayList<>();
-
     private final ContainerOpenersCounter openersCounter = new ContainerOpenersCounter()
     {
         protected void onOpen(Level level, BlockPos pos, BlockState state)
@@ -123,16 +121,6 @@ public class IceboxBlockEntity extends HearthBlockEntity implements LidBlockEnti
     protected void signalOpenCount(Level level, BlockPos pos, BlockState state, int eventId, int eventParam)
     {   Block block = state.getBlock();
         level.blockEvent(pos, block, eventId, eventParam);
-    }
-
-    private void sendUpdatePacket()
-    {
-        // Remove the players that aren't interacting with this block anymore
-        usingPlayers.removeIf(player -> !(player.containerMenu instanceof IceboxContainer iceboxContainer && iceboxContainer.te == this));
-
-        // Send data to all players with this block's menu open
-        ColdSweatPacketHandler.INSTANCE.send(PacketDistributor.NMLIST.with(()-> usingPlayers.stream().map(player -> player.connection.connection).toList()),
-                                             new BlockDataUpdateMessage(this));
     }
 
     @Override
@@ -283,12 +271,6 @@ public class IceboxBlockEntity extends HearthBlockEntity implements LidBlockEnti
     }
 
     @Override
-    public void setColdFuel(int amount, boolean update)
-    {   super.setColdFuel(amount, update);
-        this.sendUpdatePacket();
-    }
-
-    @Override
     public void addFuel(int amount)
     {   this.setColdFuelAndUpdate(this.getColdFuel() + amount);
     }
@@ -308,10 +290,6 @@ public class IceboxBlockEntity extends HearthBlockEntity implements LidBlockEnti
     {
         super.startOpen(player);
         this.openersCounter.incrementOpeners(player, this.level, this.getBlockPos(), this.getBlockState());
-        if (player instanceof ServerPlayer serverPlayer)
-        {   this.usingPlayers.add(serverPlayer);
-            this.sendUpdatePacket();
-        }
     }
 
     @Override
@@ -319,9 +297,6 @@ public class IceboxBlockEntity extends HearthBlockEntity implements LidBlockEnti
     {
         super.stopOpen(player);
         this.openersCounter.decrementOpeners(player, this.level, this.getBlockPos(), this.getBlockState());
-        if (player instanceof ServerPlayer serverPlayer)
-        {   this.usingPlayers.remove(serverPlayer);
-        }
     }
 
     @Override
