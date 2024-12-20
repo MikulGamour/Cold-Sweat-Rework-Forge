@@ -66,8 +66,6 @@ public class IceboxBlockEntity extends HearthBlockEntity implements ITickableTil
     LazyOptional<? extends IItemHandler>[] slotHandlers =
             SidedInvWrapper.create(this, Direction.UP, Direction.DOWN, Direction.NORTH);
 
-    List<ServerPlayerEntity> usingPlayers = new ArrayList<>();
-
     private final ContainerOpenersCounter openersCounter = new ContainerOpenersCounter()
     {
         protected void onOpen(World level, BlockPos pos, BlockState state)
@@ -124,16 +122,6 @@ public class IceboxBlockEntity extends HearthBlockEntity implements ITickableTil
     protected void signalOpenCount(World level, BlockPos pos, BlockState state, int eventId, int eventParam)
     {   Block block = state.getBlock();
         level.blockEvent(pos, block, eventId, eventParam);
-    }
-
-    private void sendUpdatePacket()
-    {
-        // Remove the players that aren't interacting with this block anymore
-        usingPlayers.removeIf(player -> !(player.containerMenu instanceof IceboxContainer && ((IceboxContainer) player.containerMenu).te == this));
-
-        // Send data to all players with this block's menu open
-        ColdSweatPacketHandler.INSTANCE.send(PacketDistributor.NMLIST.with(()-> usingPlayers.stream().map(player -> player.connection.connection).collect(Collectors.toList())),
-                                             new BlockDataUpdateMessage(this));
     }
 
     @Override
@@ -273,12 +261,6 @@ public class IceboxBlockEntity extends HearthBlockEntity implements ITickableTil
     }
 
     @Override
-    public void setColdFuel(int amount, boolean update)
-    {   super.setColdFuel(amount, update);
-        this.sendUpdatePacket();
-    }
-
-    @Override
     public void addFuel(int amount)
     {   this.setColdFuelAndUpdate(this.getColdFuel() + amount);
     }
@@ -298,10 +280,6 @@ public class IceboxBlockEntity extends HearthBlockEntity implements ITickableTil
     {
         super.startOpen(player);
         this.openersCounter.incrementOpeners(player, this.level, this.getBlockPos(), this.getBlockState());
-        if (player instanceof ServerPlayerEntity)
-        {   this.usingPlayers.add(((ServerPlayerEntity) player));
-            this.sendUpdatePacket();
-        }
     }
 
     @Override
@@ -309,9 +287,6 @@ public class IceboxBlockEntity extends HearthBlockEntity implements ITickableTil
     {
         super.stopOpen(player);
         this.openersCounter.decrementOpeners(player, this.level, this.getBlockPos(), this.getBlockState());
-        if (player instanceof ServerPlayerEntity)
-        {   this.usingPlayers.remove(((ServerPlayerEntity) player));
-        }
     }
 
     @Override

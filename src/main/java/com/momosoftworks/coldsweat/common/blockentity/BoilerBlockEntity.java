@@ -49,8 +49,6 @@ public class BoilerBlockEntity extends HearthBlockEntity implements ITickableTil
     LazyOptional<? extends IItemHandler>[] slotHandlers =
             SidedInvWrapper.create(this, Direction.UP, Direction.DOWN, Direction.NORTH);
 
-    List<ServerPlayerEntity> usingPlayers = new ArrayList<>();
-
     public BoilerBlockEntity()
     {   super(BlockEntityInit.BOILER_BLOCK_ENTITY_TYPE.get());
     }
@@ -63,16 +61,6 @@ public class BoilerBlockEntity extends HearthBlockEntity implements ITickableTil
     @Override
     public SUpdateTileEntityPacket getUpdatePacket()
     {   return new SUpdateTileEntityPacket(this.getBlockPos(), 0, this.getUpdateTag());
-    }
-
-    private void sendUpdatePacket()
-    {
-        // Remove the players that aren't interacting with this block anymore
-        usingPlayers.removeIf(player -> !(player.containerMenu instanceof BoilerContainer && ((BoilerContainer) player.containerMenu).te == this));
-
-        // Send data to all players with this block's menu open
-        ColdSweatPacketHandler.INSTANCE.send(PacketDistributor.NMLIST.with(()-> usingPlayers.stream().map(player -> player.connection.connection).collect(Collectors.toList())),
-                                             new BlockDataUpdateMessage(this));
     }
 
     @Override
@@ -211,7 +199,6 @@ public class BoilerBlockEntity extends HearthBlockEntity implements ITickableTil
     @Override
     public void setHotFuel(int amount, boolean update)
     {   super.setHotFuel(amount, update);
-        this.sendUpdatePacket();
     }
 
     @Override
@@ -226,12 +213,7 @@ public class BoilerBlockEntity extends HearthBlockEntity implements ITickableTil
 
     @Override
     protected Container createMenu(int id, PlayerInventory playerInv)
-    {
-        // Track the players using this block
-        if (playerInv.player instanceof ServerPlayerEntity)
-        {   usingPlayers.add((ServerPlayerEntity) playerInv.player);
-        }
-        return new BoilerContainer(id, playerInv, this);
+    {   return new BoilerContainer(id, playerInv, this);
     }
 
     @Override
