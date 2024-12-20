@@ -125,24 +125,24 @@ public class MainSettingsConfig
             BUILDER.push("Cold");
 
             FREEZING_HEARTS = BUILDER
-                .comment("When set to true, this percentage of the player's hearts will freeze over when they are too cold, preventing regeneration",
-                         "Represented as a percentage")
-                .defineInRange("Freezing Hearts Percentage", defaultDiff.getOrDefault(ConfigSettings.HEARTS_FREEZING_PERCENTAGE, 0.5), 0, 1);
+                .comment("Up to a certain portion of the player's hearts will freeze over when they are too cold, preventing regeneration",
+                         "Represented as a percentage in decimal form")
+                .defineInRange("Max Frozen Health Percentage", defaultDiff.getOrDefault(ConfigSettings.HEARTS_FREEZING_PERCENTAGE, 0.5), 0, 1);
 
             COLD_KNOCKBACK = BUILDER
-                .comment("When set to true, the player's attack knockback will be reduced by this amount when they are too cold",
-                         "Represented as a percentage")
-                .defineInRange("Chilled Knockback Reduction", defaultDiff.getOrDefault(ConfigSettings.COLD_KNOCKBACK_REDUCTION, 0.5), 0, 1);
+                .comment("The player's attack knockback will be reduced by this amount when they are too cold",
+                         "Represented as a percentage in decimal form")
+                .defineInRange("Freezing Knockback Reduction", defaultDiff.getOrDefault(ConfigSettings.COLD_KNOCKBACK_REDUCTION, 0.5), 0, 1);
 
             COLD_MOVEMENT = BUILDER
-                .comment("When set to true, the player's movement speed will be reduced by this amount when they are too cold",
-                         "Represented as a percentage")
-                .defineInRange("Chilled Movement Slowdown", defaultDiff.getOrDefault(ConfigSettings.COLD_MOVEMENT_SLOWDOWN, 0.5), 0, 1);
+                .comment("The player's movement speed will be reduced by this amount when they are too cold",
+                         "Represented as a percentage in decimal form")
+                .defineInRange("Freezing Sluggishness", defaultDiff.getOrDefault(ConfigSettings.COLD_MOVEMENT_SLOWDOWN, 0.5), 0, 1);
 
             COLD_MINING = BUILDER
-                .comment("When set to true, the player's mining speed will be reduced by this amount when they are too cold",
-                         "Represented as a percentage")
-                .defineInRange("Chilled Mining Speed Reduction", defaultDiff.getOrDefault(ConfigSettings.COLD_MINING_IMPAIRMENT, 0.5), 0, 1);
+                .comment("The player's mining speed will be reduced by this amount when they are too cold",
+                         "Represented as a percentage in decimal form")
+                .defineInRange("Freezing Mining Impairment", defaultDiff.getOrDefault(ConfigSettings.COLD_MINING_IMPAIRMENT, 0.5), 0, 1);
 
             BUILDER.pop();
         BUILDER.pop();
