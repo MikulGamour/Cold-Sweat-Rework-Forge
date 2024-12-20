@@ -70,10 +70,12 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
@@ -558,7 +560,7 @@ public class EntityTempManager
         if (event.getContainer() instanceof PlayerContainer)
         {
             PlayerContainer inventory = (PlayerContainer) event.getContainer();
-            updateInventoryTempAttributes(event.getOldStack(), event.getNewStack(), inventory.owner);
+            updateInventoryTempAttributes(event.getOldStack(), event.getNewStack(), getOwner(inventory));
         }
     }
 
@@ -569,6 +571,18 @@ public class EntityTempManager
         }
         for (ItemCarryTempData carryTempData : ConfigSettings.CARRIED_ITEM_TEMPERATURES.get().get(newStack.getItem()))
         {   entity.getAttributes().addTransientAttributeModifiers(carryTempData.attributeModifiers().getMap());
+        }
+    }
+
+    private static final Field MENU_OWNER = ObfuscationReflectionHelper.findField(PlayerContainer.class, "field_82862_h");
+    static { MENU_OWNER.setAccessible(true); }
+    private static PlayerEntity getOwner(PlayerContainer menu)
+    {
+        try
+        {   return (PlayerEntity) MENU_OWNER.get(menu);
+        }
+        catch (IllegalAccessException e)
+        {   return null;
         }
     }
 
