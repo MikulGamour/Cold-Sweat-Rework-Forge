@@ -48,8 +48,6 @@ public class BoilerBlockEntity extends HearthBlockEntity
     LazyOptional<? extends IItemHandler>[] slotHandlers =
             SidedInvWrapper.create(this, Direction.UP, Direction.DOWN, Direction.NORTH);
 
-    List<ServerPlayer> usingPlayers = new ArrayList<>();
-
     public BoilerBlockEntity(BlockPos pos, BlockState state)
     {   super(ModBlockEntities.BOILER, pos, state);
     }
@@ -62,16 +60,6 @@ public class BoilerBlockEntity extends HearthBlockEntity
     @Override
     public ClientboundBlockEntityDataPacket getUpdatePacket()
     {   return ClientboundBlockEntityDataPacket.create(this);
-    }
-
-    private void sendUpdatePacket()
-    {
-        // Remove the players that aren't interacting with this block anymore
-        usingPlayers.removeIf(player -> !(player.containerMenu instanceof BoilerContainer boilerContainer && boilerContainer.te == this));
-
-        // Send data to all players with this block's menu open
-        ColdSweatPacketHandler.INSTANCE.send(PacketDistributor.NMLIST.with(()-> usingPlayers.stream().map(player -> player.connection.connection).toList()),
-                                             new BlockDataUpdateMessage(this));
     }
 
     @Override
@@ -226,7 +214,6 @@ public class BoilerBlockEntity extends HearthBlockEntity
     @Override
     public void setHotFuel(int amount, boolean update)
     {   super.setHotFuel(amount, update);
-        this.sendUpdatePacket();
     }
 
     @Override
@@ -241,12 +228,7 @@ public class BoilerBlockEntity extends HearthBlockEntity
 
     @Override
     protected AbstractContainerMenu createMenu(int id, Inventory playerInv)
-    {
-        // Track the players using this block
-        if (playerInv.player instanceof ServerPlayer serverPlayer)
-        {   usingPlayers.add(serverPlayer);
-        }
-        return new BoilerContainer(id, playerInv, this);
+    {   return new BoilerContainer(id, playerInv, this);
     }
 
     @Override
