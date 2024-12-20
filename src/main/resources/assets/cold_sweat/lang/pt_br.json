@@ -49,7 +49,7 @@
 
 
   "effect.cold_sweat.warmth":           "Quente",
-  "effect.cold_sweat.chill":            "Gelado",
+  "effect.cold_sweat.frigidness":       "Gelado",
   "effect.cold_sweat.ice_resistance":   "Resistência ao gelo",
   "effect.cold_sweat.grace":            "Graça",
 

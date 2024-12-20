@@ -597,7 +597,7 @@ public class WorldSettingsConfig
                 .defineInRange("Hearth Warm-Up Time", 1200, 0, Integer.MAX_VALUE);
         HEARTH_MAX_INSULATION = BUILDER
                 .comment("The maximum amount of insulation that the hearth can provide")
-                .defineInRange("Hearth Chill/Warmth Strength", 10, 0, 10);
+                .defineInRange("Hearth Effect Strength", 10, 0, 10);
 
         BUILDER.pop();
 

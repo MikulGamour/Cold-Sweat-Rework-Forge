@@ -46,7 +46,7 @@
   "item.modifiers.curio": "Когда надет в качестве Curio:",
 
   "effect.cold_sweat.warmth": "Тепло",
-  "effect.cold_sweat.chill": "Холод",
+  "effect.cold_sweat.frigidness": "Холод",
   "effect.cold_sweat.ice_resistance": "Холодостойкость",
   "effect.cold_sweat.grace": "Термостойкость",
 
