@@ -268,17 +268,24 @@ public class Temperature
                     changed = true;
                 }
                 hits++;
-                // If duplicates are not allowed, break the loop
+                // If max insertion count is reached, break the loop
                 if (hits >= maxCount)
-                {   return true;
+                {   return changed;
                 }
             }
         }
+        if (hits > 0) return changed;
         // Add the modifier if the insertion check fails
-        if (placement.mode() != Placement.Mode.REPLACE)
+        switch (placement.mode())
         {
-            modifiers.add(modifier);
-            changed = true;
+            case BEFORE ->
+            {   modifiers.add(0, modifier);
+                return true;
+            }
+            case AFTER, REPLACE_OR_ADD ->
+            {   modifiers.add(modifier);
+                return true;
+            }
         }
         return changed;
     }
