@@ -50,6 +50,7 @@ import net.minecraft.world.item.UseAnim;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.util.ObfuscationReflectionHelper;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
 import net.neoforged.neoforge.event.entity.living.LivingEntityUseItemEvent;
@@ -62,6 +63,7 @@ import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 
 import javax.annotation.Nullable;
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -511,7 +513,7 @@ public class EntityTempManager
     public static void updateInventoryAttributesOnSlotChange(ContainerChangedEvent event)
     {
         if (event.getContainer() instanceof InventoryMenu inventory)
-        {   updateInventoryTempAttributes(event.getOldStack(), event.getNewStack(), inventory.owner);
+        {   updateInventoryTempAttributes(event.getOldStack(), event.getNewStack(), getOwner(inventory));
         }
     }
 
@@ -522,6 +524,18 @@ public class EntityTempManager
         }
         for (ItemCarryTempData carryTempData : ConfigSettings.CARRIED_ITEM_TEMPERATURES.get().get(newStack.getItem()))
         {   entity.getAttributes().addTransientAttributeModifiers(carryTempData.attributeModifiers().getMap());
+        }
+    }
+
+    private static final Field MENU_OWNER = ObfuscationReflectionHelper.findField(InventoryMenu.class, "owner");
+    static { MENU_OWNER.setAccessible(true); }
+    private static Player getOwner(InventoryMenu menu)
+    {
+        try
+        {   return (Player) MENU_OWNER.get(menu);
+        }
+        catch (IllegalAccessException e)
+        {   return null;
         }
     }
 
