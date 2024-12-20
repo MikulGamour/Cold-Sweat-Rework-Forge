@@ -4,10 +4,12 @@ import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
 import com.momosoftworks.coldsweat.api.temperature.modifier.TempModifier;
 import com.momosoftworks.coldsweat.util.exceptions.RegistryFailureException;
+import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.math.FastBiMap;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
+import javax.annotation.Nullable;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -26,7 +28,7 @@ public class TempModifierRegistry
             throw new RegistryFailureException(id, "TempModifier", String.format("Found duplicate TempModifier entries: %s (%s) %s (%s)", supplier.get().getClass().getName(), id,
                                                              TEMP_MODIFIERS.get(id).getClass().getName(), id), null);
         }
-        TEMP_MODIFIERS.put(id, new TempModifierHolder(supplier));
+        TEMP_MODIFIERS.put(id, new TempModifierHolder(supplier, id));
     }
 
     /**
@@ -48,22 +50,31 @@ public class TempModifierRegistry
 
     @Nullable
     public static ResourceLocation getKey(TempModifier modifier)
+    {   return CSMath.getIfNotNull(getHolder(modifier), TempModifierHolder::getId, null);
+    }
+
+    @Nullable
+    public static TempModifierHolder getHolder(TempModifier modifier)
     {
-        return TEMP_MODIFIERS.getKey(new TempModifierHolder(modifier));
+        for (TempModifierHolder holder : TEMP_MODIFIERS.values())
+        {
+            if (holder.get().getClass() == modifier.getClass())
+            {   return holder;
+            }
+        }
+        return null;
     }
 
     public static class TempModifierHolder
     {
         private final Supplier<TempModifier> supplier;
         private final Class<? extends TempModifier> clazz;
+        private final ResourceLocation id;
 
-        public TempModifierHolder(Supplier<TempModifier> supplier)
+        public TempModifierHolder(Supplier<TempModifier> supplier, ResourceLocation id)
         {   this.supplier = supplier;
             this.clazz = supplier.get().getClass();
-        }
-        public TempModifierHolder(TempModifier modifier)
-        {   this.supplier = () -> modifier;
-            this.clazz = modifier.getClass();
+            this.id = id;
         }
 
         public TempModifier get()
@@ -72,6 +83,10 @@ public class TempModifierRegistry
 
         public Class<? extends TempModifier> getModifierClass()
         {   return clazz;
+        }
+
+        public ResourceLocation getId()
+        {   return id;
         }
 
         @Override
