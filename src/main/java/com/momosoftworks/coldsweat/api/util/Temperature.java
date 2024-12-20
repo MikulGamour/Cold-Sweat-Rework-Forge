@@ -241,11 +241,11 @@ public class Temperature
     public static boolean addModifier(List<TempModifier> modifiers, TempModifier modifier, Placement.Duplicates duplicatePolicy, int maxCount, Placement placement)
     {
         boolean changed = false;
-        Predicate<TempModifier> predicate = placement.predicate;
+        Predicate<TempModifier> predicate = placement.predicate();
         if (predicate == null) predicate = mod -> true;
 
-        boolean isReplacing = placement.mode.isReplacing();
-        boolean isForward = placement.order == Placement.Order.FIRST;
+        boolean isReplacing = placement.mode().isReplacing();
+        boolean isForward = placement.order() == Placement.Order.FIRST;
 
         if (!isReplacing
         && modifiers.stream().anyMatch(mod -> Placement.Duplicates.check(duplicatePolicy, modifier, mod)))
@@ -268,21 +268,29 @@ public class Temperature
                     modifiers.set(i, modifier);
                 }
                 else
-                {   modifiers.add(i + (placement.mode  == Placement.Mode.AFTER ? 1 : 0), modifier);
+                {   modifiers.add(i + (placement.mode()  == Placement.Mode.AFTER ? 1 : 0), modifier);
                     changed = true;
                 }
                 hits++;
-                // If duplicates are not allowed, break the loop
+                // If max insertion count is reached, break the loop
                 if (hits >= maxCount)
-                {   return true;
+                {   return changed;
                 }
             }
         }
+        if (hits > 0) return changed;
         // Add the modifier if the insertion check fails
-        if (placement.mode != Placement.Mode.REPLACE)
+        switch (placement.mode())
         {
-            modifiers.add(modifier);
-            changed = true;
+            case BEFORE :
+            {   modifiers.add(0, modifier);
+                return true;
+            }
+            case AFTER :
+            case REPLACE_OR_ADD :
+            {   modifiers.add(modifier);
+                return true;
+            }
         }
         return changed;
     }

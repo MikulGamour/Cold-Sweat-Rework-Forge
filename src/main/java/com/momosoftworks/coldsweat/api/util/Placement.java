@@ -7,9 +7,9 @@ import java.util.function.Predicate;
 
 public class Placement
 {
-    public final Mode mode;
-    public final Order order;
-    public final Predicate<TempModifier> predicate;
+    private final Mode mode;
+    private final Order order;
+    private final Predicate<TempModifier> predicate;
 
     public Placement(Mode mode, Order order, Predicate<TempModifier> predicate)
     {
@@ -19,6 +19,16 @@ public class Placement
     }
     public static final Placement AFTER_LAST = Placement.of(Mode.AFTER, Order.LAST, mod -> true);
     public static final Placement BEFORE_FIRST = Placement.of(Mode.BEFORE, Order.FIRST, mod -> true);
+
+    public Mode mode()
+    {   return mode;
+    }
+    public Order order()
+    {   return order;
+    }
+    public Predicate<TempModifier> predicate()
+    {   return predicate;
+    }
 
     public static Placement of(Mode mode, Order order, Predicate<TempModifier> predicate)
     {   return new Placement(mode, order, predicate);
