@@ -50,7 +50,7 @@
 
 
   "effect.cold_sweat.warmth":           "Warmth",
-  "effect.cold_sweat.chill":            "Chill",
+  "effect.cold_sweat.frigidness":       "Frigidness",
   "effect.cold_sweat.ice_resistance":   "Ice Resistance",
   "effect.cold_sweat.grace":            "Grace",
 

@@ -5,7 +5,7 @@ import net.minecraft.world.effect.MobEffect;
 
 public class ModEffects
 {
-    public static MobEffect CHILL = EffectInit.CHILL.get();
+    public static MobEffect FRIGIDNESS = EffectInit.FRIGIDNESS.get();
     public static MobEffect WARMTH = EffectInit.WARMTH.get();
     public static MobEffect ICE_RESISTANCE = EffectInit.ICE_RESISTANCE.get();
     public static MobEffect GRACE = EffectInit.GRACE.get();

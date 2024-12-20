@@ -50,7 +50,7 @@
 
 
   "effect.cold_sweat.warmth":           "温もり",
-  "effect.cold_sweat.chill":            "冷気",
+  "effect.cold_sweat.frigidness":       "冷気",
   "effect.cold_sweat.ice_resistance":   "氷耐性",
   "effect.cold_sweat.grace":            "祝福",
 
