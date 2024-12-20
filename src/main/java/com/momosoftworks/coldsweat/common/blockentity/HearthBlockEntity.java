@@ -282,7 +282,6 @@ public class HearthBlockEntity extends RandomizableContainerBlockEntity implemen
         }
         if (!this.shouldUseColdFuel && !this.shouldUseHotFuel && !this.paths.isEmpty())
         {   this.forceUpdate();
-            this.resetPaths();
         }
 
         // Reset if a nearby block has been updated
@@ -358,13 +357,14 @@ public class HearthBlockEntity extends RandomizableContainerBlockEntity implemen
                 }
 
                 // Drain fuel
-                this.tickDrainFuel();
+                if (!isClient)
+                {   this.tickDrainFuel();
+                }
             }
         }
 
         // Update fuel
-        if (!this.level.isClientSide && this.isFuelChanged()
-        || (wasUsingColdFuel != this.shouldUseColdFuel || wasUsingHotFuel != this.shouldUseHotFuel))
+        if (!this.level.isClientSide && (this.isFuelChanged() || wasUsingColdFuel != this.shouldUseColdFuel || wasUsingHotFuel != this.shouldUseHotFuel))
         {   this.updateFuelState();
         }
 
@@ -543,15 +543,8 @@ public class HearthBlockEntity extends RandomizableContainerBlockEntity implemen
     @Override
     public void setChanged()
     {
-        this.setChanged(true);
-    }
-
-    public void setChanged(boolean updateFuel)
-    {
-        if (updateFuel)
-        {   this.checkForFuel();
-        }
         super.setChanged();
+        this.checkForFuel();
     }
 
     public void checkForFuel()
@@ -595,8 +588,7 @@ public class HearthBlockEntity extends RandomizableContainerBlockEntity implemen
             {
                 int itemFuel = getItemFuel(fuelStack);
                 if (itemFuel != 0)
-                {
-                    this.storeFuel(fuelStack, itemFuel);
+                {   this.storeFuel(fuelStack, itemFuel);
                 }
             }
         }
@@ -604,7 +596,7 @@ public class HearthBlockEntity extends RandomizableContainerBlockEntity implemen
 
     protected boolean isFuelChanged()
     {
-        return Math.abs(this.getColdFuel() - lastColdFuel) >= this.getMaxFuel()/36 || Math.abs(this.getHotFuel() - lastHotFuel) >= this.getMaxFuel()/36;
+        return this.getColdFuel() != lastColdFuel || this.getHotFuel() != lastHotFuel;
     }
 
     protected void storeFuel(ItemStack stack, int amount)
@@ -638,6 +630,7 @@ public class HearthBlockEntity extends RandomizableContainerBlockEntity implemen
     {
         if (this.ticksExisted % 40 == 0)
         {   this.drainFuel();
+            this.checkForFuel();
         }
     }
 
@@ -886,8 +879,7 @@ public class HearthBlockEntity extends RandomizableContainerBlockEntity implemen
     public void updateFuelState()
     {
         if (level != null && !level.isClientSide)
-        {   this.setChanged(false);
-            WorldHelper.syncBlockEntityData(this);
+        {   WorldHelper.syncBlockEntityData(this);
             this.lastColdFuel = this.getColdFuel();
             this.lastHotFuel = this.getHotFuel();
         }
