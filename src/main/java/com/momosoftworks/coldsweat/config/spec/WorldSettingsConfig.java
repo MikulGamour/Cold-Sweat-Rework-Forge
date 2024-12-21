@@ -68,6 +68,8 @@ public class WorldSettingsConfig
     public static final ForgeConfigSpec.ConfigValue<Boolean> CUSTOM_WATER_FREEZE_BEHAVIOR;
     public static final ForgeConfigSpec.ConfigValue<Boolean> CUSTOM_ICE_DROPS;
 
+    public static final ForgeConfigSpec.ConfigValue<List<?>> OVERCAST_TEMP_OFFSET;
+
     static
     {
         /*
@@ -300,6 +302,13 @@ public class WorldSettingsConfig
 
 
         BUILDER.push("Misc");
+
+        OVERCAST_TEMP_OFFSET = BUILDER
+                .comment("A temperature offset applied when the sky is overcast",
+                         "Format: [offset, *units]")
+                .defineList("Overcast Temperature Offset",
+                            Arrays.asList(-0.35, "mc"),
+                            it -> it instanceof Number || it instanceof String);
 
         STRUCTURE_TEMPERATURES = BUILDER
                 .comment("Overrides the world temperature when the player is within this structure",
