@@ -22,13 +22,13 @@ public class TempModifierRegistry
 
     public static void register(ResourceLocation id, Supplier<TempModifier> supplier)
     {
-        TempModifier modifier = supplier.get();
-        if (TEMP_MODIFIERS.containsKey(id))
+        TempModifierHolder holder = new TempModifierHolder(supplier, id);
+        if (TEMP_MODIFIERS.containsKey(id) || TEMP_MODIFIERS.values().stream().anyMatch(holder::equals))
         {
-            throw new RegistryFailureException(id, "TempModifier", String.format("Found duplicate TempModifier entries: %s (%s) %s (%s)", supplier.get().getClass().getName(), id,
-                                                             TEMP_MODIFIERS.get(id).getClass().getName(), id), null);
+            throw new RegistryFailureException(id, "TempModifier", String.format("Found duplicate TempModifier entries: %s (%s) %s (%s)", holder.getModifierClass().getName(), id,
+                                                             TEMP_MODIFIERS.get(id).getModifierClass().getName(), id), null);
         }
-        TEMP_MODIFIERS.put(id, new TempModifierHolder(supplier, id));
+        TEMP_MODIFIERS.put(id, holder);
     }
 
     /**
@@ -57,7 +57,7 @@ public class TempModifierRegistry
     {
         for (TempModifierHolder holder : TEMP_MODIFIERS.values())
         {
-            if (holder.get().getClass() == modifier.getClass())
+            if (holder.getModifierClass() == modifier.getClass())
             {   return holder;
             }
         }
