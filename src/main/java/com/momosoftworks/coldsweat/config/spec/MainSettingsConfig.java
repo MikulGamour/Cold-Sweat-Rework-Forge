@@ -165,27 +165,7 @@ public class MainSettingsConfig
                 .comment("Add TempModifier IDs to this list to disable them",
                          "Allows for more granular control of Cold Sweat's features",
                          " Run \"/temp debug @s <trait>\" to see IDs of all modifiers affecting the player",
-                         "",
-                         " List of \"Vanilla\" TempModifier IDs:",
-                         " cold_sweat:blocks - Disables temperature emitted by blocks",
-                         " cold_sweat:biomes - Disables biome temperature (makes all biomes temperate)",
-                         " cold_sweat:underground - Disables temperature changes caused by depth / altitude",
-                         " cold_sweat:armor - Disables armor insulation",
-                         " cold_sweat:mount - Disables insulation from riding an entity",
-                         " cold_sweat:waterskin - Disables the waterskin's temperature effects",
-                         " cold_sweat:soulspring_lamp - Disables the cooling effect of the soulspring lamp",
-                         " cold_sweat:water - Disables the cooling effect of water, and the dripping particles from when the player is wet",
-                         " cold_sweat:air_conditioning - Disables the Warmth and Chill effects from the hearth, boiler, and icebox",
-                         " cold_sweat:food - Disables temperature effects from eating food",
-                         " cold_sweat:freezing - Disables the cooling effect of powder snow",
-                         " cold_sweat:on_fire - Disables the heating effect of being on fire",
-                         " cold_sweat:soul_sprout - Disables the effects of eating a soul sprout (separate from cold_sweat:food)",
-                         " cold_sweat:inventory_items - Disables the temperature effects of items in the player's inventory",
-                         " cold_sweat:entities - Disables the temperature emitted from entities",
-                         " sereneseasons:season - Disables the temperature effects of seasons from Serene Seasons",
-                         " armorunder:lining - Disables the temperature effects of armor linings from Armor Underwear",
-                         " weather2:storm - Disables the temperature effects of storms & weather from Weather 2",
-                         " curios:curios - Disables the temperature effects of equipped curios")
+                         "See the Cold Sweat documentation for a list of default TempModifiers")
                 .defineListAllowEmpty(List.of("Disabled Temperature Modifiers"), () -> List.of(), o -> o instanceof String);
 
         BUILDER.pop();
