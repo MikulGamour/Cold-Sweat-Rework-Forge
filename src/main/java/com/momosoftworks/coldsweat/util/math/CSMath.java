@@ -262,7 +262,7 @@ public class CSMath
         return (blendTo - blendFrom) / (float) Math.sqrt(rangeMax - rangeMin) * (float) Math.sqrt(factor - rangeMin) + blendFrom;
     }
 
-    public static double blendExp(double blendFrom, double blendTo, double factor, double rangeMin, double rangeMax)
+    public static double blendExp(double blendFrom, double blendTo, double factor, double rangeMin, double rangeMax, double intensity)
     {
         // Ensure factor is within the specified range
         factor = Math.max(rangeMin, Math.min(factor, rangeMax));
@@ -271,25 +271,19 @@ public class CSMath
         double normalizedFactor = (factor - rangeMin) / (rangeMax - rangeMin);
 
         // Apply exponential curve to the normalized factor
-        float expFactor = (float) ((Math.exp(normalizedFactor) - 1) / (Math.E - 1));
+        double expFactor = (Math.pow(intensity, normalizedFactor) - 1) / (intensity - 1);
 
         // Perform the blend
         return blendFrom + (blendTo - blendFrom) * expFactor;
     }
-
+    public static float blendExp(float blendFrom, float blendTo, float factor, float rangeMin, float rangeMax, double intensity)
+    {   return (float) blendExp((double) blendFrom, blendTo, factor, rangeMin, rangeMax, intensity);
+    }
+    public static double blendExp(double blendFrom, double blendTo, double factor, double rangeMin, double rangeMax)
+    {   return blendExp(blendFrom, blendTo, factor, rangeMin, rangeMax, Math.E);
+    }
     public static float blendExp(float blendFrom, float blendTo, float factor, float rangeMin, float rangeMax)
-    {
-        // Ensure factor is within the specified range
-        factor = Math.max(rangeMin, Math.min(factor, rangeMax));
-
-        // Normalize the factor to a 0-1 range
-        float normalizedFactor = (factor - rangeMin) / (rangeMax - rangeMin);
-
-        // Apply exponential curve to the normalized factor
-        float expFactor = (float) ((Math.exp(normalizedFactor) - 1) / (Math.E - 1));
-
-        // Perform the blend
-        return blendFrom + (blendTo - blendFrom) * expFactor;
+    {   return blendExp(blendFrom, blendTo, factor, rangeMin, rangeMax, Math.E);
     }
 
     // Eases in and out, like a combination of blendLog and blendExp
