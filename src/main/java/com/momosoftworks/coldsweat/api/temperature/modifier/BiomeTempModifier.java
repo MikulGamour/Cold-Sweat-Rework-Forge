@@ -40,13 +40,13 @@ public class BiomeTempModifier extends TempModifier
             Level level = entity.level;
             BlockPos entPos = entity.blockPosition();
 
-            // In the case that the dimension temperature is overridden by config, use that and skip everything else
+            // If a dimension temperature override is defined, return
             DimensionTempData dimTempOverride = ConfigSettings.DIMENSION_TEMPS.get(entity.level.registryAccess()).get(level.dimensionTypeRegistration());
             if (dimTempOverride != null)
             {   return temp -> temp + dimTempOverride.getTemperature();
             }
 
-            // If there's a temperature structure here, ignore biome temp
+            // If a structure temperature override is defined, return
             Pair<Double, Double> structureTemp = getStructureTemp(entity.level, entity.blockPosition());
             if (structureTemp.getFirst() != null)
             {   return temp -> structureTemp.getFirst();
@@ -78,6 +78,14 @@ public class BiomeTempModifier extends TempModifier
             }
 
             worldTemp /= Math.max(1, biomeCount);
+
+            // Slightly decrease temperature if overcast
+            if (!level.dimensionType().hasCeiling() && level.isRaining())
+            {
+                long time = level.getDayTime();
+                double overcastTemp = ConfigSettings.OVERCAST_TEMP_OFFSET.get();
+                worldTemp += CSMath.blend(0, overcastTemp, Math.abs(6000 - time), 6000, 0);
+            }
 
             // Add dimension offset, if present
             DimensionTempData dimTempOffsetConf = ConfigSettings.DIMENSION_OFFSETS.get(entity.level.registryAccess()).get(level.dimensionTypeRegistration());
