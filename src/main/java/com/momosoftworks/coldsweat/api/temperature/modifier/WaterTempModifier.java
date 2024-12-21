@@ -13,7 +13,7 @@ public class WaterTempModifier extends TempModifier
 {
     private static final double WATER_SOAK_SPEED = 0.05;
     private static final double RAIN_SOAK_SPEED = 0.0125;
-    private static final double DRY_SPEED = 1/320d;
+    private static final double DRY_SPEED = 0.003125;
 
     public WaterTempModifier()
     {
@@ -40,12 +40,14 @@ public class WaterTempModifier extends TempModifier
     public Function<Double, Double> calculate(LivingEntity entity, Temperature.Trait trait)
     {
         double worldTemp = Temperature.get(entity, Temperature.Trait.WORLD);
-        double midTemp = CSMath.average(ConfigSettings.MAX_TEMP.get(), ConfigSettings.MIN_TEMP.get());
+        double minTemp = ConfigSettings.MIN_TEMP.get();
+        double maxTemp = ConfigSettings.MAX_TEMP.get();
+        double midTemp = CSMath.average(minTemp, maxTemp);
 
         double strength = this.getNBT().getDouble("Strength");
         double addAmount = WorldHelper.isInWater(entity) ? WATER_SOAK_SPEED // In water
                          : WorldHelper.isRainingAt(entity.level, entity.blockPosition()) ? RAIN_SOAK_SPEED // In rain
-                         : Math.min(-DRY_SPEED, -DRY_SPEED - worldTemp * DRY_SPEED); // Drying off
+                         : -CSMath.blendExp(DRY_SPEED, DRY_SPEED * 8, worldTemp, minTemp, maxTemp, 100); // Drying off
         double maxStrength = CSMath.clamp(Math.abs(midTemp - worldTemp) / 2, 0.23d, 0.5d);
 
         double newStrength = CSMath.clamp(strength + addAmount, 0d, maxStrength);
