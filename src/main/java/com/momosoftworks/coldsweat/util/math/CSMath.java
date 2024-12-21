@@ -264,16 +264,11 @@ public class CSMath
 
     public static double blendExp(double blendFrom, double blendTo, double factor, double rangeMin, double rangeMax, double intensity)
     {
-        // Ensure factor is within the specified range
-        factor = Math.max(rangeMin, Math.min(factor, rangeMax));
+        factor = clamp(factor, rangeMin, rangeMax);
 
-        // Normalize the factor to a 0-1 range
         double normalizedFactor = (factor - rangeMin) / (rangeMax - rangeMin);
-
-        // Apply exponential curve to the normalized factor
         double expFactor = (Math.pow(intensity, normalizedFactor) - 1) / (intensity - 1);
 
-        // Perform the blend
         return blendFrom + (blendTo - blendFrom) * expFactor;
     }
     public static float blendExp(float blendFrom, float blendTo, float factor, float rangeMin, float rangeMax, double intensity)
