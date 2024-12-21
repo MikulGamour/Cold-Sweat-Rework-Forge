@@ -143,7 +143,7 @@ public class EntityTempManager
     public static void initModifiersOnEntity(EntityJoinWorldEvent event)
     {
         if (event.getEntity() instanceof LivingEntity living && !living.level.isClientSide()
-        && isTemperatureEnabled(living.getType()))
+        && isTemperatureEnabled(living))
         {
             getTemperatureCap(living).ifPresent(cap ->
             {
@@ -163,7 +163,7 @@ public class EntityTempManager
     @SubscribeEvent
     public static void fixOldAttributeData(LivingEntityLoadAdditionalEvent event)
     {
-        if (isTemperatureEnabled(event.getEntity().getType())
+        if (isTemperatureEnabled(event.getEntity())
         && event.getNBT().getList("Attributes", 10).stream().anyMatch(attribute -> ((CompoundTag) attribute).getString("Name").equals("cold_sweat:world_temperature_offset")))
         {
             TaskScheduler.scheduleServer(() ->
@@ -225,7 +225,7 @@ public class EntityTempManager
     public static void tickInventoryTempItems(LivingEvent.LivingUpdateEvent event)
     {
         LivingEntity entity = event.getEntityLiving();
-        if (entity.tickCount % 10 != 0 || !isTemperatureEnabled(event.getEntity().getType())) return;
+        if (entity.tickCount % 10 != 0 || !isTemperatureEnabled(event.getEntity())) return;
 
         Map<Temperature.Trait, Double> effectsPerTrait = Arrays.stream(VALID_MODIFIER_TRAITS).collect(
                 () -> new EnumMap<>(Temperature.Trait.class),
@@ -461,7 +461,7 @@ public class EntityTempManager
     public static void calculateModifierImmunity(LivingEvent.LivingUpdateEvent event)
     {
         LivingEntity entity = event.getEntityLiving();
-        if (!entity.level.isClientSide() && entity.tickCount % 20 == 0 && isTemperatureEnabled(entity.getType()))
+        if (!entity.level.isClientSide() && entity.tickCount % 20 == 0 && isTemperatureEnabled(entity))
         {
             Map<ResourceLocation, Double> immunities = new FastMap<>();
             for (Map.Entry<ItemStack, InsulatorData> entry : getInsulatorsOnEntity(entity).entrySet())
@@ -667,7 +667,7 @@ public class EntityTempManager
         LivingEntity entity = event.getEntityLiving();
         MobEffectInstance effect = event.getPotionEffect();
 
-        if (!entity.level.isClientSide && isTemperatureEnabled(entity.getType())
+        if (!entity.level.isClientSide && isTemperatureEnabled(entity)
         && (effect.getEffect() == ModEffects.FRIGIDNESS || effect.getEffect() == ModEffects.WARMTH))
         {
             boolean isWarmth = effect.getEffect() == ModEffects.WARMTH;
@@ -685,7 +685,7 @@ public class EntityTempManager
         LivingEntity entity = event.getEntityLiving();
         MobEffectInstance effect = event.getPotionEffect();
 
-        if (effect != null && !entity.level.isClientSide && isTemperatureEnabled(entity.getType())
+        if (effect != null && !entity.level.isClientSide && isTemperatureEnabled(entity)
         && (effect.getEffect() == ModEffects.FRIGIDNESS || effect.getEffect() == ModEffects.WARMTH))
         {
             Optional<BlockInsulationTempModifier> modifier = Temperature.getModifier(entity, Temperature.Trait.WORLD, BlockInsulationTempModifier.class);
@@ -797,6 +797,9 @@ public class EntityTempManager
 
     public static boolean isTemperatureEnabled(EntityType<?> type)
     {   return TEMPERATURE_ENABLED_ENTITIES.contains(type);
+    }
+    public static boolean isTemperatureEnabled(Entity entity)
+    {   return TEMPERATURE_ENABLED_ENTITIES.contains(entity.getType());
     }
 
     public static boolean immuneToTempEffects(LivingEntity entity)
