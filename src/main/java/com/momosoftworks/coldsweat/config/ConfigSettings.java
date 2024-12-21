@@ -87,6 +87,7 @@ public class ConfigSettings
     public static final DynamicHolder<SeasonalTempData> AUTUMN_TEMPS;
     public static final DynamicHolder<SeasonalTempData> WINTER_TEMPS;
     public static final DynamicHolder<SeasonalTempData> SPRING_TEMPS;
+    public static final DynamicHolder<Double> OVERCAST_TEMP_OFFSET;
 
     // Block settings
     public static final DynamicHolder<Integer> BLOCK_RANGE;
@@ -358,6 +359,16 @@ public class ConfigSettings
             ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.STRUCTURE_TEMP_DATA);
 
             holder.get(registryAccess).putAll(dataMap);
+        });
+
+        OVERCAST_TEMP_OFFSET = addSetting("overcast_temp_offset", () -> 0.35, holder ->
+        {
+            List<?> setting = WorldSettingsConfig.OVERCAST_TEMP_OFFSET.get();
+            double temperature = ((Number) setting.get(0)).doubleValue();
+            Temperature.Units units = setting.size() > 1
+                                      ? Temperature.Units.fromID((String) setting.get(1))
+                                      : Temperature.Units.MC;
+            holder.set(Temperature.convert(temperature, units, Temperature.Units.MC, false));
         });
 
         DEPTH_REGIONS = addSetting("depth_regions", ArrayList::new, holder -> {});
@@ -996,14 +1007,14 @@ public class ConfigSettings
     }
 
     public static <T> DynamicHolder<T> addSyncedSetting(String id, Supplier<T> defaultVal, Consumer<DynamicHolder<T>> loader, Function<T, CompoundTag> writer, Function<CompoundTag, T> reader,
-                                                        Consumer<T> saver, DynamicHolder.SyncType syncType)
+                                                        Consumer<T> saver, SyncType syncType)
     {   DynamicHolder<T> holder = DynamicHolder.createSynced(defaultVal, loader, writer, reader, saver, syncType);
         CONFIG_SETTINGS.put(id, holder);
         return holder;
     }
 
     public static <T> DynamicHolder<T> addSyncedSettingWithRegistries(String id, Supplier<T> defaultVal, DynamicHolder.Loader<T> loader, DynamicHolder.Writer<T> writer, DynamicHolder.Reader<T> reader,
-                                                                      DynamicHolder.Saver<T> saver, DynamicHolder.SyncType syncType)
+                                                                      DynamicHolder.Saver<T> saver, SyncType syncType)
     {   DynamicHolder<T> holder = DynamicHolder.createSyncedWithRegistries(defaultVal, loader, writer, reader, saver, syncType);
         CONFIG_SETTINGS.put(id, holder);
         return holder;
