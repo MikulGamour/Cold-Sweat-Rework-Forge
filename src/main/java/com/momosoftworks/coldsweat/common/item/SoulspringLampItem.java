@@ -103,7 +103,7 @@ public class SoulspringLampItem extends Item
 
                     for (LivingEntity ent : level.getEntitiesOfClass(LivingEntity.class, bb))
                     {
-                        if (!EntityTempManager.isTemperatureEnabled(ent.getType()))
+                        if (!EntityTempManager.isTemperatureEnabled(ent))
                         {   continue;
                         }
                         // Extend modifier time if it is present
