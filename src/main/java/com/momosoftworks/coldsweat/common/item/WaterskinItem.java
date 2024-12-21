@@ -55,7 +55,7 @@ public class WaterskinItem extends Item
             if (!player.isCreative())
             {   LayeredCauldronBlock.lowerFillLevel(state, level, pos);
             }
-            fillWaterskinItem(player, context.getItemInHand(), context.getHand(), pos);
+            WaterskinItem.setFilled(player, context.getItemInHand(), context.getHand(), pos);
             WorldHelper.spawnParticleBatch(level, ParticleTypes.SPLASH, pos.getX() + 0.5, pos.getY() + 0.65, pos.getZ() + 0.5, 0.5, 0.5, 0.5, 10, 0);
             level.playSound(null, pos, ModSounds.WATERSKIN_FILL.value(), SoundSource.PLAYERS, 2f, (float) Math.random() / 5 + 0.9f);
 
@@ -81,7 +81,7 @@ public class WaterskinItem extends Item
         {
             if (lookingAt.getFluidState().isSource() && lookingAt.getFluidState().getType().isSame(Fluids.WATER))
             {
-                fillWaterskinItem(player, itemstack, hand, hitPos);
+                WaterskinItem.setFilled(player, itemstack, hand, hitPos);
                 level.playSound(null, hitPos, ModSounds.WATERSKIN_FILL.value(), SoundSource.PLAYERS, 2f, (float) Math.random() / 5 + 0.9f);
                 WorldHelper.spawnParticleBatch(level, ParticleTypes.SPLASH, hitPos.getX() + 0.5, hitPos.getY() + 1, hitPos.getZ() + 0.5, 0.5, 0.5, 0.5, 10, 0);
             }
@@ -105,7 +105,7 @@ public class WaterskinItem extends Item
         return filledWaterskin;
     }
 
-    public static void fillWaterskinItem(Player player, ItemStack thisStack, InteractionHand usedHand, BlockPos filledAtPos)
+    public static void setFilled(Player player, ItemStack thisStack, InteractionHand usedHand, BlockPos filledAtPos)
     {
         Level level = player.level();
         ItemStack filledWaterskin = getFilledItem(thisStack, level, filledAtPos);
