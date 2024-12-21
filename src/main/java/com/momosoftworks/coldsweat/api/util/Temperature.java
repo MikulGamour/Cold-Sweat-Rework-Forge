@@ -247,18 +247,19 @@ public class Temperature
         boolean isReplacing = placement.mode().isReplacing();
         boolean isForward = placement.order() == Placement.Order.FIRST;
 
-        if (!isReplacing
-        && modifiers.stream().anyMatch(mod -> Placement.Duplicates.check(duplicatePolicy, modifier, mod)))
-        {   return false;
-        }
+        int existingMatches = (int) modifiers.stream().filter(mod -> Placement.Duplicates.check(duplicatePolicy, modifier, mod)).count();
 
         // The number of TempModifiers that match the predicate
-        int hits = 0;
+        int hits = isReplacing ? 0 : existingMatches;
         // Get the start of the iterator & which direction it's going
         int start = isForward ? 0 : (modifiers.size() - 1);
         // Iterate through the list (backwards if "forward" is false)
         for (int i = start; isForward ? i < modifiers.size() : i >= 0; i += isForward ? 1 : -1)
         {
+            // If max insertion count is reached, break the loop
+            if (hits >= maxCount)
+            {   return changed;
+            }
             TempModifier modifierAt = modifiers.get(i);
             // If the predicate is true, inject the modifier at this position (or after it if "after" is true)
             if (predicate.test(modifierAt))
@@ -272,10 +273,6 @@ public class Temperature
                     changed = true;
                 }
                 hits++;
-                // If max insertion count is reached, break the loop
-                if (hits >= maxCount)
-                {   return changed;
-                }
             }
         }
         if (hits > 0) return changed;
