@@ -29,7 +29,7 @@ public class BlockTempModifier extends TempModifier
     public BlockTempModifier() {}
 
     public BlockTempModifier(int range)
-    {   this.getNBT().putInt("RangeOverride", range);
+    {   if (range > 0) this.getNBT().putInt("RangeOverride", range);
     }
 
     Map<ChunkPos, ChunkAccess> chunks = new HashMap<>(16);

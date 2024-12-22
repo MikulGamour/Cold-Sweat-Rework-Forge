@@ -115,7 +115,8 @@ public class TempModifierInit
 
         event.register(new ResourceLocation(ColdSweat.MOD_ID, "blocks"), BlockTempModifier::new);
         event.register(new ResourceLocation(ColdSweat.MOD_ID, "biomes"), BiomeTempModifier::new);
-        event.register(new ResourceLocation(ColdSweat.MOD_ID, "underground"), UndergroundTempModifier::new);
+        event.register(new ResourceLocation(ColdSweat.MOD_ID, "elevation"), ElevationTempModifier::new);
+        event.register(new ResourceLocation(ColdSweat.MOD_ID, "depth_biomes"), DepthBiomeTempModifier::new);
         event.register(new ResourceLocation(ColdSweat.MOD_ID, "armor"), ArmorInsulationTempModifier::new);
         event.register(new ResourceLocation(ColdSweat.MOD_ID, "mount"), MountTempModifier::new);
         event.register(new ResourceLocation(ColdSweat.MOD_ID, "waterskin"), WaterskinTempModifier::new);
