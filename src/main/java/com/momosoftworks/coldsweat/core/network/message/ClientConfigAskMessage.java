@@ -5,6 +5,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.PacketDistributor;
 
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -13,22 +14,19 @@ public class ClientConfigAskMessage
     UUID openerUUID;
 
     public ClientConfigAskMessage(UUID openerUUID)
-    {
-        this.openerUUID = openerUUID;
+    {   this.openerUUID = openerUUID;
     }
 
     public ClientConfigAskMessage()
-    {
-        this(SyncConfigSettingsMessage.EMPTY_UUID);
+    {   this(null);
     }
 
-    public static void encode(ClientConfigAskMessage message, FriendlyByteBuf buffer) {
-        buffer.writeUUID(message.openerUUID);
+    public static void encode(ClientConfigAskMessage message, FriendlyByteBuf buffer)
+    {   buffer.writeOptional(Optional.ofNullable(message.openerUUID), FriendlyByteBuf::writeUUID);
     }
 
     public static ClientConfigAskMessage decode(FriendlyByteBuf buffer)
-    {
-        return new ClientConfigAskMessage(buffer.readUUID());
+    {   return new ClientConfigAskMessage(buffer.readOptional(FriendlyByteBuf::readUUID).orElse(null));
     }
 
     public static void handle(ClientConfigAskMessage message, Supplier<NetworkEvent.Context> contextSupplier)
