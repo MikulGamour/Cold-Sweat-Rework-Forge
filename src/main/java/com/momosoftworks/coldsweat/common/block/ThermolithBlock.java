@@ -139,6 +139,21 @@ public class ThermolithBlock extends Block implements ITileEntityProvider
     {   return true;
     }
 
+    @SuppressWarnings("deprecation")
+    @Override
+    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean moved)
+    {
+        super.onRemove(state, level, pos, newState, moved);
+        ThermolithBlock.updateFacingNeighbors(level, state, pos);
+    }
+
+    public static void updateFacingNeighbors(Level level, BlockState state, BlockPos pos)
+    {
+        Direction facing = state.getValue(ThermolithBlock.FACING);
+        level.updateNeighborsAt(pos, state.getBlock());
+        level.updateNeighborsAt(pos.relative(facing), level.getBlockState(pos.relative(facing)).getBlock());
+    }
+
     @Override
     public void animateTick(BlockState state, World world, BlockPos pos, Random random)
     {
