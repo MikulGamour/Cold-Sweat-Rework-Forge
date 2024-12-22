@@ -15,18 +15,17 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.PacketDistributor;
 
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Supplier;
 
 public class SyncConfigSettingsMessage
 {
-    public static final UUID EMPTY_UUID = new UUID(0, 0);
-
     CompoundTag configValues;
     UUID menuOpener;
 
     public SyncConfigSettingsMessage(RegistryAccess registryAccess)
-    {   this(EMPTY_UUID, registryAccess);
+    {   this(null, registryAccess);
     }
 
     public SyncConfigSettingsMessage(UUID menuOpener, RegistryAccess registryAccess)
@@ -42,12 +41,12 @@ public class SyncConfigSettingsMessage
     public static void encode(SyncConfigSettingsMessage message, FriendlyByteBuf buffer)
     {
         buffer.writeNbt(message.configValues);
-        buffer.writeUUID(message.menuOpener);
+        buffer.writeOptional(Optional.ofNullable(message.menuOpener), FriendlyByteBuf::writeUUID);
     }
 
     public static SyncConfigSettingsMessage decode(FriendlyByteBuf buffer)
     {
-        return new SyncConfigSettingsMessage(buffer.readNbt(), buffer.readUUID());
+        return new SyncConfigSettingsMessage(buffer.readNbt(), buffer.readOptional(FriendlyByteBuf::readUUID).orElse(null));
     }
 
     public static void handle(SyncConfigSettingsMessage message, Supplier<NetworkEvent.Context> contextSupplier)
@@ -67,9 +66,8 @@ public class SyncConfigSettingsMessage
                     WorldSettingsConfig.save();
                     ItemSettingsConfig.save();
                     EntitySettingsConfig.save();
+                    ColdSweatPacketHandler.INSTANCE.send(PacketDistributor.ALL.noArg(), new SyncConfigSettingsMessage(null, registryAccess));
                 }
-
-                ColdSweatPacketHandler.INSTANCE.send(PacketDistributor.ALL.noArg(), new SyncConfigSettingsMessage(EMPTY_UUID, registryAccess));
             }
             else if (context.getDirection().getReceptionSide().isClient())
             {
@@ -79,7 +77,7 @@ public class SyncConfigSettingsMessage
                 catch (Exception e)
                 {   ColdSweat.LOGGER.error("Failed to decode config settings from server: ", e);
                 }
-                if (message.menuOpener.equals(ClientOnlyHelper.getClientPlayer().getUUID()))
+                if (message.menuOpener != null && message.menuOpener.equals(ClientOnlyHelper.getClientPlayer().getUUID()))
                 {   ClientOnlyHelper.openConfigScreen();
                 }
             }
