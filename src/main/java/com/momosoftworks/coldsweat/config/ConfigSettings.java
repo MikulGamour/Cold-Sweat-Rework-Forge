@@ -14,7 +14,6 @@ import com.momosoftworks.coldsweat.data.ModRegistries;
 import com.momosoftworks.coldsweat.data.codec.configuration.*;
 import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.util.math.CSMath;
-import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.math.FastMap;
 import com.momosoftworks.coldsweat.util.math.FastMultiMap;
 import com.momosoftworks.coldsweat.util.math.Vec2i;
@@ -39,7 +38,6 @@ import net.minecraftforge.fml.common.thread.EffectiveSide;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.apache.logging.log4j.util.TriConsumer;
 
-import javax.xml.ws.Holder;
 import java.util.*;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -133,6 +131,7 @@ public class ConfigSettings
     public static final DynamicHolder<Multimap<Item, InsulatorData>> INSULATING_CURIOS;
     public static final DynamicHolder<ScalingFormula> INSULATION_SLOTS;
     public static final DynamicHolder<List<Item>> INSULATION_BLACKLIST;
+    public static final DynamicHolder<Map<Item, DryingItemData>> DRYING_ITEMS;
 
     public static final DynamicHolder<Multimap<Item, FoodData>> FOOD_TEMPERATURES;
 
@@ -307,7 +306,7 @@ public class ConfigSettings
             holder.get(registryAccess).putAll(dataMap);
         },
         (encoder, registryAccess) -> ConfigHelper.serializeHolderRegistry(encoder, "BiomeTemps", Registry.BIOME_REGISTRY, ModRegistries.BIOME_TEMP_DATA, registryAccess),
-        (decoder, registryAccess) -> ConfigHelper.deserializeRegistry(decoder, "BiomeTemps", Registry.BIOME_REGISTRY, ModRegistries.BIOME_TEMP_DATA, registryAccess),
+        (decoder, registryAccess) -> ConfigHelper.deserializeHolderRegistry(decoder, "BiomeTemps", Registry.BIOME_REGISTRY, ModRegistries.BIOME_TEMP_DATA, registryAccess),
         (saver, registryAccess) -> {},
         SyncType.ONE_WAY);
 
@@ -320,7 +319,7 @@ public class ConfigSettings
             holder.get(registryAccess).putAll(dataMap);
         },
         (encoder, registryAccess) -> ConfigHelper.serializeHolderRegistry(encoder, "BiomeOffsets", Registry.BIOME_REGISTRY, ModRegistries.BIOME_TEMP_DATA, registryAccess),
-        (decoder, registryAccess) -> ConfigHelper.deserializeRegistry(decoder, "BiomeOffsets", Registry.BIOME_REGISTRY, ModRegistries.BIOME_TEMP_DATA, registryAccess),
+        (decoder, registryAccess) -> ConfigHelper.deserializeHolderRegistry(decoder, "BiomeOffsets", Registry.BIOME_REGISTRY, ModRegistries.BIOME_TEMP_DATA, registryAccess),
         (saver, registryAccess) -> {},
         SyncType.ONE_WAY);
 
@@ -333,7 +332,7 @@ public class ConfigSettings
             holder.get(registryAccess).putAll(dataMap);
         },
         (encoder, registryAccess) -> ConfigHelper.serializeHolderRegistry(encoder, "DimensionTemps", Registry.DIMENSION_TYPE_REGISTRY, ModRegistries.DIMENSION_TEMP_DATA, registryAccess),
-        (decoder, registryAccess) -> ConfigHelper.deserializeRegistry(decoder, "DimensionTemps", Registry.DIMENSION_TYPE_REGISTRY, ModRegistries.DIMENSION_TEMP_DATA, registryAccess),
+        (decoder, registryAccess) -> ConfigHelper.deserializeHolderRegistry(decoder, "DimensionTemps", Registry.DIMENSION_TYPE_REGISTRY, ModRegistries.DIMENSION_TEMP_DATA, registryAccess),
         (saver, registryAccess) -> {},
         SyncType.ONE_WAY);
 
@@ -346,7 +345,7 @@ public class ConfigSettings
             holder.get(registryAccess).putAll(dataMap);
         },
         (encoder, registryAccess) -> ConfigHelper.serializeHolderRegistry(encoder, "DimensionOffsets", Registry.DIMENSION_TYPE_REGISTRY, ModRegistries.DIMENSION_TEMP_DATA, registryAccess),
-        (decoder, registryAccess) -> ConfigHelper.deserializeRegistry(decoder, "DimensionOffsets", Registry.DIMENSION_TYPE_REGISTRY, ModRegistries.DIMENSION_TEMP_DATA, registryAccess),
+        (decoder, registryAccess) -> ConfigHelper.deserializeHolderRegistry(decoder, "DimensionOffsets", Registry.DIMENSION_TYPE_REGISTRY, ModRegistries.DIMENSION_TEMP_DATA, registryAccess),
         (saver, registryAccess) -> {},
         SyncType.ONE_WAY);
 
@@ -437,14 +436,14 @@ public class ConfigSettings
             holder.get().putAll(dataMap);
         };
         INSULATION_ITEMS = addSyncedSetting("insulation_items", FastMultiMap::new, holder -> insulatorAdder.accept(ItemSettingsConfig.INSULATION_ITEMS, holder, Insulation.Slot.ITEM),
-        (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "InsulationItems", Registry.ITEM_REGISTRY, ModRegistries.INSULATOR_DATA, item -> ForgeRegistries.ITEMS.getKey(item)),
-        (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "InsulationItems", ModRegistries.INSULATOR_DATA, rl -> ForgeRegistries.ITEMS.getValue(rl)),
+        (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "InsulationItems", Registry.ITEM_REGISTRY, ModRegistries.INSULATOR_DATA, ForgeRegistries.ITEMS::getKey),
+        (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "InsulationItems", ModRegistries.INSULATOR_DATA, ForgeRegistries.ITEMS::getValue),
         (saver) -> {},
         SyncType.ONE_WAY);
 
         INSULATING_ARMORS = addSyncedSetting("insulating_armors", FastMultiMap::new, holder -> insulatorAdder.accept(ItemSettingsConfig.INSULATING_ARMOR, holder, Insulation.Slot.ARMOR),
-        (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "InsulatingArmors", Registry.ITEM_REGISTRY, ModRegistries.INSULATOR_DATA, item -> ForgeRegistries.ITEMS.getKey(item)),
-        (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "InsulatingArmors", ModRegistries.INSULATOR_DATA, rl -> ForgeRegistries.ITEMS.getValue(rl)),
+        (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "InsulatingArmors", Registry.ITEM_REGISTRY, ModRegistries.INSULATOR_DATA, ForgeRegistries.ITEMS::getKey),
+        (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "InsulatingArmors", ModRegistries.INSULATOR_DATA, ForgeRegistries.ITEMS::getValue),
         (saver) -> {},
         SyncType.ONE_WAY);
 
@@ -454,8 +453,8 @@ public class ConfigSettings
             {   insulatorAdder.accept(ItemSettingsConfig.INSULATING_CURIOS, holder, Insulation.Slot.CURIO);
             }
         },
-        (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "InsulatingCurios", Registry.ITEM_REGISTRY, ModRegistries.INSULATOR_DATA, item -> ForgeRegistries.ITEMS.getKey(item)),
-        (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "InsulatingCurios", ModRegistries.INSULATOR_DATA, rl -> ForgeRegistries.ITEMS.getValue(rl)),
+        (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "InsulatingCurios", Registry.ITEM_REGISTRY, ModRegistries.INSULATOR_DATA, ForgeRegistries.ITEMS::getKey),
+        (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "InsulatingCurios", ModRegistries.INSULATOR_DATA, ForgeRegistries.ITEMS::getValue),
         (saver) -> {},
         SyncType.ONE_WAY);
 
@@ -497,6 +496,30 @@ public class ConfigSettings
                                                     .map(entry -> ForgeRegistries.ITEMS.getValue(new ResourceLocation(entry)))
                                                     .collect(ArrayList::new, List::add, List::addAll)));
 
+        DRYING_ITEMS = addSyncedSetting("drying_items", FastMap::new, holder ->
+        {
+            Map<Item, DryingItemData> dataMap = new FastMap<>();
+            for (List<?> entry : ItemSettingsConfig.DRYING_ITEMS.get())
+            {
+                DryingItemData data = DryingItemData.fromToml(entry);
+                if (data == null) continue;
+
+                data.setType(ConfigData.Type.TOML);
+
+                for (Item item : RegistryHelper.mapTaggableList(CSMath.listOrEmpty(data.data().items())))
+                {   dataMap.put(item, data);
+                }
+            }
+            // Handle registry removals
+            ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.DRYING_ITEM_DATA);
+            // Add entries
+            holder.get().putAll(dataMap);
+        },
+        (encoder) -> ConfigHelper.serializeRegistry(encoder, "DryingItems", Registry.ITEM_REGISTRY, ModRegistries.DRYING_ITEM_DATA, ForgeRegistries.ITEMS::getKey),
+        (decoder) -> ConfigHelper.deserializeRegistry(decoder, "DryingItems", ModRegistries.DRYING_ITEM_DATA, ForgeRegistries.ITEMS::getValue),
+        (saver) -> {},
+        SyncType.ONE_WAY);
+
         CHECK_SLEEP_CONDITIONS = addSetting("check_sleep_conditions", () -> true, holder -> holder.set(WorldSettingsConfig.SHOULD_CHECK_SLEEP.get()));
 
         SLEEP_CHECK_IGNORE_BLOCKS = addSetting("sleep_check_override_blocks", ArrayList::new, holder ->
@@ -527,8 +550,8 @@ public class ConfigSettings
             // Add entries
             holder.get().putAll(dataMap);
         },
-        (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "FoodTemperatures", Registry.ITEM_REGISTRY, ModRegistries.FOOD_DATA, item -> ForgeRegistries.ITEMS.getKey(item)),
-        (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "FoodTemperatures", ModRegistries.FOOD_DATA, rl -> ForgeRegistries.ITEMS.getValue(rl)),
+        (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "FoodTemperatures", Registry.ITEM_REGISTRY, ModRegistries.FOOD_DATA, ForgeRegistries.ITEMS::getKey),
+        (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "FoodTemperatures", ModRegistries.FOOD_DATA, ForgeRegistries.ITEMS::getValue),
         (saver) -> {},
         SyncType.ONE_WAY);
 
@@ -550,8 +573,8 @@ public class ConfigSettings
             // Add entries
             holder.get().putAll(dataMap);
         },
-        (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "CarriedItemTemps", Registry.ITEM_REGISTRY, ModRegistries.CARRY_TEMP_DATA, item -> ForgeRegistries.ITEMS.getKey(item)),
-        (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "CarriedItemTemps", ModRegistries.CARRY_TEMP_DATA, rl -> ForgeRegistries.ITEMS.getValue(rl)),
+        (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "CarriedItemTemps", Registry.ITEM_REGISTRY, ModRegistries.CARRY_TEMP_DATA, ForgeRegistries.ITEMS::getKey),
+        (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "CarriedItemTemps", ModRegistries.CARRY_TEMP_DATA, ForgeRegistries.ITEMS::getValue),
         (saver) -> {},
         SyncType.ONE_WAY);
 

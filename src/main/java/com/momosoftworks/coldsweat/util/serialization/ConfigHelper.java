@@ -269,21 +269,21 @@ public class ConfigHelper
 
     public static <K, V extends ConfigData> CompoundNBT serializeRegistry(Map<K, V> map, String key,
                                                                           RegistryKey<Registry<K>> gameRegistry, RegistryKey<Registry<V>> modRegistry,
-                                                                          DynamicRegistries registryAccess)
+                                                                          Function<K, ResourceLocation> keyGetter)
     {
-        return serializeEitherRegistry(map, key, gameRegistry, modRegistry, null, rl -> registryAccess.registryOrThrow(gameRegistry).getKey(rl));
+        return serializeEitherRegistry(map, key, gameRegistry, modRegistry, keyGetter);
     }
 
     public static <K, V extends ConfigData> CompoundNBT serializeHolderRegistry(Map<K, V> map, String key,
                                                                                 RegistryKey<Registry<K>> gameRegistry, RegistryKey<Registry<V>> modRegistry,
                                                                                 DynamicRegistries dynamicRegistries)
     {
-        return serializeEitherRegistry(map, key, gameRegistry, modRegistry, dynamicRegistries, k -> dynamicRegistries.registryOrThrow(gameRegistry).getKey(k));
+        return serializeEitherRegistry(map, key, gameRegistry, modRegistry, k -> dynamicRegistries.registryOrThrow(gameRegistry).getKey(k));
     }
 
     private static <K, V extends ConfigData> CompoundNBT serializeEitherRegistry(Map<K, V> map, String key,
                                                                                  RegistryKey<?> gameRegistry, RegistryKey<Registry<V>> modRegistry,
-                                                                                 DynamicRegistries dynamicRegistries, Function<K, ResourceLocation> keyGetter)
+                                                                                 Function<K, ResourceLocation> keyGetter)
     {
         Codec<V> codec = ModRegistries.getCodec(modRegistry);
         DynamicOps<INBT> encoderOps = NBTDynamicOps.INSTANCE;
@@ -311,9 +311,16 @@ public class ConfigHelper
     }
 
     public static <K, V extends ConfigData> Map<K, V> deserializeRegistry(CompoundNBT tag, String key,
-                                                                          RegistryKey<Registry<K>> gameRegistry,
-                                                                            RegistryKey<Registry<V>> modRegistry,
-                                                                          DynamicRegistries dynamicRegistries)
+                                                                          RegistryKey<Registry<V>> modRegistry,
+                                                                          Function<ResourceLocation, K> keyGetter)
+    {
+        return deserializeEitherRegistry(tag, key, modRegistry, keyGetter, null);
+    }
+
+    public static <K, V extends ConfigData> Map<K, V> deserializeHolderRegistry(CompoundNBT tag, String key,
+                                                                                RegistryKey<Registry<K>> gameRegistry,
+                                                                                RegistryKey<Registry<V>> modRegistry,
+                                                                                DynamicRegistries dynamicRegistries)
     {
         Registry<K> registry = dynamicRegistries.registryOrThrow(gameRegistry);
         return deserializeEitherRegistry(tag, key, modRegistry, rl -> registry.getOptional(RegistryKey.create(gameRegistry, rl)).orElse(null), dynamicRegistries);

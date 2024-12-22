@@ -47,6 +47,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.minecraftforge.fml.loading.FMLPaths;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -181,43 +182,62 @@ public class ConfigLoadingHandler
          Add JSON data to the config settings
          */
         // insulators
-        addInsulatorConfigs(event.getInsulators());
-        logRegistryLoaded(String.format("Loaded %s insulators", event.getInsulators().size()), event.getInsulators());
+        Collection<InsulatorData> insulators = event.getRegistry(ModRegistries.INSULATOR_DATA);
+        addInsulatorConfigs(insulators);
+        logRegistryLoaded(String.format("Loaded %s insulators", insulators.size()), insulators);
         // fuels
-        addFuelConfigs(event.getFuels());
-        logRegistryLoaded(String.format("Loaded %s fuels", event.getFuels().size()), event.getFuels());
+        Collection<FuelData> fuels = event.getRegistry(ModRegistries.FUEL_DATA);
+        addFuelConfigs(fuels);
+        logRegistryLoaded(String.format("Loaded %s fuels", fuels.size()), fuels);
         // foods
-        addFoodConfigs(event.getFoods());
-        logRegistryLoaded(String.format("Loaded %s foods", event.getFoods().size()), event.getFoods());
+        Collection<FoodData> foods = event.getRegistry(ModRegistries.FOOD_DATA);
+        addFoodConfigs(foods);
+        logRegistryLoaded(String.format("Loaded %s foods", foods.size()), foods);
         // carry temperatures
-        addCarryTempConfigs(event.getCarryTemps());
-        logRegistryLoaded(String.format("Loaded %s carried item temperatures", event.getCarryTemps().size()), event.getCarryTemps());
+        Collection<ItemCarryTempData> carryTemps = event.getRegistry(ModRegistries.CARRY_TEMP_DATA);
+        addCarryTempConfigs(carryTemps);
+        logRegistryLoaded(String.format("Loaded %s carried item temperatures", carryTemps.size()), carryTemps);
+        // drying items
+        Collection<DryingItemData> dryingItems = event.getRegistry(ModRegistries.DRYING_ITEM_DATA);
+        addDryingItemConfigs(dryingItems);
+        logRegistryLoaded(String.format("Loaded %s drying items", dryingItems.size()), dryingItems);
 
         // block temperatures
-        addBlockTempConfigs(event.getBlockTemps());
-        logRegistryLoaded(String.format("Loaded %s block temperatures", event.getBlockTemps().size()), event.getBlockTemps());
+        Collection<BlockTempData> blockTemps = event.getRegistry(ModRegistries.BLOCK_TEMP_DATA);
+        addBlockTempConfigs(blockTemps);
+        logRegistryLoaded(String.format("Loaded %s block temperatures", blockTemps.size()), blockTemps);
         // biome temperatures
-        addBiomeTempConfigs(event.getBiomeTemps(), registryAccess);
-        logRegistryLoaded(String.format("Loaded %s biome temperatures", event.getBiomeTemps().size()), event.getBiomeTemps());
+        Collection<BiomeTempData> biomeTemps = event.getRegistry(ModRegistries.BIOME_TEMP_DATA);
+        addBiomeTempConfigs(biomeTemps, registryAccess);
+        logRegistryLoaded(String.format("Loaded %s biome temperatures", biomeTemps.size()), biomeTemps);
         // dimension temperatures
-        addDimensionTempConfigs(event.getDimensionTemps(), registryAccess);
-        logRegistryLoaded(String.format("Loaded %s dimension temperatures", event.getDimensionTemps().size()), event.getDimensionTemps());
+        Collection<DimensionTempData> dimensionTemps = event.getRegistry(ModRegistries.DIMENSION_TEMP_DATA);
+        addDimensionTempConfigs(dimensionTemps, registryAccess);
+        logRegistryLoaded(String.format("Loaded %s dimension temperatures", dimensionTemps.size()), dimensionTemps);
         // structure temperatures
-        addStructureTempConfigs(event.getStructureTemps(), registryAccess);
-        logRegistryLoaded(String.format("Loaded %s structure temperatures", event.getStructureTemps().size()), event.getStructureTemps());
+        Collection<StructureTempData> structureTemps = event.getRegistry(ModRegistries.STRUCTURE_TEMP_DATA);
+        addStructureTempConfigs(structureTemps, registryAccess);
+        logRegistryLoaded(String.format("Loaded %s structure temperatures", structureTemps.size()), structureTemps);
         // depth temperatures
-        addDepthTempConfigs(event.getDepthTemps());
-        logRegistryLoaded(String.format("Loaded %s depth temperatures", event.getDepthTemps().size()), event.getDepthTemps());
+        Collection<DepthTempData> depthTemps = event.getRegistry(ModRegistries.DEPTH_TEMP_DATA);
+        addDepthTempConfigs(depthTemps);
+        logRegistryLoaded(String.format("Loaded %s depth temperatures", depthTemps.size()), depthTemps);
 
         // mounts
-        addMountConfigs(event.getMounts());
-        logRegistryLoaded(String.format("Loaded %s insulated mounts", event.getMounts().size()), event.getMounts());
+        Collection<MountData> mounts = event.getRegistry(ModRegistries.MOUNT_DATA);
+        addMountConfigs(mounts);
+        logRegistryLoaded(String.format("Loaded %s insulated mounts", mounts.size()), mounts);
         // spawn biomes
-        addSpawnBiomeConfigs(event.getSpawnBiomes(), registryAccess);
-        logRegistryLoaded(String.format("Loaded %s entity spawn biomes", event.getSpawnBiomes().size()), event.getSpawnBiomes());
+        Collection<SpawnBiomeData> spawnBiomes = event.getRegistry(ModRegistries.ENTITY_SPAWN_BIOME_DATA);
+        addSpawnBiomeConfigs(spawnBiomes, registryAccess);
+        logRegistryLoaded(String.format("Loaded %s entity spawn biomes", spawnBiomes.size()), spawnBiomes);
         // entity temperatures
-        addEntityTempConfigs(event.getEntityTemps());
-        logRegistryLoaded(String.format("Loaded %s entity temperatures", event.getEntityTemps().size()), event.getEntityTemps());
+        Collection<EntityTempData> entityTemps = event.getRegistry(ModRegistries.ENTITY_TEMP_DATA);
+        addEntityTempConfigs(entityTemps);
+        logRegistryLoaded(String.format("Loaded %s entity temperatures", entityTemps.size()), entityTemps);
+
+        CreateRegistriesEvent.Post postEvent = new CreateRegistriesEvent.Post(registryAccess, event.getRegistries());
+        MinecraftForge.EVENT_BUS.post(postEvent);
     }
 
     private static void logRegistryLoaded(String message, Collection<?> registry)
@@ -401,6 +421,28 @@ public class ConfigLoadingHandler
             });
             for (Item item : items)
             {   ConfigSettings.CARRIED_ITEM_TEMPERATURES.get().put(item, carryTempData);
+            }
+        });
+    }
+
+    private static void addDryingItemConfigs(Collection<DryingItemData> dryingItems)
+    {
+        dryingItems.forEach(dryingItemData ->
+        {
+            // Check if the required mods are loaded
+            if (!dryingItemData.areRequiredModsLoaded())
+            {   return;
+            }
+
+            List<Item> items = new ArrayList<>();
+            dryingItemData.data().items().ifPresent(itemList ->
+            {   items.addAll(RegistryHelper.mapTaggableList(itemList));
+            });
+            dryingItemData.data().tag().ifPresent(tag ->
+            {   items.addAll(tag.getValues().stream().collect(Collectors.toList()));
+            });
+            for (Item item : items)
+            {   ConfigSettings.DRYING_ITEMS.get().put(item, dryingItemData);
             }
         });
     }

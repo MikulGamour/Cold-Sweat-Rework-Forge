@@ -36,6 +36,7 @@ public class ModRegistries
     public static final RegistryKey<Registry<FuelData>> FUEL_DATA = createRegistry(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "item/fuel")), FuelData.CODEC, FuelData.class);
     public static final RegistryKey<Registry<FoodData>> FOOD_DATA = createRegistry(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "item/food")), FoodData.CODEC, FoodData.class);
     public static final RegistryKey<Registry<ItemCarryTempData>> CARRY_TEMP_DATA = createRegistry(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "item/carried_temp")), ItemCarryTempData.CODEC, ItemCarryTempData.class);
+    public static final RegistryKey<Registry<DryingItemData>> DRYING_ITEM_DATA = createRegistry(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "item/drying_item")), DryingItemData.CODEC, DryingItemData.class);
 
     // World Registries
     public static final RegistryKey<Registry<BlockTempData>> BLOCK_TEMP_DATA = createRegistry(RegistryKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "block/block_temp")), BlockTempData.CODEC, BlockTempData.class);
