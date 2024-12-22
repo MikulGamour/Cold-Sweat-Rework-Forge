@@ -35,12 +35,11 @@ public class ThermolithBlockEntity extends BlockEntity
             // Handle signal output / neighbor updates
             double temperature = WorldHelper.getTemperatureAt(level, pos);
             int newSignal = (int) CSMath.blend(0, 15, temperature, ConfigSettings.MIN_TEMP.get(), ConfigSettings.MAX_TEMP.get());
-            Direction facing = this.getBlockState().getValue(ThermolithBlock.FACING);
 
             if (newSignal != signal)
             {
                 signal = newSignal;
-                this.updateFacingNeighbors();
+                ThermolithBlock.updateFacingNeighbors(level, state, pos);
             }
 
             // Handle turning on/off
@@ -55,26 +54,8 @@ public class ThermolithBlockEntity extends BlockEntity
         }
     }
 
-    @Override
-    public void setRemoved()
-    {
-        super.setRemoved();
-        this.updateFacingNeighbors();
-    }
-
     public int getSignal()
     {
         return signal;
-    }
-
-    public void updateFacingNeighbors()
-    {
-        if (this.level == null) return;
-
-        BlockPos pos = this.getBlockPos();
-        BlockState state = this.getBlockState();
-        Direction facing = state.getValue(ThermolithBlock.FACING);
-        level.updateNeighborsAt(pos, state.getBlock());
-        level.updateNeighborsAt(pos.relative(facing), this.level.getBlockState(pos.relative(facing)).getBlock());
     }
 }
