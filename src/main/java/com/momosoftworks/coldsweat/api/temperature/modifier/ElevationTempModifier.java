@@ -18,13 +18,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-public class UndergroundTempModifier extends TempModifier
+public class ElevationTempModifier extends TempModifier
 {
-    public UndergroundTempModifier()
+    public ElevationTempModifier()
     {   this(49);
     }
 
-    public UndergroundTempModifier(int samples)
+    public ElevationTempModifier(int samples)
     {   this.getNBT().putInt("Samples", samples);
     }
 
@@ -42,9 +42,6 @@ public class UndergroundTempModifier extends TempModifier
         for (BlockPos pos : WorldHelper.getPositionGrid(entity.blockPosition(), this.getNBT().getInt("Samples"), 10))
         {
             depthTable.add(Pair.of(pos, CSMath.getDistance(entity.blockPosition(), pos)));
-        }
-        if (depthTable.isEmpty())
-        {   return temp -> temp;
         }
 
         int skylight = entity.level.getBrightness(LightType.SKY, entity.blockPosition());

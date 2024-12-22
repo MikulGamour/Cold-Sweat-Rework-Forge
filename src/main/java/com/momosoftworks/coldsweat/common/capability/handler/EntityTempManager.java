@@ -362,48 +362,47 @@ public class EntityTempManager
     public static void defineDefaultModifiers(GatherDefaultTempModifiersEvent event)
     {
         // Default TempModifiers for players
-        if (event.getEntity() instanceof PlayerEntity)
-        {
-            if (event.getTrait() == Temperature.Trait.WORLD)
-            {
-                event.addModifier(new BiomeTempModifier(49).tickRate(10), Placement.Duplicates.BY_CLASS, Placement.BEFORE_FIRST);
-                event.addModifier(new UndergroundTempModifier().tickRate(10), Placement.Duplicates.BY_CLASS, Placement.of(Mode.AFTER, Order.FIRST, mod -> mod instanceof BiomeTempModifier));
-                event.addModifier(new BlockTempModifier().tickRate(4), Placement.Duplicates.BY_CLASS, Placement.AFTER_LAST);
-                event.addModifier(new EntitiesTempModifier().tickRate(10), Placement.Duplicates.BY_CLASS, Placement.AFTER_LAST);
+        boolean isPlayer = event.getEntity() instanceof PlayerEntity;
 
-                // Serene Seasons compat
-                event.addModifierById(new ResourceLocation("sereneseasons:season"),
-                                      mod -> mod.tickRate(60),
-                                      Placement.Duplicates.BY_CLASS,
-                                      Placement.of(Mode.BEFORE, Order.FIRST, mod2 -> mod2 instanceof UndergroundTempModifier));
-                // Weather2 Compat
-                event.addModifierById(new ResourceLocation("weather2:storm"),
-                                      mod -> mod.tickRate(60),
-                                      Placement.Duplicates.BY_CLASS,
-                                      Placement.of(Mode.BEFORE, Order.FIRST, mod2 -> mod2 instanceof UndergroundTempModifier));
-            }
-            if (event.getTrait().isForModifiers())
-            {   event.addModifier(new InventoryItemsTempModifier(), Placement.Duplicates.BY_CLASS, Placement.AFTER_LAST);
-            }
-        }
-        // Default TempModifiers for other temperature-enabled entities
-        else if (event.getTrait() == Temperature.Trait.WORLD && TEMPERATURE_ENABLED_ENTITIES.contains(event.getEntity().getType()))
-        {   // Basic modifiers
-            event.addModifier(new BiomeTempModifier(16).tickRate(40), Placement.Duplicates.BY_CLASS, Placement.BEFORE_FIRST);
-            event.addModifier(new UndergroundTempModifier(16).tickRate(40), Placement.Duplicates.BY_CLASS, Placement.of(Mode.AFTER, Order.FIRST, mod -> mod instanceof BiomeTempModifier));
-            event.addModifier(new BlockTempModifier(4).tickRate(20), Placement.Duplicates.BY_CLASS, Placement.AFTER_LAST);
-            event.addModifier(new EntitiesTempModifier().tickRate(10), Placement.Duplicates.BY_CLASS, Placement.AFTER_LAST);
+        // TempModifier tick rate is generally slower for entities than for players
+        int slowTickRate = 60;
+        int mediumTickRate = isPlayer ? 10 : 40;
+        int mediumTickRate2 = isPlayer ? 10 : 20;
+        int fastTickRate = isPlayer ? 5 : 20;
+
+        if (event.getTrait() == Temperature.Trait.WORLD)
+        {
+            event.addModifier(new BiomeTempModifier(isPlayer ? 49 : 16).tickRate(mediumTickRate),
+                              Placement.Duplicates.BY_CLASS, Placement.BEFORE_FIRST);
+
+            event.addModifier(new ElevationTempModifier(isPlayer ? 49 : 16).tickRate(mediumTickRate),
+                              Placement.Duplicates.BY_CLASS, Placement.of(Mode.AFTER, Order.FIRST, mod -> mod instanceof BiomeTempModifier));
+
+            event.addModifier(new BlockTempModifier(isPlayer ? -1 : 4).tickRate(fastTickRate),
+                              Placement.Duplicates.BY_CLASS, Placement.AFTER_LAST);
+
+            event.addModifier(new EntitiesTempModifier().tickRate(mediumTickRate2),
+                              Placement.Duplicates.BY_CLASS, Placement.AFTER_LAST);
 
             // Serene Seasons compat
-            if (CompatManager.isSereneSeasonsLoaded())
-            {   TempModifierRegistry.getValue(new ResourceLocation("sereneseasons:season")).ifPresent(mod -> event.addModifier(mod.tickRate(60), Placement.Duplicates.BY_CLASS, Placement.of(Mode.BEFORE, Order.FIRST,
-                                                                                                                                          mod2 -> mod2 instanceof UndergroundTempModifier)));
-            }
+            event.addModifierById(new ResourceLocation("sereneseasons:season"),
+                                  mod -> mod.tickRate(slowTickRate),
+                                  Placement.Duplicates.BY_CLASS,
+                                  Placement.of(Mode.BEFORE, Order.FIRST, mod2 -> mod2 instanceof ElevationTempModifier));
             // Weather2 Compat
-            if (CompatManager.isWeather2Loaded())
-            {   TempModifierRegistry.getValue(new ResourceLocation("weather2:storm")).ifPresent(mod -> event.addModifier(mod.tickRate(60), Placement.Duplicates.BY_CLASS, Placement.of(Mode.BEFORE, Order.FIRST,
-                                                                                                                                    mod2 -> mod2 instanceof UndergroundTempModifier)));
-            }
+            event.addModifierById(new ResourceLocation("weather2:storm"),
+                                  mod -> mod.tickRate(slowTickRate),
+                                  Placement.Duplicates.BY_CLASS,
+                                  Placement.of(Mode.BEFORE, Order.FIRST, mod2 -> mod2 instanceof ElevationTempModifier));
+            // Valkyrien Skies Compat
+            event.addModifierById(new ResourceLocation("valkyrienskies:ship_blocks"),
+                                  mod -> mod.tickRate(mediumTickRate2),
+                                  Placement.Duplicates.BY_CLASS,
+                                  Placement.of(Mode.AFTER, Order.FIRST, mod2 -> mod2 instanceof BlockTempModifier));
+        }
+
+        else if (isPlayer && event.getTrait().isForModifiers())
+        {   event.addModifier(new InventoryItemsTempModifier().tickRate(5), Placement.Duplicates.BY_CLASS, Placement.AFTER_LAST);
         }
     }
 
