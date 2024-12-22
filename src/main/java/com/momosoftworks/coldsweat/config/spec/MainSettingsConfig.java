@@ -42,6 +42,7 @@ public class MainSettingsConfig
     public static final ForgeConfigSpec.ConfigValue<Double> COLD_MOVEMENT;
 
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> DISABLED_TEMP_MODIFIERS;
+    public static final ForgeConfigSpec.DoubleValue MODIFIER_TICK_RATE;
 
     static 
     {
@@ -167,6 +168,11 @@ public class MainSettingsConfig
                          " Run \"/temp debug @s <trait>\" to see IDs of all modifiers affecting the player",
                          "See the Cold Sweat documentation for a list of default TempModifiers")
                 .defineListAllowEmpty(List.of("Disabled Temperature Modifiers"), () -> List.of(), o -> o instanceof String);
+
+        MODIFIER_TICK_RATE = BUILDER
+                .comment("Changes the update rate for temperature modifiers on entities",
+                         "Temperature modifiers control most of Cold Sweat's behavior, so lowering this value will improve performance at the cost of responsiveness")
+                .defineInRange("Modifier Tick Rate", 1.0, 0.1, 1.0);
 
         BUILDER.pop();
 
