@@ -75,7 +75,7 @@ public class UndergroundTempModifier extends TempModifier
 
         int skylight = entity.level().getBrightness(LightLayer.SKY, entity.blockPosition());
 
-        Map<BlockPos, Pair<DepthTempData, Double>> depthRegions = new FastMap<>();
+        Map<BlockPos, Pair<DepthTempData.TempRegion, Double>> depthRegions = new FastMap<>();
 
         for (Pair<BlockPos, Double> pair : depthTable)
         {
@@ -86,17 +86,16 @@ public class UndergroundTempModifier extends TempModifier
                                         originalY <= minY ? originalY : Math.max(minY, originalY + skylight - 4),
                                         originalPos.getZ());
             double distance = pair.getSecond();
-            DepthTempData tempData = null;
-            for (DepthTempData data : ConfigSettings.DEPTH_REGIONS.get())
+            findRegion:
             {
-                if (data.withinBounds(level, pos))
+                for (DepthTempData data : ConfigSettings.DEPTH_REGIONS.get())
                 {
-                    tempData = data;
-                    break;
+                    DepthTempData.TempRegion region = data.getRegion(level, pos);
+                    if (region == null) continue;
+                    depthRegions.put(pos, Pair.of(region, distance));
+                    break findRegion;
                 }
-            }
-            if (tempData != null)
-            {   depthRegions.put(pos, Pair.of(tempData, distance));
+                depthRegions.put(pos, Pair.of(null, distance));
             }
         }
 
@@ -104,13 +103,13 @@ public class UndergroundTempModifier extends TempModifier
         {
             List<Pair<Double, Double>> depthTemps = new ArrayList<>();
 
-            for (Map.Entry<BlockPos, Pair<DepthTempData, Double>> entry : depthRegions.entrySet())
+            for (Map.Entry<BlockPos, Pair<DepthTempData.TempRegion, Double>> entry : depthRegions.entrySet())
             {
                 BlockPos pos = entry.getKey();
-                DepthTempData depthData = entry.getValue().getFirst();
+                DepthTempData.TempRegion region = entry.getValue().getFirst();
                 double distance = entry.getValue().getSecond();
 
-                double depthTemp = CSMath.orElse(depthData.getTemperature(temp, pos, level), temp);
+                double depthTemp = CSMath.getIfNotNull(region, reg -> reg.getTemperature(temp, pos, level), temp);
                 double weight = 1 / (distance / 10 + 1);
                 // Add the weighted temperature to the list
                 depthTemps.add(new Pair<>(depthTemp, weight));
