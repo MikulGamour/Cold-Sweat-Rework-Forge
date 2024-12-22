@@ -213,8 +213,11 @@ public class HearthBlockEntity extends LockableLootTileEntity implements ITickab
     {   return ConfigSettings.HEARTH_WARM_UP_TIME.get();
     }
 
-    public int getInsulationLevel()
-    {   return insulationLevel;
+    public int getCoolingLevel()
+    {   return shouldUseColdFuel ? insulationLevel : 0;
+    }
+    public int getHeatingLevel()
+    {   return shouldUseHotFuel ? insulationLevel : 0;
     }
 
     /**
