@@ -8,6 +8,7 @@ import com.momosoftworks.coldsweat.api.temperature.modifier.*;
 import com.momosoftworks.coldsweat.api.util.Placement;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.common.block.SmokestackBlock;
+import com.momosoftworks.coldsweat.common.blockentity.HearthBlockEntity;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.data.codec.configuration.BiomeTempData;
 import com.momosoftworks.coldsweat.util.entity.DummyPlayer;
@@ -649,6 +650,14 @@ public abstract class WorldHelper
             else if (modifier instanceof DepthBiomeTempModifier) modifiers.set(i, new DepthBiomeTempModifier(3));
         }
 
+        // Get insulation from hearths
+        Pair<Integer, Integer> maxCoolingHeating = getInsulationFromNearbySources(level, pos, 2);
+        int maxCoolingLevel = maxCoolingHeating.getFirst();
+        int maxHeatingLevel = maxCoolingHeating.getSecond();
+        if (maxCoolingLevel > 0 || maxHeatingLevel > 0)
+        {   modifiers.add(new BlockInsulationTempModifier(maxCoolingLevel, maxHeatingLevel));
+        }
+
         double tempAt = Temperature.apply(0, dummy, Temperature.Trait.WORLD, modifiers);
 
         snapshots.add(new TempSnapshot(level, pos, level.getGameTime(), tempAt));
@@ -766,6 +775,42 @@ public abstract class WorldHelper
             }
         }
         return false;
+    }
+
+    public static Pair<Integer, Integer> getInsulationFromNearbySources(Level level, BlockPos pos, int chunkRadius)
+    {
+        int maxCoolingLevel = 0;
+        int maxHeatingLevel = 0;
+        ChunkPos chunkPos = new ChunkPos(pos);
+        for (int x = -chunkRadius; x <= chunkRadius; x++)
+        for (int z = -chunkRadius; z <= chunkRadius; z++)
+        {
+            ChunkAccess chunk = getChunk(level, chunkPos.x + x, chunkPos.z + z);
+            if (chunk == null) continue;
+
+            for (BlockEntity be : getBlockEntities(chunk).values())
+            {
+                if (be instanceof HearthBlockEntity hearth && hearth.getPathLookup().contains(pos))
+                {
+                    maxCoolingLevel = Math.max(maxCoolingLevel, hearth.getCoolingLevel());
+                    maxHeatingLevel = Math.max(maxHeatingLevel, hearth.getHeatingLevel());
+                }
+            }
+        }
+        return Pair.of(maxCoolingLevel, maxHeatingLevel);
+    }
+
+    private static final Field CHUNK_BLOCK_ENTITIES = ObfuscationReflectionHelper.findField(ChunkAccess.class, "f_187610_");
+    static { CHUNK_BLOCK_ENTITIES.setAccessible(true); }
+    public static Map<BlockPos, BlockEntity> getBlockEntities(ChunkAccess chunk)
+    {
+        try
+        {   return (Map<BlockPos, BlockEntity>) CHUNK_BLOCK_ENTITIES.get(chunk);
+        }
+        catch (IllegalAccessException e)
+        {   e.printStackTrace();
+        }
+        return Collections.emptyMap();
     }
 
     public record TempSnapshot(Level level, BlockPos pos, long timestamp, double temperature) {}
