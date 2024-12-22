@@ -9,25 +9,22 @@ import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.math.FastMap;
 import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LightLayer;
-import net.minecraft.world.level.biome.Biome;
-import net.minecraftforge.common.Tags;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
-public class UndergroundTempModifier extends TempModifier
+public class ElevationTempModifier extends TempModifier
 {
-    public UndergroundTempModifier()
+    public ElevationTempModifier()
     {   this(49);
     }
 
-    public UndergroundTempModifier(int samples)
+    public ElevationTempModifier(int samples)
     {   this.getNBT().putInt("Samples", samples);
     }
 
@@ -45,33 +42,6 @@ public class UndergroundTempModifier extends TempModifier
         {
             depthTable.add(Pair.of(pos, CSMath.getDistance(entity.blockPosition(), pos)));
         }
-
-        // Calculate the average temperature of underground biomes
-        double biomeTempTotal = 0;
-        int caveBiomeCount = 0;
-
-        for (BlockPos pos : WorldHelper.getPositionCube(entity.blockPosition(), 5, 10))
-        {
-            if (!level.isInWorldBounds(pos)) continue;
-
-            if (WorldHelper.getHeight(pos, level) <= entity.getY()) continue;
-
-            // Get temperature of underground biomes
-            Holder<Biome> biome = level.getBiomeManager().getBiome(pos);
-            if (biome.is(Tags.Biomes.IS_UNDERGROUND))
-            {
-                double biomeTemp = CSMath.averagePair(WorldHelper.getBiomeTemperatureRange(level, biome));
-
-                biomeTempTotal += biomeTemp;
-                caveBiomeCount++;
-            }
-        }
-        if (depthTable.isEmpty() && caveBiomeCount == 0)
-        {   return temp -> temp;
-        }
-
-        int finalCaveBiomeCount = caveBiomeCount;
-        double biomeTempAvg = biomeTempTotal / Math.max(1, caveBiomeCount);
 
         int skylight = entity.level.getBrightness(LightLayer.SKY, entity.blockPosition());
 
@@ -116,10 +86,7 @@ public class UndergroundTempModifier extends TempModifier
             }
             if (depthTemps.isEmpty()) return temp;
             // Calculate the weighted average of the depth temperatures
-            double weightedDepthTemp = CSMath.weightedAverage(depthTemps);
-
-            // Weigh the depth temperature against the number of underground biomes with temperature
-            return CSMath.blend(weightedDepthTemp, biomeTempAvg, finalCaveBiomeCount, 0, depthTable.size());
+            return CSMath.weightedAverage(depthTemps);
         };
     }
 }
