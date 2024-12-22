@@ -16,13 +16,13 @@ public class ConfigPageFour extends AbstractConfigPage
 
     @Override
     public Component sectionOneTitle()
-    {   return Component.translatable("cold_sweat.config.section.hearth");
+    {   return Component.translatable("cold_sweat.config.section.thermal_source");
     }
 
     @Nullable
     @Override
     public Component sectionTwoTitle()
-    {   return Component.translatable("cold_sweat.config.section.boiler");
+    {   return null;
     }
 
     @Override
@@ -31,67 +31,27 @@ public class ConfigPageFour extends AbstractConfigPage
         super.init();
 
         // Smart Hearth
-        this.addButton("smart_hearth", Side.LEFT, () -> getToggleButtonText(Component.translatable("cold_sweat.config.smart_source.name"), ConfigSettings.SMART_HEARTH.get()),
+        this.addButton("smart_hearth", Side.LEFT, () -> getToggleButtonText(Component.translatable("cold_sweat.config.smart_source.name", Component.translatable("block.cold_sweat.hearth_bottom").getString()),
+                                                                            ConfigSettings.SMART_HEARTH.get()),
                        button -> ConfigSettings.SMART_HEARTH.set(!ConfigSettings.SMART_HEARTH.get()),
                        true, false, false, Component.translatable("cold_sweat.config.smart_source.desc"));
 
-        // Hearth Range
-        this.addDecimalInput("hearth_range", Side.LEFT, Component.translatable("cold_sweat.config.source_range.name"),
-                             value -> ConfigSettings.HEARTH_RANGE.set(value.intValue()),
-                             input -> input.setValue(ConfigSettings.HEARTH_RANGE.get() + ""),
-                             true, false, false, Component.translatable("cold_sweat.config.source_range.desc"));
+        // Smart Boiler
+        this.addButton("smart_boiler", Side.LEFT, () -> getToggleButtonText(Component.translatable("cold_sweat.config.smart_source.name", Component.translatable("block.cold_sweat.boiler").getString()),
+                                                                            ConfigSettings.SMART_BOILER.get()),
+                       button -> ConfigSettings.SMART_BOILER.set(!ConfigSettings.SMART_BOILER.get()),
+                       true, false, false, Component.translatable("cold_sweat.config.smart_source.desc"));
 
-        // Hearth Max Range
-        this.addDecimalInput("hearth_max_range", Side.LEFT, Component.translatable("cold_sweat.config.source_max_range.name"),
-                             value -> ConfigSettings.HEARTH_MAX_RANGE.set(value.intValue()),
-                             input -> input.setValue(ConfigSettings.HEARTH_MAX_RANGE.get() + ""),
-                             true, false, false, Component.translatable("cold_sweat.config.source_max_range.desc"));
-
-        // Hearth Max Volume
-        this.addDecimalInput("hearth_max_volume", Side.LEFT, Component.translatable("cold_sweat.config.source_max_volume.name"),
-                             value -> ConfigSettings.HEARTH_MAX_VOLUME.set(value.intValue()),
-                             input -> input.setValue(ConfigSettings.HEARTH_MAX_VOLUME.get() + ""),
-                             true, false, false, Component.translatable("cold_sweat.config.source_max_volume.desc"));
-
-        // Hearth Warm Up Time
-        this.addDecimalInput("hearth_warm_up_time", Side.LEFT, Component.translatable("cold_sweat.config.source_warm_up_time.name"),
-                             value -> ConfigSettings.HEARTH_WARM_UP_TIME.set(value.intValue()),
-                             input -> input.setValue(ConfigSettings.HEARTH_WARM_UP_TIME.get() + ""),
-                             true, false, false, Component.translatable("cold_sweat.config.source_warm_up_time.desc"));
+        // Smart Icebox
+        this.addButton("smart_icebox", Side.LEFT, () -> getToggleButtonText(Component.translatable("cold_sweat.config.smart_source.name", Component.translatable("block.cold_sweat.icebox").getString()),
+                                                                            ConfigSettings.SMART_ICEBOX.get()),
+                       button -> ConfigSettings.SMART_ICEBOX.set(!ConfigSettings.SMART_ICEBOX.get()),
+                       true, false, false, Component.translatable("cold_sweat.config.smart_source.desc"));
 
         // Source Debug
         this.addButton("source_debug", Side.LEFT, () -> getToggleButtonText(Component.translatable("cold_sweat.config.source_debug.name"), ConfigSettings.HEARTH_DEBUG.get()),
                        button -> ConfigSettings.HEARTH_DEBUG.set(!ConfigSettings.HEARTH_DEBUG.get()),
                        true, false, false, Component.translatable("cold_sweat.config.source_debug.desc"));
-
-        // Smart Boiler
-        this.addButton("smart_boiler", Side.RIGHT, () -> getToggleButtonText(Component.translatable("cold_sweat.config.smart_source.name"), ConfigSettings.SMART_BOILER.get()),
-                       button -> ConfigSettings.SMART_BOILER.set(!ConfigSettings.SMART_BOILER.get()),
-                       true, false, false, Component.translatable("cold_sweat.config.smart_source.desc"));
-
-        // Boiler Range
-        this.addDecimalInput("boiler_range", Side.RIGHT, Component.translatable("cold_sweat.config.source_range.name"),
-                             value -> ConfigSettings.BOILER_RANGE.set(value.intValue()),
-                             input -> input.setValue(ConfigSettings.BOILER_RANGE.get() + ""),
-                             true, false, false, Component.translatable("cold_sweat.config.source_range.desc"));
-
-        // Boiler Max Range
-        this.addDecimalInput("boiler_max_range", Side.RIGHT, Component.translatable("cold_sweat.config.source_max_range.name"),
-                             value -> ConfigSettings.BOILER_MAX_RANGE.set(value.intValue()),
-                             input -> input.setValue(ConfigSettings.BOILER_MAX_RANGE.get() + ""),
-                             true, false, false, Component.translatable("cold_sweat.config.source_max_range.desc"));
-
-        // Boiler Max Volume
-        this.addDecimalInput("boiler_max_volume", Side.RIGHT, Component.translatable("cold_sweat.config.source_max_volume.name"),
-                             value -> ConfigSettings.BOILER_MAX_VOLUME.set(value.intValue()),
-                             input -> input.setValue(ConfigSettings.BOILER_MAX_VOLUME.get() + ""),
-                             true, false, false, Component.translatable("cold_sweat.config.source_max_volume.desc"));
-
-        // Boiler Warm Up Time
-        this.addDecimalInput("boiler_warm_up_time", Side.RIGHT, Component.translatable("cold_sweat.config.source_warm_up_time.name"),
-                             value -> ConfigSettings.BOILER_WARM_UP_TIME.set(value.intValue()),
-                             input -> input.setValue(ConfigSettings.BOILER_WARM_UP_TIME.get() + ""),
-                             true, false, false, Component.translatable("cold_sweat.config.source_warm_up_time.desc"));
     }
 
     @Override
