@@ -162,6 +162,7 @@ public class ConfigSettings
     // Misc Settings
     public static final DynamicHolder<Double> INSULATION_STRENGTH;
     public static final DynamicHolder<List<ResourceLocation>> DISABLED_MODIFIERS;
+    public static final DynamicHolder<Double> MODIFIER_TICK_RATE;
 
     // Client Settings
     /* NULL ON THE SERVER */
@@ -842,6 +843,13 @@ public class ConfigSettings
         SyncType.BOTH_WAYS);
 
         DISABLED_MODIFIERS = addSetting("disabled_modifiers", ArrayList::new, holder -> holder.get().addAll(MainSettingsConfig.DISABLED_TEMP_MODIFIERS.get().stream().map(ResourceLocation::new).toList()));
+
+        MODIFIER_TICK_RATE = addSyncedSetting("modifier_tick_rate", () -> 1.0, holder -> holder.set(MainSettingsConfig.MODIFIER_TICK_RATE.get()),
+        (encoder) -> ConfigHelper.serializeNbtDouble(encoder, "ModifierTickRate"),
+        (decoder) -> decoder.getDouble("ModifierTickRate"),
+        (saver) -> MainSettingsConfig.MODIFIER_TICK_RATE.set(saver),
+        SyncType.BOTH_WAYS);
+
 
         // Client
 
