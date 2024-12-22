@@ -3,6 +3,7 @@ package com.momosoftworks.coldsweat.client.gui.config.pages;
 import com.momosoftworks.coldsweat.client.gui.config.AbstractConfigPage;
 import com.momosoftworks.coldsweat.client.gui.config.ConfigScreen;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
+import com.momosoftworks.coldsweat.util.math.CSMath;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
@@ -20,7 +21,7 @@ public class ConfigPageThree extends AbstractConfigPage
 
     @Override
     public ITextComponent sectionOneTitle()
-    {   return new TranslationTextComponent("cold_sweat.config.section.difficulty");
+    {   return new TranslationTextComponent("cold_sweat.config.section.other");
     }
 
     @Nullable
@@ -33,6 +34,12 @@ public class ConfigPageThree extends AbstractConfigPage
     protected void init()
     {
         super.init();
+
+        // Check sleep conditions
+        this.addButton("check_sleep_conditions", Side.LEFT,
+                       () -> getToggleButtonText(new TranslationTextComponent("cold_sweat.config.check_sleep_conditions.name"), ConfigSettings.CHECK_SLEEP_CONDITIONS.get()),
+                       button -> ConfigSettings.CHECK_SLEEP_CONDITIONS.set(!ConfigSettings.CHECK_SLEEP_CONDITIONS.get()),
+                       true, false, false, new TranslationTextComponent("cold_sweat.config.check_sleep_conditions.desc"));
 
         // Enable Grace Period
         this.addButton("grace_toggle", Side.LEFT,
@@ -54,11 +61,14 @@ public class ConfigPageThree extends AbstractConfigPage
                              true, false, false,
                              new TranslationTextComponent("cold_sweat.config.insulation_strength.desc"));
 
-        // Check sleep conditions
-        this.addButton("check_sleep_conditions", Side.LEFT,
-                       () -> getToggleButtonText(new TranslationTextComponent("cold_sweat.config.check_sleep_conditions.name"), ConfigSettings.CHECK_SLEEP_CONDITIONS.get()),
-                       button -> ConfigSettings.CHECK_SLEEP_CONDITIONS.set(!ConfigSettings.CHECK_SLEEP_CONDITIONS.get()),
-                       true, false, false, new TranslationTextComponent("cold_sweat.config.check_sleep_conditions.desc"));
+        // Modifier Tick Rate
+        this.addSliderButton("modifier_tick_rate", Side.LEFT,
+                             () -> getSliderPercentageText(new TranslationTextComponent("cold_sweat.config.modifier_tick_rate.name"), ConfigSettings.MODIFIER_TICK_RATE.get(), 10),
+                             0.1, 1,
+                             (value, button) -> ConfigSettings.MODIFIER_TICK_RATE.set(value),
+                             (button) -> button.setValue(CSMath.blend(0, 1, ConfigSettings.MODIFIER_TICK_RATE.get(), 0.1, 1)),
+                             true, false,
+                             new TranslationTextComponent("cold_sweat.config.modifier_tick_rate.desc"));
 
         // Freezing Hearts Percentage
         this.addSliderButton("freezing_hearts", Side.RIGHT,

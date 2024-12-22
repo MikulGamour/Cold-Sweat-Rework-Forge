@@ -8,6 +8,7 @@ import com.momosoftworks.coldsweat.api.temperature.modifier.TempModifier;
 import com.momosoftworks.coldsweat.common.capability.handler.EntityTempManager;
 import com.momosoftworks.coldsweat.common.capability.temperature.ITemperatureCap;
 import com.momosoftworks.coldsweat.common.capability.temperature.PlayerTempCap;
+import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.core.network.ColdSweatPacketHandler;
 import com.momosoftworks.coldsweat.core.network.message.SyncTempModifiersMessage;
 import com.momosoftworks.coldsweat.core.network.message.SyncTemperatureMessage;
@@ -109,17 +110,22 @@ public class Temperature
 
     /**
      * @return  a double representing what the Temperature would be after a TempModifier is applied.
-     * @param entity the entity this modifier should use
-     * @param modifiers the modifier(s) being applied to the {@code Temperature}
+     * @param entity The entity this modifier should use
+     * @param ignoreTickMultiplier Ignores the "modifier tick rate" setting and uses the normal tick rate
+     * @param modifiers The modifier(s) being applied to the {@code Temperature}
      */
-    public static double apply(double currentTemp, LivingEntity entity, Trait trait, TempModifier... modifiers)
+    public static double apply(double currentTemp, LivingEntity entity, Trait trait, boolean ignoreTickMultiplier, TempModifier... modifiers)
     {
         double temp2 = currentTemp;
         for (TempModifier modifier : modifiers)
         {
             if (modifier == null) continue;
 
-            double newTemp = entity.tickCount % modifier.getTickRate() == 0 || modifier.getTicksExisted() == 0 || entity.tickCount <= 1
+            int tickRate = ignoreTickMultiplier
+                           ? modifier.getTickRate()
+                           : (int) (modifier.getTickRate() / ConfigSettings.MODIFIER_TICK_RATE.get());
+
+            double newTemp = entity.tickCount % tickRate == 0 || modifier.getTicksExisted() == 0 || entity.tickCount <= 1
                     ? modifier.update(temp2, entity, trait)
                     : modifier.apply(temp2);
             if (!Double.isNaN(newTemp))
@@ -128,14 +134,20 @@ public class Temperature
         }
         return temp2;
     }
+    public static double apply(double currentTemp, LivingEntity entity, Trait trait, TempModifier... modifiers)
+    {   return apply(currentTemp, entity, trait, false, modifiers);
+    }
 
     /**
      * @return a double representing what the temperature would be after a collection of TempModifier(s) are applied.
      * @param entity the entity this list of modifiers should use
      * @param modifiers the list of modifiers being applied to the player's temperature
      */
+    public static double apply(double temp, LivingEntity entity, Trait trait, Collection<TempModifier> modifiers, boolean ignoreTickMultiplier)
+    {   return apply(temp, entity, trait, ignoreTickMultiplier, modifiers.toArray(new TempModifier[0]));
+    }
     public static double apply(double temp, LivingEntity entity, Trait trait, Collection<TempModifier> modifiers)
-    {   return apply(temp, entity, trait, modifiers.toArray(new TempModifier[0]));
+    {   return apply(temp, entity, trait, false, modifiers.toArray(new TempModifier[0]));
     }
 
     /**

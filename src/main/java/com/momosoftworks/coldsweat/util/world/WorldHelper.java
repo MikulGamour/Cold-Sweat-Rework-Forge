@@ -622,7 +622,7 @@ public abstract class WorldHelper
         {   modifiers.add(new BlockInsulationTempModifier(maxCoolingLevel, maxHeatingLevel));
         }
 
-        double tempAt = Temperature.apply(0, dummy, Temperature.Trait.WORLD, modifiers);
+        double tempAt = Temperature.apply(0, dummy, Temperature.Trait.WORLD, modifiers, true);
 
         snapshots.add(new TempSnapshot(level, pos, level.getGameTime(), tempAt));
 
@@ -648,7 +648,7 @@ public abstract class WorldHelper
         // Move the dummy to the position being tested
         Vector3d newPos = CSMath.getCenterPos(pos);
         dummy.setPos(newPos.x, newPos.y, newPos.z);
-        return Temperature.apply(0, dummy, Temperature.Trait.WORLD, Temperature.getModifiers(dummy, Temperature.Trait.WORLD));
+        return Temperature.apply(0, dummy, Temperature.Trait.WORLD, Temperature.getModifiers(dummy, Temperature.Trait.WORLD), true);
     }
 
     public static DummyPlayer getDummyPlayer(World level)
