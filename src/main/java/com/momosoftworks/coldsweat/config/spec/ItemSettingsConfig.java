@@ -38,6 +38,8 @@ public class ItemSettingsConfig
     public static final ModConfigSpec.IntValue WATERSKIN_STRENGTH;
     public static final ModConfigSpec.DoubleValue SOULSPRING_LAMP_STRENGTH;
 
+    public static final ModConfigSpec.ConfigValue<List<? extends List<?>>> DRYING_ITEMS;
+
     public static final ModConfigSpec.ConfigValue<List<? extends List<?>>> INSULATING_CURIOS;
 
     static
@@ -278,6 +280,14 @@ public class ItemSettingsConfig
                 .comment("Determines the strength of the Soulspring Lamp's effect before it is overwhelmed",
                          "A value of 1 means it will never be overwhelmed")
                 .defineInRange("Soulspring Lamp Strength", 0.6, 0, 1);
+
+        DRYING_ITEMS = BUILDER
+                .comment("Defines items that can be used to dry the player",
+                        "Format: [[\"item_id\", \"turns_into\"], [\"item_id\", \"turns_into\"], ...etc]")
+                .defineListAllowEmpty(List.of("Drying Items"), () -> List.of(
+                        List.of("minecraft:sponge", "minecraft:wet_sponge")
+                ),
+                it -> it instanceof String);
 
         BUILDER.pop();
 

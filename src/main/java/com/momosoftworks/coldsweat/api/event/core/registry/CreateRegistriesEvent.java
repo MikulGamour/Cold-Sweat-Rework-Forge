@@ -1,8 +1,6 @@
 package com.momosoftworks.coldsweat.api.event.core.registry;
 
 import com.google.common.collect.Multimap;
-import com.momosoftworks.coldsweat.data.ModRegistries;
-import com.momosoftworks.coldsweat.data.codec.configuration.*;
 import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
@@ -38,56 +36,20 @@ public class CreateRegistriesEvent extends Event
     {   return registries;
     }
 
-    public Collection<Holder<InsulatorData>> getInsulators()
-    {   return getRegistry(ModRegistries.INSULATOR_DATA);
-    }
-
-    public Collection<Holder<FuelData>> getFuels()
-    {   return getRegistry(ModRegistries.FUEL_DATA);
-    }
-
-    public Collection<Holder<FoodData>> getFoods()
-    {   return getRegistry(ModRegistries.FOOD_DATA);
-    }
-
-    public Collection<Holder<ItemCarryTempData>> getCarryTemps()
-    {   return getRegistry(ModRegistries.CARRY_TEMP_DATA);
-    }
-
-    public Collection<Holder<BlockTempData>> getBlockTemps()
-    {   return getRegistry(ModRegistries.BLOCK_TEMP_DATA);
-    }
-
-    public Collection<Holder<BiomeTempData>> getBiomeTemps()
-    {   return getRegistry(ModRegistries.BIOME_TEMP_DATA);
-    }
-
-    public Collection<Holder<DimensionTempData>> getDimensionTemps()
-    {   return getRegistry(ModRegistries.DIMENSION_TEMP_DATA);
-    }
-
-    public Collection<Holder<StructureTempData>> getStructureTemps()
-    {   return getRegistry(ModRegistries.STRUCTURE_TEMP_DATA);
-    }
-
-    public Collection<Holder<DepthTempData>> getDepthTemps()
-    {   return getRegistry(ModRegistries.DEPTH_TEMP_DATA);
-    }
-
-    public Collection<Holder<MountData>> getMounts()
-    {   return getRegistry(ModRegistries.MOUNT_DATA);
-    }
-
-    public Collection<Holder<SpawnBiomeData>> getSpawnBiomes()
-    {   return getRegistry(ModRegistries.ENTITY_SPAWN_BIOME_DATA);
-    }
-
-    public Collection<Holder<EntityTempData>> getEntityTemps()
-    {   return getRegistry(ModRegistries.ENTITY_TEMP_DATA);
-    }
-
     public <T> Collection<Holder<T>> getRegistry(ResourceKey<Registry<T>> key)
+    {   return (Collection<Holder<T>>) registries.get((ResourceKey) key);
+    }
+
+    /**
+     * Fired after Cold Sweat's registries have been gathered and committed to {@link com.momosoftworks.coldsweat.config.ConfigSettings}.<br>
+     * Registry removals have been processed at this point.<br>
+     * <br>
+     * This event should be used to commit your custom registries.
+     */
+    public static class Post extends CreateRegistriesEvent
     {
-        return (Collection<Holder<T>>) registries.get((ResourceKey) key);
+        public Post(RegistryAccess registryAccess, Multimap<ResourceKey<Registry<? extends ConfigData>>, Holder<? extends ConfigData>> registries)
+        {   super(registryAccess, registries);
+        }
     }
 }

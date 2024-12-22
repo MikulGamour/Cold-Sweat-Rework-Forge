@@ -36,7 +36,6 @@ import net.neoforged.fml.util.thread.EffectiveSide;
 import net.neoforged.neoforge.common.ModConfigSpec;
 import org.apache.logging.log4j.util.TriConsumer;
 import org.joml.Vector2i;
-import oshi.util.tuples.Triplet;
 
 import java.util.*;
 import java.util.function.*;
@@ -127,6 +126,7 @@ public class ConfigSettings
     public static final DynamicHolder<Multimap<Item, InsulatorData>> INSULATING_CURIOS;
     public static final DynamicHolder<ScalingFormula> INSULATION_SLOTS;
     public static final DynamicHolder<List<Item>> INSULATION_BLACKLIST;
+    public static final DynamicHolder<Map<Item, DryingItemData>> DRYING_ITEMS;
 
     public static final DynamicHolder<Multimap<Item, FoodData>> FOOD_TEMPERATURES;
 
@@ -490,6 +490,30 @@ public class ConfigSettings
                                                     .stream()
                                                     .map(entry -> BuiltInRegistries.ITEM.get(ResourceLocation.parse(entry)))
                                                     .collect(ArrayList::new, List::add, List::addAll)));
+
+        DRYING_ITEMS = addSyncedSetting("drying_items", FastMap::new, holder ->
+        {
+            Map<Item, DryingItemData> dataMap = new FastMap<>();
+            for (List<?> entry : ItemSettingsConfig.DRYING_ITEMS.get())
+            {
+                DryingItemData data = DryingItemData.fromToml(entry);
+                if (data == null) continue;
+
+                data.setType(ConfigData.Type.TOML);
+
+                for (Item item : RegistryHelper.mapBuiltinRegistryTagList(BuiltInRegistries.ITEM, CSMath.listOrEmpty(data.data().items())))
+                {   dataMap.put(item, data);
+                }
+            }
+            // Handle registry removals
+            ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.DRYING_ITEM_DATA);
+            // Add entries
+            holder.get().putAll(dataMap);
+        },
+        (encoder) -> ConfigHelper.serializeRegistry(encoder, "DryingItems", Registries.ITEM, ModRegistries.DRYING_ITEM_DATA, BuiltInRegistries.ITEM::getKey),
+        (decoder) -> ConfigHelper.deserializeRegistry(decoder, "DryingItems", ModRegistries.DRYING_ITEM_DATA, rl -> BuiltInRegistries.ITEM.get(rl)),
+        (saver) -> {},
+        SyncType.ONE_WAY);
 
         CHECK_SLEEP_CONDITIONS = addSetting("check_sleep_conditions", () -> true, holder -> holder.set(WorldSettingsConfig.SHOULD_CHECK_SLEEP.get()));
 
