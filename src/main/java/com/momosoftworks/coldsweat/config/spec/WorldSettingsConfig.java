@@ -582,8 +582,8 @@ public class WorldSettingsConfig
                 .comment("List of additional blocks that thermal sources spread through",
                          "Use this list if thermal sources are spreading through particular blocks that they shouldn't")
                 .defineListAllowEmpty(List.of("Thermal Source Spread Blacklist"), () -> List.of(
-                            ),
-                            o -> o instanceof String);
+                                            "minecraft:water"
+                ), o -> o instanceof String);
 
         BUILDER.push("Hearth");
 
