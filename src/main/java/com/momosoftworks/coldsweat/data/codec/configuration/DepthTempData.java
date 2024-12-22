@@ -72,6 +72,18 @@ public class DepthTempData extends ConfigData implements IForgeRegistryEntry<Dep
     }
 
     @Nullable
+    public TempRegion getRegion(Level level, BlockPos pos)
+    {
+        for (TempRegion region : temperatures)
+        {
+            if (region.withinBounds(level, pos))
+            {   return region;
+            }
+        }
+        return null;
+    }
+
+    @Nullable
     public Double getTemperature(double temperature, BlockPos pos, Level level)
     {
         for (TempRegion region : temperatures)
