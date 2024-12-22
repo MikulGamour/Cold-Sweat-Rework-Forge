@@ -4,10 +4,7 @@ import com.mojang.datafixers.util.Pair;
 import com.momosoftworks.coldsweat.api.event.core.init.GatherDefaultTempModifiersEvent;
 import com.momosoftworks.coldsweat.api.registry.BlockTempRegistry;
 import com.momosoftworks.coldsweat.api.temperature.block_temp.BlockTemp;
-import com.momosoftworks.coldsweat.api.temperature.modifier.BiomeTempModifier;
-import com.momosoftworks.coldsweat.api.temperature.modifier.BlockTempModifier;
-import com.momosoftworks.coldsweat.api.temperature.modifier.TempModifier;
-import com.momosoftworks.coldsweat.api.temperature.modifier.UndergroundTempModifier;
+import com.momosoftworks.coldsweat.api.temperature.modifier.*;
 import com.momosoftworks.coldsweat.api.util.Placement;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.common.block.SmokestackBlock;
@@ -117,13 +114,14 @@ public abstract class WorldHelper
     {
         List<BlockPos> posList = new ArrayList<>();
         int radius = (size * interval) / 2;
+        int halfInterval = interval / 2;
 
-        for (int x = -radius; x < radius; x += interval)
+        for (int x = -radius + halfInterval; x < radius + halfInterval; x += interval)
         {
-            for (int y = -radius; y < radius; y += interval)
+            for (int y = -radius + halfInterval; y < radius + halfInterval; y += interval)
             {
-                for (int z = -radius; z < radius; z += interval)
-                {   posList.add(pos.offset(x + interval / 2, y + interval / 2, z + interval / 2));
+                for (int z = -radius + halfInterval; z < radius + halfInterval; z += interval)
+                {   posList.add(pos.offset(x, y, z));
                 }
             }
         }
@@ -598,7 +596,8 @@ public abstract class WorldHelper
             TempModifier modifier = modifiers.get(i);
             if (modifier instanceof BlockTempModifier) modifiers.set(i, new BlockTempModifier(3));
             else if (modifier instanceof BiomeTempModifier) modifiers.set(i, new BiomeTempModifier(9));
-            else if (modifier instanceof UndergroundTempModifier) modifiers.set(i, new UndergroundTempModifier(9));
+            else if (modifier instanceof ElevationTempModifier) modifiers.set(i, new ElevationTempModifier(9));
+            else if (modifier instanceof DepthBiomeTempModifier) modifiers.set(i, new DepthBiomeTempModifier(3));
         }
 
         double tempAt = Temperature.apply(0, dummy, Temperature.Trait.WORLD, modifiers);
