@@ -67,6 +67,17 @@ public class DepthTempData extends ConfigData
         return false;
     }
 
+    public TempRegion getRegion(World level, BlockPos pos)
+    {
+        for (TempRegion region : temperatures)
+        {
+            if (region.withinBounds(level, pos))
+            {   return region;
+            }
+        }
+        return null;
+    }
+
     public Double getTemperature(double temperature, BlockPos pos, World level)
     {
         for (TempRegion region : temperatures)
