@@ -10,6 +10,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public class ClientConfigAskMessage implements CustomPacketPayload
@@ -24,15 +25,15 @@ public class ClientConfigAskMessage implements CustomPacketPayload
     }
 
     public ClientConfigAskMessage()
-    {   this(SyncConfigSettingsMessage.EMPTY_UUID);
+    {   this(null);
     }
 
     public void encode(FriendlyByteBuf buffer)
-    {   buffer.writeUUID(this.openerUUID);
+    {   buffer.writeOptional(Optional.ofNullable(this.openerUUID), (buf, id) -> buf.writeUUID(id));
     }
 
     public static ClientConfigAskMessage decode(FriendlyByteBuf buffer)
-    {   return new ClientConfigAskMessage(buffer.readUUID());
+    {   return new ClientConfigAskMessage(buffer.readOptional(buf -> buf.readUUID()).orElse(null));
     }
 
     public static void handle(ClientConfigAskMessage message, IPayloadContext context)

@@ -17,11 +17,11 @@ import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
+import java.util.Optional;
 import java.util.UUID;
 
 public class SyncConfigSettingsMessage implements CustomPacketPayload
 {
-    public static final UUID EMPTY_UUID = new UUID(0, 0);
     public static final CustomPacketPayload.Type<SyncConfigSettingsMessage> TYPE = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(ColdSweat.MOD_ID, "sync_config_settings"));
     public static final StreamCodec<FriendlyByteBuf, SyncConfigSettingsMessage> CODEC = CustomPacketPayload.codec(SyncConfigSettingsMessage::encode, SyncConfigSettingsMessage::decode);
 
@@ -29,7 +29,7 @@ public class SyncConfigSettingsMessage implements CustomPacketPayload
     UUID menuOpener;
 
     public SyncConfigSettingsMessage(RegistryAccess registryAccess)
-    {   this(EMPTY_UUID, registryAccess);
+    {   this(null, registryAccess);
     }
 
     public SyncConfigSettingsMessage(UUID menuOpener, RegistryAccess registryAccess)
@@ -44,12 +44,12 @@ public class SyncConfigSettingsMessage implements CustomPacketPayload
     public static void encode(SyncConfigSettingsMessage message, FriendlyByteBuf buffer)
     {
         buffer.writeNbt(message.configValues);
-        buffer.writeUUID(message.menuOpener);
+        buffer.writeOptional(Optional.ofNullable(message.menuOpener), (buf, id) -> buf.writeUUID(id));
     }
 
     public static SyncConfigSettingsMessage decode(FriendlyByteBuf buffer)
     {
-        return new SyncConfigSettingsMessage(buffer.readNbt(), buffer.readUUID());
+        return new SyncConfigSettingsMessage(buffer.readNbt(), buffer.readOptional(buf -> buf.readUUID()).orElse(null));
     }
 
     public static void handle(SyncConfigSettingsMessage message, IPayloadContext context)
@@ -68,8 +68,8 @@ public class SyncConfigSettingsMessage implements CustomPacketPayload
                     WorldSettingsConfig.save();
                     ItemSettingsConfig.save();
                     EntitySettingsConfig.save();
+                    PacketDistributor.sendToAllPlayers(new SyncConfigSettingsMessage(null, registryAccess));
                 }
-                PacketDistributor.sendToAllPlayers(new SyncConfigSettingsMessage(EMPTY_UUID, registryAccess));
             }
             else
             {
@@ -79,7 +79,7 @@ public class SyncConfigSettingsMessage implements CustomPacketPayload
                 catch (Exception e)
                 {   ColdSweat.LOGGER.error("Failed to decode config settings from server: ", e);
                 }
-                if (message.menuOpener.equals(ClientOnlyHelper.getClientPlayer().getUUID()))
+                if (message.menuOpener != null && message.menuOpener.equals(ClientOnlyHelper.getClientPlayer().getUUID()))
                 {   ClientOnlyHelper.openConfigScreen();
                 }
             }
