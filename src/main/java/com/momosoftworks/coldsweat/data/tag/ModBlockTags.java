@@ -15,6 +15,7 @@ public class ModBlockTags
     public static final TagKey<Block> HEARTH_SPREAD_BLACKLIST = createTag("hearth/spread_blacklist");
 
     public static final TagKey<Block> IGNORE_SLEEP_CHECK = createTag("ignore_sleep_check");
+    public static final TagKey<Block> EXTENDS_SMOKESTACK = createTag("extends_smokestack");
 
     private static TagKey<Block> createTag(String name)
     {

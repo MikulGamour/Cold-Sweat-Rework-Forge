@@ -18,6 +18,7 @@ import com.momosoftworks.coldsweat.core.init.ParticleTypesInit;
 import com.momosoftworks.coldsweat.core.network.ColdSweatPacketHandler;
 import com.momosoftworks.coldsweat.core.network.message.HearthResetMessage;
 import com.momosoftworks.coldsweat.data.codec.configuration.FuelData;
+import com.momosoftworks.coldsweat.data.tag.ModBlockTags;
 import com.momosoftworks.coldsweat.data.tag.ModFluidTags;
 import com.momosoftworks.coldsweat.util.ClientOnlyHelper;
 import com.momosoftworks.coldsweat.compat.CompatManager;
@@ -64,6 +65,7 @@ import net.minecraft.world.item.PotionItem;
 import net.minecraft.world.item.alchemy.PotionUtils;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.PipeBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
@@ -76,6 +78,9 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.MinecraftForge;
@@ -150,6 +155,7 @@ public class HearthBlockEntity extends RandomizableContainerBlockEntity implemen
 
     boolean hasSmokestack = false;
     int smokestackHeight = 2;
+    boolean topBlocked = false;
 
     static final Direction[] DIRECTIONS = Direction.values();
 
@@ -325,7 +331,7 @@ public class HearthBlockEntity extends RandomizableContainerBlockEntity implemen
             {   insulationLevel++;
             }
 
-            if (this.shouldUseColdFuel || this.shouldUseHotFuel || (ConfigSettings.SMART_HEARTH.get() && this.isPlayerNearby))
+            if ((this.shouldUseColdFuel || this.shouldUseHotFuel || (ConfigSettings.SMART_HEARTH.get() && this.isPlayerNearby)) && !topBlocked)
             {
                 // Determine whether particles are enabled
                 if (this.ticksExisted % 20 == 0)
@@ -402,6 +408,21 @@ public class HearthBlockEntity extends RandomizableContainerBlockEntity implemen
         if (isClient)
         {   this.tickParticles();
         }
+
+        // Calculate the height of the smokestack (can be extended with walls)
+        if (this.ticksExisted % 20 == 0)
+        {
+            this.smokestackHeight = 2;
+            BlockState state = level.getBlockState(this.getBlockPos().above(this.smokestackHeight));
+            while (state.is(ModBlockTags.EXTENDS_SMOKESTACK))
+            {   this.smokestackHeight++;
+                state = level.getBlockState(this.getBlockPos().above(this.smokestackHeight));
+            }
+        }
+
+        // Check if top is blocked off
+        BlockPos topPos = this.getBlockPos().above(this.smokestackHeight);
+        this.topBlocked = WorldHelper.isSpreadBlocked(level, level.getBlockState(topPos), topPos, Direction.UP, Direction.UP);
     }
 
     ChunkAccess workingChunk = null;
@@ -942,18 +963,9 @@ public class HearthBlockEntity extends RandomizableContainerBlockEntity implemen
     @OnlyIn(Dist.CLIENT)
     protected void tickParticles()
     {
+        if (topBlocked) return;
         ParticleStatus status = Minecraft.getInstance().options.particles().get();
         if (status == ParticleStatus.MINIMAL) return;
-
-        // Calculate the height of the smokestack (can be extended with walls)
-        if (this.ticksExisted % 20 == 0)
-        {   this.smokestackHeight = 2;
-            BlockState state = level.getBlockState(this.getBlockPos().above(this.smokestackHeight));
-            while (state.getBlock() instanceof WallBlock || state.getBlock() instanceof SmokestackBlock)
-            {   this.smokestackHeight++;
-                state = level.getBlockState(this.getBlockPos().above(this.smokestackHeight));
-            }
-        }
 
         RandomSource rand = this.level.random;
         if (this.shouldUseColdFuel)
