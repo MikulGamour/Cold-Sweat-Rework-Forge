@@ -1,9 +1,81 @@
 {
   "variants":
   {
-    "":
+    "facing=north,up=false,down=false":
     {
       "model": "cold_sweat:block/smokestack"
+    },
+    "facing=east,up=false,down=false":
+    {
+      "model": "cold_sweat:block/smokestack",
+      "y": 90
+    },
+    "facing=south,up=false,down=false":
+    {
+      "model": "cold_sweat:block/smokestack",
+      "y": 180
+    },
+    "facing=west,up=false,down=false":
+    {
+      "model": "cold_sweat:block/smokestack",
+      "y": 270
+    },
+    "facing=north,up=true,down=false":
+    {
+      "model": "cold_sweat:block/smokestack_connected_up"
+    },
+    "facing=east,up=true,down=false":
+    {
+      "model": "cold_sweat:block/smokestack_connected_up",
+      "y": 90
+    },
+    "facing=south,up=true,down=false":
+    {
+      "model": "cold_sweat:block/smokestack_connected_up",
+      "y": 180
+    },
+    "facing=west,up=true,down=false":
+    {
+      "model": "cold_sweat:block/smokestack_connected_up",
+      "y": 270
+    },
+    "facing=north,up=false,down=true":
+    {
+      "model": "cold_sweat:block/smokestack_connected_down"
+    },
+    "facing=east,up=false,down=true":
+    {
+      "model": "cold_sweat:block/smokestack_connected_down",
+      "y": 90
+    },
+    "facing=south,up=false,down=true":
+    {
+      "model": "cold_sweat:block/smokestack_connected_down",
+      "y": 180
+    },
+    "facing=west,up=false,down=true":
+    {
+      "model": "cold_sweat:block/smokestack_connected_down",
+      "y": 270
+    },
+    "facing=north,up=true,down=true":
+    {
+      "model": "cold_sweat:block/smokestack_connected"
+    },
+    "facing=east,up=true,down=true":
+    {
+      "model": "cold_sweat:block/smokestack_connected",
+      "y": 90
+    },
+    "facing=south,up=true,down=true":
+    {
+      "model": "cold_sweat:block/smokestack_connected",
+      "y": 180
+    },
+    "facing=west,up=true,down=true":
+    {
+      "model": "cold_sweat:block/smokestack_connected",
+      "y": 270
     }
   }
 }
