@@ -8,19 +8,19 @@ import com.momosoftworks.coldsweat.api.temperature.modifier.TempModifier;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.client.event.HearthDebugRenderer;
 import com.momosoftworks.coldsweat.common.block.HearthBottomBlock;
-import com.momosoftworks.coldsweat.common.block.SmokestackBlock;
 import com.momosoftworks.coldsweat.common.capability.handler.EntityTempManager;
 import com.momosoftworks.coldsweat.common.container.HearthContainer;
 import com.momosoftworks.coldsweat.common.event.HearthSaveDataHandler;
+import com.momosoftworks.coldsweat.compat.CompatManager;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.core.init.BlockEntityInit;
 import com.momosoftworks.coldsweat.core.init.ParticleTypesInit;
 import com.momosoftworks.coldsweat.core.network.ColdSweatPacketHandler;
 import com.momosoftworks.coldsweat.core.network.message.HearthResetMessage;
 import com.momosoftworks.coldsweat.data.codec.configuration.FuelData;
+import com.momosoftworks.coldsweat.data.tag.ModBlockTags;
 import com.momosoftworks.coldsweat.data.tag.ModFluidTags;
 import com.momosoftworks.coldsweat.util.ClientOnlyHelper;
-import com.momosoftworks.coldsweat.compat.CompatManager;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.math.FastMap;
 import com.momosoftworks.coldsweat.util.registries.ModBlocks;
@@ -35,7 +35,6 @@ import com.simibubi.create.content.contraptions.fluids.pipes.GlassFluidPipeBlock
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.RotatedPillarBlock;
-import net.minecraft.block.WallBlock;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.ParticleStatus;
 import net.minecraft.entity.player.PlayerEntity;
@@ -141,6 +140,7 @@ public class HearthBlockEntity extends LockableLootTileEntity implements ITickab
 
     boolean hasSmokestack = false;
     int smokestackHeight = 2;
+    boolean topBlocked = false;
 
     static final Direction[] DIRECTIONS = Direction.values();
 
@@ -311,7 +311,7 @@ public class HearthBlockEntity extends LockableLootTileEntity implements ITickab
             {   insulationLevel++;
             }
 
-            if (this.shouldUseColdFuel || this.shouldUseHotFuel || (ConfigSettings.SMART_HEARTH.get() && this.isPlayerNearby))
+            if ((this.shouldUseColdFuel || this.shouldUseHotFuel || (ConfigSettings.SMART_HEARTH.get() && this.isPlayerNearby)) && !topBlocked)
             {
                 // Determine whether particles are enabled
                 if (this.ticksExisted % 20 == 0)
@@ -387,6 +387,21 @@ public class HearthBlockEntity extends LockableLootTileEntity implements ITickab
         if (isClient)
         {   this.tickParticles();
         }
+
+        // Calculate the height of the smokestack (can be extended with walls)
+        if (this.ticksExisted % 20 == 0)
+        {
+            this.smokestackHeight = 2;
+            BlockState state = level.getBlockState(this.getBlockPos().above(this.smokestackHeight));
+            while (state.is(ModBlockTags.EXTENDS_SMOKESTACK))
+            {   this.smokestackHeight++;
+                state = level.getBlockState(this.getBlockPos().above(this.smokestackHeight));
+            }
+        }
+
+        // Check if top is blocked off
+        BlockPos topPos = this.getBlockPos().above(this.smokestackHeight);
+        this.topBlocked = WorldHelper.isSpreadBlocked(level, level.getBlockState(topPos), topPos, Direction.UP, Direction.UP);
     }
 
     IChunk workingChunk = null;
@@ -931,18 +946,9 @@ public class HearthBlockEntity extends LockableLootTileEntity implements ITickab
     @OnlyIn(Dist.CLIENT)
     protected void tickParticles()
     {
+        if (topBlocked) return;
         ParticleStatus status = Minecraft.getInstance().options.particles;
         if (status == ParticleStatus.MINIMAL) return;
-
-        // Calculate the height of the smokestack (can be extended with walls)
-        if (this.ticksExisted % 20 == 0)
-        {   this.smokestackHeight = 2;
-            BlockState state = level.getBlockState(this.getBlockPos().above(this.smokestackHeight));
-            while (state.getBlock() instanceof WallBlock || state.getBlock() instanceof SmokestackBlock)
-            {   this.smokestackHeight++;
-                state = level.getBlockState(this.getBlockPos().above(this.smokestackHeight));
-            }
-        }
 
         Random rand = this.level.random;
         if (this.shouldUseColdFuel)

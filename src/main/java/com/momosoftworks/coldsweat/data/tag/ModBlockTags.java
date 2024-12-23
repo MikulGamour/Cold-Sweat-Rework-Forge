@@ -15,6 +15,7 @@ public class ModBlockTags
     public static final ITag.INamedTag<Block> HEARTH_SPREAD_BLACKLIST = createTag("hearth/spread_blacklist");
 
     public static final ITag.INamedTag<Block> IGNORE_SLEEP_CHECK = createTag("ignore_sleep_check");
+    public static final ITag.INamedTag<Block> EXTENDS_SMOKESTACK = createTag("extends_smokestack");
 
     public static final ITag.INamedTag<Block> GOATS_SPAWNABLE_ON = createTag("goats_spawnable_on");
 
