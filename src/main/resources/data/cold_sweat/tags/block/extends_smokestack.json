@@ -1,0 +1,8 @@
+{
+  "replace": false,
+  "values": [
+    "cold_sweat:smokestack",
+    "cold_sweat:hearth_top",
+    "#minecraft:walls"
+  ]
+}
