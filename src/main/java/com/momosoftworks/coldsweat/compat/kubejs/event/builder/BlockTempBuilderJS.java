@@ -50,13 +50,13 @@ public class BlockTempBuilderJS
 
     public BlockTempBuilderJS maxTemperature(double maxTemperature)
     {
-        this.maxTemperature = Temperature.convert(maxTemperature, units, Temperature.Units.MC, false);
+        this.maxTemperature = Temperature.convert(maxTemperature, units, Temperature.Units.MC, true);
         return this;
     }
 
     public BlockTempBuilderJS minTemperature(double minTemperature)
     {
-        this.minTemperature = Temperature.convert(minTemperature, units, Temperature.Units.MC, false);
+        this.minTemperature = Temperature.convert(minTemperature, units, Temperature.Units.MC, true);
         return this;
     }
 
