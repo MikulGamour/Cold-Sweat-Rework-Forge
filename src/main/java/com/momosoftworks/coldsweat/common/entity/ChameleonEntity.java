@@ -253,7 +253,7 @@ public class ChameleonEntity extends AnimalEntity
     @SubscribeEvent
     public static void setHeight(EntityEvent.Size event)
     {
-        if (event.getEntity() instanceof ChameleonEntity)
+        if (event.getEntity().isAddedToWorld() && event.getEntity() instanceof ChameleonEntity)
         {
             ChameleonEntity chameleon = ((ChameleonEntity) event.getEntity());
             if (chameleon.isBaby())
