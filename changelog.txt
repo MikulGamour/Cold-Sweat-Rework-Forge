@@ -2689,6 +2689,7 @@ Technical Changes:
             - "entity": An entity requirement that the player must pass, like in other configs
             - "result": The item stack that the item will be turned into when used. If undefined, the item will be consumed
             - "sound": The sound to be played when the item is used. Defaults to a squishy sponge sound
+      - Also available as a KubeJS hook (see documentation for more info)
 * The hearth now properly functions when part of a Valkyrien Skies ship
 * Renamed the "Chill" effect to "Frigidness"
 - Smokestack blocks now connect when stacked vertically
@@ -2722,6 +2723,7 @@ Fixes:
 - Fixed errors caused when KubeJS scripts use invalid/missing IDs
 - Fixed biome temperature having too small of a search radius
 - Fixed no sound playing when a waterskin is dispensed from a dispenser
+- Fixed KubeJS-based item configs not checking their conditions properly
 
 Technical Changes:
 * The temperature decrease due to altitude is now defined in JSON as part of the default temp_region file
