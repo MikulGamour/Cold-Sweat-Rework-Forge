@@ -8,10 +8,9 @@ import com.momosoftworks.coldsweat.api.temperature.modifier.TempModifier;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.client.event.HearthDebugRenderer;
 import com.momosoftworks.coldsweat.common.block.HearthBottomBlock;
-import com.momosoftworks.coldsweat.common.block.SmokestackBlock;
+import com.momosoftworks.coldsweat.common.capability.handler.EntityTempManager;
 import com.momosoftworks.coldsweat.common.container.HearthContainer;
 import com.momosoftworks.coldsweat.common.event.HearthSaveDataHandler;
-import com.momosoftworks.coldsweat.common.capability.handler.EntityTempManager;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.core.init.BlockEntityInit;
 import com.momosoftworks.coldsweat.core.init.ParticleTypesInit;
@@ -65,11 +64,9 @@ import net.minecraft.world.item.PotionItem;
 import net.minecraft.world.item.alchemy.PotionUtils;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.PipeBlock;
 import net.minecraft.world.level.block.RotatedPillarBlock;
-import net.minecraft.world.level.block.WallBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
@@ -77,10 +74,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.CollisionContext;
-import net.minecraft.world.phys.shapes.Shapes;
-import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.common.MinecraftForge;
@@ -373,7 +368,7 @@ public class HearthBlockEntity extends RandomizableContainerBlockEntity implemen
                 }
 
                 // Give insulation to players
-                if (!isClient && this.ticksExisted % 20 == 0)
+                if (!isClient && this.ticksExisted % 5 == 0)
                 {
                     // Reset the usage status for cold/hot fuel
                     if (ConfigSettings.SMART_HEARTH.get())
@@ -384,8 +379,8 @@ public class HearthBlockEntity extends RandomizableContainerBlockEntity implemen
                     {
                         Player player = players.get(i);
                         if (player == null) continue;
-                        Vec3 playerEyePos = CompatManager.Valkyrien.transformIfShipPos(level, player.getEyePosition());
-                        if (WorldHelper.allAdjacentBlocksMatch(new BlockPos(playerEyePos), bpos -> pathLookup.contains(bpos)))
+                        AABB playerBB = CompatManager.Valkyrien.transformIfShipPos(level, player.getBoundingBox());
+                        if (BlockPos.betweenClosedStream(playerBB).anyMatch(pathLookup::contains))
                         {   this.insulatePlayer(player);
                         }
                     }
@@ -709,10 +704,10 @@ public class HearthBlockEntity extends RandomizableContainerBlockEntity implemen
             int maxEffect = this.getMaxInsulationLevel() - 1;
             int effectLevel = (int) Math.min(maxEffect, (insulationLevel / (double) this.getInsulationTime()) * maxEffect);
             if (shouldUseColdFuel)
-            {   player.addEffect(new MobEffectInstance(ModEffects.FRIGIDNESS, 120, effectLevel, false, false, true));
+            {   player.addEffect(new MobEffectInstance(ModEffects.FRIGIDNESS, 60, effectLevel, false, false, true));
             }
             if (shouldUseHotFuel)
-            {   player.addEffect(new MobEffectInstance(ModEffects.WARMTH, 120, effectLevel, false, false, true));
+            {   player.addEffect(new MobEffectInstance(ModEffects.WARMTH, 60, effectLevel, false, false, true));
             }
         }
     }
