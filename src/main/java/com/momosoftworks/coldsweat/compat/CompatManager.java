@@ -22,6 +22,7 @@ import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.ICancellableEvent;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -370,6 +371,13 @@ public class CompatManager
                 return VectorConversionsMCKt.toMinecraft(shipCoords);
             }
             return pos;
+        }*/
+
+        /*public static AABB transformIfShipPos(Level level, AABB aabb)
+        {
+            Vec3 min = transformIfShipPos(level, new Vec3(aabb.minX, aabb.minY, aabb.minZ));
+            Vec3 max = transformIfShipPos(level, new Vec3(aabb.maxX, aabb.maxY, aabb.maxZ));
+            return new AABB(min, max);
         }*/
 
         /*public static BlockPos transformIfShipPos(Level level, BlockPos pos)

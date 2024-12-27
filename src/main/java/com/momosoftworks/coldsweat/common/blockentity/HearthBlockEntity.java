@@ -8,11 +8,10 @@ import com.momosoftworks.coldsweat.api.temperature.modifier.TempModifier;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.client.event.HearthDebugRenderer;
 import com.momosoftworks.coldsweat.common.block.HearthBottomBlock;
-import com.momosoftworks.coldsweat.common.block.SmokestackBlock;
 import com.momosoftworks.coldsweat.common.capability.handler.EntityTempManager;
-import com.momosoftworks.coldsweat.common.capability.temperature.ITemperatureCap;
 import com.momosoftworks.coldsweat.common.container.HearthContainer;
 import com.momosoftworks.coldsweat.common.event.HearthSaveDataHandler;
+import com.momosoftworks.coldsweat.compat.CompatManager;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.core.init.*;
 import com.momosoftworks.coldsweat.core.network.message.HearthResetMessage;
@@ -20,7 +19,6 @@ import com.momosoftworks.coldsweat.data.codec.configuration.FuelData;
 import com.momosoftworks.coldsweat.data.tag.ModBlockTags;
 import com.momosoftworks.coldsweat.data.tag.ModFluidTags;
 import com.momosoftworks.coldsweat.util.ClientOnlyHelper;
-import com.momosoftworks.coldsweat.compat.CompatManager;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.math.FastMap;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
@@ -65,6 +63,7 @@ import net.minecraft.world.level.block.entity.RandomizableContainerBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.material.Fluids;
+import net.minecraft.world.phys.AABB;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -78,8 +77,8 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.StreamSupport;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class HearthBlockEntity extends RandomizableContainerBlockEntity implements WorldlyContainer
 {
@@ -342,7 +341,7 @@ public class HearthBlockEntity extends RandomizableContainerBlockEntity implemen
                 }
 
                 // Give insulation to players
-                if (!isClient && this.ticksExisted % 20 == 0)
+                if (!isClient && this.ticksExisted % 5 == 0)
                 {
                     // Reset the usage status for cold/hot fuel
                     if (ConfigSettings.SMART_HEARTH.get())
@@ -353,7 +352,8 @@ public class HearthBlockEntity extends RandomizableContainerBlockEntity implemen
                     {
                         Player player = players.get(i);
                         if (player == null) continue;
-                        if (WorldHelper.allAdjacentBlocksMatch(BlockPos.containing(player.getEyePosition()), bpos -> pathLookup.contains(bpos)))
+                        AABB playerBB = player.getBoundingBox();
+                        if (BlockPos.betweenClosedStream(playerBB).anyMatch(pathLookup::contains))
                         {   this.insulatePlayer(player);
                         }
                     }
@@ -679,10 +679,10 @@ public class HearthBlockEntity extends RandomizableContainerBlockEntity implemen
             int maxEffect = this.getMaxInsulationLevel() - 1;
             int effectLevel = (int) Math.min(maxEffect, (insulationLevel / (double) this.getInsulationTime()) * maxEffect);
             if (shouldUseColdFuel)
-            {   player.addEffect(new MobEffectInstance(ModEffects.FRIGIDNESS, 120, effectLevel, false, false, true));
+            {   player.addEffect(new MobEffectInstance(ModEffects.FRIGIDNESS, 60, effectLevel, false, false, true));
             }
             if (shouldUseHotFuel)
-            {   player.addEffect(new MobEffectInstance(ModEffects.WARMTH, 120, effectLevel, false, false, true));
+            {   player.addEffect(new MobEffectInstance(ModEffects.WARMTH, 60, effectLevel, false, false, true));
             }
         }
     }
