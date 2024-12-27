@@ -2694,14 +2694,23 @@ Technical Changes:
 * Ice now thaws according to Cold Sweat's temperature system
 * Ice now takes all temperature sources (nearby blocks, season, depth) into account when freezing/thawing
       - The algorithm for ice is less precise than the one for entities, so there may be a minor discrepancy
+* Added "drying items" config to item.toml, which allows players to dry off  using certain items
+      - Drying items can also be defined in JSON under item/drying_item/* with the following parameters:
+            - "data": An item requirement, like in other configs
+            - "entity": An entity requirement that the player must pass, like in other configs
+            - "result": The item stack that the item will be turned into when used. If undefined, the item will be consumed
+            - "sound": The sound to be played when the item is used. Defaults to a squishy sponge sound
 * The hearth now properly functions when part of a Valkyrien Skies ship
 * Renamed the "Chill" effect to "Frigidness"
+- Smokestack blocks now connect when stacked vertically
 - Chameleons are now immune to projectiles when they are on a player's head
 - Reorganized the "Cold Sweat: Insulators" tab & removed most of the wool colors except for white
       - More specifically, if an insulator contains a tag that has more than 6 items, only the first item in the tag will be displayed
 - World temperature now decreases slightly when the weather is overcast (even if it doesn't rain in the biome)
       - This effect can be configured in world.toml
 - Players now dry off exponentially faster in higher-temperature environments
+- Removed a lot of settings for the boiler/icebox/hearth from the in-game menu, as they took up too much space
+      - They are still present in world.toml
 
 Fixes:
 * Fixed crash when the temperature of a biome is retrieved in some cases
@@ -2715,6 +2724,8 @@ Fixes:
 * Fixed blocks configured via TOML not emitting temperature
 * Fixed goats not regrowing their fur after being sheared
 * Fixed config menu not opening on dedicated server
+* Fixed the hearth not checking for fuel items
+- Fixed the config menu infinitely re-opening when playing in offline mode
 - Fixed the Create netherite diving set not giving the right attribute modifiers
 - Fixed mixin conflict with mods that change ice freezing behavior (like TFC)
 - Fixed soul-fire-based blocks not emitting temperature properly
@@ -2722,8 +2733,6 @@ Fixes:
 - Fixed errors caused when KubeJS scripts use invalid/missing IDs
 - Fixed biome temperature having too small of a search radius
 - Fixed no sound playing when a waterskin is dispensed from a dispenser
-* Fixed the hearth not checking for fuel items
-
 
 Technical Changes:
 * The temperature decrease due to altitude is now defined in JSON as part of the default temp_region file
@@ -2734,6 +2743,7 @@ Technical Changes:
 - Removed the "trait" argument from the "/temperature set" sub-command, as it would be reset next tick anyway
 - Temperature units are now supported for seasonal temperatures and block temperatures
       - Existing configs will be automatically updated to match the new format
+- Added "cold_sweat:extends_smokestack" block tag, which defines what blocks can be used to increase the height of a smokestack
 ! The "entity" parameter for getTemperature() in BlockTemp is now nullable
 ! EnableTemperatureEvent is now fired on the Forge event bus directly after configs are loaded
 * Configs defined by JSON (and a few more) are now only synced server -> client and not the other way around
