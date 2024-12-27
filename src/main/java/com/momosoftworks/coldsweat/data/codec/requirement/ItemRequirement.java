@@ -18,6 +18,7 @@ import net.minecraft.tags.ITag;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.util.registry.Registry;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -80,11 +81,10 @@ public class ItemRequirement
         this(Optional.of(items), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), nbt);
     }
 
-    public ItemRequirement(Predicate<ItemStack> predicate)
+    public ItemRequirement(Collection<Item> items, Predicate<ItemStack> predicate)
     {
-        this(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
-             Optional.empty(), Optional.empty(), Optional.empty(), new NbtRequirement(),
-             Optional.of(predicate));
+        this(Optional.of(items.stream().map(Either::<ITag<Item>, Item>right).collect(Collectors.toList())), Optional.empty(), Optional.empty(), Optional.empty(),
+             Optional.empty(), Optional.empty(), Optional.empty(), new NbtRequirement(), Optional.ofNullable(predicate));
     }
 
     public Optional<List<Either<ITag<Item>, Item>>> items()
@@ -117,16 +117,10 @@ public class ItemRequirement
 
     public boolean test(ItemStack stack, boolean ignoreCount)
     {
-        if (this.predicate.isPresent())
-        {   return this.predicate.get().test(stack);
-        }
         if (stack.isEmpty() && items.isPresent() && !items.get().isEmpty())
         {   return false;
         }
 
-        if (!this.nbt.test(stack.getTag()))
-        {   return false;
-        }
         if (items.isPresent())
         {
             checkItem:
@@ -140,6 +134,12 @@ public class ItemRequirement
                 }
                 return false;
             }
+        }
+        if (this.predicate.isPresent())
+        {   return this.predicate.get().test(stack);
+        }
+        if (!this.nbt.test(stack.getTag()))
+        {   return false;
         }
         if (tag.isPresent() && !tag.get().contains(stack.getItem()))
         {   return false;

@@ -85,7 +85,6 @@ public class ModRegistriesEventJS extends StartupEventJS
         FoodBuilderJS foodJS = new FoodBuilderJS();
         builder.accept(foodJS);
         FoodData foodData = foodJS.build();
-        foodData.setType(ConfigData.Type.KUBEJS);
         if (!foodData.areRequiredModsLoaded()) return;
 
         for (Item item : foodJS.items)
@@ -102,7 +101,6 @@ public class ModRegistriesEventJS extends StartupEventJS
         FuelBuilderJS fuelJS = new FuelBuilderJS();
         builder.accept(fuelJS);
         FuelData fuelData = fuelJS.build(fuelType);
-        fuelData.setType(ConfigData.Type.KUBEJS);
         if (!fuelData.areRequiredModsLoaded()) return;
 
         for (Item item : fuelJS.items)
@@ -122,6 +120,10 @@ public class ModRegistriesEventJS extends StartupEventJS
     {   addFuel(builder, ConfigSettings.ICEBOX_FUEL, FuelData.FuelType.ICEBOX);
     }
 
+    public void addSoulspringLampFuel(Consumer<FuelBuilderJS> builder)
+    {   addFuel(builder, ConfigSettings.SOULSPRING_LAMP_FUEL, FuelData.FuelType.SOUL_LAMP);
+    }
+
     /*
      Carried Item Temperature
      */
@@ -131,11 +133,26 @@ public class ModRegistriesEventJS extends StartupEventJS
         CarriedItemBuilderJS carriedItemJS = new CarriedItemBuilderJS();
         builder.accept(carriedItemJS);
         ItemCarryTempData carryData = carriedItemJS.build();
-        carryData.setType(ConfigData.Type.KUBEJS);
         if (!carryData.areRequiredModsLoaded()) return;
 
         for (Item item : carriedItemJS.items)
         {   ConfigSettings.CARRIED_ITEM_TEMPERATURES.get().put(item, carryData);
+        }
+    }
+
+    /*
+     Drying Item
+     */
+
+    public void addDryingItem(Consumer<DryingItemBuilderJS> builder)
+    {
+        DryingItemBuilderJS dryingItemJS = new DryingItemBuilderJS();
+        builder.accept(dryingItemJS);
+        DryingItemData dryingData = dryingItemJS.build();
+        if (!dryingData.areRequiredModsLoaded()) return;
+
+        for (Item item : dryingItemJS.items)
+        {   ConfigSettings.DRYING_ITEMS.get().put(item, dryingData);
         }
     }
 
