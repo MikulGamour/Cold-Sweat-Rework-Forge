@@ -19,6 +19,7 @@ import com.momosoftworks.coldsweat.data.codec.configuration.FuelData;
 import com.momosoftworks.coldsweat.data.tag.ModBlockTags;
 import com.momosoftworks.coldsweat.data.tag.ModFluidTags;
 import com.momosoftworks.coldsweat.util.ClientOnlyHelper;
+import com.momosoftworks.coldsweat.util.entity.DummyPlayer;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.math.FastMap;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
@@ -351,7 +352,7 @@ public class HearthBlockEntity extends RandomizableContainerBlockEntity implemen
                     for (int i = 0; i < players.size(); i++)
                     {
                         Player player = players.get(i);
-                        if (player == null) continue;
+                        if (player == null || player instanceof DummyPlayer) continue;
                         AABB playerBB = player.getBoundingBox();
                         if (BlockPos.betweenClosedStream(playerBB).anyMatch(pathLookup::contains))
                         {   this.insulatePlayer(player);
