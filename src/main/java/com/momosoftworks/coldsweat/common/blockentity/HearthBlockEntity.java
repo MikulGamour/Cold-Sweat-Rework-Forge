@@ -59,6 +59,7 @@ import net.minecraft.tileentity.ITickableTileEntity;
 import net.minecraft.tileentity.LockableLootTileEntity;
 import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.*;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.text.ITextComponent;
@@ -353,7 +354,7 @@ public class HearthBlockEntity extends LockableLootTileEntity implements ITickab
                 }
 
                 // Give insulation to players
-                if (!isClient && this.ticksExisted % 20 == 0)
+                if (!isClient && this.ticksExisted % 5 == 0)
                 {
                     // Reset the usage status for cold/hot fuel
                     if (ConfigSettings.SMART_HEARTH.get())
@@ -364,7 +365,8 @@ public class HearthBlockEntity extends LockableLootTileEntity implements ITickab
                     {
                         PlayerEntity player = players.get(i);
                         if (player == null) continue;
-                        if (WorldHelper.allAdjacentBlocksMatch(new BlockPos(player.getEyePosition(0)), bpos -> pathLookup.contains(bpos)))
+                        AxisAlignedBB playerBB = player.getBoundingBox();
+                        if (BlockPos.betweenClosedStream(playerBB).anyMatch(pathLookup::contains))
                         {   this.insulatePlayer(player);
                         }
                     }
@@ -689,10 +691,10 @@ public class HearthBlockEntity extends LockableLootTileEntity implements ITickab
             int maxEffect = this.getMaxInsulationLevel() - 1;
             int effectLevel = (int) Math.min(maxEffect, (insulationLevel / (double) this.getInsulationTime()) * maxEffect);
             if (shouldUseColdFuel)
-            {   player.addEffect(new EffectInstance(ModEffects.FRIGIDNESS, 120, effectLevel, false, false, true));
+            {   player.addEffect(new EffectInstance(ModEffects.FRIGIDNESS, 60, effectLevel, false, false, true));
             }
             if (shouldUseHotFuel)
-            {   player.addEffect(new EffectInstance(ModEffects.WARMTH, 120, effectLevel, false, false, true));
+            {   player.addEffect(new EffectInstance(ModEffects.WARMTH, 60, effectLevel, false, false, true));
             }
         }
     }
