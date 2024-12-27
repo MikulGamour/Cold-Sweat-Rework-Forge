@@ -31,8 +31,8 @@ public class InsulatorBuilderJS
     public final Set<Item> items = new HashSet<>();
     public Insulation insulation;
     public Insulation.Slot slot;
-    public Predicate<ItemStack> itemPredicate = item -> true;
-    public Predicate<Entity> entityPredicate = entity -> true;
+    public Predicate<ItemStack> itemPredicate = null;
+    public Predicate<Entity> entityPredicate = null;
     public AttributeModifierMap attributes = new AttributeModifierMap();
     public Map<ResourceLocation, Double> immuneTempModifiers = new HashMap<>();
 

@@ -13,6 +13,7 @@ import net.minecraft.tags.ITag;
 import net.minecraft.util.registry.Registry;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.registries.ForgeRegistries;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -69,12 +70,12 @@ public class EntityRequirement
              Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
     }
 
-    public EntityRequirement(Predicate<Entity> predicate)
+    public EntityRequirement(@Nullable Predicate<Entity> predicate)
     {
         this(Optional.empty(), Optional.empty(), Optional.empty(),
              Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
              Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
-             Optional.of(predicate));
+             Optional.ofNullable(predicate));
     }
 
     public static final EntityRequirement NONE = new EntityRequirement(Optional.empty(), Optional.empty(), Optional.empty(),
