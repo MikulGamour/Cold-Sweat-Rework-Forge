@@ -34,7 +34,7 @@ public class CarriedItemBuilderJS
     public double maxEffect = 0;
     public Temperature.Trait trait = Temperature.Trait.WORLD;
     public Predicate<ItemStack> itemPredicate = null;
-    public Predicate<Entity> entityPredicate = entity -> true;
+    public Predicate<Entity> entityPredicate = null;
     public AttributeModifierMap attributes = new AttributeModifierMap();
     public Map<ResourceLocation, Double> immuneTempModifiers = new HashMap<>();
 

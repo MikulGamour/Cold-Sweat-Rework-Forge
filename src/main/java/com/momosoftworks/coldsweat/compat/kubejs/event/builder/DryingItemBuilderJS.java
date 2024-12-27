@@ -24,7 +24,7 @@ public class DryingItemBuilderJS
     public ItemStack result = ItemStack.EMPTY;
     public SoundEvent sound = SoundEvents.WET_GRASS_STEP;
     public Predicate<ItemStack> itemPredicate = null;
-    public Predicate<Entity> entityPredicate = entity -> true;
+    public Predicate<Entity> entityPredicate = null;
 
     public DryingItemBuilderJS()
     {}

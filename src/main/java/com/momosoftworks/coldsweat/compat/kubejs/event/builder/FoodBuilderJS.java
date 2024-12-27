@@ -20,8 +20,8 @@ public class FoodBuilderJS
     public final Set<Item> items = new HashSet<>();
     public double temperature = 0;
     public int duration = -1;
-    public Predicate<ItemStack> itemPredicate = item -> true;
-    public Predicate<Entity> entityPredicate = entity -> true;
+    public Predicate<ItemStack> itemPredicate = null;
+    public Predicate<Entity> entityPredicate = null;
 
     public FoodBuilderJS()
     {}

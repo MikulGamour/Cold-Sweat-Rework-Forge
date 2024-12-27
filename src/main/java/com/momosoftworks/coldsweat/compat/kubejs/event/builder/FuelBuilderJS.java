@@ -18,7 +18,7 @@ public class FuelBuilderJS
 {
     public final Set<Item> items = new HashSet<>();
     public double fuel = 0;
-    public Predicate<ItemStack> itemPredicate = item -> true;
+    public Predicate<ItemStack> itemPredicate = null;
 
     public FuelBuilderJS()
     {}
