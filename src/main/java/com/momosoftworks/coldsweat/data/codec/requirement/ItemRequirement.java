@@ -20,7 +20,9 @@ import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -84,25 +86,18 @@ public record ItemRequirement(Optional<List<Either<TagKey<Item>, Item>>> items, 
         this(Optional.of(items), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), components);
     }
 
-    public ItemRequirement(Predicate<ItemStack> predicate)
+    public ItemRequirement(Collection<Item> items, @Nullable Predicate<ItemStack> predicate)
     {
-        this(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
-             Optional.empty(), Optional.empty(), Optional.empty(), new ItemComponentsRequirement(),
-             Optional.of(predicate));
+        this(Optional.of(items.stream().map(Either::<TagKey<Item>, Item>right).toList()), Optional.empty(), Optional.empty(), Optional.empty(),
+             Optional.empty(), Optional.empty(), Optional.empty(), new ItemComponentsRequirement(), Optional.ofNullable(predicate));
     }
 
     public boolean test(ItemStack stack, boolean ignoreCount)
     {
-        if (this.predicate.isPresent())
-        {   return this.predicate.get().test(stack);
-        }
         if (stack.isEmpty() && items.isPresent() && !items.get().isEmpty())
         {   return false;
         }
 
-        if (!this.components.components().isEmpty())
-        {   return false;
-        }
         if (items.isPresent())
         {
             checkItem:
@@ -116,6 +111,12 @@ public record ItemRequirement(Optional<List<Either<TagKey<Item>, Item>>> items, 
                 }
                 return false;
             }
+        }
+        if (this.predicate.isPresent())
+        {   return this.predicate.get().test(stack);
+        }
+        if (!this.components.test(stack.getComponents()))
+        {   return false;
         }
         if (tag.isPresent() && !stack.is(tag.get()))
         {   return false;

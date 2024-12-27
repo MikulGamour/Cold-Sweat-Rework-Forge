@@ -58,7 +58,7 @@ public class FoodBuilderJS
 
     public FoodData build()
     {
-        FoodData data = new FoodData(this.temperature, new ItemRequirement(this.itemPredicate), this.duration, new EntityRequirement(this.entityPredicate));
+        FoodData data = new FoodData(this.temperature, new ItemRequirement(this.items, this.itemPredicate), this.duration, new EntityRequirement(this.entityPredicate));
         data.setType(ConfigData.Type.KUBEJS);
         return data;
     }

@@ -5,6 +5,7 @@ import com.mojang.datafixers.util.Either;
 import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.api.registry.TempModifierRegistry;
 import com.momosoftworks.coldsweat.api.util.Temperature;
+import com.momosoftworks.coldsweat.compat.kubejs.util.KubeHelper;
 import com.momosoftworks.coldsweat.data.codec.configuration.ItemCarryTempData;
 import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
@@ -32,7 +33,7 @@ public class CarriedItemBuilderJS
     public double temperature = 0;
     public double maxEffect = 0;
     public Temperature.Trait trait = Temperature.Trait.WORLD;
-    public Predicate<ItemStack> itemPredicate = item -> true;
+    public Predicate<ItemStack> itemPredicate = null;
     public Predicate<Entity> entityPredicate = entity -> true;
     public AttributeModifierMap attributes = new AttributeModifierMap();
     public Map<ResourceLocation, Double> immuneTempModifiers = new HashMap<>();
@@ -123,7 +124,7 @@ public class CarriedItemBuilderJS
 
     public ItemCarryTempData build()
     {
-        ItemCarryTempData data = new ItemCarryTempData(new ItemRequirement(this.itemPredicate), ImmutableList.copyOf(this.slots),
+        ItemCarryTempData data = new ItemCarryTempData(new ItemRequirement(this.items, this.itemPredicate), ImmutableList.copyOf(this.slots),
                                                        this.temperature, this.trait, maxEffect, new EntityRequirement(this.entityPredicate),
                                                        this.attributes, this.immuneTempModifiers);
         data.setType(ConfigData.Type.KUBEJS);

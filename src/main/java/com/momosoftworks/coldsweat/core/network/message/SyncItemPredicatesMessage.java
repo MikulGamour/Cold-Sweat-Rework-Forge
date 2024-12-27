@@ -63,14 +63,14 @@ public class SyncItemPredicatesMessage implements CustomPacketPayload
         this.checkInsulatingCurio(stack, entity);
         this.checkArmorInsulation(stack, entity);
 
-        this.checkFood(stack, entity);
-
         this.checkBoilerFuel(stack);
         this.checkIceboxFuel(stack);
         this.checkHearthFuel(stack);
         this.checkSoulLampFuel(stack);
 
+        this.checkFood(stack, entity);
         this.checkCarriedTemps(stack, inventorySlot, equipmentSlot, entity);
+        this.checkDryingItems(stack, entity);
     }
 
     public SyncItemPredicatesMessage(ItemStack stack, int inventorySlot, @Nullable EquipmentSlot equipmentSlot, Map<UUID, Boolean> predicateMap)
@@ -187,6 +187,10 @@ public class SyncItemPredicatesMessage implements CustomPacketPayload
 
             this.predicateMap.putAll(insulatorMap);
         }
+    }
+
+    private void checkDryingItems(ItemStack stack, Entity entity)
+    {   this.checkItemRequirement(stack, entity, (DynamicHolder) ConfigSettings.DRYING_ITEMS);
     }
 
     private void checkItemRequirement(ItemStack stack, Entity entity, DynamicHolder<Multimap<Item, RequirementHolder>> configSetting)
