@@ -366,7 +366,7 @@ public class HearthBlockEntity extends LockableLootTileEntity implements ITickab
                     {
                         PlayerEntity player = players.get(i);
                         if (player == null || player instanceof DummyPlayer) continue;
-                        AxisAlignedBB playerBB = player.getBoundingBox();
+                        AxisAlignedBB playerBB = player.getBoundingBox().inflate(-0.1);
                         if (BlockPos.betweenClosedStream(playerBB).anyMatch(pathLookup::contains))
                         {   this.insulatePlayer(player);
                         }
