@@ -380,7 +380,7 @@ public class HearthBlockEntity extends RandomizableContainerBlockEntity implemen
                     {
                         Player player = players.get(i);
                         if (player == null || player instanceof DummyPlayer) continue;
-                        AABB playerBB = CompatManager.Valkyrien.transformIfShipPos(level, player.getBoundingBox());
+                        AABB playerBB = CompatManager.Valkyrien.transformIfShipPos(level, player.getBoundingBox()).inflate(-0.1);
                         if (BlockPos.betweenClosedStream(playerBB).anyMatch(pathLookup::contains))
                         {   this.insulatePlayer(player);
                         }
