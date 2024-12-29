@@ -56,14 +56,15 @@ public class MixinFreezingWater
         cir.setReturnValue(false);
     }
 
-    @Mixin(value = ServerLevel.class, priority = 900)
+    @Mixin(value = ServerLevel.class)
     public static abstract class FreezeTickSpeed
     {
         ServerLevel self = (ServerLevel) (Object) this;
 
-        @ModifyArg(method = "tickChunk", index = 0, at = @At(target = "Lnet/minecraft/util/RandomSource;nextInt(I)I", value = "INVOKE"),
-                  slice = @Slice(from = @At(target = "Lnet/minecraft/util/profiling/ProfilerFiller;popPush(Ljava/lang/String;)V", value = "INVOKE", ordinal = 0),
-                                 to = @At(target = "Lnet/minecraft/util/profiling/ProfilerFiller;popPush(Ljava/lang/String;)V", value = "INVOKE", ordinal = 1)))
+        @ModifyArg(method = "tickChunk", at = @At(target = "Lnet/minecraft/util/RandomSource;nextInt(I)I", value = "INVOKE"),
+                   slice = @Slice(from = @At(target = "Lnet/minecraft/util/profiling/ProfilerFiller;popPush(Ljava/lang/String;)V", value = "INVOKE", ordinal = 0),
+                                  to = @At(target = "Lnet/minecraft/util/profiling/ProfilerFiller;popPush(Ljava/lang/String;)V", value = "INVOKE", ordinal = 1)),
+                   require = 0)
         private int tickFreezeSpeed(int bound)
         {
             if (!ConfigSettings.USE_CUSTOM_WATER_FREEZE_BEHAVIOR.get()) return bound;
