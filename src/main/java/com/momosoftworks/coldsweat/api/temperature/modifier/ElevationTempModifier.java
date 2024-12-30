@@ -52,9 +52,11 @@ public class ElevationTempModifier extends TempModifier
             BlockPos originalPos = pair.getFirst();
             int originalY = originalPos.getY();
             int minY = 0;
-            BlockPos pos = new BlockPos(originalPos.getX(),
-                                        originalY <= minY ? originalY : Math.max(minY, originalY + skylight - 4),
-                                        originalPos.getZ());
+            int groundLevel = WorldHelper.getHeight(originalPos, level);
+            int adjustedY = CSMath.betweenInclusive(originalY, minY, groundLevel) ? CSMath.clamp(originalY + skylight - 4, minY, groundLevel)
+                          : originalY >= groundLevel ? CSMath.clamp(originalY + skylight - 4, groundLevel, originalY)
+                          : CSMath.clamp(originalY + skylight - 4, originalY, minY);
+            BlockPos pos = new BlockPos(originalPos.getX(), adjustedY, originalPos.getZ());
             double distance = pair.getSecond();
             findRegion:
             {
