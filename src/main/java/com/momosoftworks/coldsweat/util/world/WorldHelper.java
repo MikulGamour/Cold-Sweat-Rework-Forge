@@ -468,14 +468,7 @@ public abstract class WorldHelper
         ItemEntity item = entity.spawnAtLocation(stack, entity.getBbHeight());
         if (item != null)
         {   item.setDeltaMovement(item.getDeltaMovement().add(((rand.nextFloat() - rand.nextFloat()) * 0.1F), (rand.nextFloat() * 0.05F), ((rand.nextFloat() - rand.nextFloat()) * 0.1F)));
-            Field age = ObfuscationReflectionHelper.findField(ItemEntity.class, "f_31985_");
-            age.setAccessible(true);
-            try
-            {   age.set(item, 6000 - lifeTime);
-            }
-            catch (Exception e)
-            {   e.printStackTrace();
-            }
+            item.lifespan = lifeTime;
         }
         return item;
     }
