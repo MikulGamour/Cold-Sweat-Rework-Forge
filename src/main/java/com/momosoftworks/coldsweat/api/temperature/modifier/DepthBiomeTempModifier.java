@@ -53,7 +53,7 @@ public class DepthBiomeTempModifier extends TempModifier
         }
 
         int finalCaveBiomeCount = caveBiomeCount;
-        double biomeTempAvg = biomeTempTotal / Math.max(1, caveBiomeCount);
+        double biomeTempAvg = biomeTempTotal / caveBiomeCount;
 
         return temp -> CSMath.blend(temp, biomeTempAvg, finalCaveBiomeCount, 0, Math.pow(sampleRoot, 3));
     }
