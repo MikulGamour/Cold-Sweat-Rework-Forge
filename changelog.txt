@@ -2704,26 +2704,29 @@ Technical Changes:
 
 Fixes:
 * Fixed crash when the temperature of a biome is retrieved in some cases
-* Fixed crash due to infinite update loop when a thermal source block's fuel is changedth
+* Fixed crash due to infinite update loop when a thermal source block's fuel is changed
 * Fixed crash when opening the creative menu in some cases
 * Fixed log spam and/or crashes caused by missing temperature modifier IDs
-* Fixed some config settings duplicating in the TOML files every time they are saved
-* Fixed server disconnection due to very large packet size in some cases
-* Fixed "NegativeArraySizeException: -1" error when connecting to a server with OP permissions
-* Fixed chestplates not being insulatable & other abnormal sewing table behaviors
-* Fixed blocks configured via TOML not emitting temperature
-* Fixed goats not regrowing their fur after being sheared
-* Fixed config menu not opening on dedicated server
-* Fixed the hearth not checking for fuel items
-- Fixed the config menu infinitely re-opening when playing in offline mode
-- Fixed the Create netherite diving set not giving the right attribute modifiers
 - Fixed mixin conflict with mods that change ice freezing behavior (like TFC)
+* Fixed "NegativeArraySizeException: -1" error when connecting to a server with OP permissions
+* Fixed config menu not opening on dedicated server
+- Fixed the config menu infinitely re-opening when playing in offline mode
+* Fixed some config settings duplicating in the TOML files every time they are saved
+- Fixed automatic config updater creating outdated configs in some cases
+* Fixed blocks configured via TOML not emitting temperature
 - Fixed soul-fire-based blocks not emitting temperature properly
+* Fixed server disconnection due to very large packet size in some cases
+* Fixed chestplates not being insulatable & other abnormal sewing table behaviors
+* Fixed goats not regrowing their fur after being sheared
+* Fixed the hearth not checking for fuel items
+- Fixed the Create netherite diving set not giving the right attribute modifiers
 - Fixed powered blocks in front of the thermolith not updating when it is destroyed
 - Fixed errors caused when KubeJS scripts use invalid/missing IDs
+- Fixed KubeJS-based item configs not checking their conditions properly
 - Fixed biome temperature having too small of a search radius
 - Fixed no sound playing when a waterskin is dispensed from a dispenser
-- Fixed KubeJS-based item configs not checking their conditions properly
+- Fixed elevation temperature being inaccurate in some cases
+- Fixed chameleon molt never despawning when shed by a chameleon
 
 Technical Changes:
 * The temperature decrease due to altitude is now defined in JSON as part of the default temp_region file
