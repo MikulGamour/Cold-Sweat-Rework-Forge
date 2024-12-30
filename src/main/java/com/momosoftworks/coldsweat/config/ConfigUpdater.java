@@ -24,39 +24,6 @@ public class ConfigUpdater
         String configVersion = MainSettingsConfig.VERSION.get();
 
         /*
-         2.3-b01a
-         */
-        if (isBehind(configVersion, "2.3-b01a"))
-        {
-            // Update chameleon molt insulation ingredient entry
-            addConfigSetting(ItemSettingsConfig.INSULATION_ITEMS,
-                             List.of("cold_sweat:chameleon_molt", 2, 0.0085, "adaptive"));
-        }
-
-        /*
-         2.3-b04a
-         */
-        if (isBehind(configVersion, "2.3-b04a"))
-        {
-            // Update soul sprout food item
-            addConfigSetting(ItemSettingsConfig.FOOD_TEMPERATURES,
-                             List.of("cold_sweat:soul_sprout", 0.0, "{}", 1200));
-            addConfigSetting(WorldSettingsConfig.BLOCK_TEMPERATURES,
-                             List.of("minecraft:lava_cauldron", 0.5, 7, true, 1.5));
-        }
-
-        /*
-         2.3-b05b
-         */
-        if (isBehind(configVersion, "2.3-b05b"))
-        {
-            // Remove water as fuel item for hearth
-            removeConfigSetting(ItemSettingsConfig.HEARTH_FUELS, "minecraft:water_bucket");
-            // Remove water as fuel item for icebox
-            removeConfigSetting(ItemSettingsConfig.ICEBOX_FUELS, "minecraft:water_bucket");
-        }
-
-        /*
          2.3
          */
         if (isBehind(configVersion, "2.3"))
@@ -64,7 +31,7 @@ public class ConfigUpdater
             // Update magma block temperature
             replaceConfigSetting(WorldSettingsConfig.BLOCK_TEMPERATURES, "minecraft:magma_block", blockTemp -> {
                 blockTemp.clear();
-                blockTemp.addAll(List.of("minecraft:magma_block", 0.25, 3, 1.0));
+                blockTemp.addAll(List.of("minecraft:magma_block", 0.25, 3, "mc", 1.0));
             });
 
             // Update ice fuel value
@@ -157,13 +124,13 @@ public class ConfigUpdater
             removeConfigSetting(WorldSettingsConfig.BLOCK_TEMPERATURES, "minecraft:soul_fire");
             removeConfigSetting(WorldSettingsConfig.BLOCK_TEMPERATURES, "minecraft:soul_campfire");
             // Add block temperatures converted from Java
-            addConfigSetting(WorldSettingsConfig.BLOCK_TEMPERATURES, List.of("cold_sweat:boiler", 0.27, 7, 0.88, "lit=true", "{}", 4));
-            addConfigSetting(WorldSettingsConfig.BLOCK_TEMPERATURES, List.of("cold_sweat:icebox", -0.27, 7, 0.88, "frosted=true", "{}", 0));
-            addConfigSetting(WorldSettingsConfig.BLOCK_TEMPERATURES, List.of("minecraft:ice", -0.15, 4, 0.6, "", "{}", -0.7));
-            addConfigSetting(WorldSettingsConfig.BLOCK_TEMPERATURES, List.of("minecraft:packed_ice", -0.25, 4, 1.0, "", "{}", -0.7));
-            addConfigSetting(WorldSettingsConfig.BLOCK_TEMPERATURES, List.of("minecraft:blue_ice", -0.35, 4, 1.4, "", "{}", -0.7));
-            addConfigSetting(WorldSettingsConfig.BLOCK_TEMPERATURES, List.of("#minecraft:ice", -0.15, 4, 0.6, "", "{}", -0.7));
-            addConfigSetting(WorldSettingsConfig.BLOCK_TEMPERATURES, List.of("#minecraft:campfires", 0.476, 7, 0.9, "lit=true", " ", 8));
+            addConfigSetting(WorldSettingsConfig.BLOCK_TEMPERATURES, List.of("cold_sweat:boiler", 0.27, 7, "mc", 0.88, "lit=true", "{}", 4));
+            addConfigSetting(WorldSettingsConfig.BLOCK_TEMPERATURES, List.of("cold_sweat:icebox", -0.27, 7, "mc", 0.88, "frosted=true", "{}", 0));
+            addConfigSetting(WorldSettingsConfig.BLOCK_TEMPERATURES, List.of("minecraft:ice", -0.15, 4, "mc", 0.6, "", "{}", -0.7));
+            addConfigSetting(WorldSettingsConfig.BLOCK_TEMPERATURES, List.of("minecraft:packed_ice", -0.25, 4, "mc", 1.0, "", "{}", -0.7));
+            addConfigSetting(WorldSettingsConfig.BLOCK_TEMPERATURES, List.of("minecraft:blue_ice", -0.35, 4, "mc", 1.4, "", "{}", -0.7));
+            addConfigSetting(WorldSettingsConfig.BLOCK_TEMPERATURES, List.of("#minecraft:ice", -0.15, 4, "mc", 0.6, "", "{}", -0.7));
+            addConfigSetting(WorldSettingsConfig.BLOCK_TEMPERATURES, List.of("#minecraft:campfires", 0.476, 7, "mc", 0.9, "lit=true", " ", 8));
         }
 
         /*
@@ -171,7 +138,7 @@ public class ConfigUpdater
          */
         if (isBehind(configVersion, "2.3.10"))
         {
-            List blockTemps = WorldSettingsConfig.BLOCK_TEMPERATURES.get();
+            List blockTemps = new ArrayList<>(WorldSettingsConfig.BLOCK_TEMPERATURES.get());
             for (int i = 0; i < blockTemps.size(); i++)
             {
                 List blockTemp = new ArrayList<>((List) blockTemps.get(i));
