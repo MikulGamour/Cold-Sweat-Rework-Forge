@@ -286,7 +286,10 @@ public class ItemSettingsConfig
                 .defineListAllowEmpty(List.of("Drying Items"), () -> List.of(
                         List.of("minecraft:sponge", "minecraft:wet_sponge")
                 ),
-                it -> it instanceof String);
+                it -> it instanceof List<?> list
+                && list.size() == 2
+                && list.get(0) instanceof String
+                && list.get(1) instanceof String);
 
         BUILDER.pop();
 
