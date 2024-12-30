@@ -715,7 +715,7 @@ public class ConfigSettings
             return list;
         },
         (saver) -> WorldSettingsConfig.setSourceSpreadWhitelist(saver.stream().map(block -> BuiltInRegistries.BLOCK.getKey(block)).toList()),
-        SyncType.BOTH_WAYS);
+        SyncType.ONE_WAY);
 
         THERMAL_SOURCE_SPREAD_BLACKLIST = addSyncedSetting("hearth_spread_blacklist", ArrayList::new, holder ->
         {
@@ -741,7 +741,7 @@ public class ConfigSettings
             return list;
         },
         (saver) -> WorldSettingsConfig.setSourceSpreadBlacklist(saver.stream().map(block -> BuiltInRegistries.BLOCK.getKey(block)).toList()),
-        SyncType.BOTH_WAYS);
+        SyncType.ONE_WAY);
 
         THERMAL_SOURCE_STRENGTH = addSetting("hearth_effect", () -> 0.75, holder -> holder.set(WorldSettingsConfig.SOURCE_EFFECT_STRENGTH.get()));
 
