@@ -35,11 +35,12 @@ public class PlayerDrying
             }
             // Remove item from player's inventory
             if (!player.abilities.instabuild)
-            {   stack.shrink(1);
-            }
-            // Add result item to player's inventory
-            if (!player.inventory.add(newStack))
-            {   player.drop(newStack, false);
+            {
+                stack.shrink(1);
+                // Add result item to player's inventory
+                if (!player.inventory.add(newStack))
+                {   player.drop(newStack, false);
+                }
             }
             // Effects
             player.swing(event.getHand(), true);
