@@ -31,11 +31,12 @@ public class PlayerDrying
             ItemStack newStack = dryingResult.result();
             // Remove item from player's inventory
             if (!player.getAbilities().instabuild)
-            {   stack.shrink(1);
-            }
-            // Add result item to player's inventory
-            if (!player.getInventory().add(newStack))
-            {   player.drop(newStack, false);
+            {
+                stack.shrink(1);
+                // Add result item to player's inventory
+                if (!player.getInventory().add(newStack))
+                {   player.drop(newStack, false);
+                }
             }
             // Effects
             player.swing(event.getHand(), true);
