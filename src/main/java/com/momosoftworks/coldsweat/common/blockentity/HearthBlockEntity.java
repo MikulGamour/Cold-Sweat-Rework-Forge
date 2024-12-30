@@ -368,6 +368,10 @@ public class HearthBlockEntity extends RandomizableContainerBlockEntity implemen
             }
         }
 
+        if (this.ticksExisted % 40 == 0)
+        {   this.checkForFuel();
+        }
+
         // Update fuel
         if (!this.level.isClientSide && (this.isFuelChanged() || wasUsingColdFuel != this.shouldUseColdFuel || wasUsingHotFuel != this.shouldUseHotFuel))
         {   this.updateFuelState();
@@ -650,7 +654,6 @@ public class HearthBlockEntity extends RandomizableContainerBlockEntity implemen
     {
         if (this.ticksExisted % 40 == 0)
         {   this.drainFuel();
-            this.checkForFuel();
         }
     }
 
