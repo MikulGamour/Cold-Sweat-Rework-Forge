@@ -720,7 +720,7 @@ public class ConfigSettings
             return list;
         },
         saver -> WorldSettingsConfig.SOURCE_SPREAD_WHITELIST.set(saver.stream().map(block -> ForgeRegistries.BLOCKS.getKey(block).toString()).collect(Collectors.toList())),
-        SyncType.BOTH_WAYS);
+        SyncType.ONE_WAY);
 
         THERMAL_SOURCE_SPREAD_BLACKLIST = addSyncedSetting("hearth_spread_blacklist", ArrayList::new, holder ->
         {
@@ -746,7 +746,7 @@ public class ConfigSettings
             return list;
         },
         saver -> WorldSettingsConfig.SOURCE_SPREAD_WHITELIST.set(saver.stream().map(block -> ForgeRegistries.BLOCKS.getKey(block).toString()).collect(Collectors.toList())),
-        SyncType.BOTH_WAYS);
+        SyncType.ONE_WAY);
 
         THERMAL_SOURCE_STRENGTH = addSetting("hearth_effect", () -> 0.75, holder -> holder.set(WorldSettingsConfig.SOURCE_EFFECT_STRENGTH.get()));
 
