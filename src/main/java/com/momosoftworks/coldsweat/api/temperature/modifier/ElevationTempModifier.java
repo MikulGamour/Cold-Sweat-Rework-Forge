@@ -3,7 +3,6 @@ package com.momosoftworks.coldsweat.api.temperature.modifier;
 import com.mojang.datafixers.util.Pair;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
-import com.momosoftworks.coldsweat.data.codec.configuration.BiomeTempData;
 import com.momosoftworks.coldsweat.data.codec.configuration.DepthTempData;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.math.FastMap;
