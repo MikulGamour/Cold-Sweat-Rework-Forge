@@ -287,7 +287,7 @@ public class Chameleon extends Animal
         if (!(event.getRayTraceResult() instanceof EntityHitResult hitResult)) return;
         if (hitResult.getEntity() instanceof Chameleon chameleon && chameleon.getVehicle() instanceof Player)
         {
-            event.setImpactResult(ProjectileImpactEvent.ImpactResult.SKIP_ENTITY);
+            event.setCanceled(true);
             chameleon.setHurtTimestamp(chameleon.tickCount - 20);
         }
     }

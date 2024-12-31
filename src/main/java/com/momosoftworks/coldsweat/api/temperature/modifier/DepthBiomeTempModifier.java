@@ -26,7 +26,7 @@ public class DepthBiomeTempModifier extends TempModifier
     protected Function<Double, Double> calculate(LivingEntity entity, Temperature.Trait trait)
     {
         int sampleRoot = this.getNBT().getInt("SampleRoot");
-        Level level = entity.level();
+        Level level = entity.level;
 
         // Calculate the average temperature of underground biomes
         double biomeTempTotal = 0;

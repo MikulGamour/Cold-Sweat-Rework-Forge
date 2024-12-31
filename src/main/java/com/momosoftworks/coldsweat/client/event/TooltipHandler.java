@@ -182,7 +182,7 @@ public class TooltipHandler
             component = getFormattedVanillaAttributeModifier(attribute, amount, operation);
             TranslatableContents contents = (TranslatableContents) component.getContents();
             params.addAll(0, Arrays.asList(contents.getArgs()));
-            component = setComponentContents(getFormattedVanillaAttributeModifier(attribute, amount, operation), new TranslatableContents(contents.getKey(), contents.getFallback(), params.toArray()));
+            component = setComponentContents(getFormattedVanillaAttributeModifier(attribute, amount, operation), new TranslatableContents(contents.getKey(), params.toArray()));
         }
         component = component.withStyle(color);
         component = addTooltipFlags(component, forTooltip, strikethrough);
@@ -235,7 +235,7 @@ public class TooltipHandler
             if (strikethrough)
             {   params.add("strikethrough");
             }
-            MutableComponent newComponent = setComponentContents(component, new TranslatableContents(translatable.getKey(), "_", params.toArray()));
+            MutableComponent newComponent = setComponentContents(component, new TranslatableContents(translatable.getKey(), params.toArray()));
             if (strikethrough)
             {   newComponent.setStyle(Style.EMPTY.withColor(7561572));
             }
