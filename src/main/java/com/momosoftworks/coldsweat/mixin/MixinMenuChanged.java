@@ -19,7 +19,7 @@ public class MixinMenuChanged
             locals = LocalCapture.CAPTURE_FAILHARD)
     private void onMenuChanged(int slotIndex, ItemStack pStack, Supplier<ItemStack> stackSupplier, CallbackInfo ci,
                                // locals
-                               ItemStack oldStack, ItemStack newStack)
+                               ItemStack oldStack, boolean clientStackChanged, ItemStack newStack)
     {
         ContainerChangedEvent event = new ContainerChangedEvent((AbstractContainerMenu) (Object) this, oldStack, newStack, slotIndex);
         MinecraftForge.EVENT_BUS.post(event);
