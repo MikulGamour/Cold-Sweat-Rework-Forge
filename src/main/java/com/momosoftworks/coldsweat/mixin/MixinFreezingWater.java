@@ -70,7 +70,7 @@ public class MixinFreezingWater
 
             int tickSpeed = self.getGameRules().getInt(GameRules.RULE_RANDOMTICKING);
             if (tickSpeed == 0) return 999999;
-            return Math.max(1, bound / (tickSpeed / 3));
+            return Math.max(1, bound / Math.max(1, tickSpeed / 3));
         }
     }
 
