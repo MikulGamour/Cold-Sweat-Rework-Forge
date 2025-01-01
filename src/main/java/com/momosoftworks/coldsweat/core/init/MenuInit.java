@@ -5,10 +5,7 @@ import net.minecraftforge.common.extensions.IForgeMenuType;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import com.momosoftworks.coldsweat.ColdSweat;
-import com.momosoftworks.coldsweat.common.container.BoilerContainer;
-import com.momosoftworks.coldsweat.common.container.HearthContainer;
-import com.momosoftworks.coldsweat.common.container.IceboxContainer;
-import com.momosoftworks.coldsweat.common.container.SewingContainer;
+import com.momosoftworks.coldsweat.common.container.*;
 import net.minecraftforge.registries.RegistryObject;
 
 public class MenuInit
