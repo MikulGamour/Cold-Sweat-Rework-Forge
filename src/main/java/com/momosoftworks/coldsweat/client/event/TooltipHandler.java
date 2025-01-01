@@ -416,8 +416,6 @@ public class TooltipHandler
 
             ItemInsulationManager.getInsulationCap(stack).ifPresent(cap ->
             {
-                cap.deserializeNBT(stack.getOrCreateTag());
-
                 // Iterate over both the insulation items and the checks for each item
                 List<Pair<ItemStack, Multimap<InsulatorData, Insulation>>> insulators = cap.getInsulation();
 
