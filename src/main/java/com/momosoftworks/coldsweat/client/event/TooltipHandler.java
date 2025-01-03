@@ -3,7 +3,6 @@ package com.momosoftworks.coldsweat.client.event;
 import com.google.common.collect.Multimap;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.datafixers.util.Either;
 import com.mojang.datafixers.util.Pair;
 import com.momosoftworks.coldsweat.api.insulation.Insulation;
 import com.momosoftworks.coldsweat.api.util.Temperature;
@@ -141,7 +140,7 @@ public class TooltipHandler
                 && (attribute == ModAttributes.FREEZING_POINT
                 || attribute == ModAttributes.BURNING_POINT
                 || attribute == ModAttributes.WORLD_TEMPERATURE
-                || attribute == ModAttributes.BASE_BODY_TEMPERATURE))
+                ))
         {
             value = Temperature.convert(value, Temperature.Units.MC, ConfigSettings.CELSIUS.get() ? Temperature.Units.C : Temperature.Units.F, false);
         }
