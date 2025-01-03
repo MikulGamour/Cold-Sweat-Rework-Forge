@@ -143,8 +143,7 @@ public class TooltipHandler
         if (operation == AttributeModifier.Operation.ADDITION
         && (attribute == ModAttributes.FREEZING_POINT
         || attribute == ModAttributes.BURNING_POINT
-        || attribute == ModAttributes.WORLD_TEMPERATURE
-        || attribute == ModAttributes.BASE_BODY_TEMPERATURE))
+        || attribute == ModAttributes.WORLD_TEMPERATURE))
         {
             value = Temperature.convert(value, Temperature.Units.MC, ConfigSettings.CELSIUS.get() ? Temperature.Units.C : Temperature.Units.F, false);
         }
