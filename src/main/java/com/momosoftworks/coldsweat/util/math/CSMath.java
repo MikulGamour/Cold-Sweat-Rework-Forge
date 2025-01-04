@@ -255,21 +255,14 @@ public class CSMath
      * A blend function with a logarithmic curve (starts fast, then slows down).<br>
      * @return The interpolated value.
      */
-    public static double blendLog(double blendFrom, double blendTo, double factor, double rangeMin, double rangeMax)
+    public static double blendLog(double blendFrom, double blendTo, double factor, double rangeMin, double rangeMax, double intensity)
     {
-        if (factor <= rangeMin) return blendFrom;
-        if (factor >= rangeMax) return blendTo;
-        return (blendTo - blendFrom) / Math.sqrt(rangeMax - rangeMin) * Math.sqrt(factor - rangeMin) + blendFrom;
-    }
+        factor = clamp(factor, rangeMin, rangeMax);
 
-    /**
-     * Floating-point overload for {@link #blendLog(double, double, double, double, double)}.
-     */
-    public static float blendLog(float blendFrom, float blendTo, float factor, float rangeMin, float rangeMax)
-    {
-        if (factor <= rangeMin) return blendFrom;
-        if (factor >= rangeMax) return blendTo;
-        return (blendTo - blendFrom) / (float) Math.sqrt(rangeMax - rangeMin) * (float) Math.sqrt(factor - rangeMin) + blendFrom;
+        double normalizedFactor = (factor - rangeMin) / (rangeMax - rangeMin);
+        double logFactor = Math.log(intensity * normalizedFactor + 1) / Math.log(intensity + 1);
+
+        return blendFrom + (blendTo - blendFrom) * logFactor;
     }
 
     public static double blendExp(double blendFrom, double blendTo, double factor, double rangeMin, double rangeMax, double intensity)

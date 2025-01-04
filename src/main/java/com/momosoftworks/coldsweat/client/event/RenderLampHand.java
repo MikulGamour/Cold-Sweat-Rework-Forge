@@ -132,11 +132,11 @@ public class RenderLampHand
 
         if (attackAnim < windUpTime / 3)
         {
-            arm.xRot += CSMath.blendLog(0f, windUpPoint, attackAnim, 0, windUpTime / 3) / pitchFactor;
+            arm.xRot += CSMath.blendLog(0f, windUpPoint, attackAnim, 0, windUpTime / 3, 1) / pitchFactor;
         }
         else if (attackAnim < windUpTime)
         {
-            arm.xRot += CSMath.blendLog(windUpPoint, 1f, attackAnim, windUpTime / 3, windUpTime) / pitchFactor;
+            arm.xRot += CSMath.blendLog(windUpPoint, 1f, attackAnim, windUpTime / 3, windUpTime, 1) / pitchFactor;
         }
         else if (attackAnim < midSwingTime)
         {   arm.xRot += CSMath.blend(1f, 0.2f, attackAnim, windUpTime, midSwingTime) / pitchFactor;

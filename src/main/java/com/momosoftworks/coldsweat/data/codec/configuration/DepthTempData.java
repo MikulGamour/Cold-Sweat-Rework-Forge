@@ -183,7 +183,7 @@ public class DepthTempData extends ConfigData
                                           topTemp,
                                           pos.getY(),
                                           bottom.getHeight(pos, level),
-                                          top.getHeight(pos, level));
+                                          top.getHeight(pos, level), 1);
                 }
             };
         }
