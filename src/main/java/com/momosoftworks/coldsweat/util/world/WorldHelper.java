@@ -672,7 +672,7 @@ public abstract class WorldHelper
             if (surroundedByIce(levelReader, pos))
             {   return true;
             }
-            DynamicHolder<Boolean> freezingTemp = DynamicHolder.create(() -> getRoughTemperatureAt(serverLevel, pos) < 0.15F);
+            DynamicHolder<Boolean> freezingTemp = DynamicHolder.create(() -> getRoughTemperatureAt(serverLevel, pos) < 0f);
 
             if (!mustBeAtEdge)
             {   return freezingTemp.get();
@@ -696,7 +696,7 @@ public abstract class WorldHelper
             if (mustBeAtEdge && surroundedByIce(levelReader, pos))
             {   return false;
             }
-            return getRoughTemperatureAt(serverLevel, pos) >= 0.15F;
+            return getRoughTemperatureAt(serverLevel, pos) >= 0f;
         }
         return false;
     }
