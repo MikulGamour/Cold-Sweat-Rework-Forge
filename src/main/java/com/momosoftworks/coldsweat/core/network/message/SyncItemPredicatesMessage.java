@@ -154,23 +154,23 @@ public class SyncItemPredicatesMessage implements CustomPacketPayload
     }
 
     private void checkFood(ItemStack stack, Entity entity)
-    {   this.checkItemRequirement(stack, entity, (DynamicHolder) ConfigSettings.FOOD_TEMPERATURES);
+    {   this.checkItemRequirement(stack, entity, ConfigSettings.FOOD_TEMPERATURES);
     }
 
     private void checkBoilerFuel(ItemStack stack)
-    {   this.checkItemRequirement(stack, null, (DynamicHolder) ConfigSettings.BOILER_FUEL);
+    {   this.checkItemRequirement(stack, null, ConfigSettings.BOILER_FUEL);
     }
 
     private void checkIceboxFuel(ItemStack stack)
-    {   this.checkItemRequirement(stack, null, (DynamicHolder) ConfigSettings.ICEBOX_FUEL);
+    {   this.checkItemRequirement(stack, null, ConfigSettings.ICEBOX_FUEL);
     }
 
     private void checkHearthFuel(ItemStack stack)
-    {   this.checkItemRequirement(stack, null, (DynamicHolder) ConfigSettings.HEARTH_FUEL);
+    {   this.checkItemRequirement(stack, null, ConfigSettings.HEARTH_FUEL);
     }
 
     private void checkSoulLampFuel(ItemStack stack)
-    {   this.checkItemRequirement(stack, null, (DynamicHolder) ConfigSettings.SOULSPRING_LAMP_FUEL);
+    {   this.checkItemRequirement(stack, null, ConfigSettings.SOULSPRING_LAMP_FUEL);
     }
 
     private void checkCarriedTemps(ItemStack stack, int invSlot, EquipmentSlot equipmentSlot, Entity entity)
@@ -190,10 +190,16 @@ public class SyncItemPredicatesMessage implements CustomPacketPayload
     }
 
     private void checkDryingItems(ItemStack stack, Entity entity)
-    {   this.checkItemRequirement(stack, entity, (DynamicHolder) ConfigSettings.DRYING_ITEMS);
+    {
+        Map<UUID, Boolean> configMap = new FastMap<>();
+        DryingItemData data = ConfigSettings.DRYING_ITEMS.get().get(stack.getItem());
+        if (data == null) return;
+        UUID id = data.getId();
+        configMap.put(id, data.test(entity, stack));
+        this.predicateMap.putAll(configMap);
     }
 
-    private void checkItemRequirement(ItemStack stack, Entity entity, DynamicHolder<Multimap<Item, RequirementHolder>> configSetting)
+    private void checkItemRequirement(ItemStack stack, Entity entity, DynamicHolder<? extends Multimap<Item, ? extends RequirementHolder>> configSetting)
     {
         Map<UUID, Boolean> configMap = new FastMap<>();
         configSetting.get().get(stack.getItem())

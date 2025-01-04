@@ -19,8 +19,7 @@ public class MixinGoatRenderer
             at = @At("HEAD"), cancellable = true)
     private void getTextureLocation(Goat goat, CallbackInfoReturnable<ResourceLocation> cir)
     {
-        IShearableCap goatCap = ShearableFurManager.getFurCap(goat);
-        if (goatCap.isSheared())
+        if (ShearableFurManager.getFurCap(goat).map(IShearableCap::isSheared).orElse(false))
         {   cir.setReturnValue(SHEARED_GOAT_TEXTURE);
         }
     }

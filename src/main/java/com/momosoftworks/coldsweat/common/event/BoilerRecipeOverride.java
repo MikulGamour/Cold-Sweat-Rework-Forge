@@ -7,26 +7,28 @@ import net.minecraft.world.Container;
 import net.minecraft.world.inventory.*;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
-import net.minecraftforge.event.entity.player.PlayerContainerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
+import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.RecipeInput;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.util.ObfuscationReflectionHelper;
+import net.neoforged.neoforge.event.entity.player.PlayerContainerEvent;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 
-@Mod.EventBusSubscriber
+@EventBusSubscriber
 public class BoilerRecipeOverride
 {
     @SubscribeEvent
     public static void onCraftingTableOpen(PlayerContainerEvent.Open event)
     {
-        if (event.getContainer() instanceof RecipeBookMenu<?> crafting
+        if (event.getContainer() instanceof RecipeBookMenu<?, ?> crafting
         && crafting.getGridWidth() == 3 && crafting.getGridHeight() == 3)
         {
             MinecraftServer server = event.getEntity().getServer();
             if (server == null) return;
-            Recipe<Container> boilerRecipe = (Recipe) server.getRecipeManager().byKey(new ResourceLocation(ColdSweat.MOD_ID, "boiler")).orElse(null);
+            RecipeHolder boilerRecipe = server.getRecipeManager().byKey(ResourceLocation.fromNamespaceAndPath(ColdSweat.MOD_ID, "boiler")).orElse(null);
             if (boilerRecipe == null) return;
             
             crafting.addSlotListener(new ContainerListener()
@@ -39,7 +41,11 @@ public class BoilerRecipeOverride
                     if (slot instanceof ResultSlot resultSlot)
                     {
                         if (crafting.recipeMatches(boilerRecipe))
-                        {   slot.set(boilerRecipe.assemble(getCraftingContainer(resultSlot), server.registryAccess()));
+                        {
+                            CraftingContainer craftSlots = getCraftingContainer(resultSlot);
+                            if (craftSlots != null)
+                            {   slot.set(boilerRecipe.value().assemble(craftSlots.asCraftInput(), server.registryAccess()));
+                            }
                         }
                     }
                 }
@@ -51,7 +57,7 @@ public class BoilerRecipeOverride
         }
     }
 
-    private static final Field SLOT_CRAFT_CONTAINER = ObfuscationReflectionHelper.findField(ResultSlot.class, "f_40162_");
+    private static final Field SLOT_CRAFT_CONTAINER = ObfuscationReflectionHelper.findField(ResultSlot.class, "craftSlots");
     static
     {   SLOT_CRAFT_CONTAINER.setAccessible(true);
     }

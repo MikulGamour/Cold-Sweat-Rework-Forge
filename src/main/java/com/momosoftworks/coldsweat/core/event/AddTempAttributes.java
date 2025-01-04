@@ -26,7 +26,7 @@ import static com.momosoftworks.coldsweat.common.capability.handler.EntityTempMa
 @EventBusSubscriber
 public class AddTempAttributes
 {
-    @EventBusSubscriber
+    @EventBusSubscriber(bus = EventBusSubscriber.Bus.MOD)
     public static class ForPlayer
     {
         @SubscribeEvent

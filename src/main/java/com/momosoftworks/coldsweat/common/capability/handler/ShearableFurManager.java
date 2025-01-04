@@ -38,6 +38,7 @@ import oshi.util.tuples.Triplet;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @EventBusSubscriber
 public class ShearableFurManager
@@ -45,10 +46,10 @@ public class ShearableFurManager
     public static Map<Entity, IShearableCap> SERVER_CAP_CACHE = new HashMap<>();
     public static Map<Entity, IShearableCap> CLIENT_CAP_CACHE = new HashMap<>();
 
-    public static IShearableCap getFurCap(Entity entity)
+    public static Optional<IShearableCap> getFurCap(Entity entity)
     {
         Map<Entity, IShearableCap> cache = entity.level().isClientSide ? CLIENT_CAP_CACHE : SERVER_CAP_CACHE;
-        return cache.computeIfAbsent(entity, e -> e.getCapability(ModCapabilities.SHEARABLE_FUR));
+        return Optional.ofNullable(cache.computeIfAbsent(entity, e -> e.getCapability(ModCapabilities.SHEARABLE_FUR)));
     }
 
     @SubscribeEvent
@@ -61,7 +62,8 @@ public class ShearableFurManager
         if (entity instanceof LivingEntity living && (!(living instanceof AgeableMob ageable) || !ageable.isBaby())
         && !entity.level().isClientSide && stack.is(Tags.Items.TOOLS_SHEAR))
         {
-            IShearableCap cap = getFurCap(living);
+            IShearableCap cap = getFurCap(living).orElse(null);
+            if (cap == null) return;
             if (cap.isSheared())
             {   event.setCancellationResult(InteractionResult.PASS);
                 return;
@@ -135,7 +137,8 @@ public class ShearableFurManager
     {
         Entity entity = event.getEntity();
         if (!(entity instanceof LivingEntity living)) return;
-        IShearableCap cap = getFurCap(entity);
+        Optional<IShearableCap> icap = getFurCap(entity);
+        icap.ifPresent(cap ->
         {
             EntityDropData furConfig = ConfigSettings.FUR_TIMINGS.get();
             // Tick fur growth cooldown
@@ -160,7 +163,7 @@ public class ShearableFurManager
                 cap.setSheared(false);
                 syncData(living, null);
             }
-        }
+        });
     }
 
     @SubscribeEvent
@@ -175,13 +178,15 @@ public class ShearableFurManager
     {
         if (!entity.level().isClientSide)
         {
-            IShearableCap cap = getFurCap(entity);
-            if (player != null)
-            {   PacketDistributor.sendToPlayer(player, new SyncShearableDataMessage(entity.getId(), cap.serializeNBT()));
-            }
-            else
-            {   PacketDistributor.sendToPlayersTrackingEntity(entity, new SyncShearableDataMessage(entity.getId(), cap.serializeNBT()));
-            }
+            getFurCap(entity).ifPresent(cap ->
+            {
+                if (player != null)
+                {   PacketDistributor.sendToPlayer(player, new SyncShearableDataMessage(entity.getId(), cap.serializeNBT()));
+                }
+                else
+                {   PacketDistributor.sendToPlayersTrackingEntity(entity, new SyncShearableDataMessage(entity.getId(), cap.serializeNBT()));
+                }
+            });
         }
     }
 }

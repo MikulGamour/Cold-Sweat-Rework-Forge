@@ -744,7 +744,7 @@ public abstract class WorldHelper
         return Pair.of(maxCoolingLevel, maxHeatingLevel);
     }
 
-    private static final Field CHUNK_BLOCK_ENTITIES = ObfuscationReflectionHelper.findField(ChunkAccess.class, "f_187610_");
+    private static final Field CHUNK_BLOCK_ENTITIES = ObfuscationReflectionHelper.findField(ChunkAccess.class, "blockEntities");
     static { CHUNK_BLOCK_ENTITIES.setAccessible(true); }
     public static Map<BlockPos, BlockEntity> getBlockEntities(ChunkAccess chunk)
     {

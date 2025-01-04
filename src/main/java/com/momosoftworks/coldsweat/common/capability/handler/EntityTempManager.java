@@ -389,7 +389,7 @@ public class EntityTempManager
     }
 
     @SubscribeEvent
-    public static void calculateModifierImmunity(EntityTickEvent event)
+    public static void calculateModifierImmunity(EntityTickEvent.Pre event)
     {
         if (event.getEntity() instanceof LivingEntity entity
         && !entity.level().isClientSide() && entity.tickCount % 20 == 0 && isTemperatureEnabled(entity))
@@ -540,7 +540,7 @@ public class EntityTempManager
     }
 
     @SubscribeEvent
-    public static void tickInsulationAttributeChanges(EntityTickEvent event)
+    public static void tickInsulationAttributeChanges(EntityTickEvent.Pre event)
     {
         if (!(event.getEntity() instanceof LivingEntity entity)) return;
         if (entity.tickCount % 20 == 0)

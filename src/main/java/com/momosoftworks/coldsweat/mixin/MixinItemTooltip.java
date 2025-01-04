@@ -1,6 +1,5 @@
 package com.momosoftworks.coldsweat.mixin;
 
-import com.google.common.collect.Multimap;
 import com.mojang.datafixers.util.Pair;
 import com.momosoftworks.coldsweat.client.event.TooltipHandler;
 import com.momosoftworks.coldsweat.common.capability.handler.EntityTempManager;
@@ -8,14 +7,14 @@ import com.momosoftworks.coldsweat.common.capability.handler.ItemInsulationManag
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.data.codec.configuration.InsulatorData;
 import com.momosoftworks.coldsweat.data.codec.util.AttributeModifierMap;
-import com.momosoftworks.coldsweat.util.math.FastMultiMap;
+import com.momosoftworks.coldsweat.mixin_public.MixinItemTooltipAdditional;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.EquipmentSlotGroup;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -24,6 +23,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
+import net.neoforged.neoforge.common.CommonHooks;
+import net.neoforged.neoforge.event.ItemAttributeModifierEvent;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
@@ -35,9 +36,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 @Mixin(ItemStack.class)
@@ -47,8 +46,6 @@ public abstract class MixinItemTooltip
 
     ItemStack stack = (ItemStack) (Object) this;
 
-    private static List<Component> TOOLTIP;
-
     @Inject(method = "getTooltipLines", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;addToTooltip(Lnet/minecraft/core/component/DataComponentType;Lnet/minecraft/world/item/Item$TooltipContext;Ljava/util/function/Consumer;Lnet/minecraft/world/item/TooltipFlag;)V",
                                                  ordinal = 6, shift = At.Shift.AFTER),
             locals = LocalCapture.CAPTURE_FAILHARD)
@@ -57,7 +54,6 @@ public abstract class MixinItemTooltip
                                         List<Component> tooltip, MutableComponent mutablecomponent, Consumer consumer)
     {
         ItemStack stack = (ItemStack) (Object) this;
-        TOOLTIP = tooltip;
 
         // Add insulation attributes to tooltip
         AttributeModifierMap insulatorAttributes = new AttributeModifierMap();
@@ -96,67 +92,98 @@ public abstract class MixinItemTooltip
         }
     }
 
-    private static Multimap<Holder<Attribute>, AttributeModifier> INSULATION_MODIFIERS = new FastMultiMap<>();
-    private static Multimap<Holder<Attribute>, AttributeModifier> UNMET_MODIFIERS = new FastMultiMap<>();
-
-    @Inject(method = "addAttributeTooltips", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;forEachModifier(Lnet/minecraft/world/entity/EquipmentSlotGroup;Ljava/util/function/BiConsumer;)V", shift = At.Shift.AFTER),
+    @Inject(method = "addAttributeTooltips", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;forEachModifier(Lnet/minecraft/world/entity/EquipmentSlotGroup;Ljava/util/function/BiConsumer;)V"),
             locals = LocalCapture.CAPTURE_FAILHARD)
     private void getItemAttributes(Consumer<Component> pTooltipAdder, Player player, CallbackInfo ci,
                                    // locals
                                    ItemAttributeModifiers itemattributemodifiers, EquipmentSlotGroup[] allSlots, int var5, int var6, EquipmentSlotGroup slot, MutableBoolean isFirstLine)
     {
-        INSULATION_MODIFIERS.clear();
-        UNMET_MODIFIERS.clear();
+        MixinItemTooltipAdditional.INSULATION_MODIFIERS.clear();
+        MixinItemTooltipAdditional.UNMET_MODIFIERS.clear();
+        MixinItemTooltipAdditional.GETTING_ATTRIBUTES = true;
+        MixinItemTooltipAdditional.CURRENT_SLOT_QUERY = slot;
+    }
 
-        // We don't care if the item is not equipped in the correct slot
-        if (player == null || EquipmentSlotGroup.bySlot(Minecraft.getInstance().player.getEquipmentSlotForItem(stack)) != slot
-        || Arrays.stream(EquipmentSlot.values()).noneMatch(slot::test))
-        {   return;
-        }
+    @Inject(method = "addAttributeTooltips", at = @At(value = "TAIL"),
+            locals = LocalCapture.CAPTURE_FAILHARD)
+    private void clearGettingTooltipLines(Consumer<Component> pTooltipAdder, Player player, CallbackInfo ci)
+    {
+        MixinItemTooltipAdditional.GETTING_ATTRIBUTES = false;
+    }
 
-        for (InsulatorData insulator : ConfigSettings.INSULATING_ARMORS.get().get(stack.getItem()))
+    @Mixin(CommonHooks.class)
+    public static class GetModifiers
+    {
+        @Inject(method = "computeModifiedAttributes", at = @At("RETURN"), locals = LocalCapture.CAPTURE_FAILHARD)
+        private static void getAttributeModifiers(ItemStack stack, ItemAttributeModifiers defaultModifiers, CallbackInfoReturnable<ItemAttributeModifiers> cir,
+                                                  //locals
+                                                  ItemAttributeModifierEvent event)
         {
-            boolean strikethrough = !TooltipHandler.passesRequirement(insulator);
-            for (Map.Entry<Holder<Attribute>, AttributeModifier> entry : insulator.attributes().getMap().entries())
+            //if (!MixinItemTooltipFields.GETTING_ATTRIBUTES) return;
+
+            LocalPlayer player = Minecraft.getInstance().player;
+            if (player == null) return;
+            if (MixinItemTooltipAdditional.CURRENT_SLOT_QUERY != EquipmentSlotGroup.bySlot(player.getEquipmentSlotForItem(stack)))
+            {   return;
+            }
+
+            if (MixinItemTooltipAdditional.CURRENT_SLOT_QUERY.test(player.getEquipmentSlotForItem(stack)))
             {
-                if (strikethrough) UNMET_MODIFIERS.put(entry.getKey(), entry.getValue());
-                else INSULATION_MODIFIERS.put(entry.getKey(), entry.getValue());
-                pTooltipAdder.accept(TooltipHandler.getFormattedAttributeModifier(entry.getKey(), entry.getValue().amount(), entry.getValue().operation(), true, strikethrough));
+                for (InsulatorData insulator : ConfigSettings.INSULATING_ARMORS.get().get(stack.getItem()))
+                {
+                    if (TooltipHandler.passesRequirement(insulator))
+                    {   MixinItemTooltipAdditional.INSULATION_MODIFIERS.putAll(insulator.attributes().getMap());
+                    }
+                    else MixinItemTooltipAdditional.UNMET_MODIFIERS.putAll(insulator.attributes().getMap());
+                }
+                ItemInsulationManager.getInsulationCap(stack).ifPresent(cap ->
+                {
+                    cap.getInsulation().stream().map(Pair::getFirst).forEach(item ->
+                    {
+                        for (InsulatorData insulator : ConfigSettings.INSULATION_ITEMS.get().get(item.getItem()))
+                        {
+                            if (TooltipHandler.passesRequirement(insulator))
+                            {   MixinItemTooltipAdditional.INSULATION_MODIFIERS.putAll(insulator.attributes().getMap());
+                            }
+                            else MixinItemTooltipAdditional.UNMET_MODIFIERS.putAll(insulator.attributes().getMap());
+                        }
+                    });
+                });
             }
         }
-        ItemInsulationManager.getInsulationCap(stack).ifPresent(cap ->
-        {
-            cap.getInsulation().stream().map(Pair::getFirst).forEach(item ->
-            {
-                for (InsulatorData insulator : ConfigSettings.INSULATION_ITEMS.get().get(item.getItem()))
-                {
-                    boolean strikethrough = !TooltipHandler.passesRequirement(insulator);
-                    for (Map.Entry<Holder<Attribute>, AttributeModifier> entry : insulator.attributes().getMap().entries())
-                    {
-                        if (strikethrough) UNMET_MODIFIERS.put(entry.getKey(), entry.getValue());
-                        else INSULATION_MODIFIERS.put(entry.getKey(), entry.getValue());
-                        pTooltipAdder.accept(TooltipHandler.getFormattedAttributeModifier(entry.getKey(), entry.getValue().amount(), entry.getValue().operation(), true, strikethrough));
-                    }
-                }
-            });
-        });
+    }
+
+    private static Holder<Attribute> ATTRIBUTE;
+    private static AttributeModifier MODIFIER;
+
+    @Inject(method = "addModifierTooltip", at = @At(value = "HEAD"))
+    private void captureMethodArgs(Consumer<Component> tooltipAdder, @Nullable Player player, Holder<Attribute> attribute, AttributeModifier modifier, CallbackInfo ci)
+    {
+        ATTRIBUTE = attribute;
+        MODIFIER = modifier;
     }
 
     @ModifyArg(method = "addModifierTooltip",
-               at = @At(value = "INVOKE", target = "Ljava/util/function/Consumer;accept(Ljava/lang/Object;)V"),
-               index = 0)
-    private Component setupModdedAttributeDisplay(Component tooltip, Consumer<Component> tooltipAdder, @Nullable Player player, Holder<Attribute> attribute, AttributeModifier modifier)
+               at = @At(value = "INVOKE", target = "Ljava/util/function/Consumer;accept(Ljava/lang/Object;)V"))
+    private Object customAttributeFormatting(Object obj)
     {
-        boolean hasUnmetRequirements = UNMET_MODIFIERS.remove(attribute, modifier);
-        boolean isFromInsulation = INSULATION_MODIFIERS.remove(attribute, modifier) || hasUnmetRequirements;
+        if (obj instanceof MutableComponent component
+        && ATTRIBUTE != null && MODIFIER != null)
+        {
+            boolean hasUnmetRequirements = MixinItemTooltipAdditional.UNMET_MODIFIERS.remove(ATTRIBUTE, MODIFIER);
+            boolean isFromInsulation = MixinItemTooltipAdditional.INSULATION_MODIFIERS.remove(ATTRIBUTE, MODIFIER) || hasUnmetRequirements;
 
-        // TODO: Check this
-        if (EntityTempManager.isTemperatureAttribute(attribute.value()))
-        {   return TooltipHandler.getFormattedAttributeModifier(attribute, modifier.amount(), modifier.operation(), isFromInsulation, hasUnmetRequirements);
+            if (EntityTempManager.isTemperatureAttribute(ATTRIBUTE))
+            {
+                MutableComponent newline = TooltipHandler.getFormattedAttributeModifier(ATTRIBUTE, MODIFIER.amount(), MODIFIER.operation(), true, hasUnmetRequirements);
+
+                for (Component sibling : component.getSiblings())
+                {   newline = newline.append(sibling);
+                }
+                return newline;
+            }
+            else return TooltipHandler.addTooltipFlags(component, isFromInsulation, hasUnmetRequirements);
         }
-        else if (tooltip instanceof MutableComponent mutable)
-        {   return TooltipHandler.addTooltipFlags(mutable, isFromInsulation, hasUnmetRequirements);
-        }
-        return tooltip;
+        return obj;
     }
 }

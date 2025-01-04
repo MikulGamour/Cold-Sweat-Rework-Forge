@@ -5,7 +5,7 @@ import com.momosoftworks.coldsweat.api.registry.TempModifierRegistry;
 import com.momosoftworks.coldsweat.api.temperature.modifier.TempModifier;
 import com.momosoftworks.coldsweat.api.util.Placement;
 import com.momosoftworks.coldsweat.api.util.Temperature;
-import dev.latvian.mods.kubejs.entity.LivingEntityEventJS;
+import dev.latvian.mods.kubejs.entity.KubeLivingEntityEvent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 
@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-public class DefaultModifiersEventJS extends LivingEntityEventJS
+public class DefaultModifiersEventJS implements KubeLivingEntityEvent
 {
     private final GatherDefaultTempModifiersEvent event;
 

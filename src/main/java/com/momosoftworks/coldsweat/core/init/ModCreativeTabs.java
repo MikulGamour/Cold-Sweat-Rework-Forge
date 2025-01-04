@@ -5,6 +5,7 @@ import com.momosoftworks.coldsweat.api.event.client.InsulatorTabBuildEvent;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.compat.CompatManager;
 import com.momosoftworks.coldsweat.data.codec.configuration.InsulatorData;
+import com.momosoftworks.coldsweat.util.entity.DummyPlayer;
 import com.momosoftworks.coldsweat.util.serialization.ObjectBuilder;
 import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponentMap;
@@ -35,7 +36,7 @@ public class ModCreativeTabs
                         ModItems.WATERSKIN.value().getDefaultInstance(),
                         ObjectBuilder.build(() ->
                         {   ItemStack stack = ModItems.FILLED_WATERSKIN.value().getDefaultInstance();
-                            stack = CompatManager.setWaterPurity(stack, 3);
+                            stack = CompatManager.Thirst.setWaterPurity(stack, 3);
                             return stack;
                         }),
                         ModItems.GOAT_FUR.value().getDefaultInstance(),
@@ -95,6 +96,7 @@ public class ModCreativeTabs
     private static List<ItemStack> sort(Collection<Map.Entry<Item, InsulatorData>> items)
     {
         List<Map.Entry<Item, InsulatorData>> list = new ArrayList<>(items);
+        DummyPlayer slotGetter = new DummyPlayer();
 
         // Sort by tags the items are in
         list.sort(Comparator.comparing(entry -> entry.getKey().builtInRegistryHolder().tags().sequential().map(tag -> tag.location().toString()).reduce("", (a, b) -> a + b)));
@@ -102,7 +104,7 @@ public class ModCreativeTabs
         list.sort(Comparator.comparingInt(entry -> entry.getValue().insulation().getCompareValue()));
         // Sort by armor material and slot
         list.sort(Comparator.comparing(entry -> entry.getKey() instanceof ArmorItem armor
-                                               ? armor.getMaterial().getKey().location().toString() + (3 - armor.getDefaultInstance().getEquipmentSlot().getIndex())
+                                               ? armor.getMaterial().getKey().location().toString() + (3 - slotGetter.getEquipmentSlotForItem(entry.getKey().getDefaultInstance()).getIndex())
                                                : ""));
 
         InsulatorTabBuildEvent event = new InsulatorTabBuildEvent(list);

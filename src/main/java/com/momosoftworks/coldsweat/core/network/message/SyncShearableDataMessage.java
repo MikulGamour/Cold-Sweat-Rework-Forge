@@ -45,8 +45,7 @@ public class SyncShearableDataMessage implements CustomPacketPayload
             {   Entity entity = level.getEntity(message.entityId);
                 if (entity instanceof LivingEntity living)
                 {
-                    IShearableCap cap = ShearableFurManager.getFurCap(living);
-                    cap.deserializeNBT(message.nbt);
+                    ShearableFurManager.getFurCap(living).ifPresent(cap -> cap.deserializeNBT(message.nbt));
                 }
             }
         });

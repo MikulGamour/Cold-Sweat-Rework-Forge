@@ -28,6 +28,7 @@
     "MixinIce$AddDrops",
     "MixinIce$NoWaterOnBreak",
     "MixinInventoryOpenServer",
+    "MixinItemTooltip$GetModifiers",
     "MixinLivingLoad",
     "MixinLoadItemStack",
     "MixinMenuChanged",

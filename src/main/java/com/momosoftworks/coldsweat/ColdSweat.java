@@ -14,6 +14,7 @@ import com.momosoftworks.coldsweat.core.init.*;
 import com.momosoftworks.coldsweat.data.ModRegistries;
 import com.momosoftworks.coldsweat.compat.CompatManager;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.SpawnPlacementTypes;
@@ -106,19 +107,18 @@ public class ColdSweat
     public void registerCaps(RegisterCapabilitiesEvent event)
     {
         // Register temperature for temperature-enabled entities
-        for (EntityType<?> type : EntityTempManager.getEntitiesWithTemperature())
+        event.registerEntity(ModCapabilities.PLAYER_TEMPERATURE, EntityType.PLAYER, (entity, context) ->
+        {   return new PlayerTempCap();
+        });
+        for (EntityType<?> type : BuiltInRegistries.ENTITY_TYPE)
         {
-            if (type == EntityType.PLAYER)
+            event.registerEntity(ModCapabilities.ENTITY_TEMPERATURE, type, (entity, context) ->
             {
-                event.registerEntity(ModCapabilities.PLAYER_TEMPERATURE, type, (entity, context) ->
-                {   return new PlayerTempCap();
-                });
-            }
-            else
-            {   event.registerEntity(ModCapabilities.ENTITY_TEMPERATURE, type, (entity, context) ->
+                if (EntityTempManager.isTemperatureEnabled(entity))
                 {   return new EntityTempCap();
-                });
-            }
+                }
+                return null;
+            });
         }
 
         // Register shearable fur for goats
@@ -136,7 +136,7 @@ public class ColdSweat
                  : null;
         });
         event.registerBlockEntity(Capabilities.FluidHandler.BLOCK, ModBlockEntities.BOILER.value(), (boiler, facing) -> new HearthBlockEntity.BottomFluidHandler(boiler));
-        //event.registerBlockEntity(Capabilities.FluidHandler.BLOCK, ModBlockEntities.ICEBOX.value(), (icebox, facing) -> new HearthBlockEntity.SidesFluidHandler(icebox));
+        event.registerBlockEntity(Capabilities.FluidHandler.BLOCK, ModBlockEntities.ICEBOX.value(), (icebox, facing) -> new HearthBlockEntity.SidesFluidHandler(icebox));
     }
 
     public void updateConfigs(FMLLoadCompleteEvent event)

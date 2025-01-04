@@ -37,13 +37,7 @@ public class DisableHearthParticlesMessage implements CustomPacketPayload
             });
         }
         else
-        {
-            if (context.flow().isServerbound())
-            {   context.player().getPersistentData().put("DisabledHearths", message.nbt);
-            }
-            else
-            {   HearthSaveDataHandler.deserializeDisabledHearths(message.nbt);
-            }
+        {   HearthSaveDataHandler.deserializeDisabledHearths(message.nbt);
         }
     }
 
