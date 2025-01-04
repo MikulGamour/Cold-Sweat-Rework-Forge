@@ -94,7 +94,7 @@ public class MixinItemTooltip
         INSULATION_MODIFIERS.clear();
         UNMET_MODIFIERS.clear();
         Multimap<Attribute, AttributeModifier> modifiers = MultimapBuilder.linkedHashKeys().arrayListValues().build(original);
-        if (player != null && LivingEntity.getEquipmentSlotForItem(stack) == CURRENT_SLOT_QUERY)
+        if (LivingEntity.getEquipmentSlotForItem(stack) == CURRENT_SLOT_QUERY)
         {
             for (InsulatorData insulator : ConfigSettings.INSULATING_ARMORS.get().get(stack.getItem()))
             {
@@ -122,8 +122,7 @@ public class MixinItemTooltip
         return modifiers;
     }
 
-    private static List<Component> TOOLTIP = null;
-    private static Map.Entry<Attribute, AttributeModifier> ENTRY = null;
+    private static Attribute ATTRIBUTE = null;
     private static AttributeModifier MODIFIER = null;
 
     @Inject(method = "getTooltipLines",
@@ -138,11 +137,10 @@ public class MixinItemTooltip
                                              // Locals
                                              List<Component> tooltip, MutableComponent name, int hideFlags, EquipmentSlot[] var6, int var7, int var8,
                                              EquipmentSlot equipmentslot, Multimap<Attribute, AttributeModifier> attributeMap, Iterator<AttributeModifier> entryIterator,
-                                             Map.Entry<Attribute, AttributeModifier> entry, AttributeModifier modifier, double d0, boolean flag, double d1)
+                                             Map.Entry<Attribute, AttributeModifier> entry)
     {
-        TOOLTIP = tooltip;
-        ENTRY = entry;
-        MODIFIER = modifier;
+        ATTRIBUTE = entry.getKey();
+        MODIFIER = entry.getValue();
     }
 
     @ModifyArg(method = "getTooltipLines",
@@ -154,26 +152,22 @@ public class MixinItemTooltip
                ))
     private <E> E customAttributeFormatting(E obj)
     {
-        if (obj instanceof MutableComponent component)
+        if (obj instanceof MutableComponent component
+        && ATTRIBUTE != null && MODIFIER != null)
         {
-            List<Component> siblings = component.getSiblings();
+            boolean hasUnmetRequirements = UNMET_MODIFIERS.remove(ATTRIBUTE, MODIFIER);
+            boolean isFromInsulation = INSULATION_MODIFIERS.remove(ATTRIBUTE, MODIFIER) || hasUnmetRequirements;
 
-            if (TOOLTIP != null && ENTRY != null && MODIFIER != null)
+            if (EntityTempManager.isTemperatureAttribute(ATTRIBUTE))
             {
-                boolean hasUnmetRequirements = UNMET_MODIFIERS.remove(ENTRY.getKey(), ENTRY.getValue());
-                boolean isFromInsulation = INSULATION_MODIFIERS.remove(ENTRY.getKey(), ENTRY.getValue()) || hasUnmetRequirements;
+                MutableComponent newline = TooltipHandler.getFormattedAttributeModifier(ATTRIBUTE, MODIFIER.getAmount(), MODIFIER.getOperation(), true, hasUnmetRequirements);
 
-                if (EntityTempManager.isTemperatureAttribute(ENTRY.getKey()))
-                {
-                    MutableComponent newline = TooltipHandler.getFormattedAttributeModifier(ENTRY.getKey(), MODIFIER.getAmount(), MODIFIER.getOperation(), true, hasUnmetRequirements);
-
-                    for (Component sibling : siblings)
-                    {   newline = newline.append(sibling);
-                    }
-                    return (E) newline;
+                for (Component sibling : component.getSiblings())
+                {   newline = newline.append(sibling);
                 }
-                else return (E) TooltipHandler.addTooltipFlags(component, isFromInsulation, hasUnmetRequirements);
+                return (E) newline;
             }
+            else return (E) TooltipHandler.addTooltipFlags(component, isFromInsulation, hasUnmetRequirements);
         }
         return obj;
     }
