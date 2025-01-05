@@ -25,7 +25,7 @@ import com.momosoftworks.coldsweat.data.codec.configuration.FoodData;
 import com.momosoftworks.coldsweat.data.codec.configuration.InsulatorData;
 import com.momosoftworks.coldsweat.data.codec.configuration.ItemCarryTempData;
 import com.momosoftworks.coldsweat.data.codec.configuration.MountData;
-import com.momosoftworks.coldsweat.util.ClientOnlyHelper;
+import com.momosoftworks.coldsweat.data.codec.configuration.ItemCarryTempData.SlotType;
 import com.momosoftworks.coldsweat.compat.CompatManager;
 import com.momosoftworks.coldsweat.util.entity.DummyPlayer;
 import com.momosoftworks.coldsweat.util.math.CSMath;
@@ -64,7 +64,6 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.world.SleepFinishedTimeEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -297,16 +296,6 @@ public class EntityTempManager
         }
     }
 
-    @SubscribeEvent
-    public static void clearClientCapCache(TickEvent.ClientTickEvent event)
-    {
-        if (event.side == LogicalSide.CLIENT && event.phase == TickEvent.Phase.END
-        && ClientOnlyHelper.getClientLevel() != null
-        && ClientOnlyHelper.getClientLevel().getGameTime() % 5 == 0)
-        {   CAP_CACHE.clearClient();
-        }
-    }
-
     /**
      * Transfer the player's capability when traveling from the End
      */
@@ -323,6 +312,7 @@ public class EntityTempManager
             getTemperatureCap(oldPlayer).map(ITemperatureCap::getPersistentAttributes).orElse(new HashSet<>())
             .forEach(attr ->
             {   newPlayer.getAttribute(attr).setBaseValue(oldPlayer.getAttribute(attr).getBaseValue());
+                getTemperatureCap(newPlayer).ifPresent(cap -> cap.markPersistentAttribute(attr));
             });
             oldPlayer.invalidateCaps();
         }
@@ -336,8 +326,6 @@ public class EntityTempManager
     {
         Player oldPlayer = event.getOriginal();
         Player newPlayer = event.getPlayer();
-
-        CAP_CACHE.ifLazyPresent(oldPlayer, LazyOptional::invalidate);
 
         getTemperatureCap(newPlayer).ifPresent(cap ->
         {
@@ -438,18 +426,12 @@ public class EntityTempManager
     public static void cancelDisabledModifiers(TempModifierEvent.Calculate.Pre event)
     {
         TempModifier modifier = event.getModifier();
-        LivingEntity entity = event.getEntity();
 
         ResourceLocation modifierKey = TempModifierRegistry.getKey(modifier);
 
-        if (ConfigSettings.DISABLED_MODIFIERS.get().contains(modifierKey))
+        if (modifierKey != null && ConfigSettings.DISABLED_MODIFIERS.get().contains(modifierKey))
         {
-            if (modifier instanceof BiomeTempModifier)
-            {   event.setFunction(temp -> temp + ((Temperature.get(entity, Temperature.Trait.FREEZING_POINT) + Temperature.get(entity, Temperature.Trait.BURNING_POINT)) / 2));
-            }
-            else
-            {   event.setFunction(temp -> temp);
-            }
+            modifier.expires(0);
             event.setCanceled(true);
         }
     }
@@ -512,6 +494,23 @@ public class EntityTempManager
                                                                          : temp;
                 return CSMath.blend(oldFunction.apply(temp), lastInput, immunity, 0, 1);
             });
+        }
+    }
+
+    @SubscribeEvent
+    public static void preventFullyImmuneModifiers(TempModifierEvent.Add event)
+    {
+        if (event.getEntity() instanceof DummyPlayer) return;
+        if (!event.getTrait().isForAttributes()) return;
+
+        TempModifier modifier = event.getModifier();
+        ResourceLocation modifierKey = TempModifierRegistry.getKey(modifier);
+        LivingEntity entity = event.getEntity();
+
+        // Calculate modifier immunity from equipped insulators
+        double immunity = TEMP_MODIFIER_IMMUNITIES.getOrDefault(entity, Collections.emptyMap()).getOrDefault(modifierKey, 0.0);
+        if (immunity == 1)
+        {   event.setCanceled(true);
         }
     }
 
@@ -828,9 +827,9 @@ public class EntityTempManager
         return insulators;
     }
 
-    public static Map<ItemStack, Pair<ItemCarryTempData, Either<Integer, ItemCarryTempData.SlotType>>> getInventoryTemperaturesOnEntity(Player player)
+    public static Map<ItemStack, Pair<ItemCarryTempData, Either<Integer, SlotType>>> getInventoryTemperaturesOnEntity(Player player)
     {
-        Map<ItemStack, Pair<ItemCarryTempData, Either<Integer, ItemCarryTempData.SlotType>>> tempItems = new HashMap<>();
+        Map<ItemStack, Pair<ItemCarryTempData, Either<Integer, SlotType>>> tempItems = new HashMap<>();
         /*
          Inventory items
          */
@@ -851,7 +850,7 @@ public class EntityTempManager
             if (slot.getType() != EquipmentSlot.Type.ARMOR) continue;
             ItemStack stack = player.getItemBySlot(slot);
             if (stack.isEmpty()) continue;
-            ItemCarryTempData.SlotType slotType = ItemCarryTempData.SlotType.fromEquipment(slot);
+            SlotType slotType = SlotType.fromEquipment(slot);
 
             ConfigSettings.CARRIED_ITEM_TEMPERATURES.get().get(stack.getItem()).forEach(temp ->
             {   tempItems.put(stack, Pair.of(temp, Either.right(slotType)));
@@ -863,7 +862,7 @@ public class EntityTempManager
         for (ItemStack curio : CompatManager.Curios.getCurios(player))
         {
             ConfigSettings.CARRIED_ITEM_TEMPERATURES.get().get(curio.getItem()).forEach(temp ->
-            {   tempItems.put(curio, Pair.of(temp, Either.right(ItemCarryTempData.SlotType.CURIO)));
+            {   tempItems.put(curio, Pair.of(temp, Either.right(SlotType.CURIO)));
             });
         }
         /*
@@ -873,7 +872,7 @@ public class EntityTempManager
         if (!offhand.isEmpty())
         {
             ConfigSettings.CARRIED_ITEM_TEMPERATURES.get().get(offhand.getItem()).forEach(temp ->
-            {   tempItems.put(offhand, Pair.of(temp, Either.right(ItemCarryTempData.SlotType.HAND)));
+            {   tempItems.put(offhand, Pair.of(temp, Either.right(SlotType.HAND)));
             });
         }
         return tempItems;
