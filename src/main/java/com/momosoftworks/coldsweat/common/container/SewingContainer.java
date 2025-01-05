@@ -217,8 +217,13 @@ public class SewingContainer extends AbstractRepairContainer
             {
                 ItemStack processed = wearableItem.copy();
                 if (insulateArmorItem(processed, insulatorItem))
-                {   this.setItem(this.getResultSlot(), processed);
-                    this.broadcastChanges();
+                {
+                    // Serialize insulation data for client syncing
+                    ItemInsulationManager.getInsulationCap(wearableItem).ifPresent(cap ->
+                    {   processed.getOrCreateTag().merge(cap.serializeNBT());
+                    });
+                    // Set slot to result
+                    this.setItem(this.getResultSlot(), processed);
                 }
             }
         }
