@@ -2,10 +2,9 @@ package com.momosoftworks.coldsweat.mixin;
 
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.momosoftworks.coldsweat.ColdSweat;
+import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.client.gui.Overlays;
-import com.momosoftworks.coldsweat.common.event.TempEffectsCommon;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
-import com.momosoftworks.coldsweat.config.spec.MainSettingsConfig;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.registries.ModEffects;
 import net.minecraft.client.gui.AbstractGui;
@@ -52,42 +51,37 @@ public abstract class MixinHeartRender
         double heartsFreezePercentage = ConfigSettings.HEARTS_FREEZING_PERCENTAGE.get();
         int hearts = CSMath.ceil(health / 2d);
         int lastHeartIndex = (int) (healthMax / 2 - hearts);
-        boolean half = HEART_INDEX == lastHeartIndex + 1 && health % 2 == 1;
+        boolean halfHeart = HEART_INDEX == lastHeartIndex + 1 && health % 2 == 1;
         if (player == null) return;
 
-        boolean isHardcore = player.level.getLevelData().isHardcore();
 
         if (heartsFreezePercentage == 0
         || player.hasEffect(ModEffects.GRACE)) return;
-
         if (player.hasEffect(ModEffects.ICE_RESISTANCE)) return;
+
         double temp = Overlays.BODY_TEMP;
+        float maxHealth = player.getMaxHealth();
+        boolean isHardcore = player.level.getLevelData().isHardcore();
 
         // Get protection from armor underwear
-        float unfrozenHealth = CSMath.blend((float) (1 - heartsFreezePercentage), 1, TempEffectsCommon.getColdResistance(player), 0, 4);
-        if (unfrozenHealth == 1) return;
+        float maxFrozenHealth = (float) CSMath.blend(maxHealth * heartsFreezePercentage, 0, Temperature.get(player, Temperature.Trait.COLD_RESISTANCE), 0, 1);
+        if (maxFrozenHealth == 0) return;
 
-        int frozenHealth = (int) (player.getMaxHealth() - player.getMaxHealth() * CSMath.blend(unfrozenHealth, 1, temp, -100, -50));
-        int frozenHearts = frozenHealth / 2;
-        int u = blink || IS_CONTAINER ? 14 : half ? 7 : 0;
+        int frozenHealth = (int) CSMath.blend(0, maxHealth * heartsFreezePercentage, temp, -50, -100);
+        int frozenHearts = Math.round(frozenHealth / 2f);
+        boolean partialFrozen = frozenHealth % 2 == 1 && HEART_INDEX == frozenHearts;
+        int u = isHardcore ? 7 : 0;
+        int v = partialFrozen ? halfHeart ? 21 : 14 : halfHeart ? 7 : 0;
 
         // Render frozen hearts
         bind(HEART_TEXTURE);
-        if (HEART_INDEX > 0 && HEART_INDEX < frozenHearts + 1)
+        if (HEART_INDEX <= frozenHearts)
         {
-            AbstractGui.blit(ps, x, y, 21, 0, 9, 9, 30, 14);
-            AbstractGui.blit(ps, x + 1, y + 1, u, 0, 7, 7, 30, 14);
-            if (isHardcore)
-            {   AbstractGui.blit(ps, x + 1, y + 1, 23, 10, 7, 4, 30, 14);
+            if (IS_CONTAINER)
+            {   AbstractGui.blit(ps, x + 1, y + 1, 14, v, 7, 7, 21, 28);
             }
-            ci.cancel();
-        }
-        // Render half-frozen heart if needed
-        else if (HEART_INDEX == frozenHearts + 1 && frozenHealth % 2 == 1)
-        {
-            AbstractGui.blit(ps, x + 1, y + 1, u, 7, 7, 7, 30, 14);
-            if (isHardcore)
-            {   AbstractGui.blit(ps, x + 4, y + 1, 26, 10, 4, 4, 30, 14);
+            else
+            {  AbstractGui.blit(ps, x + 1, y + 1, u, v, 7, 7, 21, 28);
             }
         }
         bind(GUI_ICONS_LOCATION);
