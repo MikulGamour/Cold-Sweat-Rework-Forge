@@ -31,7 +31,7 @@ public class PreventPlayerSleep
         // If the player's body temperature is critical
         if (!CSMath.betweenExclusive(bodyTemp, -100, 100))
         {   // Let the player sleep if they're resistant to damage
-            if (TempEffectsCommon.getTempResistance(event.getPlayer(), bodyTemp < 100) >= 4)
+            if (Temperature.get(player, bodyTemp > 0 ? Temperature.Trait.HEAT_RESISTANCE : Temperature.Trait.COLD_RESISTANCE) >= 1)
             {   return;
             }
             // Prevent sleep with message
