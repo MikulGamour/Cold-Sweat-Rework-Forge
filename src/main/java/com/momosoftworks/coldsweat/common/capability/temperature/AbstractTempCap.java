@@ -187,13 +187,13 @@ public class AbstractTempCap implements ITemperatureCap
         // 1 if newWorldTemp is above max, -1 if below min, 0 if between the values (safe)
         int worldTempSign = CSMath.signForRange(newWorldTemp, minTemp, maxTemp);
 
-        boolean immuneToTemp = EntityTempManager.immuneToTempEffects(entity);
+        boolean immuneToTemp = EntityTempManager.isPeacefulMode(entity);
         boolean isFullyColdDampened = worldTempSign < 0 && (coldDampening >= 1 || immuneToTemp);
         boolean isFullyHeatDampened = worldTempSign > 0 && (heatDampening >= 1 || immuneToTemp);
 
         // Don't change player temperature if they're in creative/spectator mode
         if (worldTempSign != 0 && (!(entity instanceof Player player) || !player.isCreative()) && !entity.isSpectator()
-        && !EntityTempManager.immuneToTempEffects(entity))
+        && !EntityTempManager.isPeacefulMode(entity))
         {
             // How much hotter/colder the player's temp is compared to max/min
             double difference = Math.abs(newWorldTemp - CSMath.clamp(newWorldTemp, minTemp, maxTemp));
@@ -316,7 +316,7 @@ public class AbstractTempCap implements ITemperatureCap
 
     public void tickHurting(LivingEntity entity, double heatResistance, double coldResistance)
     {
-        if (EntityTempManager.immuneToTempEffects(entity)) return;
+        if (EntityTempManager.isPeacefulMode(entity)) return;
 
         double bodyTemp = getTrait(Temperature.Trait.BODY);
 
