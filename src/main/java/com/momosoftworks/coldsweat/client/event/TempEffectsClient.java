@@ -9,7 +9,6 @@ import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.client.gui.Overlays;
 import com.momosoftworks.coldsweat.client.renderer.PostProcessShaderManager;
 import com.momosoftworks.coldsweat.common.capability.handler.EntityTempManager;
-import com.momosoftworks.coldsweat.common.event.TempEffectsCommon;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.core.init.ModEffects;
 import com.momosoftworks.coldsweat.util.math.CSMath;
@@ -44,15 +43,15 @@ public class TempEffectsClient
     static float Y_SWAY_PHASE = 0;
     static float TIME_SINCE_NEW_SWAY = 0;
 
-    static int COLD_IMMUNITY = 0;
-    static int HOT_IMMUNITY  = 0;
+    static double COLD_IMMUNITY = 0;
+    static double HOT_IMMUNITY  = 0;
 
     // Sway the player's camera when the player is too hot; swaying is more drastic at higher temperatures
     @SubscribeEvent
     public static void setCamera(ViewportEvent.ComputeCameraAngles event)
     {
         Player player = Minecraft.getInstance().player;
-        if (player == null || !player.isAlive() && EntityTempManager.immuneToTempEffects(player)) return;
+        if (player == null || !player.isAlive() && EntityTempManager.isPeacefulMode(player)) return;
 
         if (!Minecraft.getInstance().isPaused())
         {
@@ -66,21 +65,22 @@ public class TempEffectsClient
             if (ConfigSettings.DISTORTION_EFFECTS.get())
             {
                 // Camera "shivers" when temp is < -50
-                if (BLEND_TEMP <= -50 && COLD_IMMUNITY < 4)
+                if (BLEND_TEMP <= -50 && COLD_IMMUNITY < 1)
                 {
                     double tickTime = player.tickCount + event.getPartialTick();
                     float shiverIntensity = CSMath.blend(((float) Math.sin(tickTime / 10) + 1) * 0.03f + 0.01f,
                                                 0f, BLEND_TEMP, -100, -50);
                     // Multiply the effect for lower framerates
                     shiverIntensity *= Minecraft.getInstance().getTimer().getRealtimeDeltaTicks() * 10;
-                    float shiverRotation = (float) (Math.sin(tickTime * 2.5) * shiverIntensity) / (1 + COLD_IMMUNITY);
+                    shiverIntensity = (float) CSMath.blend(shiverIntensity, 0, COLD_IMMUNITY, 0, 1);
+                    float shiverRotation = (float) (Math.sin(tickTime * 2.5) * shiverIntensity);
                     // Rotate camera
                     player.setYRot(player.getYRot() + shiverRotation);
                 }
                 // Sway camera for heatstroke
-                else if (BLEND_TEMP >= 50 && HOT_IMMUNITY < 4)
+                else if (BLEND_TEMP >= 50 && HOT_IMMUNITY < 1)
                 {
-                    float immunityModifier = CSMath.blend(BLEND_TEMP, 50, HOT_IMMUNITY, 0, 4);
+                    float immunityModifier = (float) CSMath.blend(BLEND_TEMP, 50, HOT_IMMUNITY, 0, 1);
                     float factor = CSMath.blend(0, 20, immunityModifier, 50, 100);
 
                     // Set random sway speed every once in a while
@@ -116,17 +116,19 @@ public class TempEffectsClient
     public static void onClientTick(ClientTickEvent.Post event)
     {
         Player player = Minecraft.getInstance().player;
-        if (player == null || EntityTempManager.immuneToTempEffects(player)) return;
+        if (player == null || EntityTempManager.isPeacefulMode(player)) return;
         if (player.tickCount % 5 == 0)
         {
-            boolean hasGrace = player.hasEffect(ModEffects.GRACE);
-            if (player.hasEffect(ModEffects.ICE_RESISTANCE) || hasGrace) COLD_IMMUNITY = 4;
-            else COLD_IMMUNITY = 0;
-            if (player.hasEffect(MobEffects.FIRE_RESISTANCE) || hasGrace) HOT_IMMUNITY = 4;
-            else HOT_IMMUNITY = 0;
-
-            if (COLD_IMMUNITY != 4) COLD_IMMUNITY = TempEffectsCommon.getColdResistance(player);
-            if (HOT_IMMUNITY  != 4) HOT_IMMUNITY  = TempEffectsCommon.getHeatResistance(player);
+            // Set cold immunity
+            if (player.hasEffect(ModEffects.ICE_RESISTANCE) && ConfigSettings.ICE_RESISTANCE_ENABLED.get())
+                {   COLD_IMMUNITY = 1;
+                }
+            else COLD_IMMUNITY = Temperature.get(player, Temperature.Trait.COLD_RESISTANCE);
+                // Set heat immunity
+            if (player.hasEffect(MobEffects.FIRE_RESISTANCE) && ConfigSettings.FIRE_RESISTANCE_ENABLED.get())
+            {   HOT_IMMUNITY = 1;
+                }
+            else HOT_IMMUNITY  = Temperature.get(player, Temperature.Trait.HEAT_RESISTANCE);
         }
     }
 
@@ -134,13 +136,13 @@ public class TempEffectsClient
     public static void setFogDistance(ViewportEvent.RenderFog event)
     {
         Player player = Minecraft.getInstance().player;
-        if (player == null || EntityTempManager.immuneToTempEffects(player)) return;
+        if (player == null || EntityTempManager.isPeacefulMode(player)) return;
 
         double fogDistance = ConfigSettings.HEATSTROKE_FOG_DISTANCE.get();
         if (fogDistance >= 64) return;
-        if (fogDistance < Double.POSITIVE_INFINITY&& BLEND_TEMP >= 50 && HOT_IMMUNITY < 4)
+        if (fogDistance < Double.POSITIVE_INFINITY && BLEND_TEMP >= 50 && HOT_IMMUNITY < 1)
         {
-            float tempWithResistance = CSMath.blend(BLEND_TEMP, 50, HOT_IMMUNITY, 0, 4);
+            float tempWithResistance = (float) CSMath.blend(BLEND_TEMP, 50, HOT_IMMUNITY, 0, 1);
             if (fogDistance > (event.getFarPlaneDistance())) return;
             event.setFarPlaneDistance(CSMath.blend(event.getFarPlaneDistance(), (float) fogDistance, tempWithResistance, 50f, 90f));
             event.setNearPlaneDistance(CSMath.blend(event.getNearPlaneDistance(), (float) (fogDistance * 0.3), tempWithResistance, 50f, 90f));
@@ -156,7 +158,7 @@ public class TempEffectsClient
         if (fogDistance >= 64) return;
         if (fogDistance < Double.POSITIVE_INFINITY && player != null && BLEND_TEMP >= 50 && HOT_IMMUNITY < 4)
         {
-            float tempWithResistance = CSMath.blend(BLEND_TEMP, 50, HOT_IMMUNITY, 0, 4);
+            float tempWithResistance = (float) CSMath.blend(BLEND_TEMP, 50, HOT_IMMUNITY, 0, 4);
             event.setRed(CSMath.blend(event.getRed(), 0.01f, tempWithResistance, 50, 90));
             event.setGreen(CSMath.blend(event.getGreen(), 0.01f, tempWithResistance, 50, 90));
             event.setBlue(CSMath.blend(event.getBlue(), 0.05f, tempWithResistance, 50, 90));
@@ -170,11 +172,11 @@ public class TempEffectsClient
     public static void vignette(RenderGuiLayerEvent.Pre event)
     {
         Player player = Minecraft.getInstance().player;
-        if (player == null || EntityTempManager.immuneToTempEffects(player)) return;
+        if (player == null || EntityTempManager.isPeacefulMode(player)) return;
         if (event.getName() == VanillaGuiLayers.CAMERA_OVERLAYS
-        && ((BLEND_TEMP > 0 && HOT_IMMUNITY < 4) || (BLEND_TEMP < 0 && COLD_IMMUNITY < 4)))
+        && ((BLEND_TEMP > 0 && HOT_IMMUNITY < 1) || (BLEND_TEMP < 0 && COLD_IMMUNITY < 1)))
         {
-            float resistance = CSMath.blend(1, 0, BLEND_TEMP > 0 ? HOT_IMMUNITY : COLD_IMMUNITY, 0, 4);
+            float resistance = (float) CSMath.blend(1, 0, BLEND_TEMP > 0 ? HOT_IMMUNITY : COLD_IMMUNITY, 0, 1);
             float opacity = CSMath.blend(0f, 1f, Math.abs(BLEND_TEMP), 50, 100) * resistance;
             float tickTime = player.tickCount + event.getPartialTick().getGameTimeDeltaPartialTick(true);
             if (opacity == 0) return;
@@ -211,10 +213,11 @@ public class TempEffectsClient
         PostProcessShaderManager shaderManager = PostProcessShaderManager.getInstance();
 
         float playerTemp = (float) Overlays.BODY_TEMP;
-        if (ConfigSettings.DISTORTION_EFFECTS.get() && playerTemp >= 50 && HOT_IMMUNITY < 4
-        && mc.player != null && !EntityTempManager.immuneToTempEffects(mc.player))
+        if (ConfigSettings.DISTORTION_EFFECTS.get() && playerTemp >= 50 && HOT_IMMUNITY < 1
+        && mc.player != null && !EntityTempManager.isPeacefulMode(mc.player))
         {
-            float blur = CSMath.blend(0f, 12f, playerTemp, 50, 100) / (HOT_IMMUNITY + 1);
+            float blur = CSMath.blend(0f, 12f, playerTemp, 50, 100);
+            blur = (float) CSMath.blend(blur, 0, HOT_IMMUNITY, 0, 1);
             if (!shaderManager.hasEffect("heat_blur"))
             {   shaderManager.loadEffect("heat_blur", PostProcessShaderManager.BLOBS);
             }

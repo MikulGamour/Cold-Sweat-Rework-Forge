@@ -108,7 +108,6 @@ public class TempModifierInit
         long startMS = System.currentTimeMillis();
         String compatPath = "com.momosoftworks.coldsweat.api.temperature.modifier.compat.";
         String sereneSeasons = compatPath + "SereneSeasonsTempModifier";
-        String armorUnder = compatPath + "ArmorUnderTempModifier";
         String weatherStorms = compatPath + "StormTempModifier";
         String curios = compatPath + "CuriosTempModifier";
 
@@ -132,9 +131,6 @@ public class TempModifierInit
         // Compat
         if (CompatManager.isSereneSeasonsLoaded())
         {   event.registerByClassName(ResourceLocation.fromNamespaceAndPath("sereneseasons", "season"), sereneSeasons);
-        }
-        if (CompatManager.isArmorUnderwearLoaded())
-        {   event.registerByClassName(ResourceLocation.fromNamespaceAndPath("armorunder", "lining"), armorUnder);
         }
         if (CompatManager.isWeather2Loaded())
         {   event.registerByClassName(ResourceLocation.fromNamespaceAndPath("weather2", "storm"), weatherStorms);
