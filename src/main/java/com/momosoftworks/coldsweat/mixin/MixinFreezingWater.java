@@ -60,25 +60,6 @@ public abstract class MixinFreezingWater
         cir.setReturnValue(false);
     }
 
-    @Mixin(value = ServerWorld.class)
-    public static abstract class FreezeTickSpeed
-    {
-        ServerWorld self = (ServerWorld) (Object) this;
-
-        @ModifyArg(method = "tickChunk", at = @At(target = "Ljava/util/Random;nextInt(I)I", value = "INVOKE"),
-                   slice = @Slice(from = @At(target = "Lnet/minecraft/profiler/IProfiler;popPush(Ljava/lang/String;)V", value = "INVOKE", ordinal = 0),
-                                  to = @At(target = "Lnet/minecraft/profiler/IProfiler;popPush(Ljava/lang/String;)V", value = "INVOKE", ordinal = 1)),
-                   require = 0)
-        private int tickFreezeSpeed(int bound)
-        {
-            if (!ConfigSettings.USE_CUSTOM_WATER_FREEZE_BEHAVIOR.get()) return bound;
-
-            int tickSpeed = self.getGameRules().getInt(GameRules.RULE_RANDOMTICKING);
-            if (tickSpeed == 0) return 999999;
-            return Math.max(1, bound / Math.max(1, tickSpeed / 3));
-        }
-    }
-
     @Mixin(IceBlock.class)
     public static abstract class IceMelt
     {

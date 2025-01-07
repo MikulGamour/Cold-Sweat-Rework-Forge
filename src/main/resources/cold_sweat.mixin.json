@@ -28,7 +28,6 @@
     "MixinCampfire",
     "MixinEntityRiding",
     "MixinFreezingWater",
-    "MixinFreezingWater$FreezeTickSpeed",
     "MixinFreezingWater$IceMelt",
     "MixinIce$AddDrops",
     "MixinIce$NoWaterOnBreak",
