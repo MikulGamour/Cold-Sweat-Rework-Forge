@@ -77,7 +77,6 @@ public class CompatManager
     private static final boolean CURIOS_LOADED = modLoaded("curios");
     private static final boolean WEREWOLVES_LOADED = modLoaded("werewolves");
     private static final boolean SPIRIT_LOADED = modLoaded("spirit");
-    private static final boolean ARMOR_UNDERWEAR_LOADED = modLoaded("armorunder");
     private static final boolean BYG_LOADED = modLoaded("byg");
     private static final boolean BWG_LOADED = modLoaded("biomeswevegone");
     private static final boolean CREATE_LOADED = modLoaded("create", "0.5.1");
@@ -148,9 +147,6 @@ public class CompatManager
     public static boolean isSpiritLoaded()
     {   return SPIRIT_LOADED;
     }
-    public static boolean isArmorUnderwearLoaded()
-    {   return ARMOR_UNDERWEAR_LOADED;
-    }
     public static boolean isBiomesYoullGoLoaded()
     {   return BYG_LOADED;
     }
@@ -216,24 +212,6 @@ public class CompatManager
                              }
                              return list;
                          }).orElse(new ArrayList<>());
-        }
-    }
-
-    public static class ArmorUnderwear
-    {
-        public static boolean hasOzzyLiner(ItemStack stack)
-        {   return false;
-            //return ARMOR_UNDERWEAR_LOADED && Armory.getXLining(stack).has(Armory.XLining.TEMPERATURE_REGULATOR);
-        }
-
-        public static boolean hasOttoLiner(ItemStack stack)
-        {   return false;
-            //return ARMOR_UNDERWEAR_LOADED && Armory.getXLining(stack).has(Armory.XLining.ANTIFREEZE_SHIELD);
-        }
-
-        public static boolean hasOllieLiner(ItemStack stack)
-        {   return false;
-            //return ARMOR_UNDERWEAR_LOADED && Armory.getXLining(stack).has(Armory.XLining.ANTIBURN_SHIELD);
         }
     }
 
@@ -438,40 +416,6 @@ public class CompatManager
                     });
                 }
             }.registerListener();
-        }
-    }
-
-    @SubscribeEvent
-    public static void onLivingTempDamage(LivingEvent event)
-    {
-        if (!(event instanceof LivingDamageEvent || event instanceof LivingAttackEvent)) return;
-        // Armor Underwear compat
-        if (ARMOR_UNDERWEAR_LOADED && !event.getEntity().level().isClientSide)
-        {
-            // Get the damage source from the event (different methods for LivingDamage/LivingAttack)
-            DamageSource source = event instanceof LivingDamageEvent
-                                  ? ((LivingDamageEvent) event).getSource()
-                                  : ((LivingAttackEvent) event).getSource();
-            if (source == null) return;
-
-            boolean isDamageCold;
-            if (((isDamageCold = ModDamageSources.isFreezing(source)) || ModDamageSources.isBurning(source)))
-            {
-                int liners = 0;
-                for (ItemStack stack : event.getEntity().getArmorSlots())
-                {
-                    if (isDamageCold ? ArmorUnderwear.hasOttoLiner(stack) : ArmorUnderwear.hasOllieLiner(stack))
-                        liners++;
-                }
-                // Cancel the event if full liners
-                if (liners >= 4)
-                {   event.setCanceled(true);
-                    return;
-                }
-                // Dampen the damage as the number of liners increases
-                if (event instanceof LivingDamageEvent damageEvent)
-                    damageEvent.setAmount(CSMath.blend(damageEvent.getAmount(), 0, liners, 0, 4));
-            }
         }
     }
 

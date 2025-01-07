@@ -797,7 +797,7 @@ public class EntityTempManager
     {   return TEMPERATURE_ENABLED_ENTITIES.contains(entity.getType());
     }
 
-    public static boolean immuneToTempEffects(LivingEntity entity)
+    public static boolean isPeacefulMode(LivingEntity entity)
     {   return entity.level().getDifficulty() == Difficulty.PEACEFUL && ConfigSettings.USE_PEACEFUL_MODE.get();
     }
 
