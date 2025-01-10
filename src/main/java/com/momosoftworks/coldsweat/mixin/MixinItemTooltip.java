@@ -8,9 +8,8 @@ import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.data.codec.configuration.InsulatorData;
 import com.momosoftworks.coldsweat.data.codec.util.AttributeModifierMap;
 import com.momosoftworks.coldsweat.mixin_public.MixinItemTooltipAdditional;
+import com.momosoftworks.coldsweat.util.ClientOnlyHelper;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
@@ -23,6 +22,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
+import net.neoforged.fml.util.thread.EffectiveSide;
 import net.neoforged.neoforge.common.CommonHooks;
 import net.neoforged.neoforge.event.ItemAttributeModifierEvent;
 import org.apache.commons.lang3.mutable.MutableBoolean;
@@ -119,9 +119,9 @@ public abstract class MixinItemTooltip
                                                   //locals
                                                   ItemAttributeModifierEvent event)
         {
-            //if (!MixinItemTooltipFields.GETTING_ATTRIBUTES) return;
+            if (!EffectiveSide.get().isClient()) return;
 
-            LocalPlayer player = Minecraft.getInstance().player;
+            Player player = ClientOnlyHelper.getClientPlayer();
             if (player == null) return;
             if (MixinItemTooltipAdditional.CURRENT_SLOT_QUERY != EquipmentSlotGroup.bySlot(player.getEquipmentSlotForItem(stack)))
             {   return;

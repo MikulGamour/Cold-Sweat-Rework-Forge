@@ -5,6 +5,7 @@ import com.momosoftworks.coldsweat.api.event.client.InsulatorTabBuildEvent;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.compat.CompatManager;
 import com.momosoftworks.coldsweat.data.codec.configuration.InsulatorData;
+import com.momosoftworks.coldsweat.util.ClientOnlyHelper;
 import com.momosoftworks.coldsweat.util.entity.DummyPlayer;
 import com.momosoftworks.coldsweat.util.serialization.ObjectBuilder;
 import net.minecraft.core.Holder;
@@ -96,7 +97,7 @@ public class ModCreativeTabs
     private static List<ItemStack> sort(Collection<Map.Entry<Item, InsulatorData>> items)
     {
         List<Map.Entry<Item, InsulatorData>> list = new ArrayList<>(items);
-        DummyPlayer slotGetter = new DummyPlayer();
+        DummyPlayer slotGetter = new DummyPlayer(ClientOnlyHelper.getClientLevel());
 
         // Sort by tags the items are in
         list.sort(Comparator.comparing(entry -> entry.getKey().builtInRegistryHolder().tags().sequential().map(tag -> tag.location().toString()).reduce("", (a, b) -> a + b)));
