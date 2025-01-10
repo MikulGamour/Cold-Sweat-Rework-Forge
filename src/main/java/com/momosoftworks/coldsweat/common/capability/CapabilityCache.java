@@ -27,6 +27,10 @@ public class CapabilityCache<C, K extends ICapabilityProvider>
         });
     }
 
+    public void remove(K key)
+    {   cache.remove(key);
+    }
+
     public void clear()
     {   cache.clear();
     }
