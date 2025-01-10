@@ -339,6 +339,8 @@ public class EntityTempManager
             {   Temperature.updateTemperature(newPlayer, cap, true);
             }
         });
+
+        CAP_CACHE.remove(oldPlayer);
     }
 
     /**
