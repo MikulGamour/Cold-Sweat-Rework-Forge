@@ -83,20 +83,20 @@ public class ProcessEquipmentInsulation
                     else
                     {   // Add the armor's insulation value from the Sewing Table
                         LazyOptional<IInsulatableCap> iCap = ItemInsulationManager.getInsulationCap(armorStack);
-                        List<Insulation> insulation = ItemInsulationManager.getAllEffectiveInsulation(armorStack, player);
+                        List<InsulatorData> insulation = ItemInsulationManager.getEffectiveAppliedInsulation(armorStack, player);
 
                         // Get the armor's insulation values
-                        for (Insulation value : insulation)
+                        for (InsulatorData value : insulation)
                         {
-                            if (value instanceof StaticInsulation)
+                            if (value.insulation() instanceof StaticInsulation)
                             {
-                                mapAdd(armorInsulation, "cold_insulators", ((StaticInsulation) value).getCold());
-                                mapAdd(armorInsulation, "heat_insulators", ((StaticInsulation) value).getHeat());
+                                mapAdd(armorInsulation, "cold_insulators", value.insulation().getCold());
+                                mapAdd(armorInsulation, "heat_insulators", value.insulation().getHeat());
                             }
-                            else if (value instanceof AdaptiveInsulation)
+                            else if (value.insulation() instanceof AdaptiveInsulation)
                             {
-                                mapAdd(armorInsulation, "cold_insulators", CSMath.blend(((AdaptiveInsulation) value).getInsulation() * 0.75, 0, ((AdaptiveInsulation) value).getFactor(), -1, 1));
-                                mapAdd(armorInsulation, "heat_insulators", CSMath.blend(0, ((AdaptiveInsulation) value).getInsulation() * 0.75, ((AdaptiveInsulation) value).getFactor(), -1, 1));
+                                mapAdd(armorInsulation, "cold_insulators", CSMath.blend(((AdaptiveInsulation) value.insulation()).getInsulation() * 0.75, 0, ((AdaptiveInsulation) value.insulation()).getFactor(), -1, 1));
+                                mapAdd(armorInsulation, "heat_insulators", CSMath.blend(0, ((AdaptiveInsulation) value.insulation()).getInsulation() * 0.75, ((AdaptiveInsulation) value.insulation()).getFactor(), -1, 1));
                             }
                         }
 

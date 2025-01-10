@@ -284,7 +284,7 @@ public class TooltipHandler
                     return;
                 }
                 if (HOVERED_ITEM_UPDATE_COOLDOWN <= 0
-                || ItemInsulationManager.getInsulatorsForStack(stack).stream().map(InsulatorData::getId).anyMatch(id -> !HOVERED_STACK_PREDICATES.containsKey(id)))
+                || ItemInsulationManager.getAllInsulatorsForStack(stack).stream().map(InsulatorData::getId).anyMatch(id -> !HOVERED_STACK_PREDICATES.containsKey(id)))
                 {
                     HOVERED_STACK = stack;
                     HOVERED_ITEM_UPDATE_COOLDOWN = 5;
