@@ -188,7 +188,7 @@ public class EntityTempManager
                     CSMath.doIfNotNull(getAttribute(attributeType, event.getEntity()),
                     attribute ->
                     {
-                        attribute.removeModifiers();
+                        attribute.getModifiers().forEach(attribute::removeModifier);
                         attribute.setBaseValue(attribute.getAttribute().getDefaultValue());
                     });
                 }

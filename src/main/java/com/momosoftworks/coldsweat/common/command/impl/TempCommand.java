@@ -446,7 +446,7 @@ public class TempCommand extends BaseCommand
                 EntityTempManager.getTemperatureCap(entity).ifPresent(cap ->
                 {   ModifiableAttributeInstance instance = EntityTempManager.getAttribute(attribute, ((LivingEntity) entity));
                     if (instance == null) return;
-                    instance.removeModifiers();
+                    instance.getModifiers().forEach(instance::removeModifier);
                     EntityTempManager.getAttribute(attribute, ((LivingEntity) entity)).setBaseValue(Double.NaN);
                     cap.clearPersistentAttribute(instance.getAttribute());
                 });
@@ -481,7 +481,7 @@ public class TempCommand extends BaseCommand
                     {
                         ModifiableAttributeInstance instance = EntityTempManager.getAttribute(attribute, ((LivingEntity) entity));
                         if (instance == null) continue;
-                        instance.removeModifiers();
+                        instance.getModifiers().forEach(instance::removeModifier);
                         instance.setBaseValue(instance.getAttribute().getDefaultValue());
                         cap.clearPersistentAttribute(instance.getAttribute());
                     }
