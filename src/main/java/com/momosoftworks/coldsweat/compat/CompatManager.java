@@ -46,7 +46,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-@EventBusSubscriber
 public class CompatManager
 {
     private static final boolean BOP_LOADED = modLoaded("biomesoplenty");
