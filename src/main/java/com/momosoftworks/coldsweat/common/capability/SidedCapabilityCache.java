@@ -22,6 +22,16 @@ public class SidedCapabilityCache<C, K extends ICapabilityProvider> extends Capa
         return isClient ? clientCache.get(key) : super.get(key);
     }
 
+    @Override
+    public void remove(K key)
+    {
+        boolean isClient = EffectiveSide.get().isClient();
+        if (isClient)
+        {   clientCache.remove(key);
+        }
+        else super.remove(key);
+    }
+
     public void clearClient()
     {   clientCache.clear();
     }
