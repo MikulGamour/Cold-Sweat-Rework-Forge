@@ -2703,6 +2703,8 @@ Fixes:
 * Fixed crash when the temperature of a biome is retrieved in some cases
 * Fixed crash due to infinite update loop when a thermal source block's fuel is changed
 * Fixed crash when opening the creative menu in some cases
+- Fixed crash while processing registry removals in some cases
+- Fixed rare crash when calculating block temperature in some cases
 * Fixed log spam and/or crashes caused by missing temperature modifier IDs
 - Fixed mixin conflict with mods that change ice freezing behavior (like TFC)
 * Fixed "NegativeArraySizeException: -1" error when connecting to a server with OP permissions
@@ -2714,6 +2716,7 @@ Fixes:
 - Fixed soul-fire-based blocks not emitting temperature properly
 * Fixed server disconnection due to very large packet size in some cases
 * Fixed chestplates not being insulatable & other abnormal sewing table behaviors
+- Fixed insulating armor tooltip not displaying
 * Fixed goats not regrowing their fur after being sheared
 * Fixed the hearth not checking for fuel items
 - Fixed the Create netherite diving set not giving the right attribute modifiers
@@ -2724,6 +2727,10 @@ Fixes:
 - Fixed no sound playing when a waterskin is dispensed from a dispenser
 - Fixed elevation temperature being inaccurate in some cases
 - Fixed chameleon molt never despawning when shed by a chameleon
+- Fixed crash when a block is destroyed due to a non-player action in some cases
+- Fixed temperature ceasing to work after death in some cases
+- Fixed the freezing point of ice being higher than it should
+- Fixed frozen hearts rendering incorrectly in hardcore mode
 
 Technical Changes:
 * The temperature decrease due to altitude is now defined in JSON as part of the default temp_region file
