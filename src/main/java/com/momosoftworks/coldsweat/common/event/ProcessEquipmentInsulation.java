@@ -88,17 +88,17 @@ public class ProcessEquipmentInsulation
                         {   continue;
                         }
                         ItemInsulationCap cap = icap.get();
-                        List<Insulation> insulation = ItemInsulationManager.getAllEffectiveInsulation(armorStack, player);
+                        List<InsulatorData> insulation = ItemInsulationManager.getEffectiveAppliedInsulation(armorStack, player);
 
                         // Get the armor's insulation values
-                        for (Insulation value : insulation)
+                        for (InsulatorData value : insulation)
                         {
-                            if (value instanceof StaticInsulation insul)
+                            if (value.insulation() instanceof StaticInsulation insul)
                             {
                                 mapAdd(armorInsulation, "cold_insulators", insul.getCold());
                                 mapAdd(armorInsulation, "heat_insulators", insul.getHeat());
                             }
-                            else if (value instanceof AdaptiveInsulation insul)
+                            else if (value.insulation() instanceof AdaptiveInsulation insul)
                             {
                                 mapAdd(armorInsulation, "cold_insulators", CSMath.blend(insul.getInsulation() * 0.75, 0, insul.getFactor(), -1, 1));
                                 mapAdd(armorInsulation, "heat_insulators", CSMath.blend(0, insul.getInsulation() * 0.75, insul.getFactor(), -1, 1));

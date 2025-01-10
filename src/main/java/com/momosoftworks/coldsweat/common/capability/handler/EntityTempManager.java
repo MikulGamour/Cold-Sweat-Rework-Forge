@@ -579,14 +579,11 @@ public class EntityTempManager
 
     public static void updateInsulationAttributeModifiers(LivingEntity entity, ItemStack from, ItemStack to)
     {
-        for (InsulatorData insulatorData : ItemInsulationManager.getInsulatorsForStack(from))
+        for (InsulatorData insulatorData : ItemInsulationManager.getAllInsulatorsForStack(from))
         {   entity.getAttributes().removeAttributeModifiers(insulatorData.attributes().getMap());
         }
-        for (InsulatorData insulatorData : ItemInsulationManager.getInsulatorsForStack(to))
-        {
-            if (insulatorData.test(entity, to))
-            {   entity.getAttributes().addTransientAttributeModifiers(insulatorData.attributes().getMap());
-            }
+        for (InsulatorData insulatorData : ItemInsulationManager.getAllEffectiveInsulation(to, entity))
+        {   entity.getAttributes().addTransientAttributeModifiers(insulatorData.attributes().getMap());
         }
     }
 

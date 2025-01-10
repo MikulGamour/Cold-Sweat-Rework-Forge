@@ -134,7 +134,6 @@ dependencies {
     implementation "curse.maven:spoiled-364918:5490658"
     implementation "curse.maven:curios-continuation-1037991:5747224"
     implementation "curse.maven:iceberg-520110:5590963"
-    implementation "curse.maven:in-game-account-switcher-232676:5474316"
 
     implementation "dev.architectury:architectury-neoforge:${architectury_version}"
     implementation "dev.latvian.mods:kubejs-neoforge:${kubejs_version}"
