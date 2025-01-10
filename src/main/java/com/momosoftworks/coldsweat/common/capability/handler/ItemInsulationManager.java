@@ -1,5 +1,6 @@
 package com.momosoftworks.coldsweat.common.capability.handler;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimap;
 import com.mojang.datafixers.util.Pair;
 import com.momosoftworks.coldsweat.ColdSweat;
@@ -154,7 +155,7 @@ public class ItemInsulationManager
             && !ConfigSettings.INSULATION_ITEMS.get().containsKey(stack.getItem());
     }
 
-    public static List<InsulatorData> getInsulatorsForStack(ItemStack stack)
+    public static List<InsulatorData> getAllInsulatorsForStack(ItemStack stack)
     {
         if (stack.isEmpty()) return new ArrayList<>();
 
@@ -175,20 +176,38 @@ public class ItemInsulationManager
         return insulators;
     }
 
-    public static List<Insulation> getAllEffectiveInsulation(ItemStack armor, LivingEntity entity)
+    /**
+     * Returns a list of all valid insulation applied to the given armor item.<br>
+     * Insulation is considered valid if its requirement passes for the given armor and entity.
+     * @param armor The armor item from which to get insulation.
+     * @param entity The entity wearing the item. If null, the insulators' entity requirements will always pass.
+     * @return an IMMUTABLE list of valid insulation on the armor item
+     */
+    public static List<InsulatorData> getEffectiveAppliedInsulation(ItemStack armor, @Nullable LivingEntity entity)
     {
         return ItemInsulationManager.getInsulationCap(armor)
                .map(IInsulatableCap::getInsulation).orElse(new ArrayList<>())
                .stream()
-               .map(pair -> pair.mapSecond(map -> new FastMultiMap<>(map.entries().stream().filter(entry -> entry.getKey().test(entity, armor)).toList())))
-               .map(pair -> pair.getSecond().values())
+               .map(pair -> pair.mapSecond(map -> new FastMultiMap<>(map.entries().stream().filter(entry -> entry.getKey().test(entity, pair.getFirst())).toList())))
+                .map(map -> map.getSecond().keySet())
                .flatMap(Collection::stream).toList();
     }
 
-    public static List<AttributeModifier> getInsulationAttributeModifiers(ItemStack stack, Attribute attribute, @Nullable AttributeModifier.Operation operation, @Nullable Entity owner)
+    /**
+     * Gets both applied an intrinsic insulation on the armor item.<br>
+     * See {@link #getEffectiveAppliedInsulation(ItemStack, LivingEntity)} for more information.
+     */
+    public static List<InsulatorData> getAllEffectiveInsulation(ItemStack armor, @Nullable LivingEntity entity)
+    {
+        List<InsulatorData> insulation = new ArrayList<>(getEffectiveAppliedInsulation(armor, entity));
+        insulation.addAll(ConfigSettings.INSULATING_ARMORS.get().get(armor.getItem()).stream().filter(insulator -> insulator.test(entity, armor)).toList());
+        return ImmutableList.copyOf(insulation);
+    }
+
+    public static List<AttributeModifier> getAppliedInsulationAttributes(ItemStack stack, Attribute attribute, @Nullable AttributeModifier.Operation operation, @Nullable Entity owner)
     {
         List<AttributeModifier> modifiers = new ArrayList<>();
-        for (InsulatorData insulator : getInsulatorsForStack(stack))
+        for (InsulatorData insulator : getAllInsulatorsForStack(stack))
         {
             if (insulator.test(owner, stack))
             {
@@ -209,7 +228,7 @@ public class ItemInsulationManager
                                                          .filter(mod -> mod.getOperation() == operation)
                                                          .toList()
                                                   : stack.getAttributeModifiers(slot).get(attribute));
-        modifiers.addAll(getInsulationAttributeModifiers(stack, attribute, operation, owner));
+        modifiers.addAll(getAppliedInsulationAttributes(stack, attribute, operation, owner));
         return modifiers;
     }
 

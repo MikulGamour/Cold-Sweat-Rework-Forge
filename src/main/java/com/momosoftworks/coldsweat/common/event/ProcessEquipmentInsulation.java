@@ -25,6 +25,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageType;
+import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.Attributes;
@@ -83,17 +85,17 @@ public class ProcessEquipmentInsulation
                     else
                     {   // Add the armor's insulation value from the Sewing Table
                         LazyOptional<IInsulatableCap> iCap = ItemInsulationManager.getInsulationCap(armorStack);
-                        List<Insulation> insulation = ItemInsulationManager.getAllEffectiveInsulation(armorStack, player);
+                        List<InsulatorData> insulation = ItemInsulationManager.getEffectiveAppliedInsulation(armorStack, player);
 
                         // Get the armor's insulation values
-                        for (Insulation value : insulation)
+                        for (InsulatorData value : insulation)
                         {
-                            if (value instanceof StaticInsulation insul)
+                            if (value.insulation() instanceof StaticInsulation insul)
                             {
                                 mapAdd(armorInsulation, "cold_insulators", insul.getCold());
                                 mapAdd(armorInsulation, "heat_insulators", insul.getHeat());
                             }
-                            else if (value instanceof AdaptiveInsulation insul)
+                            else if (value.insulation() instanceof AdaptiveInsulation insul)
                             {
                                 mapAdd(armorInsulation, "cold_insulators", CSMath.blend(insul.getInsulation() * 0.75, 0, insul.getFactor(), -1, 1));
                                 mapAdd(armorInsulation, "heat_insulators", CSMath.blend(0, insul.getInsulation() * 0.75, insul.getFactor(), -1, 1));
@@ -191,7 +193,7 @@ public class ProcessEquipmentInsulation
     public static void onDamageTaken(LivingAttackEvent event)
     {
         DamageSource source = event.getSource();
-        if (source == event.getEntity().level().damageSources().hotFloor() && event.getEntity().getItemBySlot(EquipmentSlot.FEET).is(ModItems.HOGLIN_HOOVES))
+        if (source.is(DamageTypes.HOT_FLOOR) && event.getEntity().getItemBySlot(EquipmentSlot.FEET).is(ModItems.HOGLIN_HOOVES))
         {   event.setCanceled(true);
         }
     }
