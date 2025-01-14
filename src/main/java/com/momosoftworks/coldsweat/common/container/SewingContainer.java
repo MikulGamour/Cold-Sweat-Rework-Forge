@@ -136,7 +136,7 @@ public class SewingContainer extends ItemCombinerMenu
                 if (!cap.getInsulation().isEmpty())
                 {   // Damage shears
                     if (!player.getAbilities().instabuild)
-                    {   input2.hurt(1, player.getRandom(), null);
+                    {   input2.hurtAndBreak(1, player, item -> {});
                     }
 
                     // Remove the last insulation item added
