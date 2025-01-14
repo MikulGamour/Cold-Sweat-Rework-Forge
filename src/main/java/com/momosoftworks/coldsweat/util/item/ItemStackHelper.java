@@ -1,6 +1,7 @@
 package com.momosoftworks.coldsweat.util.item;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponentType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.player.Player;
@@ -12,6 +13,7 @@ import net.neoforged.fml.util.ObfuscationReflectionHelper;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Method;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 public class ItemStackHelper
@@ -34,5 +36,16 @@ public class ItemStackHelper
 
     public static Stream<ItemAttributeModifiers.Entry> getAttributeModifiers(ItemStack stack, EquipmentSlot slot)
     {   return stack.getAttributeModifiers().modifiers().stream().filter(entry -> entry.slot().test(slot));
+    }
+
+    public static <T> T getOrCreateComponent(ItemStack stack, DataComponentType<T> componentType, Supplier<T> componentCreator)
+    {
+        T component = stack.get(componentType);
+        if (component == null)
+        {
+            component = componentCreator.get();
+            stack.set(componentType, component);
+        }
+        return component;
     }
 }

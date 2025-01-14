@@ -60,7 +60,7 @@ public class CommonStreamCodecs
         return StreamCodec.of((buf, either) ->
                               {
                                   buf.writeBoolean(either.left().isPresent());
-                                  either.ifLeft(tag -> buf.writeUtf("#" + tag.location()))
+                                  either.ifLeft(tag -> buf.writeUtf(tag.location().toString()))
                                         .ifRight(reg -> ByteBufCodecs.registry(key).encode(buf, reg));
                               },
                               buf ->
