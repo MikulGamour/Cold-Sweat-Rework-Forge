@@ -15,11 +15,8 @@ import net.minecraft.entity.MobEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.player.ServerPlayerEntity;
-import net.minecraft.inventory.CraftResultInventory;
 import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.Inventory;
 import net.minecraft.inventory.container.AbstractRepairContainer;
-import net.minecraft.inventory.container.Container;
 import net.minecraft.inventory.container.ContainerType;
 import net.minecraft.inventory.container.Slot;
 import net.minecraft.item.ArmorItem;
@@ -135,7 +132,7 @@ public class SewingContainer extends AbstractRepairContainer
                 if (!cap.getInsulation().isEmpty())
                 {   // Damage shears
                     if (!player.abilities.instabuild)
-                    {   input2.hurt(1, player.getRandom(), null);
+                    {   input2.hurtAndBreak(1, player, item -> {});
                     }
 
                     // Remove the last insulation item added
