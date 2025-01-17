@@ -35,9 +35,6 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
-import net.minecraftforge.event.entity.living.LivingDamageEvent;
-import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
@@ -329,9 +326,13 @@ public class CompatManager
 
         public static AABB transformIfShipPos(Level level, AABB aabb)
         {
-            Vec3 min = transformIfShipPos(level, new Vec3(aabb.minX, aabb.minY, aabb.minZ));
-            Vec3 max = transformIfShipPos(level, new Vec3(aabb.maxX, aabb.maxY, aabb.maxZ));
-            return new AABB(min, max);
+            if (VALKYRIEN_SKIES_LOADED)
+            {
+                Vec3 min = transformIfShipPos(level, new Vec3(aabb.minX, aabb.minY, aabb.minZ));
+                Vec3 max = transformIfShipPos(level, new Vec3(aabb.maxX, aabb.maxY, aabb.maxZ));
+                return new AABB(min, max);
+            }
+            return aabb;
         }
 
         public static BlockPos transformIfShipPos(Level level, BlockPos pos)

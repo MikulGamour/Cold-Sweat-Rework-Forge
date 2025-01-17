@@ -21,6 +21,7 @@ import java.util.function.Function;
 
 public class ElevationTempModifier extends TempModifier
 {
+
     public ElevationTempModifier()
     {   this(49);
     }
@@ -44,7 +45,9 @@ public class ElevationTempModifier extends TempModifier
             depthTable.add(Pair.of(pos, CSMath.getDistance(entity.blockPosition(), pos)));
         }
 
-        BlockPos translatedPos = CompatManager.Valkyrien.transformIfShipPos(level, entity.blockPosition());
+        BlockPos translatedPos = CompatManager.isValkyrienSkiesLoaded()
+                                 ? CompatManager.Valkyrien.transformIfShipPos(level, entity.blockPosition())
+                                 : entity.blockPosition();
         int skylight = entity.level.getBrightness(LightLayer.SKY, translatedPos);
 
         Map<BlockPos, Pair<DepthTempData.TempRegion, Double>> depthRegions = new FastMap<>();

@@ -292,7 +292,9 @@ public class HearthBlockEntity extends RandomizableContainerBlockEntity implemen
             players.clear();
             for (Player player : this.level.players())
             {
-                Vec3 playerPos = CompatManager.Valkyrien.transformIfShipPos(level, player.position());
+                Vec3 playerPos = CompatManager.isValkyrienSkiesLoaded()
+                                 ? CompatManager.Valkyrien.transformIfShipPos(level, player.position())
+                                 : player.position();
                 if (playerPos.closerThan(CSMath.getCenterPos(pos), this.getMaxRange()))
                 {   players.add(player);
                     this.isPlayerNearby = true;
@@ -380,7 +382,9 @@ public class HearthBlockEntity extends RandomizableContainerBlockEntity implemen
                     {
                         Player player = players.get(i);
                         if (player == null || player instanceof DummyPlayer) continue;
-                        AABB playerBB = CompatManager.Valkyrien.transformIfShipPos(level, player.getBoundingBox()).inflate(-0.1);
+                        AABB playerBB = CompatManager.isValkyrienSkiesLoaded()
+                                        ? CompatManager.Valkyrien.transformIfShipPos(level, player.getBoundingBox()).inflate(-0.1)
+                                        : player.getBoundingBox().inflate(-0.1);
                         if (BlockPos.betweenClosedStream(playerBB).anyMatch(pathLookup::contains))
                         {   this.insulatePlayer(player);
                         }
