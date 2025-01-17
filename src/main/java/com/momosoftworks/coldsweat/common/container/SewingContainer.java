@@ -121,6 +121,8 @@ public class SewingContainer extends AbstractRepairContainer
     @Override
     protected ItemStack onTake(PlayerEntity player, ItemStack stack)
     {
+        if (!ItemInsulationManager.isInsulatable(stack)) return;
+
         ItemStack input1 = this.getItem(0);
         ItemStack input2 = this.getItem(1);
 
@@ -235,6 +237,8 @@ public class SewingContainer extends AbstractRepairContainer
      */
     private boolean insulateArmorItem(ItemStack armorItem, ItemStack insulatorItem)
     {
+        if (!ItemInsulationManager.isInsulatable(armorItem)) return false;
+
         InsulateItemEvent insulateEvent = new InsulateItemEvent(armorItem, insulatorItem, this.player);
         MinecraftForge.EVENT_BUS.post(insulateEvent);
         if (insulateEvent.isCanceled())
