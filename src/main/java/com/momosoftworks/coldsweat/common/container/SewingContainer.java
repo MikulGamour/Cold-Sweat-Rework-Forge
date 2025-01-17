@@ -98,6 +98,8 @@ public class SewingContainer extends ItemCombinerMenu
     @Override
     protected void onTake(Player player, ItemStack stack)
     {
+        if (!ItemInsulationManager.isInsulatable(stack)) return;
+
         ItemStack input1 = this.getItem(0);
         ItemStack input2 = this.getItem(1);
 
@@ -204,6 +206,8 @@ public class SewingContainer extends ItemCombinerMenu
      */
     private boolean insulateArmorItem(ItemStack armorItem, ItemStack insulatorItem)
     {
+        if (!ItemInsulationManager.isInsulatable(armorItem)) return false;
+
         InsulateItemEvent insulateEvent = new InsulateItemEvent(armorItem, insulatorItem, this.player);
         NeoForge.EVENT_BUS.post(insulateEvent);
         if (insulateEvent.isCanceled())
