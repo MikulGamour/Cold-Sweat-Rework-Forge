@@ -3,40 +3,32 @@ package com.momosoftworks.coldsweat.compat;
 import com.anthonyhilyard.iceberg.util.Tooltips;
 import com.mojang.datafixers.util.Either;
 import com.momosoftworks.coldsweat.ColdSweat;
+import com.momosoftworks.coldsweat.api.event.core.init.FetchSeasonsModsEvent;
 import com.momosoftworks.coldsweat.api.temperature.modifier.compat.SereneSeasonsTempModifier;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.common.capability.handler.EntityTempManager;
 import com.momosoftworks.coldsweat.core.init.ModItems;
 import com.momosoftworks.coldsweat.util.math.CSMath;
-import com.momosoftworks.coldsweat.util.registries.ModDamageSources;
 import dev.ghen.thirst.content.purity.ContainerWithPurity;
 import dev.ghen.thirst.content.purity.WaterPurity;
 import dev.ghen.thirst.foundation.common.event.RegisterThirstValueEvent;
 import glitchcore.event.EventManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.FormattedText;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.Vec3;
-import net.neoforged.bus.api.ICancellableEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.loading.FMLLoader;
 import net.neoforged.fml.loading.moddiscovery.ModFileInfo;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.entity.living.LivingDamageEvent;
-import net.neoforged.neoforge.event.entity.living.LivingEvent;
-import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
-import org.joml.Vector3d;
 import sereneseasons.api.season.SeasonChangedEvent;
 import sereneseasons.season.SeasonHooks;
 import top.theillusivec4.curios.api.CuriosCapability;
@@ -49,7 +41,7 @@ import java.util.Optional;
 public class CompatManager
 {
     private static final boolean BOP_LOADED = modLoaded("biomesoplenty");
-    private static final boolean SEASONS_LOADED = modLoaded("sereneseasons");
+    private static final boolean SERENE_SEASONS_LOADED = modLoaded("sereneseasons");
     private static final boolean CURIOS_LOADED = modLoaded("curios");
     private static final boolean WEREWOLVES_LOADED = modLoaded("werewolves");
     private static final boolean SPIRIT_LOADED = modLoaded("spirit");
@@ -67,6 +59,8 @@ public class CompatManager
     private static final boolean ICEBERG_LOADED = modLoaded("iceberg");
     private static final boolean SPOILED_LOADED = modLoaded("spoiled");
     private static final boolean SUPPLEMENTARIES_LOADED = modLoaded("supplementaries");
+
+    private static final List<String> SEASONS_MODS = fetchSeasonsMods();
 
     public static boolean modLoaded(String modID, String minVersion, String maxVersion)
     {
@@ -107,11 +101,25 @@ public class CompatManager
     {   return modLoaded(modID, "");
     }
 
+    private static List<String> fetchSeasonsMods()
+    {
+        FetchSeasonsModsEvent event = new FetchSeasonsModsEvent();
+        if (SERENE_SEASONS_LOADED)
+        {   event.addSeasonsMod("sereneseasons");
+        }
+        NeoForge.EVENT_BUS.post(event);
+        return event.getSeasonsMods();
+    }
+
+    public static List<String> getSeasonsMods()
+    {   return SEASONS_MODS;
+    }
+
     public static boolean isBiomesOPlentyLoaded()
     {   return BOP_LOADED;
     }
     public static boolean isSereneSeasonsLoaded()
-    {   return SEASONS_LOADED;
+    {   return SERENE_SEASONS_LOADED;
     }
     public static boolean isCuriosLoaded()
     {   return CURIOS_LOADED;
@@ -246,7 +254,7 @@ public class CompatManager
     {
         public static boolean isColdEnoughToSnow(Level level, BlockPos pos)
         {
-            return SEASONS_LOADED && SeasonHooks.coldEnoughToSnowSeasonal(level, level.getBiome(pos), pos);
+            return SERENE_SEASONS_LOADED && SeasonHooks.coldEnoughToSnowSeasonal(level, level.getBiome(pos), pos);
         }
     }
 
@@ -400,7 +408,7 @@ public class CompatManager
             });
         }
 
-        if (SEASONS_LOADED)
+        if (SERENE_SEASONS_LOADED)
         {
             // Register event to GlitchCore's stupid redundant proprietary event bus
             new Object()
