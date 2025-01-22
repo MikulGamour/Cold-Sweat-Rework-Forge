@@ -5,6 +5,7 @@ import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.loading.FMLPaths;
+import org.joml.Vector2i;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -46,8 +47,6 @@ public class ClientSettingsConfig
     public static final ForgeConfigSpec.BooleanValue HIDE_INSULATION_TOOLTIPS;
     public static final ForgeConfigSpec.BooleanValue EXPAND_TOOLTIPS;
 
-
-    private static final ClientSettingsConfig INSTANCE = new ClientSettingsConfig();
     public static final ForgeConfigSpec.IntValue WATER_EFFECT_SETTING;
 
     static 
@@ -152,214 +151,47 @@ public class ClientSettingsConfig
         ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, SPEC, "coldsweat/client.toml");
     }
 
-    public static ClientSettingsConfig getInstance()
-    {   return INSTANCE;
+    public static Vector2i getBodyIconPos()
+    {   return new Vector2i(BODY_TEMP_ICON_POS.get().get(0), BODY_TEMP_ICON_POS.get().get(1));
     }
 
-    /*
-     * Non-private values for use elsewhere
-     */
-
-    public boolean isHighContrast()
-    {   return HIGH_CONTRAST_MODE.get();
-    }
-    public void setHighContrast(boolean enabled)
-    {   HIGH_CONTRAST_MODE.set(enabled);
+    public static Vector2i getBodyReadoutPos()
+    {   return new Vector2i(BODY_TEMP_READOUT_POS.get().get(0), BODY_TEMP_READOUT_POS.get().get(1));
     }
 
-    public boolean isCelsius()
-    {   return USE_CELSIUS.get();
+    public static Vector2i getWorldGaugePos()
+    {   return new Vector2i(WORLD_TEMP_GAUGE_POS.get().get(0), WORLD_TEMP_GAUGE_POS.get().get(1));
     }
 
-    public int getTempOffset()
-    {   return TEMPERATURE_OFFSET.get();
+    public static Vector2i getConfigButtonPos()
+    {   return new Vector2i(CONFIG_BUTTON_POS.get().get(0), CONFIG_BUTTON_POS.get().get(1));
     }
 
-    public static int getBodyIconX()
-    {   return BODY_TEMP_ICON_POS.get().get(0);
-    }
-    public static int getBodyIconY()
-    {   return BODY_TEMP_ICON_POS.get().get(1);
-    }
-
-    public static int getBodyReadoutX()
-    {   return BODY_TEMP_READOUT_POS.get().get(0);
-    }
-    public static int getBodyReadoutY()
-    {   return BODY_TEMP_READOUT_POS.get().get(1);
-    }
-
-    public static int getWorldGaugeX()
-    {   return WORLD_TEMP_GAUGE_POS.get().get(0);
-    }
-    public static int getWorldGaugeY()
-    {   return WORLD_TEMP_GAUGE_POS.get().get(1);
-    }
-
-    public double getTempSmoothing()
-    {   return TEMPERATURE_SMOOTHING.get();
-    }
-
-    public boolean isCustomHotbarLayout()
-    {   return USE_CUSTOM_HOTBAR_LAYOUT.get();
-    }
-
-    public boolean isIconBobbing()
-    {   return ENABLE_ICON_BOBBING.get();
-    }
-
-    public boolean isHearthDebug()
-    {   return SHOW_HEARTH_DEBUG_VISUALS.get();
-    }
-
-    public boolean showCreativeWarning()
-    {   return ENABLE_CREATIVE_WARNING.get();
-    }
-
-    public boolean isBodyIconEnabled()
-    {   return SHOW_BODY_TEMP_ICON.get();
-    }
-    public boolean isBodyReadoutEnabled()
-    {   return SHOW_BODY_TEMP_READOUT.get();
-    }
-    public boolean isWorldGaugeEnabled()
-    {   return SHOW_WORLD_TEMP_GAUGE.get();
-    }
-
-    public boolean moveBodyIconWhenAdvanced()
-    {   return MOVE_BODY_TEMP_ICON_ADVANCED.get();
-    }
-
-    public boolean hideTooltips()
-    {   return HIDE_INSULATION_TOOLTIPS.get();
-    }
-
-    public boolean isWaterEffectEnabled()
-    {   return SHOW_WATER_EFFECT.get();
-    }
-
-    /*
-     * Safe set methods for config values
-     */
-
-    public void setCelsius(boolean enabled)
-    {   USE_CELSIUS.set(enabled);
-    }
-
-    public void setTempOffset(int offset)
-    {   TEMPERATURE_OFFSET.set(offset);
-    }
-
-    public void setBodyIconX(int pos)
-    {   BODY_TEMP_ICON_POS.set(List.of(pos, getBodyIconY()));
-    }
-    public void setBodyIconY(int pos)
-    {   BODY_TEMP_ICON_POS.set(List.of(getBodyIconX(), pos));
-    }
-
-    public void setBodyReadoutX(int pos)
-    {   BODY_TEMP_READOUT_POS.set(List.of(pos, getBodyReadoutY()));
-    }
-    public void setBodyReadoutY(int pos)
-    {   BODY_TEMP_READOUT_POS.set(List.of(getBodyReadoutX(), pos));
-    }
-
-    public void setWorldGaugeX(int pos)
-    {   WORLD_TEMP_GAUGE_POS.set(List.of(pos, getWorldGaugeY()));
-    }
-    public void setWorldGaugeY(int pos)
-    {   WORLD_TEMP_GAUGE_POS.set(List.of(getWorldGaugeX(), pos));
-    }
-
-    public void setCustomHotbar(boolean enabled)
-    {   USE_CUSTOM_HOTBAR_LAYOUT.set(enabled);
-    }
-
-    public void setIconBobbing(boolean enabled)
-    {   ENABLE_ICON_BOBBING.set(enabled);
-    }
-
-    public void setHearthDebug(boolean enabled)
-    {   SHOW_HEARTH_DEBUG_VISUALS.set(enabled);
-    }
-
-    public boolean showConfigButton()
-    {   return SHOW_CONFIG_BUTTON.get();
-    }
-    public static int getConfigButtonX()
-    {   return CONFIG_BUTTON_POS.get().get(0);
-    }
-    public static int getConfigButtonY()
-    {   return CONFIG_BUTTON_POS.get().get(1);
-    }
-    public void setConfigButtonPos(List<Integer> pos)
-    {   CONFIG_BUTTON_POS.set(pos);
-    }
-
-    public boolean areDistortionsEnabled()
-    {   return SHOW_SCREEN_DISTORTIONS.get();
-    }
-    public void setDistortionsEnabled(boolean enabled)
-    {   SHOW_SCREEN_DISTORTIONS.set(enabled);
-    }
-
-    public void setCreativeWarningEnabled(boolean enabled)
-    {   ENABLE_CREATIVE_WARNING.set(enabled);
-    }
-
-    public void setBodyIconEnabled(boolean enabled)
-    {   SHOW_BODY_TEMP_ICON.set(enabled);
-    }
-    public void setBodyReadoutEnabled(boolean enabled)
-    {   SHOW_BODY_TEMP_READOUT.set(enabled);
-    }
-    public void setWorldGaugeEnabled(boolean enabled)
-    {   SHOW_WORLD_TEMP_GAUGE.set(enabled);
-    }
-
-    public void setTempSmoothing(double smoothing)
-    {   TEMPERATURE_SMOOTHING.set(smoothing);
-    }
-
-    public void setMoveBodyIconWhenAdvanced(boolean enabled)
-    {   MOVE_BODY_TEMP_ICON_ADVANCED.set(enabled);
-    }
-
-    public void setHideTooltips(boolean hide)
-    {   HIDE_INSULATION_TOOLTIPS.set(hide);
-    }
-
-    public void setWaterEffectEnabled(boolean enabled)
-    {   SHOW_WATER_EFFECT.set(enabled);
-    }
-
-    public synchronized void writeAndSave()
-    {   this.setCelsius(ConfigSettings.CELSIUS.get());
-        this.setTempOffset(ConfigSettings.TEMP_OFFSET.get());
-        this.setTempSmoothing(ConfigSettings.TEMP_SMOOTHING.get());
-        this.setBodyIconX(ConfigSettings.BODY_ICON_POS.get().x());
-        this.setBodyIconY(ConfigSettings.BODY_ICON_POS.get().y());
-        this.setBodyReadoutX(ConfigSettings.BODY_READOUT_POS.get().x());
-        this.setBodyReadoutY(ConfigSettings.BODY_READOUT_POS.get().y());
-        this.setWorldGaugeX(ConfigSettings.WORLD_GAUGE_POS.get().x());
-        this.setWorldGaugeY(ConfigSettings.WORLD_GAUGE_POS.get().y());
-        this.setCustomHotbar(ConfigSettings.CUSTOM_HOTBAR_LAYOUT.get());
-        this.setIconBobbing(ConfigSettings.ICON_BOBBING.get());
-        this.setHearthDebug(ConfigSettings.HEARTH_DEBUG.get());
-        this.setCreativeWarningEnabled(ConfigSettings.SHOW_CREATIVE_WARNING.get());
-        this.setBodyIconEnabled(ConfigSettings.BODY_ICON_ENABLED.get());
-        this.setBodyReadoutEnabled(ConfigSettings.BODY_READOUT_ENABLED.get());
-        this.setWorldGaugeEnabled(ConfigSettings.WORLD_GAUGE_ENABLED.get());
-        this.setDistortionsEnabled(ConfigSettings.DISTORTION_EFFECTS.get());
-        this.setHighContrast(ConfigSettings.HIGH_CONTRAST.get());
-        this.setConfigButtonPos(List.of(ConfigSettings.CONFIG_BUTTON_POS.get().x(),
+    public static synchronized void writeAndSave()
+    {
+        USE_CELSIUS.set(ConfigSettings.CELSIUS.get());
+        TEMPERATURE_OFFSET.set(ConfigSettings.TEMP_OFFSET.get());
+        TEMPERATURE_SMOOTHING.set(ConfigSettings.TEMP_SMOOTHING.get());
+        BODY_TEMP_ICON_POS.set(List.of(ConfigSettings.BODY_ICON_POS.get().x(), ConfigSettings.BODY_ICON_POS.get().y()));
+        BODY_TEMP_READOUT_POS.set(List.of(ConfigSettings.BODY_READOUT_POS.get().x(), ConfigSettings.BODY_READOUT_POS.get().y()));
+        WORLD_TEMP_GAUGE_POS.set(List.of(ConfigSettings.WORLD_GAUGE_POS.get().x(), ConfigSettings.WORLD_GAUGE_POS.get().y()));
+        USE_CUSTOM_HOTBAR_LAYOUT.set(ConfigSettings.CUSTOM_HOTBAR_LAYOUT.get());
+        ENABLE_ICON_BOBBING.set(ConfigSettings.ICON_BOBBING.get());
+        SHOW_HEARTH_DEBUG_VISUALS.set(ConfigSettings.HEARTH_DEBUG.get());
+        ENABLE_CREATIVE_WARNING.set(ConfigSettings.SHOW_CREATIVE_WARNING.get());
+        SHOW_BODY_TEMP_ICON.set(ConfigSettings.BODY_ICON_ENABLED.get());
+        SHOW_BODY_TEMP_READOUT.set(ConfigSettings.BODY_READOUT_ENABLED.get());
+        SHOW_WORLD_TEMP_GAUGE.set(ConfigSettings.WORLD_GAUGE_ENABLED.get());
+        SHOW_SCREEN_DISTORTIONS.set(ConfigSettings.DISTORTION_EFFECTS.get());
+        HIGH_CONTRAST_MODE.set(ConfigSettings.HIGH_CONTRAST.get());
+        CONFIG_BUTTON_POS.set(List.of(ConfigSettings.CONFIG_BUTTON_POS.get().x(),
                                         ConfigSettings.CONFIG_BUTTON_POS.get().y()));
-        this.setMoveBodyIconWhenAdvanced(ConfigSettings.MOVE_BODY_ICON_WHEN_ADVANCED.get());
-        this.save();
+        MOVE_BODY_TEMP_ICON_ADVANCED.set(ConfigSettings.MOVE_BODY_ICON_WHEN_ADVANCED.get());
         WATER_EFFECT_SETTING.set(ConfigSettings.WATER_EFFECT_SETTING.get().ordinal());
+        save();
     }
 
-    public synchronized void save()
+    public static synchronized void save()
     {   SPEC.save();
     }
 }
