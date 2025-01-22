@@ -175,7 +175,7 @@ public abstract class MixinItemTooltip
 
             if (EntityTempManager.isTemperatureAttribute(ATTRIBUTE))
             {
-                MutableComponent newline = TooltipHandler.getFormattedAttributeModifier(ATTRIBUTE, MODIFIER.amount(), MODIFIER.operation(), true, hasUnmetRequirements);
+                MutableComponent newline = TooltipHandler.getFormattedAttributeModifier(ATTRIBUTE, MODIFIER.amount(), MODIFIER.operation(), isFromInsulation, hasUnmetRequirements);
 
                 for (Component sibling : component.getSiblings())
                 {   newline = newline.append(sibling);
