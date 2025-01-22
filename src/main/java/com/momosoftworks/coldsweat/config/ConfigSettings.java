@@ -907,11 +907,11 @@ public class ConfigSettings
 
         WATER_EFFECT_SETTING = addClientSetting("show_water_effect", () -> WaterEffectSetting.ALL, holder -> holder.set(WaterEffectSetting.values()[ClientSettingsConfig.WATER_EFFECT_SETTING.get()]));
 
-        boolean ssLoaded = CompatManager.isSereneSeasonsLoaded();
-        SUMMER_TEMPS = addSetting("summer_temps", SeasonalTempData::new, holder -> holder.set(ssLoaded ? SeasonalTempData.fromToml(WorldSettingsConfig.getSummerTemps()) : new SeasonalTempData()));
-        AUTUMN_TEMPS = addSetting("autumn_temps", SeasonalTempData::new, holder -> holder.set(ssLoaded ? SeasonalTempData.fromToml(WorldSettingsConfig.getAutumnTemps()) : new SeasonalTempData()));
-        WINTER_TEMPS = addSetting("winter_temps", SeasonalTempData::new, holder -> holder.set(ssLoaded ? SeasonalTempData.fromToml(WorldSettingsConfig.getWinterTemps()) : new SeasonalTempData()));
-        SPRING_TEMPS = addSetting("spring_temps", SeasonalTempData::new, holder -> holder.set(ssLoaded ? SeasonalTempData.fromToml(WorldSettingsConfig.getSpringTemps()) : new SeasonalTempData()));
+        boolean seasonsModLoaded = !CompatManager.getSeasonsMods().isEmpty();
+        SUMMER_TEMPS = addSetting("summer_temps", SeasonalTempData::new, holder -> holder.set(seasonsModLoaded ? SeasonalTempData.fromToml(WorldSettingsConfig.getSummerTemps()) : new SeasonalTempData()));
+        AUTUMN_TEMPS = addSetting("autumn_temps", SeasonalTempData::new, holder -> holder.set(seasonsModLoaded ? SeasonalTempData.fromToml(WorldSettingsConfig.getAutumnTemps()) : new SeasonalTempData()));
+        WINTER_TEMPS = addSetting("winter_temps", SeasonalTempData::new, holder -> holder.set(seasonsModLoaded ? SeasonalTempData.fromToml(WorldSettingsConfig.getWinterTemps()) : new SeasonalTempData()));
+        SPRING_TEMPS = addSetting("spring_temps", SeasonalTempData::new, holder -> holder.set(seasonsModLoaded ? SeasonalTempData.fromToml(WorldSettingsConfig.getSpringTemps()) : new SeasonalTempData()));
     }
 
     public static String getKey(DynamicHolder<?> setting)
