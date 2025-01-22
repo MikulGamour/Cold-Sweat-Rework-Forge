@@ -11,6 +11,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
+import net.minecraft.tags.FluidTags;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
@@ -23,14 +24,20 @@ import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LayeredCauldronBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
+import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.capability.IFluidHandler;
 
 public class WaterskinItem extends Item
 {
+    public static final int FLUID_VALUE_MB = 250;
+
     public WaterskinItem()
     {
         super(new Properties().tab(ColdSweatGroup.COLD_SWEAT).stacksTo(16));
@@ -49,17 +56,40 @@ public class WaterskinItem extends Item
             return super.useOn(context);
         }
 
+        // Drain water from cauldron
         if (player.getAbilities().mayBuild && state.getBlock() == Blocks.WATER_CAULDRON
         && state.getValue(BlockStateProperties.LEVEL_CAULDRON) > 0)
         {
             if (!player.isCreative())
             {   LayeredCauldronBlock.lowerFillLevel(state, level, pos);
             }
-            WaterskinItem.setFilled(player, context.getItemInHand(), context.getHand(), pos);
+            WaterskinItem.handleFillWaterskin(player, context.getItemInHand(), context.getHand(), pos);
             WorldHelper.spawnParticleBatch(level, ParticleTypes.SPLASH, pos.getX() + 0.5, pos.getY() + 0.65, pos.getZ() + 0.5, 0.5, 0.5, 0.5, 10, 0);
-            level.playSound(null, pos, ModSounds.WATERSKIN_FILL, SoundSource.PLAYERS, 2f, (float) Math.random() / 5 + 0.9f);
 
             return InteractionResult.SUCCESS;
+        }
+        // Drain fluid from IFluidHandler block
+        else
+        {
+            BlockEntity blockEntity = level.getBlockEntity(pos);
+            if (blockEntity != null)
+            {
+                blockEntity.getCapability(ForgeCapabilities.FLUID_HANDLER, context.getClickedFace()).ifPresent(cap ->
+                {
+                    for (int i = 0; i < cap.getTanks(); i++)
+                    {
+                        FluidStack fluidStack = cap.getFluidInTank(i);
+                        if (fluidStack.getFluid().is(FluidTags.WATER) && fluidStack.getAmount() >= FLUID_VALUE_MB)
+                        {
+                            FluidStack drainStack = fluidStack.copy();
+                            drainStack.setAmount(FLUID_VALUE_MB);
+                            cap.drain(drainStack, IFluidHandler.FluidAction.EXECUTE);
+                            WaterskinItem.handleFillWaterskin(player, context.getItemInHand(), context.getHand(), pos);
+                            return;
+                        }
+                    }
+                });
+            }
         }
         return super.useOn(context);
     }
@@ -81,8 +111,7 @@ public class WaterskinItem extends Item
         {
             if (lookingAt.getFluidState().isSource() && lookingAt.getFluidState().getType().isSame(Fluids.WATER))
             {
-                WaterskinItem.setFilled(player, itemstack, hand, hitPos);
-                level.playSound(null, hitPos, ModSounds.WATERSKIN_FILL, SoundSource.PLAYERS, 2f, (float) Math.random() / 5 + 0.9f);
+                WaterskinItem.handleFillWaterskin(player, itemstack, hand, hitPos);
                 WorldHelper.spawnParticleBatch(level, ParticleTypes.SPLASH, hitPos.getX() + 0.5, hitPos.getY() + 1, hitPos.getZ() + 0.5, 0.5, 0.5, 0.5, 10, 0);
             }
             return ar;
@@ -105,13 +134,13 @@ public class WaterskinItem extends Item
         return filledWaterskin;
     }
 
-    public static void setFilled(Player player, ItemStack thisStack, InteractionHand usedHand, BlockPos filledAtPos)
+    public static void handleFillWaterskin(Player player, ItemStack thisStack, InteractionHand usedHand, BlockPos filledAtPos)
     {
         Level level = player.level;
         ItemStack filledWaterskin = getFilledItem(thisStack, level, filledAtPos);
 
         //Replace 1 of the stack with a FilledWaterskinItem
-        if (thisStack.getCount() > 1)
+        if (thisStack.getCount() > 1 || player.getAbilities().instabuild)
         {
             if (!player.addItem(filledWaterskin))
             {
@@ -130,6 +159,7 @@ public class WaterskinItem extends Item
         player.getCooldowns().addCooldown(ModItems.FILLED_WATERSKIN, 10);
         player.getCooldowns().addCooldown(ModItems.WATERSKIN, 10);
         player.awardStat(Stats.ITEM_USED.get(thisStack.getItem()));
+        level.playSound(null, filledAtPos, ModSounds.WATERSKIN_FILL, SoundSource.PLAYERS, 2f, (float) Math.random() / 5 + 0.9f);
     }
 
     @Override
