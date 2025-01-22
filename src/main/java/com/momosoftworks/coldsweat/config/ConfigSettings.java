@@ -25,6 +25,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.*;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
@@ -188,7 +189,7 @@ public class ConfigSettings
     public static final DynamicHolder<Boolean> HIDE_TOOLTIPS;
     public static final DynamicHolder<Boolean> EXPAND_TOOLTIPS;
 
-    public static final DynamicHolder<Boolean> SHOW_WATER_EFFECT;
+    public static final DynamicHolder<WaterEffectSetting> WATER_EFFECT_SETTING;
 
 
     // Makes the settings instantiation collapsible & easier to read
@@ -876,18 +877,15 @@ public class ConfigSettings
 
         TEMP_SMOOTHING = addClientSetting("temp_smoothing", () -> 10d, holder -> holder.set(ClientSettingsConfig.TEMPERATURE_SMOOTHING.get()));
 
-        BODY_ICON_POS = addClientSetting("body_icon_pos", Vector2i::new, holder -> holder.set(new Vector2i(ClientSettingsConfig.getBodyIconX(),
-                                                                  ClientSettingsConfig.getBodyIconY())));
+        BODY_ICON_POS = addClientSetting("body_icon_pos", Vector2i::new, holder -> holder.set(ClientSettingsConfig.getBodyIconPos()));
         BODY_ICON_ENABLED = addClientSetting("body_icon_enabled", () -> true, holder -> holder.set(ClientSettingsConfig.SHOW_BODY_TEMP_ICON.get()));
 
         MOVE_BODY_ICON_WHEN_ADVANCED = addClientSetting("move_body_icon_for_advanced", () -> true, holder -> holder.set(ClientSettingsConfig.MOVE_BODY_TEMP_ICON_ADVANCED.get()));
 
-        BODY_READOUT_POS = addClientSetting("body_readout_pos", Vector2i::new, holder -> holder.set(new Vector2i(ClientSettingsConfig.getBodyReadoutX(),
-                                                                                ClientSettingsConfig.getBodyReadoutY())));
+        BODY_READOUT_POS = addClientSetting("body_readout_pos", Vector2i::new, holder -> holder.set(ClientSettingsConfig.getBodyReadoutPos()));
         BODY_READOUT_ENABLED = addClientSetting("body_readout_enabled", () -> true, holder -> holder.set(ClientSettingsConfig.SHOW_BODY_TEMP_READOUT.get()));
 
-        WORLD_GAUGE_POS = addClientSetting("world_gauge_pos", Vector2i::new, holder -> holder.set(new Vector2i(ClientSettingsConfig.getWorldGaugeX(),
-                                                                    ClientSettingsConfig.getWorldGaugeY())));
+        WORLD_GAUGE_POS = addClientSetting("world_gauge_pos", Vector2i::new, holder -> holder.set(ClientSettingsConfig.getWorldGaugePos()));
         WORLD_GAUGE_ENABLED = addClientSetting("world_gauge_enabled", () -> true, holder -> holder.set(ClientSettingsConfig.SHOW_WORLD_TEMP_GAUGE.get()));
 
         CUSTOM_HOTBAR_LAYOUT = addClientSetting("custom_hotbar_layout", () -> true, holder -> holder.set(ClientSettingsConfig.USE_CUSTOM_HOTBAR_LAYOUT.get()));
@@ -896,8 +894,7 @@ public class ConfigSettings
         HEARTH_DEBUG = addClientSetting("hearth_debug", () -> true, holder -> holder.set(ClientSettingsConfig.SHOW_HEARTH_DEBUG_VISUALS.get()));
 
         SHOW_CONFIG_BUTTON = addClientSetting("show_config_button", () -> true, holder -> holder.set(ClientSettingsConfig.SHOW_CONFIG_BUTTON.get()));
-        CONFIG_BUTTON_POS = addClientSetting("config_button_pos", Vector2i::new, holder -> holder.set(new Vector2i(ClientSettingsConfig.getConfigButtonX(),
-                                                                          ClientSettingsConfig.getConfigButtonY())));
+        CONFIG_BUTTON_POS = addClientSetting("config_button_pos", Vector2i::new, holder -> holder.set(ClientSettingsConfig.getConfigButtonPos()));
 
         DISTORTION_EFFECTS = addClientSetting("distortion_effects", () -> true, holder -> holder.set(ClientSettingsConfig.SHOW_SCREEN_DISTORTIONS.get()));
 
@@ -908,7 +905,7 @@ public class ConfigSettings
         HIDE_TOOLTIPS = addClientSetting("show_creative_warning", () -> false, holder -> holder.set(ClientSettingsConfig.HIDE_INSULATION_TOOLTIPS.get()));
         EXPAND_TOOLTIPS = addClientSetting("expand_tooltips", () -> true, holder -> holder.set(ClientSettingsConfig.EXPAND_TOOLTIPS.get()));
 
-        SHOW_WATER_EFFECT = addClientSetting("show_water_effect", () -> true, holder -> holder.set(ClientSettingsConfig.SHOW_WATER_EFFECT.get()));
+        WATER_EFFECT_SETTING = addClientSetting("show_water_effect", () -> WaterEffectSetting.ALL, holder -> holder.set(WaterEffectSetting.values()[ClientSettingsConfig.WATER_EFFECT_SETTING.get()]));
 
         boolean ssLoaded = CompatManager.isSereneSeasonsLoaded();
         SUMMER_TEMPS = addSetting("summer_temps", SeasonalTempData::new, holder -> holder.set(ssLoaded ? SeasonalTempData.fromToml(WorldSettingsConfig.getSummerTemps()) : new SeasonalTempData()));
@@ -1116,6 +1113,37 @@ public class ConfigSettings
     {
         for (Map.Entry<String, DynamicHolder<?>> entry : CONFIG_SETTINGS.entrySet())
         {   entry.getValue().reset();
+        }
+    }
+
+    public enum WaterEffectSetting implements StringRepresentable
+    {
+        OFF("options.off", false, false),
+        PARTICLES("cold_sweat.config.show_water_effect.particles", true, false),
+        SCREEN("cold_sweat.config.show_water_effect.screen", false, true),
+        ALL("cold_sweat.config.show_water_effect.all", true, true);
+
+        private final String translationKey;
+        private final boolean showParticles;
+        private final boolean showGui;
+
+        WaterEffectSetting(String translationKey, boolean showParticles, boolean showGui)
+        {   this.translationKey = translationKey;
+            this.showParticles = showParticles;
+            this.showGui = showGui;
+        }
+
+        @Override
+        public String getSerializedName()
+        {   return this.translationKey;
+        }
+
+        public boolean showParticles()
+        {   return this.showParticles;
+        }
+
+        public boolean showGui()
+        {   return this.showGui;
         }
     }
 }
