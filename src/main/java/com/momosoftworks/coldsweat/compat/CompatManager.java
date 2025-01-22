@@ -3,6 +3,7 @@ package com.momosoftworks.coldsweat.compat;
 import com.blackgear.cavesandcliffs.common.entity.GoatEntity;
 import com.blackgear.cavesandcliffs.core.registries.entity.CCBEntityTypes;
 import com.momosoftworks.coldsweat.ColdSweat;
+import com.momosoftworks.coldsweat.api.event.core.init.FetchSeasonsModsEvent;
 import com.momosoftworks.coldsweat.common.capability.handler.EntityTempManager;
 import com.momosoftworks.coldsweat.common.capability.handler.ShearableFurManager;
 import net.minecraft.entity.Entity;
@@ -33,7 +34,7 @@ import java.util.stream.Collectors;
 public class CompatManager
 {
     private static final boolean BOP_LOADED = modLoaded("biomesoplenty");
-    private static final boolean SEASONS_LOADED = modLoaded("sereneseasons");
+    private static final boolean SERENE_SEASONS_LOADED = modLoaded("sereneseasons");
     private static final boolean CURIOS_LOADED = modLoaded("curios");
     private static final boolean WEREWOLVES_LOADED = modLoaded("werewolves");
     private static final boolean SPIRIT_LOADED = modLoaded("spirit");
@@ -52,6 +53,8 @@ public class CompatManager
     private static final boolean ICEBERG_LOADED = modLoaded("iceberg");
     private static final boolean SPOILED_LOADED = modLoaded("spoiled");
     private static final boolean SUPPLEMENTARIES_LOADED = modLoaded("supplementaries");
+
+    private static final List<String> SEASONS_MODS = fetchSeasonsMods();
 
     public static boolean modLoaded(String modID, String minVersion, String maxVersion)
     {
@@ -92,11 +95,25 @@ public class CompatManager
     {   return modLoaded(modID, "");
     }
 
+    private static List<String> fetchSeasonsMods()
+    {
+        FetchSeasonsModsEvent event = new FetchSeasonsModsEvent();
+        if (SERENE_SEASONS_LOADED)
+        {   event.addSeasonsMod("sereneseasons");
+        }
+        MinecraftForge.EVENT_BUS.post(event);
+        return event.getSeasonsMods();
+    }
+
+    public static List<String> getSeasonsMods()
+    {   return SEASONS_MODS;
+    }
+
     public static boolean isBiomesOPlentyLoaded()
     {   return BOP_LOADED;
     }
     public static boolean isSereneSeasonsLoaded()
-    {   return SEASONS_LOADED;
+    {   return SERENE_SEASONS_LOADED;
     }
     public static boolean isCuriosLoaded()
     {   return CURIOS_LOADED;
@@ -180,7 +197,7 @@ public class CompatManager
     {
         public static boolean isColdEnoughToSnow(World level, BlockPos pos)
         {
-            return SEASONS_LOADED && SeasonHooks.getBiomeTemperature(level, level.getBiome(pos), pos) < 0.15f;
+            return SERENE_SEASONS_LOADED && SeasonHooks.getBiomeTemperature(level, level.getBiome(pos), pos) < 0.15f;
         }
     }
 
