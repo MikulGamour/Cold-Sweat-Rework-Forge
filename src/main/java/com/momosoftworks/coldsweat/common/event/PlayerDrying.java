@@ -4,15 +4,15 @@ import com.momosoftworks.coldsweat.api.temperature.modifier.WaterTempModifier;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.data.codec.configuration.DryingItemData;
-import com.momosoftworks.coldsweat.util.serialization.NBTHelper;
 import com.momosoftworks.coldsweat.util.world.WorldHelper;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+
+import java.util.Collection;
 
 @EventBusSubscriber
 public class PlayerDrying
@@ -22,14 +22,16 @@ public class PlayerDrying
     {
         ItemStack stack = event.getItemStack();
         Player player = event.getEntity();
-        DryingItemData dryingResult = ConfigSettings.DRYING_ITEMS.get().get(stack.getItem());
+        Collection<DryingItemData> dryingResults = ConfigSettings.DRYING_ITEMS.get().get(stack.getItem());
 
-        if (!player.level().isClientSide() && dryingResult != null && dryingResult.test(stack, player)
-        && Temperature.hasModifier(player, Temperature.Trait.WORLD, WaterTempModifier.class))
+        if (!player.level().isClientSide() && Temperature.hasModifier(player, Temperature.Trait.WORLD, WaterTempModifier.class))
         {
-            // Create result item
-            ItemStack newStack = dryingResult.result();
-            // Remove item from player's inventory
+            for (DryingItemData dryingResult : dryingResults)
+            {
+                if (!dryingResult.test(player, stack)) continue;
+                // Create result item
+                ItemStack newStack = dryingResult.result();
+                // Remove item from player's inventory
             if (!player.getAbilities().instabuild)
             {
                 stack.shrink(1);
@@ -42,7 +44,8 @@ public class PlayerDrying
             player.swing(event.getHand(), true);
             WorldHelper.playEntitySound(dryingResult.sound(), player, SoundSource.PLAYERS, 1.0F, 1.0F);
             // Remove water temperature modifier
-            Temperature.removeModifiers(player, Temperature.Trait.WORLD, mod -> mod instanceof WaterTempModifier);
+            Temperature.removeModifiers(player, Temperature.Trait.WORLD, mod -> mod instanceof WaterTempModifier);break;
+            }
         }
     }
 }
