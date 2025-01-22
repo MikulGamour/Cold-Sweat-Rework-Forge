@@ -111,8 +111,12 @@ public class EntityTempData extends ConfigData implements RequirementHolder
             && this.playerRequirement.map(req -> req.test(affectedPlayer)).orElse(true);
     }
 
-    public double getTemperature(Entity entity, Entity affectedPlayer)
-    {   return CSMath.blend(0, this.temperature, entity.distanceTo(affectedPlayer), range, 0);
+    public double getTemperature()
+    {   return Temperature.convert(temperature, units, Temperature.Units.MC, false);
+    }
+
+    public double getTemperatureEffect(Entity entity, Entity affectedPlayer)
+    {   return CSMath.blend(0, this.getTemperature(), entity.distanceTo(affectedPlayer), range, 0);
     }
 
     @Override
