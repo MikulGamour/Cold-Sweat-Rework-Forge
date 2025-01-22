@@ -14,6 +14,8 @@ import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
+import java.util.Collection;
+
 @Mod.EventBusSubscriber
 public class PlayerDrying
 {
@@ -22,31 +24,35 @@ public class PlayerDrying
     {
         ItemStack stack = event.getItemStack();
         Player player = event.getEntity();
-        DryingItemData dryingResult = ConfigSettings.DRYING_ITEMS.get().get(stack.getItem());
+        Collection<DryingItemData> dryingResults = ConfigSettings.DRYING_ITEMS.get().get(stack.getItem());
 
-        if (!player.level.isClientSide() && dryingResult != null && dryingResult.test(stack, player)
-        && Temperature.hasModifier(player, Temperature.Trait.WORLD, WaterTempModifier.class))
+        if (!player.level.isClientSide() && Temperature.hasModifier(player, Temperature.Trait.WORLD, WaterTempModifier.class))
         {
-            // Create result item
-            ItemStack newStack = dryingResult.result();
-            CompoundTag oldTag = NBTHelper.getTagOrEmpty(stack).copy();
-            if (!oldTag.isEmpty())
-            {   newStack.getOrCreateTag().merge(NBTHelper.getTagOrEmpty(stack).copy());
-            }
-            // Remove item from player's inventory
-            if (!player.getAbilities().instabuild)
+            for (DryingItemData dryingResult : dryingResults)
             {
-                stack.shrink(1);
-                // Add result item to player's inventory
-                if (!player.getInventory().add(newStack))
-                {   player.drop(newStack, false);
+                if (!dryingResult.test(player, stack)) continue;
+                // Create result item
+                ItemStack newStack = dryingResult.result();
+                CompoundTag oldTag = NBTHelper.getTagOrEmpty(stack).copy();
+                if (!oldTag.isEmpty())
+                {   newStack.getOrCreateTag().merge(NBTHelper.getTagOrEmpty(stack).copy());
                 }
+                // Remove item from player's inventory
+                if (!player.getAbilities().instabuild)
+                {
+                    stack.shrink(1);
+                    // Add result item to player's inventory
+                    if (!player.getInventory().add(newStack))
+                    {   player.drop(newStack, false);
+                    }
+                }
+                // Effects
+                player.swing(event.getHand(), true);
+                WorldHelper.playEntitySound(dryingResult.sound(), player, SoundSource.PLAYERS, 1.0F, 1.0F);
+                // Remove water temperature modifier
+                Temperature.removeModifiers(player, Temperature.Trait.WORLD, mod -> mod instanceof WaterTempModifier);
+                break;
             }
-            // Effects
-            player.swing(event.getHand(), true);
-            WorldHelper.playEntitySound(dryingResult.sound(), player, SoundSource.PLAYERS, 1.0F, 1.0F);
-            // Remove water temperature modifier
-            Temperature.removeModifiers(player, Temperature.Trait.WORLD, mod -> mod instanceof WaterTempModifier);
         }
     }
 }

@@ -1,11 +1,11 @@
 package com.momosoftworks.coldsweat.config.spec;
 
 import com.momosoftworks.coldsweat.config.ConfigSettings;
+import com.momosoftworks.coldsweat.util.math.Vec2i;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.loading.FMLPaths;
-import org.joml.Vector2i;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -151,20 +151,20 @@ public class ClientSettingsConfig
         ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, SPEC, "coldsweat/client.toml");
     }
 
-    public static Vector2i getBodyIconPos()
-    {   return new Vector2i(BODY_TEMP_ICON_POS.get().get(0), BODY_TEMP_ICON_POS.get().get(1));
+    public static Vec2i getBodyIconPos()
+    {   return new Vec2i(BODY_TEMP_ICON_POS.get().get(0), BODY_TEMP_ICON_POS.get().get(1));
     }
 
-    public static Vector2i getBodyReadoutPos()
-    {   return new Vector2i(BODY_TEMP_READOUT_POS.get().get(0), BODY_TEMP_READOUT_POS.get().get(1));
+    public static Vec2i getBodyReadoutPos()
+    {   return new Vec2i(BODY_TEMP_READOUT_POS.get().get(0), BODY_TEMP_READOUT_POS.get().get(1));
     }
 
-    public static Vector2i getWorldGaugePos()
-    {   return new Vector2i(WORLD_TEMP_GAUGE_POS.get().get(0), WORLD_TEMP_GAUGE_POS.get().get(1));
+    public static Vec2i getWorldGaugePos()
+    {   return new Vec2i(WORLD_TEMP_GAUGE_POS.get().get(0), WORLD_TEMP_GAUGE_POS.get().get(1));
     }
 
-    public static Vector2i getConfigButtonPos()
-    {   return new Vector2i(CONFIG_BUTTON_POS.get().get(0), CONFIG_BUTTON_POS.get().get(1));
+    public static Vec2i getConfigButtonPos()
+    {   return new Vec2i(CONFIG_BUTTON_POS.get().get(0), CONFIG_BUTTON_POS.get().get(1));
     }
 
     public static synchronized void writeAndSave()
