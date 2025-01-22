@@ -6,7 +6,6 @@ import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.loading.FMLPaths;
-import org.joml.Vector2i;
 
 import java.nio.file.Files;
 import java.nio.file.Path;

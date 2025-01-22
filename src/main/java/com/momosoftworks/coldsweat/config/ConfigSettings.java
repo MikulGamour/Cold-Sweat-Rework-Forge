@@ -134,7 +134,7 @@ public class ConfigSettings
     public static final DynamicHolder<Multimap<Item, InsulatorData>> INSULATING_CURIOS;
     public static final DynamicHolder<ScalingFormula> INSULATION_SLOTS;
     public static final DynamicHolder<List<Item>> INSULATION_BLACKLIST;
-    public static final DynamicHolder<Map<Item, DryingItemData>> DRYING_ITEMS;
+    public static final DynamicHolder<Multimap<Item, DryingItemData>> DRYING_ITEMS;
 
     public static final DynamicHolder<Multimap<Item, FoodData>> FOOD_TEMPERATURES;
 
@@ -499,9 +499,9 @@ public class ConfigSettings
                                                     .map(entry -> ForgeRegistries.ITEMS.getValue(new ResourceLocation(entry)))
                                                     .collect(ArrayList::new, List::add, List::addAll)));
 
-        DRYING_ITEMS = addSyncedSetting("drying_items", FastMap::new, holder ->
+        DRYING_ITEMS = addSyncedSetting("drying_items", FastMultiMap::new, holder ->
         {
-            Map<Item, DryingItemData> dataMap = new FastMap<>();
+            Multimap<Item, DryingItemData> dataMap = new FastMultiMap<>();
             for (List<?> entry : ItemSettingsConfig.DRYING_ITEMS.get())
             {
                 DryingItemData data = DryingItemData.fromToml(entry);
@@ -518,8 +518,8 @@ public class ConfigSettings
             // Add entries
             holder.get().putAll(dataMap);
         },
-        (encoder) -> ConfigHelper.serializeRegistry(encoder, "DryingItems", Registry.ITEM_REGISTRY, ModRegistries.DRYING_ITEM_DATA, ForgeRegistries.ITEMS::getKey),
-        (decoder) -> ConfigHelper.deserializeRegistry(decoder, "DryingItems", ModRegistries.DRYING_ITEM_DATA, rl -> ForgeRegistries.ITEMS.getValue(rl)),
+        (encoder) -> ConfigHelper.serializeMultimapRegistry(encoder, "DryingItems", Registry.ITEM_REGISTRY, ModRegistries.DRYING_ITEM_DATA, ForgeRegistries.ITEMS::getKey),
+        (decoder) -> ConfigHelper.deserializeMultimapRegistry(decoder, "DryingItems", ModRegistries.DRYING_ITEM_DATA, rl -> ForgeRegistries.ITEMS.getValue(rl)),
         (saver) -> {},
         SyncType.ONE_WAY);
 
