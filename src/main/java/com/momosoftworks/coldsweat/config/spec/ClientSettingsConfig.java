@@ -46,9 +46,9 @@ public class ClientSettingsConfig
     public static final ForgeConfigSpec.BooleanValue HIDE_INSULATION_TOOLTIPS;
     public static final ForgeConfigSpec.BooleanValue EXPAND_TOOLTIPS;
 
-    public static final ForgeConfigSpec.BooleanValue SHOW_WATER_EFFECT;
 
     private static final ClientSettingsConfig INSTANCE = new ClientSettingsConfig();
+    public static final ForgeConfigSpec.IntValue WATER_EFFECT_SETTING;
 
     static 
     {
@@ -66,9 +66,10 @@ public class ClientSettingsConfig
                     .comment("The amount of smoothing applied to gauges in the UI",
                              "A value of 1 has no smoothing")
                     .defineInRange("Temperature Smoothing", 10, 1.0, Integer.MAX_VALUE);
-            SHOW_WATER_EFFECT = BUILDER
-                    .comment("Displays a dripping water effect on-screen when the player is wet")
-                    .define("Show Water Effect", true);
+            WATER_EFFECT_SETTING = BUILDER
+                    .comment("Displays a dripping water effect on-screen and/or with particles when the player is wet",
+                             "0: Off, 1: Particles, 2: On-Screen, 3: Both")
+                    .defineInRange("Show Water Effect", 3, 0, 3);
         BUILDER.pop();
 
         BUILDER.push("UI Options");
@@ -195,48 +196,6 @@ public class ClientSettingsConfig
     {   return WORLD_TEMP_GAUGE_POS.get().get(1);
     }
 
-    public double getTempSmoothing()
-    {   return TEMPERATURE_SMOOTHING.get();
-    }
-
-    public boolean customHotbarEnabled()
-    {   return USE_CUSTOM_HOTBAR_LAYOUT.get();
-    }
-
-    public boolean isIconBobbingEnabled()
-    {   return ENABLE_ICON_BOBBING.get();
-    }
-
-    public boolean isHearthDebugEnabled()
-    {   return SHOW_HEARTH_DEBUG_VISUALS.get();
-    }
-
-    public boolean isCreativeWarningEnabled()
-    {   return ENABLE_CREATIVE_WARNING.get();
-    }
-
-    public boolean isBodyIconEnabled()
-    {   return SHOW_BODY_TEMP_ICON.get();
-    }
-    public boolean isBodyReadoutEnabled()
-    {   return SHOW_BODY_TEMP_READOUT.get();
-    }
-    public boolean isWorldGaugeEnabled()
-    {   return SHOW_WORLD_TEMP_GAUGE.get();
-    }
-
-    public boolean moveBodyIconWhenAdvanced()
-    {   return MOVE_BODY_TEMP_ICON_ADVANCED.get();
-    }
-
-    public boolean hideTooltips()
-    {   return HIDE_INSULATION_TOOLTIPS.get();
-    }
-
-    public boolean isWaterEffectEnabled()
-    {   return SHOW_WATER_EFFECT.get();
-    }
-
     /*
      * Safe set methods for config values
      */
@@ -324,14 +283,6 @@ public class ClientSettingsConfig
     {   MOVE_BODY_TEMP_ICON_ADVANCED.set(enabled);
     }
 
-    public void setHideTooltips(boolean hide)
-    {   HIDE_INSULATION_TOOLTIPS.set(hide);
-    }
-
-    public void setWaterEffectEnabled(boolean enabled)
-    {   SHOW_WATER_EFFECT.set(enabled);
-    }
-
     public synchronized void writeAndSave()
     {   this.setCelsius(ConfigSettings.CELSIUS.get());
         this.setTempOffset(ConfigSettings.TEMP_OFFSET.get());
@@ -354,8 +305,8 @@ public class ClientSettingsConfig
         this.setConfigButtonPos(List.of(ConfigSettings.CONFIG_BUTTON_POS.get().x(),
                                         ConfigSettings.CONFIG_BUTTON_POS.get().y()));
         this.setMoveBodyIconWhenAdvanced(ConfigSettings.MOVE_BODY_ICON_WHEN_ADVANCED.get());
-        this.setWaterEffectEnabled(ConfigSettings.SHOW_WATER_EFFECT.get());
         this.save();
+        WATER_EFFECT_SETTING.set(ConfigSettings.WATER_EFFECT_SETTING.get().ordinal());
     }
 
     public void save()

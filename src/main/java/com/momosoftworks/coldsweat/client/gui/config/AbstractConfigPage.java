@@ -13,6 +13,7 @@ import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.*;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.StringRepresentable;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -609,6 +610,19 @@ public abstract class AbstractConfigPage extends Screen
     {
         return text.append(": ")
                    .append(on ? CommonComponents.OPTION_ON : CommonComponents.OPTION_OFF);
+    }
+
+    public <T extends Enum<T> & StringRepresentable> MutableComponent getEnumButtonText(MutableComponent text, T value)
+    {
+        return text.append(": ")
+                   .append(new TranslatableComponent(value.getSerializedName()));
+    }
+
+    public <T extends Enum<T> & StringRepresentable> T getNextCycle(T current)
+    {
+        T[] values = current.getDeclaringClass().getEnumConstants();
+        int index = (current.ordinal() + 1) % values.length;
+        return values[index];
     }
 
     public MutableComponent getSliderPercentageText(MutableComponent message, double value, double offAt)
