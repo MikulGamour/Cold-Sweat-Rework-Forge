@@ -1,13 +1,13 @@
 package com.momosoftworks.coldsweat.compat;
 
 import com.momosoftworks.coldsweat.ColdSweat;
+import com.momosoftworks.coldsweat.api.event.core.init.FetchSeasonsModsEvent;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.common.capability.handler.EntityTempManager;
 import com.momosoftworks.coldsweat.core.init.BlockInit;
 import com.momosoftworks.coldsweat.compat.create.ColdSweatDisplayBehaviors;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.registries.ModBlocks;
-import com.momosoftworks.coldsweat.util.registries.ModDamageSources;
 import com.momosoftworks.coldsweat.util.registries.ModItems;
 import com.simibubi.create.content.equipment.armor.BacktankItem;
 import com.simibubi.create.content.equipment.armor.BacktankUtil;
@@ -23,7 +23,6 @@ import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -65,7 +64,7 @@ import java.util.List;
 public class CompatManager
 {
     private static final boolean BOP_LOADED = modLoaded("biomesoplenty");
-    private static final boolean SEASONS_LOADED = modLoaded("sereneseasons");
+    private static final boolean SERENE_SEASONS_LOADED = modLoaded("sereneseasons");
     private static final boolean CURIOS_LOADED = modLoaded("curios");
     private static final boolean WEREWOLVES_LOADED = modLoaded("werewolves");
     private static final boolean SPIRIT_LOADED = modLoaded("spirit");
@@ -83,6 +82,8 @@ public class CompatManager
     private static final boolean SPOILED_LOADED = modLoaded("spoiled");
     private static final boolean SUPPLEMENTARIES_LOADED = modLoaded("supplementaries");
     private static final boolean VALKYRIEN_SKIES_LOADED = modLoaded("valkyrienskies");
+
+    private static final List<String> SEASONS_MODS = fetchSeasonsMods();
 
     public static boolean modLoaded(String modID, String minVersion, String maxVersion)
     {
@@ -123,11 +124,25 @@ public class CompatManager
     {   return modLoaded(modID, "");
     }
 
+    private static List<String> fetchSeasonsMods()
+    {
+        FetchSeasonsModsEvent event = new FetchSeasonsModsEvent();
+        if (SERENE_SEASONS_LOADED)
+        {   event.addSeasonsMod("sereneseasons");
+        }
+        MinecraftForge.EVENT_BUS.post(event);
+        return event.getSeasonsMods();
+    }
+
+    public static List<String> getSeasonsMods()
+    {   return SEASONS_MODS;
+    }
+
     public static boolean isBiomesOPlentyLoaded()
     {   return BOP_LOADED;
     }
     public static boolean isSereneSeasonsLoaded()
-    {   return SEASONS_LOADED;
+    {   return SERENE_SEASONS_LOADED;
     }
     public static boolean isCuriosLoaded()
     {   return CURIOS_LOADED;
@@ -215,7 +230,7 @@ public class CompatManager
     {
         public static boolean isColdEnoughToSnow(Level level, BlockPos pos)
         {
-            return SEASONS_LOADED && SeasonHooks.coldEnoughToSnowHook(level.getBiome(pos).value(), pos, level);
+            return SERENE_SEASONS_LOADED && SeasonHooks.coldEnoughToSnowHook(level.getBiome(pos).value(), pos, level);
         }
     }
 
