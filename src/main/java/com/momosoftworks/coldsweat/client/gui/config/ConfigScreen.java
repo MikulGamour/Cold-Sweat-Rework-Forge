@@ -63,7 +63,7 @@ public class ConfigScreen
             PacketDistributor.sendToServer(new SyncConfigSettingsMessage(registryAccess));
             PacketDistributor.sendToServer(new SyncPreferredUnitsMessage(ConfigSettings.CELSIUS.get() ? Temperature.Units.C : Temperature.Units.F));
         }
-        ClientSettingsConfig.getInstance().writeAndSave();
+        ClientSettingsConfig.writeAndSave();
     }
 
     @SubscribeEvent
