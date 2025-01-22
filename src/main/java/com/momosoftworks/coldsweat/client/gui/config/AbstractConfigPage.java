@@ -3,6 +3,7 @@ package com.momosoftworks.coldsweat.client.gui.config;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.datafixers.util.Pair;
 import com.momosoftworks.coldsweat.util.math.CSMath;
+import com.momosoftworks.coldsweat.util.serialization.StringRepresentable;
 import net.minecraft.client.Minecraft;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import net.minecraft.client.gui.DialogTexts;
@@ -617,6 +618,19 @@ public abstract class AbstractConfigPage extends Screen
     {
         return text.append(": ")
                    .append(on ? DialogTexts.OPTION_ON : DialogTexts.OPTION_OFF);
+    }
+
+    public <T extends Enum<T> & StringRepresentable> IFormattableTextComponent getEnumButtonText(IFormattableTextComponent text, T value)
+    {
+        return text.append(": ")
+                   .append(new TranslationTextComponent(value.getSerializedName()));
+    }
+
+    public <T extends Enum<T> & StringRepresentable> T getNextCycle(T current)
+    {
+        T[] values = current.getDeclaringClass().getEnumConstants();
+        int index = (current.ordinal() + 1) % values.length;
+        return values[index];
     }
 
     public IFormattableTextComponent getSliderPercentageText(IFormattableTextComponent message, double value, double offAt)
