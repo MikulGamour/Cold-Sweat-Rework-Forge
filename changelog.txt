@@ -2761,3 +2761,29 @@ Technical Changes:
       - DepthBiomeTempModifier ("cold_sweat:depth_biomes"): Handles the temperature of underground biomes
       - ElevationTempModifier ("cold_sweat:elevation"): Handles temperature changes based on altitude & depth underground (provided by temperature regions)
       - These modifiers will be automatically added to existing players/entities
+
+------------------------------------------------------------------------------------------------------------------------
+2.3.11
+* The Water Effects config setting now has 5 states:
+      - OFF: Disables all water effects
+      - Particles: Only water drip particles are shown
+      - Overlay: Only the on-screen water overlay is shown
+      - All: Both particles and overlay are shown
+      - Clicking the button in the config menu will now cycle through these options
+- Slightly improved the performance of the "blobs" shader that is applied when the player is overheating
+- Waterskins can now take from any Forge fluid container that has 250mb of water, if the container supports it
+
+Fixes:
+* Fixed crash when shift-clicking an empty slot in the sewing menu
+* (1.19) Fixed crash when Valkyrien Skies is not installed
+* (1.21) Fixed insulation not being properly removed in the sewing table
+* Fixed shears not breaking at 0 durability in the sewing table
+* Fixed players not having temperature attributes
+- Fixed attribute modifier tooltips always having an insulation icon, even if they aren't added by insulation
+
+Technical Changes:
+- Added FetchSeasonsModsEvent, which allows mod developers to signal that Cold Sweat should load the appropriate seasonal configs
+      - Add your mod's ID to the list via FetchSeasonsModsEvent#addSeasonsMod()
+      - This event is fired on the Forge event bus when configs are being constructed
+- Multiple "drying item" configs can now be configured for a given item
+      - The first applicable config will be used in the event that there are more than one
