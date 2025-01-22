@@ -36,7 +36,7 @@ public class EntitiesTempModifier extends TempModifier
                 if (tempData.test(nearbyEnt, affectedEnt))
                 {
                     // Get the temperature of the entity (considering distance)
-                    double entityTemp = tempData.getTemperature(nearbyEnt, affectedEnt);
+                    double entityTemp = tempData.getTemperatureEffect(nearbyEnt, affectedEnt);
                     // Dampen the effect by the number of solid blocks between the entities
                     AtomicInteger blocksBetween = new AtomicInteger();
                     WorldHelper.forBlocksInRay(EntityHelper.getCenterOf(affectedEnt),
