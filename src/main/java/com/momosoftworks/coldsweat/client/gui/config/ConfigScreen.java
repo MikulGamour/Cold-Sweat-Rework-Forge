@@ -61,7 +61,7 @@ public class ConfigScreen
             ColdSweatPacketHandler.INSTANCE.sendToServer(new SyncConfigSettingsMessage(registryAccess));
             ColdSweatPacketHandler.INSTANCE.sendToServer(new SyncPreferredUnitsMessage(ConfigSettings.CELSIUS.get() ? Temperature.Units.C : Temperature.Units.F));
         }
-        ClientSettingsConfig.getInstance().writeAndSave();
+        ClientSettingsConfig.writeAndSave();
     }
 
     @SubscribeEvent
