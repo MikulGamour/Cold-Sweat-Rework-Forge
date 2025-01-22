@@ -64,8 +64,8 @@ public class ConfigPageTwo extends AbstractConfigPage
                 false, false, true, Component.translatable("cold_sweat.config.high_contrast.desc"));
 
         // Show Water Effect
-        this.addButton("show_water_effect", Side.LEFT, () -> getToggleButtonText(Component.translatable("cold_sweat.config.show_water_effect.name"), ConfigSettings.SHOW_WATER_EFFECT.get()),
-                button -> ConfigSettings.SHOW_WATER_EFFECT.set(!ConfigSettings.SHOW_WATER_EFFECT.get()),
+        this.addButton("show_water_effect", Side.LEFT, () -> getEnumButtonText(Component.translatable("cold_sweat.config.show_water_effect.name"), ConfigSettings.WATER_EFFECT_SETTING.get()),
+                button -> ConfigSettings.WATER_EFFECT_SETTING.set(getNextCycle(ConfigSettings.WATER_EFFECT_SETTING.get())),
                 false, false, true, Component.translatable("cold_sweat.config.show_water_effect.desc"));
 
         // Direction Buttons: Steve Head
