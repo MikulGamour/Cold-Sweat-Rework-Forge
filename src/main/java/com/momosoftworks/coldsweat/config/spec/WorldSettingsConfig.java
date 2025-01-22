@@ -701,8 +701,8 @@ public class WorldSettingsConfig
         BUILDER.pop();
 
 
-        /* Serene Seasons config */
-        if (CompatManager.isSereneSeasonsLoaded())
+        /* Seasons config */
+        if (!CompatManager.getSeasonsMods().isEmpty())
         {
             BUILDER.comment("Format: [season-start, season-mid, season-end, *units]",
                             "First 3 parameters: The temperature offset at the start, middle, and end of the season",
