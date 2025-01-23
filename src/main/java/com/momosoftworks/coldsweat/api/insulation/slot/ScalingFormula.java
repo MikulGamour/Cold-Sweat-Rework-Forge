@@ -70,7 +70,10 @@ public abstract class ScalingFormula implements NbtSerializable
         @Override
         public List<? extends Number> getValues()
         {
-            return Arrays.stream(EquipmentSlotType.values()).filter(slot -> slot.getType() == EquipmentSlotType.Group.ARMOR).map(slots::get).collect(Collectors.toList());
+            return Arrays.asList(slots.get(EquipmentSlotType.HEAD),
+                                 slots.get(EquipmentSlotType.CHEST),
+                                 slots.get(EquipmentSlotType.LEGS),
+                                 slots.get(EquipmentSlotType.FEET));
         }
 
         public static Static deserialize(CompoundNBT nbt)
