@@ -309,9 +309,13 @@ public class CompatManager
 
         public static AABB transformIfShipPos(Level level, AABB aabb)
         {
-            Vec3 min = transformIfShipPos(level, new Vec3(aabb.minX, aabb.minY, aabb.minZ));
-            Vec3 max = transformIfShipPos(level, new Vec3(aabb.maxX, aabb.maxY, aabb.maxZ));
-            return new AABB(min, max);
+            if (VALKYRIEN_SKIES_LOADED)
+            {
+                Vec3 min = transformIfShipPos(level, new Vec3(aabb.minX, aabb.minY, aabb.minZ));
+                Vec3 max = transformIfShipPos(level, new Vec3(aabb.maxX, aabb.maxY, aabb.maxZ));
+                return new AABB(min, max);
+            }
+            return aabb;
         }
 
         public static BlockPos transformIfShipPos(Level level, BlockPos pos)
