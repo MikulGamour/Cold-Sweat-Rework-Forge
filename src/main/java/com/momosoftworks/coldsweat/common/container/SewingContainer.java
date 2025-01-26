@@ -8,6 +8,7 @@ import com.momosoftworks.coldsweat.core.init.ModAdvancementTriggers;
 import com.momosoftworks.coldsweat.core.init.ModBlocks;
 import com.momosoftworks.coldsweat.core.init.ModItemComponents;
 import com.momosoftworks.coldsweat.core.init.ModMenus;
+import com.momosoftworks.coldsweat.util.item.ItemStackHelper;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerLevel;
@@ -119,6 +120,7 @@ public class SewingContainer extends ItemCombinerMenu
                     // Play shear sound
                     player.level().playSound(null, player.blockPosition(), SoundEvents.SHEEP_SHEAR, SoundSource.PLAYERS, 0.8F, 1.0F);
                 }
+                input1.set(ModItemComponents.ARMOR_INSULATION, cap);
             });
         }
         // If insulation is being added
@@ -200,9 +202,9 @@ public class SewingContainer extends ItemCombinerMenu
     /**
      * Tries to apply the given insulator to the armor item.<br>
      * Fails if the
-     * @param armorItem
-     * @param insulatorItem
-     * @return
+     * @param armorItem The armor item to insulate
+     * @param insulatorItem The insulator item to apply
+     * @return True if the insulator was applied, false otherwise
      */
     private boolean insulateArmorItem(ItemStack armorItem, ItemStack insulatorItem)
     {
@@ -231,8 +233,8 @@ public class SewingContainer extends ItemCombinerMenu
         // Transfer enchantments
         if (armorItem.has(DataComponents.ENCHANTMENTS) && insulator.has(DataComponents.ENCHANTMENTS))
         {
-            ItemEnchantments armorEnch = armorItem.get(DataComponents.ENCHANTMENTS);
-            ItemEnchantments.Mutable insulatorEnch = new ItemEnchantments.Mutable(insulator.get(DataComponents.ENCHANTMENTS));
+            ItemEnchantments armorEnch = ItemStackHelper.getOrCreateComponent(armorItem, DataComponents.ENCHANTMENTS, () -> ItemEnchantments.EMPTY);
+            ItemEnchantments.Mutable insulatorEnch = new ItemEnchantments.Mutable(ItemStackHelper.getOrCreateComponent(insulator, DataComponents.ENCHANTMENTS, () -> ItemEnchantments.EMPTY));
             insulatorEnch.removeIf(ench ->
             {
                 if (ench == null) return false;
