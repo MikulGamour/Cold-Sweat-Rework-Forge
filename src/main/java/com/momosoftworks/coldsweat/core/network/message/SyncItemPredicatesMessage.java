@@ -190,13 +190,7 @@ public class SyncItemPredicatesMessage implements CustomPacketPayload
     }
 
     private void checkDryingItems(ItemStack stack, Entity entity)
-    {
-        Map<UUID, Boolean> configMap = new FastMap<>();
-        DryingItemData data = ConfigSettings.DRYING_ITEMS.get().get(stack.getItem());
-        if (data == null) return;
-        UUID id = data.getId();
-        configMap.put(id, data.test(entity, stack));
-        this.predicateMap.putAll(configMap);
+    {   this.checkItemRequirement(stack, entity, ConfigSettings.DRYING_ITEMS);
     }
 
     private void checkItemRequirement(ItemStack stack, Entity entity, DynamicHolder<? extends Multimap<Item, ? extends RequirementHolder>> configSetting)
