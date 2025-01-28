@@ -15,6 +15,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.material.Fluids;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -67,7 +68,7 @@ public class WetnessRenderer
 
         BlockPos playerPos = player.blockPosition();
         float playerYVelocity = (float) (player.position().y - player.yOld);
-        boolean isSubmerged = player.canSwimInFluidType(player.getEyeInFluidType());
+        boolean isSubmerged = player.getEyeInFluidType() == Fluids.WATER.getFluidType();
 
         int light = player.level().getMaxLocalRawBrightness(playerPos.above());
         if (player.hasEffect(MobEffects.NIGHT_VISION)) light = 15;
