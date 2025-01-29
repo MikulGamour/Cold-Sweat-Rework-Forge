@@ -2744,7 +2744,7 @@ Technical Changes:
 - Added "cold_sweat:extends_smokestack" block tag, which defines what blocks can be used to increase the height of a smokestack
 ! The "entity" parameter for getTemperature() in BlockTemp is now nullable
 ! EnableTemperatureEvent is now fired on the Forge event bus directly after configs are loaded
-* Configs defined by JSON (and a few more) are now only synced server -> client and not the other way around
+* Configs defined by JSON (and a few more) are now only synced server -> client and not the other way arounddddd
       - These configs will no longer attempt to be written to TOML files
       - This change also affects singleplayer worlds, as they have an integrated server
       * Structure temperatures are not synced at all anymore, because structures themselves are not synced anyway
@@ -2780,7 +2780,9 @@ Fixes:
 * Fixed shears not breaking at 0 durability in the sewing table
 * Fixed players not having temperature attributes
 * Fixed the number of insulation slots for chestplates and leggings being swapped
+- Fixed overlapping thermal sources with two different strengths causing temperature fluctuations
 - Fixed attribute modifier tooltips always having an insulation icon, even if they aren't added by insulation
+- Fixed water drops appearing on the screen when the player emerges from a swim-able liquid that isn't water
 
 Technical Changes:
 - Added FetchSeasonsModsEvent, which allows mod developers to signal that Cold Sweat should load the appropriate seasonal configs
