@@ -1,7 +1,7 @@
 {
   "conditions": [
     {
-      "modid": "supplementaries",
+      "modid": "jeed",
       "type": "forge:mod_loaded"
     }
   ],
