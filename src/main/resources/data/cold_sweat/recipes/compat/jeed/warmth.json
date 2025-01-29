@@ -1,0 +1,15 @@
+{
+  "conditions": [
+    {
+      "modid": "supplementaries",
+      "type": "forge:mod_loaded"
+    }
+  ],
+  "type": "jeed:effect_provider",
+  "effect": "cold_sweat:warmth",
+  "providers": [
+    {
+      "tag": "cold_sweat:hearth"
+    }
+  ]
+}
