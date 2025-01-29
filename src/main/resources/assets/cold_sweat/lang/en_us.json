@@ -293,6 +293,15 @@
   "attribute.cold_sweat.modifier.add.world_temperature":      "%d° Environment Temperature",
   "attribute.cold_sweat.modifier.multiply.world_temperature": "%d Environment Temperature",
 
+  "effect.cold_sweat.frigidness.desc": "Decreases and stabilizes the world temperature for the player. Higher levels provide a more habitable temperature in frigid environments."
+  "effect.cold_sweat.grace.desc": "Grants complete immunity to temperature-based damage. \n\nOnly obtainable when joining a world for the first time."
+  "effect.cold_sweat.ice_resistance.desc": "Grants immunity to freezing damage, as well as damage from powdered snow."
+  "effect.cold_sweat.frigidness.desc": "Increases and stabilizes the world temperature for the player. Higher levels provide a more habitable temperature in hot environments."
+  "effect.cold_sweat.frigidness.description": "Decreases and stabilizes the world temperature for the player. Higher levels provide a more habitable temperature in frigid environments."
+  "effect.cold_sweat.grace.description": "Grants complete immunity to temperature-based damage. \n\nOnly obtainable when joining a world for the first time."
+  "effect.cold_sweat.ice_resistance.description": "Grants immunity to freezing damage, as well as damage from powdered snow."
+  "effect.cold_sweat.frigidness.description": "Increases and stabilizes the world temperature for the player. Higher levels provide a more habitable temperature in hot environments."
+
   "message.cold_sweat.mod_name": "Cold Sweat",
   "message.cold_sweat.warning": "Warning!",
   "message.cold_sweat.disable": "click to disable",
