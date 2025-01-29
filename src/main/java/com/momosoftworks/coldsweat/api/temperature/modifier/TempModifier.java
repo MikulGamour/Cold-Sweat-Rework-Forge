@@ -85,10 +85,10 @@ public abstract class TempModifier
      * @param ticks the number of ticks this modifier will last.
      * @return this TempModifier instance (allows for in-line building).
      */
-    public final TempModifier expires(int ticks)
+    public final <T extends TempModifier> T expires(int ticks)
     {
         expireTicks = ticks;
-        return this;
+        return (T) this;
     }
     public final int getExpireTime()
     {   return expireTicks;
@@ -111,9 +111,9 @@ public abstract class TempModifier
      * @param ticks the number of ticks between each call to {@code getResult()}.
      * @return this TempModifier instance (allows for in-line building).
      */
-    public final TempModifier tickRate(int ticks)
+    public final <T extends TempModifier> T tickRate(int ticks)
     {   tickRate = Math.max(1, ticks);
-        return this;
+        return (T) this;
     }
 
     public final int getTickRate()
