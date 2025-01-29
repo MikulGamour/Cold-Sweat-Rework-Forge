@@ -19,6 +19,14 @@ public class BlockInsulationTempModifier extends TempModifier
         this.getNBT().putInt("Warming", warming);
     }
 
+    public int getCooling()
+    {   return this.getNBT().getInt("Cooling");
+    }
+
+    public int getWarming()
+    {   return this.getNBT().getInt("Warming");
+    }
+
     @Override
     public Function<Double, Double> calculate(LivingEntity entity, Temperature.Trait trait)
     {
@@ -27,8 +35,8 @@ public class BlockInsulationTempModifier extends TempModifier
         double mid = (min + max) / 2;
         double hearthStrength = ConfigSettings.THERMAL_SOURCE_STRENGTH.get();
 
-        double cooling = this.getNBT().getInt("Cooling") * hearthStrength;
-        double warming = this.getNBT().getInt("Warming") * hearthStrength;
+        double cooling = this.getCooling() * hearthStrength;
+        double warming = this.getWarming() * hearthStrength;
 
         return temp ->
         {
