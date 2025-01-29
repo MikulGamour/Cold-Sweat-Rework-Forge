@@ -97,7 +97,7 @@ public class Overlays
 
             // Render frame
             graphics.blit(WORLD_TEMP_GAUGE_LOCATION.get(),
-                          (width / 2) + 92 + ConfigSettings.WORLD_GAUGE_POS.get().x(),
+                          (width / 2) + 93 + ConfigSettings.WORLD_GAUGE_POS.get().x(),
                           height - 19 + ConfigSettings.WORLD_GAUGE_POS.get().y(), 0, 64 - severity * 16, 25, 16, 25, 144);
 
             RenderSystem.disableBlend();
@@ -109,7 +109,7 @@ public class Overlays
             int blendedTemp = (int) CSMath.blend(PREV_WORLD_TEMP, WORLD_TEMP, Minecraft.getInstance().getFrameTime(), 0, 1);
 
             graphics.drawString(font, (blendedTemp + ConfigSettings.TEMP_OFFSET.get())+"",
-                    /* X */ width / 2 + 105 + (Integer.toString(blendedTemp + ConfigSettings.TEMP_OFFSET.get()).length() * -3) + ConfigSettings.WORLD_GAUGE_POS.get().x(),
+                    /* X */ width / 2 + 106 + (Integer.toString(blendedTemp + ConfigSettings.TEMP_OFFSET.get()).length() * -3) + ConfigSettings.WORLD_GAUGE_POS.get().x(),
                     /* Y */ height - 15 - bob + ConfigSettings.WORLD_GAUGE_POS.get().y(), color, false);
             poseStack.popPose();
         }
