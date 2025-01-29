@@ -9,7 +9,7 @@
   "effect": "cold_sweat:warmth",
   "providers": [
     {
-      "tag": "cold_sweat:hearth"
+      "item": "cold_sweat:hearth"
     }
   ]
 }
