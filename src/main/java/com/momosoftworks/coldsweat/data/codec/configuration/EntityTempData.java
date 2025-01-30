@@ -26,10 +26,11 @@ public class EntityTempData extends ConfigData implements RequirementHolder
     final double range;
     final Temperature.Units units;
     final EntityRequirement playerRequirement;
+    final double maxEffect;
 
     public EntityTempData(EntityRequirement entity, double temperature, double range,
                           Temperature.Units units, EntityRequirement playerRequirement,
-                          List<String> requiredMods)
+                          double maxEffect, List<String> requiredMods)
     {
         super(requiredMods);
         this.entity = entity;
@@ -37,12 +38,13 @@ public class EntityTempData extends ConfigData implements RequirementHolder
         this.range = range;
         this.units = units;
         this.playerRequirement = playerRequirement;
+        this.maxEffect = maxEffect;
     }
 
     public EntityTempData(EntityRequirement entity, double temperature, double range,
-                          Temperature.Units units, EntityRequirement playerRequirement)
+                          Temperature.Units units, EntityRequirement playerRequirement, double maxEffect)
     {
-        this(entity, temperature, range, units, playerRequirement, ConfigHelper.getModIDs(CSMath.listOrEmpty(entity.entities()), ForgeRegistries.ENTITIES));
+        this(entity, temperature, range, units, playerRequirement, maxEffect, ConfigHelper.getModIDs(CSMath.listOrEmpty(entity.entities()), ForgeRegistries.ENTITIES));
     }
 
     public static final Codec<EntityTempData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -51,12 +53,9 @@ public class EntityTempData extends ConfigData implements RequirementHolder
             Codec.DOUBLE.fieldOf("range").forGetter(data -> data.range),
             Temperature.Units.CODEC.optionalFieldOf("units", Temperature.Units.MC).forGetter(data -> data.units),
             EntityRequirement.getCodec().optionalFieldOf("player", EntityRequirement.NONE).forGetter(data -> data.playerRequirement),
+            Codec.DOUBLE.optionalFieldOf("max_effect", Double.MAX_VALUE).forGetter(EntityTempData::maxEffect),
             Codec.STRING.listOf().optionalFieldOf("required_mods", Arrays.asList()).forGetter(EntityTempData::requiredMods)
-    ).apply(instance, (entity, temperature, range, units, playerRequirement, requiredMods) ->
-    {
-        double cTemp = Temperature.convert(temperature, units, Temperature.Units.MC, false);
-        return new EntityTempData(entity, cTemp, range, units, playerRequirement, requiredMods);
-    }));
+    ).apply(instance, EntityTempData::new));
 
     public EntityRequirement entity()
     {   return entity;
@@ -72,6 +71,16 @@ public class EntityTempData extends ConfigData implements RequirementHolder
     }
     public EntityRequirement playerRequirement()
     {   return playerRequirement;
+    }
+    public double maxEffect()
+    {   return maxEffect;
+    }
+
+    public double getTemperature()
+    {   return Temperature.convert(temperature, units, Temperature.Units.MC, false);
+    }
+    public double getMaxEffect()
+    {   return Temperature.convert(maxEffect, units, Temperature.Units.MC, false);
     }
 
     @Nullable
@@ -92,10 +101,13 @@ public class EntityTempData extends ConfigData implements RequirementHolder
         Temperature.Units units = entry.size() > 3
                                   ? Temperature.Units.fromID((String) entry.get(3))
                                   : Temperature.Units.MC;
+        double maxEffect = entry.size() > 4
+                           ? ((Number) entry.get(4)).doubleValue()
+                           : Double.MAX_VALUE;
 
         EntityRequirement requirement = new EntityRequirement(entities);
 
-        return new EntityTempData(requirement, temp, range, units, EntityRequirement.NONE);
+        return new EntityTempData(requirement, temp, range, units, EntityRequirement.NONE, maxEffect);
     }
 
     @Override
@@ -108,10 +120,6 @@ public class EntityTempData extends ConfigData implements RequirementHolder
         return entity.distanceTo(affectedPlayer) <= range
             && this.test(entity)
             && this.playerRequirement.test(affectedPlayer);
-    }
-
-    public double getTemperature()
-    {   return Temperature.convert(temperature, units, Temperature.Units.MC, false);
     }
 
     public double getTemperatureEffect(Entity entity, Entity affectedPlayer)

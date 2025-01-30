@@ -4,6 +4,7 @@ import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.data.codec.configuration.EntityTempData;
 import com.momosoftworks.coldsweat.util.entity.EntityHelper;
+import com.momosoftworks.coldsweat.util.math.FastMap;
 import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -11,7 +12,9 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.world.World;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
@@ -24,6 +27,8 @@ public class EntitiesTempModifier extends TempModifier
         // Search for entities in an 8-block radius
         AxisAlignedBB aabb = new AxisAlignedBB(affectedEnt.blockPosition()).move(0, affectedEnt.getBbHeight() / 2 - 0.5, 0).inflate(8);
         List<Entity> entities = affectedEnt.level.getEntities(affectedEnt, aabb, e -> e != affectedEnt);
+
+        Map<EntityTempData, Double> effects = new FastMap<>();
 
         double totalTemp = 0;
         for (Entity nearbyEnt : entities)
@@ -50,7 +55,13 @@ public class EntitiesTempModifier extends TempModifier
                                                }, 3);
                     entityTemp /= blocksBetween.get() + 1;
                     // Add the temperature to the total
+                    double maxTemp = tempData.getMaxEffect();
+                    double currentTemp = effects.getOrDefault(tempData, 0d);
+                    if (currentTemp + entityTemp > maxTemp)
+                    {   entityTemp = maxTemp - currentTemp;
+                    }
                     totalTemp += entityTemp;
+                    effects.put(tempData, currentTemp + entityTemp);
                 }
             }
         }
