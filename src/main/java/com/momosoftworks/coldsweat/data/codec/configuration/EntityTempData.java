@@ -25,21 +25,23 @@ public class EntityTempData extends ConfigData implements RequirementHolder
     final double temperature;
     final double range;
     final Temperature.Units units;
+    final double maxEffect;
 
     public EntityTempData(EntityRequirement entity, double temperature, double range,
-                          Temperature.Units units, List<String> requiredMods)
+                          Temperature.Units units, double maxEffect, List<String> requiredMods)
     {
         super(requiredMods);
         this.entity = entity;
         this.temperature = temperature;
         this.range = range;
         this.units = units;
+        this.maxEffect = maxEffect;
     }
 
     public EntityTempData(EntityRequirement entity, double temperature, double range,
-                          Temperature.Units units)
+                          Temperature.Units units, double maxEffect)
     {
-        this(entity, temperature, range, units, ConfigHelper.getModIDs(CSMath.listOrEmpty(entity.entities()), BuiltInRegistries.ENTITY_TYPE));
+        this(entity, temperature, range, units, maxEffect, ConfigHelper.getModIDs(CSMath.listOrEmpty(entity.entities()), BuiltInRegistries.ENTITY_TYPE));
     }
 
     public static final Codec<EntityTempData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -47,12 +49,9 @@ public class EntityTempData extends ConfigData implements RequirementHolder
             Codec.DOUBLE.fieldOf("temperature").forGetter(EntityTempData::temperature),
             Codec.DOUBLE.fieldOf("range").forGetter(EntityTempData::temperature),
             Temperature.Units.CODEC.optionalFieldOf("units", Temperature.Units.MC).forGetter(EntityTempData::units),
+            Codec.DOUBLE.optionalFieldOf("max_effect", Double.MAX_VALUE).forGetter(EntityTempData::maxEffect),
             Codec.STRING.listOf().optionalFieldOf("required_mods", List.of()).forGetter(EntityTempData::requiredMods)
-    ).apply(instance, (entity, temperature, range, units, requiredMods) ->
-    {
-        double cTemp = Temperature.convert(temperature, units, Temperature.Units.MC, false);
-        return new EntityTempData(entity, cTemp, range, units, requiredMods);
-    }));
+    ).apply(instance, EntityTempData::new));
 
     public EntityRequirement entity()
     {   return entity;
@@ -65,6 +64,16 @@ public class EntityTempData extends ConfigData implements RequirementHolder
     }
     public Temperature.Units units()
     {   return units;
+    }
+    public double maxEffect()
+    {   return maxEffect;
+    }
+
+    public double getTemperature()
+    {   return Temperature.convert(temperature, units, Temperature.Units.MC, false);
+    }
+    public double getMaxEffect()
+    {   return Temperature.convert(maxEffect, units, Temperature.Units.MC, false);
     }
 
     @Nullable
@@ -85,10 +94,13 @@ public class EntityTempData extends ConfigData implements RequirementHolder
         Temperature.Units units = entry.size() > 3
                                   ? Temperature.Units.fromID((String) entry.get(3))
                                   : Temperature.Units.MC;
+        double maxEffect = entry.size() > 4
+                           ? ((Number) entry.get(4)).doubleValue()
+                           : Double.MAX_VALUE;
 
         EntityRequirement requirement = new EntityRequirement(entities);
 
-        return new EntityTempData(requirement, temp, range, units);
+        return new EntityTempData(requirement, temp, range, units, maxEffect);
     }
 
     @Override
@@ -100,10 +112,6 @@ public class EntityTempData extends ConfigData implements RequirementHolder
     {
         return entity.distanceTo(affectedPlayer) <= range
             && this.test(entity);
-    }
-
-    public double getTemperature()
-    {   return Temperature.convert(temperature, units, Temperature.Units.MC, false);
     }
 
     public double getTemperatureEffect(Entity entity, Entity affectedPlayer)
