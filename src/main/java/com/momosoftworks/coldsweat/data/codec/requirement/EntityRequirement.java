@@ -55,7 +55,7 @@ public record EntityRequirement(Optional<List<Either<TagKey<EntityType<?>>, Enti
                                                                        Optional.empty(), Optional.empty(), Optional.empty());
 
     public static final Codec<EntityRequirement> SIMPLE_CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            ConfigHelper.tagOrBuiltinCodec(Registries.ENTITY_TYPE, ForgeRegistries.ENTITY_TYPES).listOf().optionalFieldOf("entity").forGetter(requirement -> requirement.entities),
+            ConfigHelper.tagOrBuiltinCodec(Registries.ENTITY_TYPE, ForgeRegistries.ENTITY_TYPES).listOf().optionalFieldOf("entities").forGetter(requirement -> requirement.entities),
             LocationRequirement.CODEC.optionalFieldOf("location").forGetter(requirement -> requirement.location),
             LocationRequirement.CODEC.optionalFieldOf("stepping_on").forGetter(requirement -> requirement.steppingOn),
             EffectsRequirement.CODEC.optionalFieldOf("effects").forGetter(requirement -> requirement.effects),
