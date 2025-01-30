@@ -4,12 +4,14 @@ import com.momosoftworks.coldsweat.api.event.common.insulation.InsulateItemEvent
 import com.momosoftworks.coldsweat.api.event.common.temperautre.TempModifierEvent;
 import com.momosoftworks.coldsweat.api.event.common.temperautre.TemperatureChangedEvent;
 import com.momosoftworks.coldsweat.api.event.core.init.GatherDefaultTempModifiersEvent;
+import com.momosoftworks.coldsweat.api.event.core.registry.CreateRegistriesEvent;
 import com.momosoftworks.coldsweat.compat.kubejs.event.*;
-import dev.architectury.event.EventResult;
 import dev.latvian.mods.kubejs.event.EventGroup;
 import dev.latvian.mods.kubejs.event.EventHandler;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
 
-
+@EventBusSubscriber
 public class KubeEventHandlers
 {
     public static final EventGroup COLD_SWEAT = EventGroup.of("ColdSweatEvents");
@@ -22,67 +24,43 @@ public class KubeEventHandlers
 
     public static final EventHandler APPLY_INSULATION = COLD_SWEAT.server("applyInsulation", () -> ApplyInsulationEventJS.class);
 
-
-    public static void init()
-    {
-        KubeEventSignatures.REGISTRIES.register(KubeEventHandlers::buildRegistries);
-        KubeEventSignatures.GATHER_MODIFIERS.register(KubeEventHandlers::gatherDefaultModifiers);
-        KubeEventSignatures.TEMPERATURE_CHANGED.register(KubeEventHandlers::onTemperatureChanged);
-        KubeEventSignatures.INSULATE_ITEM.register(KubeEventHandlers::onInsulateItem);
-        KubeEventSignatures.ADD_MODIFIER.register(KubeEventHandlers::onTempModifierAdd);
-    }
-
-    private static void buildRegistries()
+    @SubscribeEvent
+    public static void buildRegistries(CreateRegistriesEvent event)
     {
         if (REGISTER.hasListeners())
         {   REGISTER.post(new ModRegistriesEventJS());
         }
     }
 
-    private static void gatherDefaultModifiers(GatherDefaultTempModifiersEvent event)
+    @SubscribeEvent
+    public static void gatherDefaultModifiers(GatherDefaultTempModifiersEvent event)
     {
         if (GATHER_DEFAULT_MODIFIERS.hasListeners())
         {   GATHER_DEFAULT_MODIFIERS.post(new DefaultModifiersEventJS(event));
         }
     }
 
-    private static EventResult onTemperatureChanged(TemperatureChangedEvent event)
+    @SubscribeEvent
+    public static void onTemperatureChanged(TemperatureChangedEvent event)
     {
         if (TEMP_CHANGED.hasListeners())
-        {   return convertResult(TEMP_CHANGED.post(new TempChangedEventJS(event)));
+        {   TEMP_CHANGED.post(new TempChangedEventJS(event)).applyCancel(event);
         }
-        return EventResult.pass();
     }
 
-    private static EventResult onInsulateItem(InsulateItemEvent event)
+    @SubscribeEvent
+    public static void onInsulateItem(InsulateItemEvent event)
     {
         if (APPLY_INSULATION.hasListeners())
-        {   return convertResult(APPLY_INSULATION.post(new ApplyInsulationEventJS(event)));
+        {   APPLY_INSULATION.post(new ApplyInsulationEventJS(event)).applyCancel(event);
         }
-        return EventResult.pass();
     }
 
-    private static EventResult onTempModifierAdd(TempModifierEvent.Add event)
+    @SubscribeEvent
+    public static void onTempModifierAdd(TempModifierEvent.Add event)
     {
         if (MODIFIER_ADD.hasListeners())
-        {   return convertResult(MODIFIER_ADD.post(new AddModifierEventJS(event)));
-        }
-        return EventResult.pass();
-    }
-
-    private static dev.architectury.event.EventResult convertResult(dev.latvian.mods.kubejs.event.EventResult result)
-    {
-        if (result.interruptDefault())
-        {   return EventResult.interruptDefault();
-        }
-        if (result.interruptFalse())
-        {   return EventResult.interruptFalse();
-        }
-        if (result.interruptTrue())
-        {   return EventResult.interruptTrue();
-        }
-        else
-        {   return EventResult.pass();
+        {   MODIFIER_ADD.post(new AddModifierEventJS(event)).applyCancel(event);
         }
     }
 }
