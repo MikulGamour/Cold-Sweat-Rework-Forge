@@ -8,7 +8,6 @@ import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.data.codec.impl.RequirementHolder;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
-import com.momosoftworks.coldsweat.data.codec.requirement.PlayerDataRequirement;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
 import net.minecraft.tags.TagKey;
@@ -18,7 +17,6 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nullable;
 import java.util.List;
-import java.util.Optional;
 
 public class EntityTempData extends ConfigData implements RequirementHolder
 {
@@ -26,10 +24,10 @@ public class EntityTempData extends ConfigData implements RequirementHolder
     final double temperature;
     final double range;
     final Temperature.Units units;
-    final Optional<PlayerDataRequirement> playerRequirement;
+    final EntityRequirement playerRequirement;
 
     public EntityTempData(EntityRequirement entity, double temperature, double range,
-                          Temperature.Units units, Optional<PlayerDataRequirement> playerRequirement,
+                          Temperature.Units units, EntityRequirement playerRequirement,
                           List<String> requiredMods)
     {
         super(requiredMods);
@@ -41,7 +39,7 @@ public class EntityTempData extends ConfigData implements RequirementHolder
     }
 
     public EntityTempData(EntityRequirement entity, double temperature, double range,
-                          Temperature.Units units, Optional<PlayerDataRequirement> playerRequirement)
+                          Temperature.Units units, EntityRequirement playerRequirement)
     {
         this(entity, temperature, range, units, playerRequirement, ConfigHelper.getModIDs(CSMath.listOrEmpty(entity.entities()), ForgeRegistries.ENTITY_TYPES));
     }
@@ -51,7 +49,7 @@ public class EntityTempData extends ConfigData implements RequirementHolder
             Codec.DOUBLE.fieldOf("temperature").forGetter(EntityTempData::temperature),
             Codec.DOUBLE.fieldOf("range").forGetter(EntityTempData::temperature),
             Temperature.Units.CODEC.optionalFieldOf("units", Temperature.Units.MC).forGetter(EntityTempData::units),
-            PlayerDataRequirement.CODEC.optionalFieldOf("player").forGetter(EntityTempData::playerRequirement),
+            EntityRequirement.getCodec().optionalFieldOf("player", EntityRequirement.NONE).forGetter(EntityTempData::playerRequirement),
             Codec.STRING.listOf().optionalFieldOf("required_mods", List.of()).forGetter(EntityTempData::requiredMods)
     ).apply(instance, (entity, temperature, range, units, playerRequirement, requiredMods) ->
     {
@@ -71,7 +69,7 @@ public class EntityTempData extends ConfigData implements RequirementHolder
     public Temperature.Units units()
     {   return units;
     }
-    public Optional<PlayerDataRequirement> playerRequirement()
+    public EntityRequirement playerRequirement()
     {   return playerRequirement;
     }
 
@@ -96,7 +94,7 @@ public class EntityTempData extends ConfigData implements RequirementHolder
 
         EntityRequirement requirement = new EntityRequirement(entities);
 
-        return new EntityTempData(requirement, temp, range, units, Optional.empty());
+        return new EntityTempData(requirement, temp, range, units, EntityRequirement.NONE);
     }
 
     @Override
@@ -108,7 +106,7 @@ public class EntityTempData extends ConfigData implements RequirementHolder
     {
         return entity.distanceTo(affectedPlayer) <= range
             && this.test(entity)
-            && this.playerRequirement.map(req -> req.test(affectedPlayer)).orElse(true);
+            && this.playerRequirement.test(affectedPlayer);
     }
 
     public double getTemperature()
