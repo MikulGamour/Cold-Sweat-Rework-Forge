@@ -4,6 +4,7 @@ import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.data.codec.configuration.EntityTempData;
 import com.momosoftworks.coldsweat.util.entity.EntityHelper;
+import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.math.FastMap;
 import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import net.minecraft.world.entity.Entity;
@@ -57,9 +58,7 @@ public class EntitiesTempModifier extends TempModifier
                     // Add the temperature to the total
                     double maxTemp = tempData.getMaxEffect();
                     double currentTemp = effects.getOrDefault(tempData, 0d);
-                    if (currentTemp + entityTemp > maxTemp)
-                    {   entityTemp = maxTemp - currentTemp;
-                    }
+                    entityTemp = CSMath.clamp(entityTemp, -maxTemp - currentTemp, maxTemp - currentTemp);
                     totalTemp += entityTemp;
                     effects.put(tempData, currentTemp + entityTemp);
                 }
