@@ -149,6 +149,15 @@ public class BoilerBlockEntity extends HearthBlockEntity
     }
 
     @Override
+    protected void tickDrainFuel()
+    {
+        int fuelInterval = ConfigSettings.BOILER_FUEL_INTERVAL.get();
+        if (fuelInterval > 0 && this.ticksExisted % fuelInterval == 0)
+        {   this.drainFuel();
+        }
+    }
+
+    @Override
     protected boolean hasSignalFromBack()
     {
         return Direction.stream().anyMatch(direction ->
