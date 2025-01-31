@@ -305,14 +305,14 @@
   "attribute.cold_sweat.modifier.add.world_temperature":      "%d° Environment Temperature",
   "attribute.cold_sweat.modifier.multiply.world_temperature": "%d Environment Temperature",
 
-  "effect.cold_sweat.frigidness.desc": "Decreases and stabilizes the world temperature for the player. Higher levels provide a more habitable temperature in frigid environments."
-  "effect.cold_sweat.grace.desc": "Grants complete immunity to temperature-based damage. \n\nOnly obtainable when joining a world for the first time."
-  "effect.cold_sweat.ice_resistance.desc": "Grants immunity to freezing damage, as well as damage from powdered snow."
-  "effect.cold_sweat.warmth.desc": "Increases and stabilizes the world temperature for the player. Higher levels provide a more habitable temperature in hot environments."
-  "effect.cold_sweat.frigidness.description": "Decreases and stabilizes the world temperature for the player. Higher levels provide a more habitable temperature in frigid environments."
-  "effect.cold_sweat.grace.description": "Grants complete immunity to temperature-based damage. \n\nOnly obtainable when joining a world for the first time."
-  "effect.cold_sweat.ice_resistance.description": "Grants immunity to freezing damage, as well as damage from powdered snow."
-  "effect.cold_sweat.warmth.description": "Increases and stabilizes the world temperature for the player. Higher levels provide a more habitable temperature in hot environments."
+  "effect.cold_sweat.frigidness.desc": "Grants the player a cooling effect in hot environments. Higher levels have a stronger effect.",
+  "effect.cold_sweat.grace.desc": "Grants immunity to temperature-based damage for a time after the player dies or first spawns. \n\n.",
+  "effect.cold_sweat.ice_resistance.desc": "Grants immunity to freezing damage and powder snow.",
+  "effect.cold_sweat.warmth.desc": "Grants the player a warming effect in cold environments. Higher levels have a stronger effect.",
+  "effect.cold_sweat.frigidness.description": "Grants the player a cooling effect in hot environments. Higher levels have a stronger effect.",
+  "effect.cold_sweat.grace.description": "Grants immunity to temperature-based damage for a time after the player dies or first spawns.",
+  "effect.cold_sweat.ice_resistance.description": "Grants immunity to freezing damage and powder snow.",
+  "effect.cold_sweat.warmth.description": "Grants the player a warming effect in cold environments. Higher levels have a stronger effect.",
 
   "message.cold_sweat.mod_name": "Cold Sweat",
   "message.cold_sweat.warning": "Warning!",
