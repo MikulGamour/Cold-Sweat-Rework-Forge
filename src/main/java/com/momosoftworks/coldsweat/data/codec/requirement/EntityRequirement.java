@@ -4,19 +4,19 @@ import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.momosoftworks.coldsweat.api.util.Temperature;
+import com.momosoftworks.coldsweat.data.codec.util.DoubleBounds;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
 import net.minecraft.core.Registry;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Predicate;
 
 public record EntityRequirement(Optional<List<Either<TagKey<EntityType<?>>, EntityType<?>>>> entities,
@@ -24,26 +24,27 @@ public record EntityRequirement(Optional<List<Either<TagKey<EntityType<?>>, Enti
                                 Optional<EffectsRequirement> effects, Optional<NbtRequirement> nbt, Optional<EntityFlagsRequirement> flags,
                                 Optional<EquipmentRequirement> equipment, Optional<PlayerDataRequirement> playerData,
                                 Optional<EntityRequirement> vehicle, Optional<EntityRequirement> passenger, Optional<EntityRequirement> target,
-                                Optional<Predicate<Entity>> predicate)
+                                Optional<Map<Temperature.Trait, DoubleBounds>> temperature, Optional<Predicate<Entity>> predicate)
 {
     public EntityRequirement(Optional<List<Either<TagKey<EntityType<?>>, EntityType<?>>>> type, Optional<LocationRequirement> location,
                              Optional<LocationRequirement> steppingOn, Optional<EffectsRequirement> effects, Optional<NbtRequirement> nbt,
                              Optional<EntityFlagsRequirement> flags, Optional<EquipmentRequirement> equipment, Optional<PlayerDataRequirement> playerData,
-                             Optional<EntityRequirement> vehicle, Optional<EntityRequirement> passenger, Optional<EntityRequirement> target)
+                             Optional<EntityRequirement> vehicle, Optional<EntityRequirement> passenger, Optional<EntityRequirement> target,
+                             Optional<Map<Temperature.Trait, DoubleBounds>> temperature)
     {
-        this(type, location, steppingOn, effects, nbt, flags, equipment, playerData, vehicle, passenger, target, Optional.empty());
+        this(type, location, steppingOn, effects, nbt, flags, equipment, playerData, vehicle, passenger, target, temperature, Optional.empty());
     }
 
     public EntityRequirement(List<Either<TagKey<EntityType<?>>, EntityType<?>>> entities)
     {
         this(Optional.of(entities),
              Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
-             Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
+             Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty());
     }
 
     public EntityRequirement(@Nullable Predicate<Entity> predicate)
     {
-        this(Optional.empty(), Optional.empty(), Optional.empty(),
+        this(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
              Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
              Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
              Optional.ofNullable(predicate));
@@ -52,7 +53,8 @@ public record EntityRequirement(Optional<List<Either<TagKey<EntityType<?>>, Enti
     public static final EntityRequirement NONE = new EntityRequirement(Optional.empty(), Optional.empty(), Optional.empty(),
                                                                        Optional.empty(), Optional.empty(), Optional.empty(),
                                                                        Optional.empty(), Optional.empty(), Optional.empty(),
-                                                                       Optional.empty(), Optional.empty(), Optional.empty());
+                                                                       Optional.empty(), Optional.empty(), Optional.empty(),
+                                                                       Optional.empty());
 
     public static final Codec<EntityRequirement> SIMPLE_CODEC = RecordCodecBuilder.create(instance -> instance.group(
             ConfigHelper.tagOrBuiltinCodec(Registry.ENTITY_TYPE_REGISTRY, ForgeRegistries.ENTITY_TYPES).listOf().optionalFieldOf("entities").forGetter(requirement -> requirement.entities),
@@ -61,10 +63,11 @@ public record EntityRequirement(Optional<List<Either<TagKey<EntityType<?>>, Enti
             EffectsRequirement.CODEC.optionalFieldOf("effects").forGetter(requirement -> requirement.effects),
             NbtRequirement.CODEC.optionalFieldOf("nbt").forGetter(requirement -> requirement.nbt),
             EntityFlagsRequirement.CODEC.optionalFieldOf("flags").forGetter(requirement -> requirement.flags),
-            EquipmentRequirement.CODEC.optionalFieldOf("equipment").forGetter(requirement -> requirement.equipment)
-    ).apply(instance, (type, location, standingOn, effects, nbt, flags, equipment) -> new EntityRequirement(type, location, standingOn, effects, nbt, flags, equipment,
+            EquipmentRequirement.CODEC.optionalFieldOf("equipment").forGetter(requirement -> requirement.equipment),
+            Codec.unboundedMap(Temperature.Trait.CODEC, DoubleBounds.CODEC).optionalFieldOf("temperature").forGetter(requirement -> requirement.temperature)
+    ).apply(instance, (type, location, standingOn, effects, nbt, flags, equipment, temperature) -> new EntityRequirement(type, location, standingOn, effects, nbt, flags, equipment,
                                                                                                             Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
-                                                                                                            Optional.empty())));
+                                                                                                            temperature)));
 
     private static final List<Codec<EntityRequirement>> REQUIREMENT_CODEC_STACK = new ArrayList<>(List.of(SIMPLE_CODEC));
     // Allow for up to 16 layers of inner codecs
@@ -92,7 +95,8 @@ public record EntityRequirement(Optional<List<Either<TagKey<EntityType<?>>, Enti
                 PlayerDataRequirement.getCodec(latestCodec).optionalFieldOf("player_data").forGetter(requirement -> requirement.playerData),
                 latestCodec.optionalFieldOf("vehicle").forGetter(requirement -> requirement.vehicle),
                 latestCodec.optionalFieldOf("passenger").forGetter(requirement -> requirement.passenger),
-                latestCodec.optionalFieldOf("target").forGetter(requirement -> requirement.target)
+                latestCodec.optionalFieldOf("target").forGetter(requirement -> requirement.target),
+                Codec.unboundedMap(Temperature.Trait.CODEC, DoubleBounds.CODEC).optionalFieldOf("temperature").forGetter(requirement -> requirement.temperature)
         ).apply(instance, EntityRequirement::new));
 
         REQUIREMENT_CODEC_STACK.add(codec);
@@ -159,6 +163,16 @@ public record EntityRequirement(Optional<List<Either<TagKey<EntityType<?>>, Enti
             {   return false;
             }
         }
+        if (temperature.isPresent() && entity instanceof LivingEntity living)
+        {
+            for (Map.Entry<Temperature.Trait, DoubleBounds> entry : temperature.get().entrySet())
+            {
+                double value = Temperature.get(living, entry.getKey());
+                if (!entry.getValue().test(value))
+                {   return false;
+                }
+            }
+        }
         return true;
     }
 
@@ -185,6 +199,7 @@ public record EntityRequirement(Optional<List<Either<TagKey<EntityType<?>>, Enti
             && vehicle.equals(that.vehicle)
             && passenger.equals(that.passenger)
             && target.equals(that.target)
-            && predicate.equals(that.predicate);
+            && predicate.equals(that.predicate)
+            && temperature.equals(that.temperature);
     }
 }
