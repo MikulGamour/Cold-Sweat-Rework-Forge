@@ -63,7 +63,7 @@ public class WaterTempModifier extends TempModifier
 
         return temp ->
         {
-            if (entity.level().isClientSide() && ConfigSettings.WATER_EFFECT_SETTING.get().showParticles() && !entity.isInWater())
+            if (entity.level.isClientSide() && ConfigSettings.WATER_EFFECT_SETTING.get().showParticles() && !entity.isInWater())
             {
                 if (Math.random() < strength * 2)
                 {
