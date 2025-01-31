@@ -294,7 +294,7 @@
   "attribute.cold_sweat.modifier.multiply.world_temperature": "%d Environment Temperature",
 
   "effect.cold_sweat.frigidness.desc": "Grants the player a cooling effect in hot environments. Higher levels have a stronger effect.",
-  "effect.cold_sweat.grace.desc": "Grants immunity to temperature-based damage for a time after the player dies or first spawns. \n\n.",
+  "effect.cold_sweat.grace.desc": "Grants immunity to temperature-based damage for a time after the player dies or first spawns.",
   "effect.cold_sweat.ice_resistance.desc": "Grants immunity to freezing damage and powder snow.",
   "effect.cold_sweat.warmth.desc": "Grants the player a warming effect in cold environments. Higher levels have a stronger effect.",
   "effect.cold_sweat.frigidness.description": "Grants the player a cooling effect in hot environments. Higher levels have a stronger effect.",
