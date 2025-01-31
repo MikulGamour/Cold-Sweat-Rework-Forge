@@ -32,6 +32,7 @@
     "MixinMenuChanged",
     "MixinMinecart",
     "MixinPreServerLoad",
+    "MixinShearsDispenseBehavior",
     "MixinSmithingRecipe",
     "MixinSoulCampfire",
     "MixinSoulFire",
