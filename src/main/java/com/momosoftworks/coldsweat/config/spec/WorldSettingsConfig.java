@@ -49,18 +49,21 @@ public class WorldSettingsConfig
     public static final ForgeConfigSpec.ConfigValue<Integer> HEARTH_MAX_VOLUME;
     public static final ForgeConfigSpec.ConfigValue<Integer> HEARTH_WARM_UP_TIME;
     public static final ForgeConfigSpec.ConfigValue<Integer> HEARTH_MAX_INSULATION;
+    public static final ForgeConfigSpec.ConfigValue<Integer> HEARTH_FUEL_INTERVAL;
 
     public static final ForgeConfigSpec.ConfigValue<Integer> BOILER_RANGE;
     public static final ForgeConfigSpec.ConfigValue<Integer> BOILER_MAX_RANGE;
     public static final ForgeConfigSpec.ConfigValue<Integer> BOILER_MAX_VOLUME;
     public static final ForgeConfigSpec.ConfigValue<Integer> BOILER_WARM_UP_TIME;
     public static final ForgeConfigSpec.ConfigValue<Integer> BOILER_MAX_INSULATION;
+    public static final ForgeConfigSpec.ConfigValue<Integer> BOILER_FUEL_INTERVAL;
 
     public static final ForgeConfigSpec.ConfigValue<Integer> ICEBOX_RANGE;
     public static final ForgeConfigSpec.ConfigValue<Integer> ICEBOX_MAX_RANGE;
     public static final ForgeConfigSpec.ConfigValue<Integer> ICEBOX_MAX_VOLUME;
     public static final ForgeConfigSpec.ConfigValue<Integer> ICEBOX_WARM_UP_TIME;
     public static final ForgeConfigSpec.ConfigValue<Integer> ICEBOX_MAX_INSULATION;
+    public static final ForgeConfigSpec.ConfigValue<Integer> ICEBOX_FUEL_INTERVAL;
 
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> SLEEPING_OVERRIDE_BLOCKS;
     public static final ForgeConfigSpec.ConfigValue<Boolean> SHOULD_CHECK_SLEEP;
@@ -408,6 +411,10 @@ public class WorldSettingsConfig
         HEARTH_MAX_INSULATION = BUILDER
                 .comment("The maximum amount of insulation that the hearth can provide")
                 .defineInRange("Hearth Effect Strength", 10, 0, 10);
+        HEARTH_FUEL_INTERVAL = BUILDER
+                .comment("How often the hearth consumes fuel (in ticks)",
+                         "Lower numbers mean fuel is consumed faster. Setting to 0 disables fuel consumption")
+                .defineInRange("Hearth Fuel Consumption Interval", 40, 0, Integer.MAX_VALUE);
 
         BUILDER.pop();
 
@@ -432,6 +439,10 @@ public class WorldSettingsConfig
         BOILER_MAX_INSULATION = BUILDER
                 .comment("The maximum amount of insulation that the boiler can provide")
                 .defineInRange("Boiler Warmth Strength", 5, 0, 10);
+        BOILER_FUEL_INTERVAL = BUILDER
+                .comment("How often the boiler consumes fuel (in ticks)",
+                         "Lower numbers mean fuel is consumed faster. Setting to 0 disables fuel consumption")
+                .defineInRange("Boiler Fuel Consumption Interval", 40, 0, Integer.MAX_VALUE);
 
         BUILDER.pop();
 
@@ -456,6 +467,10 @@ public class WorldSettingsConfig
         ICEBOX_MAX_INSULATION = BUILDER
                 .comment("The maximum amount of insulation that the icebox can provide")
                 .defineInRange("Icebox Chill Strength", 5, 0, 10);
+        ICEBOX_FUEL_INTERVAL = BUILDER
+                .comment("How often the icebox consumes fuel (in ticks)",
+                         "Lower numbers mean fuel is consumed faster. Setting to 0 disables fuel consumption")
+                .defineInRange("Icebox Fuel Consumption Interval", 40, 0, Integer.MAX_VALUE);
 
         BUILDER.pop();
 

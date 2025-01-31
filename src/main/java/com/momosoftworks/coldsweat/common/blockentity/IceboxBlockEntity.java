@@ -220,6 +220,15 @@ public class IceboxBlockEntity extends HearthBlockEntity implements ITickableTil
     }
 
     @Override
+    protected void tickDrainFuel()
+    {
+        int fuelInterval = ConfigSettings.ICEBOX_FUEL_INTERVAL.get();
+        if (fuelInterval > 0 && this.ticksExisted % fuelInterval == 0)
+        {   this.drainFuel();
+        }
+    }
+
+    @Override
     protected boolean hasSignalFromSides()
     {   return Arrays.stream(Direction.values()).anyMatch(dir -> dir != Direction.UP && this.level.hasSignal(this.getBlockPos().relative(dir), dir));
     }
