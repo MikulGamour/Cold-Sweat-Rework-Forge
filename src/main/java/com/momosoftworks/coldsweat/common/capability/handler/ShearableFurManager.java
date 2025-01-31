@@ -36,6 +36,7 @@ import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import oshi.util.tuples.Triplet;
 
+import javax.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -72,17 +73,14 @@ public class ShearableFurManager
             // Use shears
             player.swing(event.getHand(), true);
             stack.hurtAndBreak(1, ((ServerLevel) event.getEntity().level()), event.getEntity(), (item) -> {});
-            // Play sound
-            living.level().playSound(null, living, SoundEvents.SHEEP_SHEAR, SoundSource.NEUTRAL, 1.0F, 1.0F);
+
 
             // Spawn item(s)
-            for (ItemStack item : ModLootTables.getEntityDropsLootTable(living, player, ModLootTables.GOAT_SHEARING))
-            {   WorldHelper.entityDropItem(living, item);
-            }
+            shear(living, stack, player);
 
             // Random chance to ram the player when sheared
-            stopGoals:
-            if (living instanceof Goat goat && !player.isCreative() && goat.level().getDifficulty() != Difficulty.PEACEFUL
+
+            if (living instanceof Goat goat && !player.getAbilities().instabuild && goat.level().getDifficulty() != Difficulty.PEACEFUL
             && !goat.level().isClientSide && goat.getRandom().nextDouble() < 0.4)
             {
                 // Set ram cooldown ticks
@@ -93,7 +91,7 @@ public class ShearableFurManager
                     if (goal.isInterruptable())
                     {   goal.stop();
                     }
-                    else break stopGoals;
+
                 }
 
                 // Start lowering head
@@ -123,10 +121,7 @@ public class ShearableFurManager
                 goat.getBrain().setActiveActivityIfPossible(Activity.RAM);
             }
 
-            // Set sheared
-            cap.setSheared(true);
-            cap.setFurGrowthCooldown(ConfigSettings.FUR_TIMINGS.get().cooldown());
-            syncData(living, null);
+
             event.setCancellationResult(InteractionResult.SUCCESS);
         }
     }
@@ -172,6 +167,31 @@ public class ShearableFurManager
         if (event.getEntity() instanceof ServerPlayer player && event.getTarget() instanceof Goat goat)
         {   syncData(goat, player);
         }
+    }
+
+    public static void shear(LivingEntity entity, ItemStack shears, @Nullable Player player)
+    {
+        getFurCap(entity).ifPresent(cap ->
+        {
+            if (!cap.isSheared() && !entity.level().isClientSide())
+            {
+                // Set sheared flag & cooldown
+                cap.setSheared(true);
+                cap.setFurGrowthCooldown(ConfigSettings.FUR_TIMINGS.get().cooldown());
+                // Drop items
+                for (ItemStack item : ModLootTables.getEntityDropsLootTable(entity, player, ModLootTables.GOAT_SHEARING))
+                {   WorldHelper.entityDropItem(entity, item);
+                }
+                // Play sound
+                entity.level().playSound(null, entity, SoundEvents.SHEEP_SHEAR, SoundSource.NEUTRAL, 1.0F, 1.0F);
+                // Damage shears
+                if (player == null || !player.getAbilities().instabuild)
+                {   shears.hurtAndBreak(1, ((ServerLevel) entity.level()), entity, (item) -> {});
+                }
+                // Sync shear data
+                syncData(entity, null);
+            }
+        });
     }
 
     public static void syncData(LivingEntity entity, ServerPlayer player)

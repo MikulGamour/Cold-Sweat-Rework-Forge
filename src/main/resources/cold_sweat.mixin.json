@@ -33,6 +33,7 @@
     "MixinMenuChanged",
     "MixinMinecart",
     "MixinPreServerLoad",
+    "MixinShearsDispenseBehavior",
     "MixinSoulCampfire",
     "MixinSoulFire",
     "MixinTridentRiptide",
