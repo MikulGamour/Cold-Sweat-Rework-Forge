@@ -681,7 +681,8 @@ public class HearthBlockEntity extends RandomizableContainerBlockEntity implemen
 
     protected void tickDrainFuel()
     {
-        if (this.ticksExisted % 40 == 0)
+        int fuelInterval = ConfigSettings.HEARTH_FUEL_INTERVAL.get();
+        if (fuelInterval > 0 && this.ticksExisted % fuelInterval == 0)
         {   this.drainFuel();
         }
     }

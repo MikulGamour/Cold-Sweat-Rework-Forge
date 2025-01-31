@@ -109,6 +109,7 @@ public class ConfigSettings
     public static final DynamicHolder<Integer> HEARTH_MAX_VOLUME;
     public static final DynamicHolder<Integer> HEARTH_WARM_UP_TIME;
     public static final DynamicHolder<Integer> HEARTH_MAX_INSULATION;
+    public static final DynamicHolder<Integer> HEARTH_FUEL_INTERVAL;
 
     public static final DynamicHolder<Boolean> SMART_BOILER;
     public static final DynamicHolder<Integer> BOILER_MAX_RANGE;
@@ -116,6 +117,7 @@ public class ConfigSettings
     public static final DynamicHolder<Integer> BOILER_MAX_VOLUME;
     public static final DynamicHolder<Integer> BOILER_WARM_UP_TIME;
     public static final DynamicHolder<Integer> BOILER_MAX_INSULATION;
+    public static final DynamicHolder<Integer> BOILER_FUEL_INTERVAL;
 
     public static final DynamicHolder<Boolean> SMART_ICEBOX;
     public static final DynamicHolder<Integer> ICEBOX_MAX_RANGE;
@@ -123,6 +125,7 @@ public class ConfigSettings
     public static final DynamicHolder<Integer> ICEBOX_MAX_VOLUME;
     public static final DynamicHolder<Integer> ICEBOX_WARM_UP_TIME;
     public static final DynamicHolder<Integer> ICEBOX_MAX_INSULATION;
+    public static final DynamicHolder<Integer> ICEBOX_FUEL_INTERVAL;
 
     public static final DynamicHolder<List<Block>> SLEEP_CHECK_IGNORE_BLOCKS;
     public static final DynamicHolder<Boolean> USE_CUSTOM_WATER_FREEZE_BEHAVIOR;
@@ -801,6 +804,12 @@ public class ConfigSettings
         (saver) -> WorldSettingsConfig.HEARTH_MAX_INSULATION.set(saver),
         SyncType.BOTH_WAYS);
 
+        HEARTH_FUEL_INTERVAL = addSyncedSetting("hearth_fuel_rate", () -> 1, holder -> holder.set(WorldSettingsConfig.HEARTH_FUEL_INTERVAL.get()),
+        (encoder) -> ConfigHelper.serializeNbtInt(encoder, "HearthFuelRate"),
+        (decoder) -> decoder.getInt("HearthFuelRate"),
+        (saver) -> WorldSettingsConfig.HEARTH_FUEL_INTERVAL.set(saver),
+        SyncType.BOTH_WAYS);
+
         BOILER_MAX_RANGE = addSyncedSetting("boiler_max_range", () -> 16, holder -> holder.set(WorldSettingsConfig.BOILER_MAX_RANGE.get()),
         (encoder) -> ConfigHelper.serializeNbtInt(encoder, "BoilerMaxRange"),
         (decoder) -> decoder.getInt("BoilerMaxRange"),
@@ -831,6 +840,12 @@ public class ConfigSettings
         (saver) -> WorldSettingsConfig.BOILER_MAX_INSULATION.set(saver),
         SyncType.BOTH_WAYS);
 
+        BOILER_FUEL_INTERVAL = addSyncedSetting("boiler_fuel_rate", () -> 1, holder -> holder.set(WorldSettingsConfig.BOILER_FUEL_INTERVAL.get()),
+        (encoder) -> ConfigHelper.serializeNbtInt(encoder, "BoilerFuelRate"),
+        (decoder) -> decoder.getInt("BoilerFuelRate"),
+        (saver) -> WorldSettingsConfig.BOILER_FUEL_INTERVAL.set(saver),
+        SyncType.BOTH_WAYS);
+
         ICEBOX_MAX_RANGE = addSyncedSetting("icebox_max_range", () -> 16, holder -> holder.set(WorldSettingsConfig.ICEBOX_MAX_RANGE.get()),
         (encoder) -> ConfigHelper.serializeNbtInt(encoder, "IceboxMaxRange"),
         (decoder) -> decoder.getInt("IceboxMaxRange"),
@@ -859,6 +874,12 @@ public class ConfigSettings
         (encoder) -> ConfigHelper.serializeNbtInt(encoder, "IceboxMaxInsulation"),
         (decoder) -> decoder.getInt("IceboxMaxInsulation"),
         (saver) -> WorldSettingsConfig.ICEBOX_MAX_INSULATION.set(saver),
+        SyncType.BOTH_WAYS);
+
+        ICEBOX_FUEL_INTERVAL = addSyncedSetting("icebox_fuel_rate", () -> 1, holder -> holder.set(WorldSettingsConfig.ICEBOX_FUEL_INTERVAL.get()),
+        (encoder) -> ConfigHelper.serializeNbtInt(encoder, "IceboxFuelRate"),
+        (decoder) -> decoder.getInt("IceboxFuelRate"),
+        (saver) -> WorldSettingsConfig.ICEBOX_FUEL_INTERVAL.set(saver),
         SyncType.BOTH_WAYS);
 
         INSULATION_STRENGTH = addSyncedSetting("insulation_strength", () -> 1d, holder -> holder.set(ItemSettingsConfig.INSULATION_STRENGTH.get()),
