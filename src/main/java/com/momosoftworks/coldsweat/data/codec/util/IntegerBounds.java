@@ -1,5 +1,6 @@
 package com.momosoftworks.coldsweat.data.codec.util;
 
+import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.nbt.CompoundNBT;
@@ -15,10 +16,15 @@ public class IntegerBounds
     {   this.min = min;
         this.max = max;
     }
-    public static final Codec<IntegerBounds> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+    public static final Codec<IntegerBounds> DIRECT_CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.INT.optionalFieldOf("min", -Integer.MAX_VALUE).forGetter(bounds -> bounds.min),
             Codec.INT.optionalFieldOf("max", Integer.MAX_VALUE).forGetter(bounds -> bounds.max)
     ).apply(instance, IntegerBounds::new));
+
+    public static final Codec<IntegerBounds> CODEC = Codec.either(DIRECT_CODEC, Codec.INT).xmap(
+            either -> either.map(left -> left, right -> new IntegerBounds(right, right)),
+            bounds -> bounds.max == bounds.min ? Either.right(bounds.min) : Either.left(bounds)
+    );
 
     public static IntegerBounds NONE = new IntegerBounds(-Integer.MAX_VALUE, Integer.MAX_VALUE);
 
@@ -28,18 +34,6 @@ public class IntegerBounds
 
     public boolean contains(IntegerBounds bounds)
     {   return bounds.min >= min && bounds.max <= max;
-    }
-
-    public CompoundNBT serialize()
-    {
-        CompoundNBT tag = new CompoundNBT();
-        tag.putInt("min", min);
-        tag.putInt("max", max);
-        return tag;
-    }
-
-    public static IntegerBounds deserialize(CompoundNBT tag)
-    {   return new IntegerBounds(tag.getInt("min"), tag.getInt("max"));
     }
 
     @Override
