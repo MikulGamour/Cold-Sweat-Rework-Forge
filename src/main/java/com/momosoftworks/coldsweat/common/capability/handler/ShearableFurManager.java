@@ -113,9 +113,7 @@ public class ShearableFurManager
                 entity.level.playSound(null, entity, SoundEvents.SHEEP_SHEAR, SoundCategory.NEUTRAL, 1.0F, 1.0F);
 
                 // Spawn item(s)
-                for (ItemStack item : ModLootTables.getEntityDropsLootTable(entity, player, ModLootTables.GOAT_SHEARING))
-                {   WorldHelper.entityDropItem(entity, item);
-                }
+                shear((LivingEntity) entity, stack, player);
 
                 // Set sheared
                 cap.setSheared(true);
@@ -165,6 +163,34 @@ public class ShearableFurManager
         if (event.getEntity() instanceof ServerPlayerEntity && event.getTarget() instanceof GoatEntity)
         {   syncData((LivingEntity) event.getTarget(), (ServerPlayerEntity) event.getEntity());
         }
+    }
+
+    public static void shear(LivingEntity entity, ItemStack shears, @Nullable PlayerEntity player)
+    {
+        getFurCap(entity).ifPresent(cap ->
+        {
+            if (!cap.isSheared())
+            {
+                // Set sheared flag & cooldown
+                cap.setSheared(true);
+                cap.setFurGrowthCooldown(ConfigSettings.FUR_TIMINGS.get().cooldown());
+                // Drop items
+                for (ItemStack item : ModLootTables.getEntityDropsLootTable(entity, player, ModLootTables.GOAT_SHEARING))
+                {   WorldHelper.entityDropItem(entity, item);
+                }
+                // Play sound
+                entity.level.playSound(null, entity, SoundEvents.SHEEP_SHEAR, SoundCategory.NEUTRAL, 1.0F, 1.0F);
+                // Damage shears
+                if (player == null || !player.abilities.instabuild)
+                {
+                    shears.hurtAndBreak(1, entity, (p) -> {
+                        if (player != null) p.broadcastBreakEvent(player.getUsedItemHand());
+                    });
+                }
+                // Sync shear data
+                syncData(entity, null);
+            }
+        });
     }
 
     public static void syncData(LivingEntity entity, ServerPlayerEntity player)
