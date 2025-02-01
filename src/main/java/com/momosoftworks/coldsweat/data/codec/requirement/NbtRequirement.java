@@ -43,6 +43,7 @@ public record NbtRequirement(CompoundTag tag)
         if (tag == other) return true;
         if (tag == null) return true;
         if (other == null) return false;
+        if (tag.equals(other)) return true;
 
         // Handle CompoundTag comparison
         if (tag instanceof CompoundTag compoundTag)
@@ -59,7 +60,12 @@ public record NbtRequirement(CompoundTag tag)
         {   return compareNumericRange(string, numericTag);
         }
 
-        return tag.equals(other);
+        // Handle numeric comparison
+        if (tag instanceof NumericTag numericTag && other instanceof NumericTag otherNumeric)
+        {   return compareNumbers(numericTag, otherNumeric);
+        }
+
+        return false;
     }
 
     private static boolean handleCompoundTagComparison(CompoundTag compoundTag, Tag other, boolean compareListTag)
@@ -67,25 +73,67 @@ public record NbtRequirement(CompoundTag tag)
         // Case 1: Compare with another CompoundTag
         if (other instanceof CompoundTag otherCompound)
         {
-            return compoundTag.getAllKeys().stream()
-                    .allMatch(key -> compareNbt(compoundTag.get(key), otherCompound.get(key), compareListTag));
+            for (String key : compoundTag.getAllKeys())
+            {
+                if (!compareNbt(compoundTag.get(key), otherCompound.get(key), compareListTag))
+                {   return false;
+                }
+            }
+            return true;
         }
 
         // Case 2: Special comparison with cs:contains or cs:any_of
-        if (compoundTag.getAllKeys().size() != 1) return false;
+        if (compoundTag.getAllKeys().size() != 1)
+            return false;
 
         ListTag anyOfValues = (ListTag) compoundTag.get("cs:any_of");
         if (anyOfValues != null && !anyOfValues.isEmpty())
         {
-            return anyOfValues.stream()
-                    .anyMatch(value -> compareNbt(value, other, compareListTag));
+            for (int i = 0; i < anyOfValues.size(); i++)
+            {
+                Tag value = anyOfValues.get(i);
+                if (compareNbt(value, other, compareListTag))
+                {   return true;
+                }
+            }
+            return false;
         }
 
-        ListTag containsValues = (ListTag) compoundTag.get("cs:contains");
-        if (containsValues != null && !containsValues.isEmpty() && other instanceof ListTag otherList)
+        ListTag containsAnyValues = (ListTag) compoundTag.get("cs:contains_any");
+        if (containsAnyValues != null && !containsAnyValues.isEmpty() && other instanceof ListTag otherList)
         {
-            return containsValues.stream()
-                    .anyMatch(otherList::contains);
+            for (int i = 0; i < containsAnyValues.size(); i++)
+            {
+                Tag value = containsAnyValues.get(i);
+                for (int i1 = 0; i1 < otherList.size(); i1++)
+                {
+                    Tag otherValue = otherList.get(i1);
+                    if (compareNbt(value, otherValue, compareListTag))
+                    {   return true;
+                    }
+                }
+            }
+        }
+
+        ListTag containsAllValues = (ListTag) compoundTag.get("cs:contains_all");
+        if (containsAllValues != null && !containsAllValues.isEmpty() && other instanceof ListTag otherList)
+        {
+            for (int i = 0; i < containsAllValues.size(); i++)
+            {
+                Tag value = containsAllValues.get(i);
+                find:
+                {
+                    for (int i1 = 0; i1 < otherList.size(); i1++)
+                    {
+                        Tag otherValue = otherList.get(i1);
+                        if (compareNbt(value, otherValue, compareListTag))
+                        {   break find;
+                        }
+                    }
+                    return false;
+                }
+            }
+            return true;
         }
 
         return false;
@@ -118,6 +166,10 @@ public record NbtRequirement(CompoundTag tag)
         catch (Exception e)
         {   return false;
         }
+    }
+
+    private static boolean compareNumbers(NumericTag tag, NumericTag other)
+    {   return tag.getAsDouble() == other.getAsDouble();
     }
 
     @Override
