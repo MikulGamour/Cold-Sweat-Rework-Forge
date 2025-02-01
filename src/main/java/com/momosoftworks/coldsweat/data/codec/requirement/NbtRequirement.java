@@ -57,6 +57,7 @@ public class NbtRequirement
         if (tag == other) return true;
         if (tag == null) return true;
         if (other == null) return false;
+        if (tag.equals(other)) return true;
 
         // Handle CompoundNBT comparison
         if (tag instanceof CompoundNBT)
@@ -73,33 +74,83 @@ public class NbtRequirement
         {   return compareNumericRange((StringNBT) tag, (NumberNBT) other);
         }
 
-        return tag.equals(other);
+        // Handle numeric comparison
+        if (tag instanceof NumberNBT && other instanceof NumberNBT)
+        {   return compareNumbers((NumberNBT) tag, (NumberNBT) other);
+        }
+
+        return false;
     }
 
-    private static boolean handleCompoundNBTComparison(CompoundNBT CompoundNBT, INBT other, boolean compareListNBT)
+    private static boolean handleCompoundNBTComparison(CompoundNBT compoundTag, INBT other, boolean compareListNBT)
     {
         // Case 1: Compare with another CompoundNBT
         if (other instanceof CompoundNBT)
         {
-            return CompoundNBT.getAllKeys().stream()
-                    .allMatch(key -> compareNbt(CompoundNBT.get(key), ((CompoundNBT) other).get(key), compareListNBT));
+            CompoundNBT otherCompound = (CompoundNBT) other;
+            for (String key : compoundTag.getAllKeys())
+            {
+                if (!compareNbt(compoundTag.get(key), otherCompound.get(key), compareListNBT))
+                {   return false;
+                }
+            }
+            return true;
         }
 
         // Case 2: Special comparison with cs:contains or cs:any_of
-        if (CompoundNBT.getAllKeys().size() != 1) return false;
+        if (compoundTag.getAllKeys().size() != 1)
+            return false;
 
-        ListNBT anyOfValues = (ListNBT) CompoundNBT.get("cs:any_of");
+        ListNBT anyOfValues = (ListNBT) compoundTag.get("cs:any_of");
         if (anyOfValues != null && !anyOfValues.isEmpty())
         {
-            return anyOfValues.stream()
-                    .anyMatch(value -> compareNbt(value, other, compareListNBT));
+            for (int i = 0; i < anyOfValues.size(); i++)
+            {
+                INBT value = anyOfValues.get(i);
+                if (compareNbt(value, other, compareListNBT))
+                {   return true;
+                }
+            }
+            return false;
         }
 
-        ListNBT containsValues = (ListNBT) CompoundNBT.get("cs:contains");
-        if (containsValues != null && !containsValues.isEmpty() && other instanceof ListNBT)
+        ListNBT containsAnyValues = (ListNBT) compoundTag.get("cs:contains_any");
+        if (containsAnyValues != null && !containsAnyValues.isEmpty() && other instanceof ListNBT)
         {
-            return containsValues.stream()
-                    .anyMatch(((ListNBT) other)::contains);
+            ListNBT otherList = (ListNBT) other;
+            for (int i = 0; i < containsAnyValues.size(); i++)
+            {
+                INBT value = containsAnyValues.get(i);
+                for (int i1 = 0; i1 < otherList.size(); i1++)
+                {
+                    INBT otherValue = otherList.get(i1);
+                    if (compareNbt(value, otherValue, compareListNBT))
+                    {   return true;
+                    }
+                }
+            }
+        }
+
+        ListNBT containsAllValues = (ListNBT) compoundTag.get("cs:contains_all");
+        if (containsAllValues != null && !containsAllValues.isEmpty() && other instanceof ListNBT)
+        {
+            ListNBT otherList = (ListNBT) other;
+            for (int i = 0; i < containsAllValues.size(); i++)
+            {
+                INBT value = containsAllValues.get(i);
+                find:
+                {
+                    for (int i1 = 0; i1 < otherList.size(); i1++)
+                    {
+                        INBT otherValue = otherList.get(i1);
+                        if (compareNbt(value, otherValue, compareListNBT))
+                        {   break find;
+                        }
+                    }
+                    return false;
+                }
+            }
+            return true;
         }
 
         return false;
@@ -132,6 +183,10 @@ public class NbtRequirement
         catch (Exception e)
         {   return false;
         }
+    }
+
+    private static boolean compareNumbers(NumberNBT tag, NumberNBT other)
+    {   return tag.getAsDouble() == other.getAsDouble();
     }
 
     @Override
