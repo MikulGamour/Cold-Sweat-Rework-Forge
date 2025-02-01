@@ -66,8 +66,6 @@ public class BlockTempModifier extends TempModifier
 
                 for (int y = -range; y < range; y++)
                 {
-                    try
-                    {
                         blockpos.set(entX + x, entY + y, entZ + z);
 
                         BlockState state = stateCache.get(blockpos);
@@ -128,11 +126,8 @@ public class BlockTempModifier extends TempModifier
                                 if (shouldTickAdvancements)
                                 {   triggers.add(new Triplet<>(blockpos, blockTemp, distance));
                                 }
-                                break;
                             }
                         }
-                    }
-                    catch (Exception ignored) {}
                 }
             }
         }
