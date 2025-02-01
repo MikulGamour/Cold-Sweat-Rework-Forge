@@ -6,7 +6,6 @@ import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.core.init.ModAdvancementTriggers;
 import com.momosoftworks.coldsweat.util.math.CSMath;
-import com.momosoftworks.coldsweat.util.math.FastMap;
 import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -66,8 +65,6 @@ public class BlockTempModifier extends TempModifier
 
                 for (int y = -range; y < range; y++)
                 {
-                    try
-                    {
                         blockpos.set(entX + x, entY + y, entZ + z);
 
                         BlockState state = stateCache.get(blockpos);
@@ -128,11 +125,8 @@ public class BlockTempModifier extends TempModifier
                                 if (shouldTickAdvancements)
                                 {   triggers.add(new Triplet<>(blockpos, blockTemp, distance));
                                 }
-                                break;
                             }
                         }
-                    }
-                    catch (Exception ignored) {}
                 }
             }
         }
