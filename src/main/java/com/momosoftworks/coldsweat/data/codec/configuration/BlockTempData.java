@@ -159,7 +159,7 @@ public class BlockTempData extends ConfigData
                                                                       ? Optional.of(BlockRequirement.StateRequirement.fromToml(((String) entry.get(4)).split(","), effectBlocks[0]))
                                                                       : Optional.empty();
 
-        Optional<NbtRequirement> nbtRequirement = entry.size() > 6 && entry.get(6) instanceof String&& !((String) entry.get(5)).isEmpty()
+        Optional<NbtRequirement> nbtRequirement = entry.size() > 6 && entry.get(6) instanceof String&& !((String) entry.get(5)).isBlank()
                                                   ? Optional.of(new NbtRequirement(NBTHelper.parseCompoundNbt((String) entry.get(5))))
                                                   : Optional.empty();
 
