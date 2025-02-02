@@ -51,7 +51,7 @@ public class EntityTempData extends ConfigData implements RequirementHolder, IFo
     public static final Codec<EntityTempData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             EntityRequirement.getCodec().fieldOf("entity").forGetter(EntityTempData::entity),
             Codec.DOUBLE.fieldOf("temperature").forGetter(EntityTempData::temperature),
-            Codec.DOUBLE.fieldOf("range").forGetter(EntityTempData::temperature),
+            Codec.DOUBLE.fieldOf("range").forGetter(EntityTempData::range),
             Temperature.Units.CODEC.optionalFieldOf("units", Temperature.Units.MC).forGetter(EntityTempData::units),
             EntityRequirement.getCodec().optionalFieldOf("player", EntityRequirement.NONE).forGetter(EntityTempData::playerRequirement),
             Codec.DOUBLE.optionalFieldOf("max_effect", Double.MAX_VALUE).forGetter(EntityTempData::maxEffect),
