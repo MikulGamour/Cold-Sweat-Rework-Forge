@@ -154,7 +154,7 @@ public class BlockTempData extends ConfigData
                                  : Double.MAX_VALUE;
 
         // Get block predicate
-        Optional<BlockRequirement.StateRequirement> blockPredicates = entry.size() > 5 && entry.get(5) instanceof String str && !str.isEmpty()
+        Optional<BlockRequirement.StateRequirement> blockPredicates = entry.size() > 5 && entry.get(5) instanceof String str && !str.isBlank()
                                                                       ? Optional.of(BlockRequirement.StateRequirement.fromToml(str.split(","), effectBlocks[0]))
                                                                       : Optional.empty();
 
