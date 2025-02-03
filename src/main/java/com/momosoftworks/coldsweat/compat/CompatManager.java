@@ -330,6 +330,7 @@ public class CompatManager
         }
     }
 
+    //TODO: Reimplement when mod is updated to this version
     public static abstract class Valkyrien
     {
         /*public static Vec3 translateToShipCoords(Vec3 pos, Ship ship)
@@ -450,10 +451,14 @@ public class CompatManager
         {   return;
         }
 
+        double worldTemp = Temperature.get(player, Temperature.Trait.WORLD);
+        double freezingPoint = Temperature.get(player, Temperature.Trait.FREEZING_POINT);
+        double burningPoint = Temperature.get(player, Temperature.Trait.BURNING_POINT);
+
         if (!player.isCreative() && !player.isInLava()
         && backTank.getItem() instanceof BacktankItem
         && backTank.getItem().isFireResistant()
-        && Temperature.get(player, Temperature.Trait.WORLD) > Temperature.get(player, Temperature.Trait.BURNING_POINT))
+        && (ConfigSettings.HEAT_DRAINS_BACKTANK.get() && worldTemp > burningPoint || ConfigSettings.COLD_DRAINS_BACKTANK.get() && worldTemp < freezingPoint))
         {
             // Ensure player is wearing a full set of fire-resistant armor
             ItemStack helmet = player.getItemBySlot(EquipmentSlot.HEAD);
