@@ -26,7 +26,7 @@ public class EntitiesTempModifier extends TempModifier
     {
         Level level = affectedEnt.level;
         // Search for entities in an 8-block radius
-        AABB aabb = new AABB(affectedEnt.blockPosition()).move(0, affectedEnt.getBbHeight() / 2 - 0.5, 0).inflate(8);
+        AABB aabb = new AABB(affectedEnt.blockPosition()).move(0, affectedEnt.getBbHeight() / 2 - 0.5, 0).inflate(16);
         List<Entity> entities = affectedEnt.level.getEntities(affectedEnt, aabb, e -> e != affectedEnt);
 
         Map<EntityTempData, Double> effects = new FastMap<>();
