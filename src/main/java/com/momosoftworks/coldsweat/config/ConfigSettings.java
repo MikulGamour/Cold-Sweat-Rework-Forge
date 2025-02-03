@@ -149,6 +149,9 @@ public class ConfigSettings
     public static final DynamicHolder<Boolean> HEARTH_POTIONS_ENABLED;
     public static final DynamicHolder<List<MobEffect>> HEARTH_POTION_BLACKLIST;
 
+    public static final DynamicHolder<Boolean> HEAT_DRAINS_BACKTANK;
+    public static final DynamicHolder<Boolean> COLD_DRAINS_BACKTANK;
+
     // Entity Settings
     public static final DynamicHolder<EntityDropData> FUR_TIMINGS;
     public static final DynamicHolder<EntityDropData> SHED_TIMINGS;
@@ -586,6 +589,13 @@ public class ConfigSettings
                                                                            .stream()
                                                                            .map(entry -> registryAccess.registryOrThrow(Registry.DIMENSION_TYPE_REGISTRY).get(new ResourceLocation(entry)))
                                                                            .collect(ArrayList::new, List::add, List::addAll))));
+
+        HEAT_DRAINS_BACKTANK = addSetting("heat_drains_backtank", () -> true, holder ->
+        {   if (CompatManager.isCreateLoaded()) holder.set(ItemSettingsConfig.HEAT_DRAINS_BACKTANK.get());
+        });
+        COLD_DRAINS_BACKTANK = addSetting("cold_drains_backtank", () -> false, holder ->
+        {   if (CompatManager.isCreateLoaded()) holder.set(ItemSettingsConfig.COLD_DRAINS_BACKTANK.get());
+        });
 
         FUR_TIMINGS = addSyncedSetting("fur_timings", () -> new EntityDropData(0, 0, 0d), holder ->
         {   List<?> entry = EntitySettingsConfig.GOAT_FUR_GROWTH_STATS.get();

@@ -39,7 +39,10 @@ public class ItemSettingsConfig
 
     public static final ForgeConfigSpec.ConfigValue<List<? extends List<?>>> DRYING_ITEMS;
 
+    // Compat settings
     public static final ForgeConfigSpec.ConfigValue<List<? extends List<?>>> INSULATING_CURIOS;
+    public static final ForgeConfigSpec.BooleanValue HEAT_DRAINS_BACKTANK;
+    public static final ForgeConfigSpec.BooleanValue COLD_DRAINS_BACKTANK;
 
     static
     {
@@ -315,6 +318,27 @@ public class ItemSettingsConfig
                         && list.get(3) instanceof String
                         && (list.size() < 5 || list.get(4) instanceof String)
                         && (list.size() < 6 || list.get(5) instanceof Number));
+
+        BUILDER.pop();
+
+        if (CompatManager.isCreateLoaded())
+        {
+            BUILDER.comment("Drains pressure from Create's netherite backtank if the player is in a hot/cold environment",
+                            "Triggered by the set bonus for wearing a full set of netherite diving gear",
+                            "Disabling these settings will not disable the heat/cold protection set bonus")
+                    .push("Create Backtank");
+
+            HEAT_DRAINS_BACKTANK = BUILDER
+                    .define("Heat Drains Backtank", true);
+            COLD_DRAINS_BACKTANK = BUILDER
+                    .define("Cold Drains Backtank", false);
+
+            BUILDER.pop();
+        }
+        else
+        {   HEAT_DRAINS_BACKTANK = null;
+            COLD_DRAINS_BACKTANK = null;
+        }
 
         BUILDER.pop();
 
