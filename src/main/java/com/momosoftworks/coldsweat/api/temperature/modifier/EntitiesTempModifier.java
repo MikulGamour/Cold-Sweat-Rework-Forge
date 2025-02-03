@@ -26,7 +26,7 @@ public class EntitiesTempModifier extends TempModifier
     {
         World level = affectedEnt.level;
         // Search for entities in an 8-block radius
-        AxisAlignedBB aabb = new AxisAlignedBB(affectedEnt.blockPosition()).move(0, affectedEnt.getBbHeight() / 2 - 0.5, 0).inflate(8);
+        AxisAlignedBB aabb = new AxisAlignedBB(affectedEnt.blockPosition()).move(0, affectedEnt.getBbHeight() / 2 - 0.5, 0).inflate(16);
         List<Entity> entities = affectedEnt.level.getEntities(affectedEnt, aabb, e -> e != affectedEnt);
 
         Map<EntityTempData, Double> effects = new FastMap<>();
