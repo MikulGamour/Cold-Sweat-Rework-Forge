@@ -4,6 +4,7 @@ import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.api.event.core.init.FetchSeasonsModsEvent;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.common.capability.handler.EntityTempManager;
+import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.core.init.BlockInit;
 import com.momosoftworks.coldsweat.compat.create.ColdSweatDisplayBehaviors;
 import com.momosoftworks.coldsweat.util.math.CSMath;
@@ -398,10 +399,14 @@ public class CompatManager
         {   return;
         }
 
+        double worldTemp = Temperature.get(player, Temperature.Trait.WORLD);
+        double freezingPoint = Temperature.get(player, Temperature.Trait.FREEZING_POINT);
+        double burningPoint = Temperature.get(player, Temperature.Trait.BURNING_POINT);
+
         if (!player.isCreative() && !player.isInLava()
         && backTank.getItem() instanceof BacktankItem
         && backTank.getItem().isFireResistant()
-        && Temperature.get(player, Temperature.Trait.WORLD) > Temperature.get(player, Temperature.Trait.BURNING_POINT))
+        && (ConfigSettings.HEAT_DRAINS_BACKTANK.get() && worldTemp > burningPoint || ConfigSettings.COLD_DRAINS_BACKTANK.get() && worldTemp < freezingPoint))
         {
             // Ensure player is wearing a full set of fire-resistant armor
             ItemStack helmet = player.getItemBySlot(EquipmentSlot.HEAD);
