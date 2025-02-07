@@ -26,7 +26,7 @@ public class KubePlugin extends KubeJSPlugin
     }
 
     @SubscribeEvent
-    public static void fireRegistries(CreateRegistriesEvent event)
+    public static void fireRegistries(CreateRegistriesEvent.Pre event)
     {   KubeEventSignatures.REGISTRIES.invoker().buildRegistries();
     }
 
