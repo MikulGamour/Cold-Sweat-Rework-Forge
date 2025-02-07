@@ -1,6 +1,8 @@
 package com.momosoftworks.coldsweat.api.event.core.registry;
 
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
+import com.momosoftworks.coldsweat.data.codec.configuration.RemoveRegistryData;
 import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import net.minecraft.util.RegistryKey;
 import net.minecraft.util.registry.DynamicRegistries;
@@ -14,7 +16,7 @@ import java.util.Collection;
  * <br>
  * Fired on the Forge event bus when Cold Sweat's registries are gathered, but before they are committed to {@link com.momosoftworks.coldsweat.config.ConfigSettings} where they become usable.<br>
  */
-public class CreateRegistriesEvent extends Event
+public abstract class CreateRegistriesEvent extends Event
 {
     DynamicRegistries registryAccess;
     Multimap<RegistryKey<Registry<? extends ConfigData>>, ? extends ConfigData> registries;
@@ -35,6 +37,26 @@ public class CreateRegistriesEvent extends Event
 
     public <T> Collection<T> getRegistry(RegistryKey<Registry<T>> key)
     {   return (Collection<T>) registries.get((RegistryKey) key);
+    }
+
+    /**
+     * Fired directly after registries have been gathered, before registry removals are triggered.
+     */
+    public static class Pre extends CreateRegistriesEvent
+    {
+        private Multimap<RegistryKey<Registry<? extends ConfigData>>, RemoveRegistryData<?>> removals;
+
+        public Pre(DynamicRegistries registryAccess, Multimap<RegistryKey<Registry<? extends ConfigData>>, ? extends ConfigData> registries,
+                   Multimap<RegistryKey<Registry<? extends ConfigData>>, RemoveRegistryData<?>> removals)
+        {   super(registryAccess, registries);
+        }
+
+        /**
+         * @return An IMMUTABLE multimap of registry removals.
+         */
+        public Multimap<RegistryKey<Registry<? extends ConfigData>>, RemoveRegistryData<?>> getRegistryRemovals()
+        {   return ImmutableMultimap.copyOf(removals);
+        }
     }
 
     /**
