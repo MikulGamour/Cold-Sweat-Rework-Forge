@@ -611,12 +611,11 @@ public class EntityTempManager
         && (effect.getEffect() == ModEffects.FRIGIDNESS || effect.getEffect() == ModEffects.WARMTH))
         {
             boolean isWarmth = effect.getEffect() == ModEffects.WARMTH;
-            int warming = isWarmth ? effect.getAmplifier() + 1 : 0;
-            int cooling = !isWarmth ? effect.getAmplifier() + 1 : 0;
+            int strength = effect.getAmplifier() + 1;
             // Add TempModifier on potion effect added
-            BlockInsulationTempModifier newMod = new BlockInsulationTempModifier(cooling, warming).expires(effect.getDuration());
-            BlockInsulationTempModifier oldMod = Temperature.getModifier(entity, Temperature.Trait.WORLD, BlockInsulationTempModifier.class).orElse(null);
-            if (oldMod == null || oldMod.getCooling() <= cooling || oldMod.getWarming() <= warming)
+            ThermalSourceTempModifier newMod = (isWarmth ? new WarmthTempModifier(strength) : new FrigidnessTempModifier(strength)).expires(effect.getDuration());
+            ThermalSourceTempModifier oldMod = Temperature.getModifier(entity, Temperature.Trait.WORLD, ThermalSourceTempModifier.class).orElse(null);
+            if (oldMod == null || oldMod.getStrength() <= strength)
             {   Temperature.addOrReplaceModifier(entity, newMod, Temperature.Trait.WORLD, Placement.Duplicates.BY_CLASS);
             }
         }
@@ -631,7 +630,7 @@ public class EntityTempManager
         if (effect != null && !entity.level().isClientSide && isTemperatureEnabled(entity)
         && (effect.getEffect() == ModEffects.FRIGIDNESS || effect.getEffect() == ModEffects.WARMTH))
         {
-            Optional<BlockInsulationTempModifier> modifier = Temperature.getModifier(entity, Temperature.Trait.WORLD, BlockInsulationTempModifier.class);
+            Optional<ThermalSourceTempModifier> modifier = Temperature.getModifier(entity, Temperature.Trait.WORLD, ThermalSourceTempModifier.class);
             if (modifier.isPresent())
             {
                 boolean isWarmth = effect.getEffect() == ModEffects.WARMTH;
@@ -640,7 +639,7 @@ public class EntityTempManager
                 if (isWarmth) nbt.putInt("Warming", 0);
                 else nbt.putInt("Cooling", 0);
                 if (isWarmth ? !entity.hasEffect(ModEffects.FRIGIDNESS) : !entity.hasEffect(ModEffects.WARMTH))
-                {   Temperature.removeModifiers(entity, Temperature.Trait.WORLD, mod -> mod instanceof BlockInsulationTempModifier);
+                {   Temperature.removeModifiers(entity, Temperature.Trait.WORLD, mod -> mod instanceof ThermalSourceTempModifier);
                 }
             }
         }
