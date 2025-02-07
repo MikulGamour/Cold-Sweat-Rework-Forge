@@ -25,7 +25,7 @@ public class KubeEventHandlers
     public static final EventHandler APPLY_INSULATION = COLD_SWEAT.server("applyInsulation", () -> ApplyInsulationEventJS.class);
 
     @SubscribeEvent
-    public static void buildRegistries(CreateRegistriesEvent event)
+    public static void buildRegistries(CreateRegistriesEvent.Pre event)
     {
         if (REGISTER.hasListeners())
         {   REGISTER.post(new ModRegistriesEventJS());

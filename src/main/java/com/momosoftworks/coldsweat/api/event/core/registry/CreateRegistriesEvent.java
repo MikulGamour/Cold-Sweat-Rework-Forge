@@ -1,6 +1,8 @@
 package com.momosoftworks.coldsweat.api.event.core.registry;
 
+import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
+import com.momosoftworks.coldsweat.data.codec.configuration.*;
 import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
@@ -17,7 +19,7 @@ import java.util.*;
  * <br>
  * This is not an {@link net.neoforged.bus.api.ICancellableEvent}.
  */
-public class CreateRegistriesEvent extends Event
+public abstract class CreateRegistriesEvent extends Event
 {
     RegistryAccess registryAccess;
     Multimap<ResourceKey<Registry<? extends ConfigData>>, Holder<? extends ConfigData>> registries;
@@ -38,6 +40,26 @@ public class CreateRegistriesEvent extends Event
 
     public <T> Collection<Holder<T>> getRegistry(ResourceKey<Registry<T>> key)
     {   return (Collection<Holder<T>>) registries.get((ResourceKey) key);
+    }
+
+    /**
+     * Fired directly after registries have been gathered, before registry removals are triggered.
+     */
+    public static class Pre extends CreateRegistriesEvent
+    {
+        private Multimap<ResourceKey<Registry<? extends ConfigData>>, RemoveRegistryData<?>> removals;
+
+        public Pre(RegistryAccess registryAccess, Multimap<ResourceKey<Registry<? extends ConfigData>>, Holder<? extends ConfigData>> registries,
+                   Multimap<ResourceKey<Registry<? extends ConfigData>>, RemoveRegistryData<?>> removals)
+        {   super(registryAccess, registries);
+        }
+
+        /**
+         * @return An IMMUTABLE multimap of registry removals.
+         */
+        public Multimap<ResourceKey<Registry<? extends ConfigData>>, RemoveRegistryData<?>> getRegistryRemovals()
+        {   return ImmutableMultimap.copyOf(removals);
+        }
     }
 
     /**

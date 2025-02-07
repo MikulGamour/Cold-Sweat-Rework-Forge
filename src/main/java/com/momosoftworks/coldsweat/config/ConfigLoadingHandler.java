@@ -12,6 +12,7 @@ import com.momosoftworks.coldsweat.api.event.core.registry.CreateRegistriesEvent
 import com.momosoftworks.coldsweat.api.event.vanilla.ServerConfigsLoadedEvent;
 import com.momosoftworks.coldsweat.api.registry.BlockTempRegistry;
 import com.momosoftworks.coldsweat.api.temperature.block_temp.BlockTemp;
+import com.momosoftworks.coldsweat.compat.CompatManager;
 import com.momosoftworks.coldsweat.core.init.TempModifierInit;
 import com.momosoftworks.coldsweat.data.ModRegistries;
 import com.momosoftworks.coldsweat.data.codec.configuration.*;
@@ -21,17 +22,13 @@ import com.momosoftworks.coldsweat.data.tag.ModBlockTags;
 import com.momosoftworks.coldsweat.data.tag.ModDimensionTags;
 import com.momosoftworks.coldsweat.data.tag.ModEffectTags;
 import com.momosoftworks.coldsweat.data.tag.ModItemTags;
-import com.momosoftworks.coldsweat.compat.CompatManager;
 import com.momosoftworks.coldsweat.util.math.FastMultiMap;
-import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
 import com.momosoftworks.coldsweat.util.serialization.RegistryHelper;
 import net.minecraft.core.*;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.GsonHelper;
@@ -51,7 +48,6 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.neoforged.fml.loading.FMLPaths;
 import net.neoforged.neoforge.common.NeoForge;
-import oshi.util.tuples.Triplet;
 
 import java.io.File;
 import java.io.FileReader;
@@ -213,7 +209,7 @@ public class ConfigLoadingHandler
         }
 
         // Fire registry creation event
-        CreateRegistriesEvent event = new CreateRegistriesEvent(registryAccess, registries);
+        CreateRegistriesEvent.Pre event = new CreateRegistriesEvent.Pre(registryAccess, registries, REMOVED_REGISTRIES);
         NeoForge.EVENT_BUS.post(event);
 
         // Remove registry entries that match removal criteria
