@@ -340,8 +340,6 @@ public class ItemSettingsConfig
             COLD_DRAINS_BACKTANK = null;
         }
 
-        BUILDER.pop();
-
         SPEC = BUILDER.build();
     }
 
