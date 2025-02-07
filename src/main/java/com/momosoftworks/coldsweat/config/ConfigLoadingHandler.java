@@ -211,7 +211,7 @@ public class ConfigLoadingHandler
         }
 
         // Fire registry creation event
-        CreateRegistriesEvent event = new CreateRegistriesEvent(registryAccess, registries);
+        CreateRegistriesEvent.Pre event = new CreateRegistriesEvent.Pre(registryAccess, registries, REMOVED_REGISTRIES);
         MinecraftForge.EVENT_BUS.post(event);
 
         // Remove registry entries that match removal criteria
