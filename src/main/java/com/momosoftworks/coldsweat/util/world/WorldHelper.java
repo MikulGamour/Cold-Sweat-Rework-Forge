@@ -647,8 +647,11 @@ public abstract class WorldHelper
         Pair<Integer, Integer> maxCoolingHeating = getInsulationFromNearbySources(level, pos, 2);
         int maxCoolingLevel = maxCoolingHeating.getFirst();
         int maxHeatingLevel = maxCoolingHeating.getSecond();
-        if (maxCoolingLevel > 0 || maxHeatingLevel > 0)
-        {   modifiers.add(new BlockInsulationTempModifier(maxCoolingLevel, maxHeatingLevel));
+        if (maxCoolingLevel > 0)
+        {   modifiers.add(new FrigidnessTempModifier(maxCoolingLevel));
+        }
+        if (maxHeatingLevel > 0)
+        {   modifiers.add(new WarmthTempModifier(maxHeatingLevel));
         }
 
         double tempAt = Temperature.apply(0, dummy, Temperature.Trait.WORLD, modifiers, true);

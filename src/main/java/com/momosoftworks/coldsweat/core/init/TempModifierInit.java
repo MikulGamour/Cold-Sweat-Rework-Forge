@@ -121,7 +121,8 @@ public class TempModifierInit
         event.register(new ResourceLocation(ColdSweat.MOD_ID, "waterskin"), WaterskinTempModifier::new);
         event.register(new ResourceLocation(ColdSweat.MOD_ID, "soulspring_lamp"), SoulLampTempModifier::new);
         event.register(new ResourceLocation(ColdSweat.MOD_ID, "water"), WaterTempModifier::new);
-        event.register(new ResourceLocation(ColdSweat.MOD_ID, "air_conditioning"), BlockInsulationTempModifier::new);
+        event.register(new ResourceLocation(ColdSweat.MOD_ID, "warming"), WarmthTempModifier::new);
+        event.register(new ResourceLocation(ColdSweat.MOD_ID, "cooling"), FrigidnessTempModifier::new);
         event.register(new ResourceLocation(ColdSweat.MOD_ID, "food"), FoodTempModifier::new);
         event.register(new ResourceLocation(ColdSweat.MOD_ID, "freezing"), FreezingTempModifier::new);
         event.register(new ResourceLocation(ColdSweat.MOD_ID, "on_fire"), FireTempModifier::new);
