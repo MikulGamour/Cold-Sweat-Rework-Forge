@@ -382,8 +382,6 @@ public class ItemSettingsConfig
                         && (list.size() < 6 || list.get(5) instanceof Number);
                 });
 
-        BUILDER.pop();
-
         SPEC = BUILDER.build();
     }
 
