@@ -3,7 +3,7 @@ package com.momosoftworks.coldsweat.common.blockentity;
 import com.mojang.datafixers.util.Pair;
 import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.api.event.vanilla.BlockStateChangedEvent;
-import com.momosoftworks.coldsweat.api.temperature.modifier.BlockInsulationTempModifier;
+import com.momosoftworks.coldsweat.api.temperature.modifier.ThermalSourceTempModifier;
 import com.momosoftworks.coldsweat.api.temperature.modifier.TempModifier;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.client.event.HearthDebugRenderer;
@@ -710,7 +710,7 @@ public class HearthBlockEntity extends LockableLootTileEntity implements ITickab
         if (!shouldUseColdFuel || !shouldUseHotFuel)
         EntityTempManager.getTemperatureCap(player).ifPresent(cap ->
         {
-            double temp = CSMath.getIfNotNull(Temperature.getModifier(cap, Temperature.Trait.WORLD, BlockInsulationTempModifier.class).orElse(null),
+            double temp = CSMath.getIfNotNull(Temperature.getModifier(cap, Temperature.Trait.WORLD, ThermalSourceTempModifier.class).orElse(null),
                                               TempModifier::getLastInput,
                                               cap.getTrait(Temperature.Trait.WORLD));
             double min = cap.getTrait(Temperature.Trait.FREEZING_POINT);
