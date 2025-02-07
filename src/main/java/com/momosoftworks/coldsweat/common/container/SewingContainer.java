@@ -99,8 +99,6 @@ public class SewingContainer extends ItemCombinerMenu
     @Override
     protected void onTake(Player player, ItemStack stack)
     {
-        if (!ItemInsulationManager.isInsulatable(stack)) return;
-
         ItemStack input1 = this.getItem(0);
         ItemStack input2 = this.getItem(1);
 
