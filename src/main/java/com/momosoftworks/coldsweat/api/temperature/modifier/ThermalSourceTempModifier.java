@@ -7,23 +7,21 @@ import net.minecraft.world.entity.LivingEntity;
 
 import java.util.function.Function;
 
-public class BlockInsulationTempModifier extends TempModifier
+public abstract class ThermalSourceTempModifier extends TempModifier
 {
-    public BlockInsulationTempModifier()
-    {   this(0, 0);
-    }
-
-    public BlockInsulationTempModifier(int cooling, int warming)
+    public ThermalSourceTempModifier(int cooling, int warming)
     {
         this.getNBT().putInt("Cooling", cooling);
         this.getNBT().putInt("Warming", warming);
     }
 
-    public int getCooling()
+    public abstract int getStrength();
+
+    protected int getCooling()
     {   return this.getNBT().getInt("Cooling");
     }
 
-    public int getWarming()
+    protected int getWarming()
     {   return this.getNBT().getInt("Warming");
     }
 
