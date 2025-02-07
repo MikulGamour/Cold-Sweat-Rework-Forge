@@ -121,8 +121,6 @@ public class SewingContainer extends AbstractRepairContainer
     @Override
     protected ItemStack onTake(PlayerEntity player, ItemStack stack)
     {
-        if (!ItemInsulationManager.isInsulatable(stack)) return stack;
-
         ItemStack input1 = this.getItem(0);
         ItemStack input2 = this.getItem(1);
 
