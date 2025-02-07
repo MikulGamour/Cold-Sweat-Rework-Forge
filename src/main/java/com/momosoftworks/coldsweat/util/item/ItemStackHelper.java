@@ -6,6 +6,7 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.BucketItem;
+import net.minecraft.world.item.Equipable;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.level.LevelAccessor;
@@ -47,5 +48,21 @@ public class ItemStackHelper
             stack.set(componentType, component);
         }
         return component;
+    }
+
+    public static EquipmentSlot getEquipmentSlot(ItemStack stack)
+    {
+        final EquipmentSlot slot = stack.getEquipmentSlot();
+        // Item overrides getEquipmentSlot()
+        if (slot != null)
+        {   return slot;
+        }
+        // Item is equippable
+        Equipable equipable = Equipable.get(stack);
+        if (equipable != null)
+        {   return equipable.getEquipmentSlot();
+        }
+
+        return EquipmentSlot.MAINHAND;
     }
 }
