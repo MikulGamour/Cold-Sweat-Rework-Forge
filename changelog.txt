@@ -2790,3 +2790,33 @@ Technical Changes:
       - This event is fired on the Forge event bus when configs are being constructed
 - Multiple "drying item" configs can now be configured for a given item
       - The first applicable config will be used in the event that there are more than one
+
+------------------------------------------------------------------------------------------------------------------------
+2.3.12
+- Added config setting to change the hearth/boiler/icebox's fuel consumption rate when applying warmth/frigidness
+- Added config setting to enable/disable the Create backtank losing pressure in hot or cold environments
+- Added support for Just Enough Effect Descriptions (courtesy of Cicopath)
+- Piglins now accept the thermometer as a bartering item (also courtesy of Cicopath)
+- Goats can now be sheared by a dispenser
+
+Fixes:
+* (1.21) Fixed crash loading KubeJS integration when Architectury is not installed
+* Fixed removing insulation in the sewing table duplicating the insulation item
+* Fixed crash when the player is wet on a dedicated server
+- Fixed NBT arguments in JSON not parsing correctly in some cases, especially with nested compound tags
+- Fixed TOML block temp configs being invalid if any string arguments contain only whitespace (" ")
+- Fixed the "range" field in entity temperature JSON configs taking its value from the "temperature" field
+- Fixed overlapping thermal sources still conflicting in some cases
+- Fixed KubeJS registry events firing twice
+
+Technical Changes:
+* Added a "temperature" field to entity requirement JSON:
+      - Allows for checking the temperature of the target entity
+      - Represented as a map of string keys and double or double-range values
+      - i.e. {"body": 50.0} or {"world": {"min": 1.0, "max": 2.5}}
+- The "cs:contains" NBT operator has been split into "cs:contains_all" and "cs:contains_any"
+      - "cs:contains_all" checks if the NBT list contains all of the specified keys
+      - "cs:contains_any" checks if the NBT list contains any one of the specified keys
+- Added CreateRegistriesEvent.Pre
+      - Fires directly after registries are compiled, and before removals are handled
+      - Subscribing to the base event is not recommended, as it will cause the subscriber to fire twice
