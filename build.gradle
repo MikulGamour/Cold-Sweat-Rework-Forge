@@ -158,9 +158,9 @@ dependencies {
 
     implementation 'thedarkcolour:kotlinforforge:3.12.0'
 
-    compileOnly fg.deobf("curse.maven:tinkers-construct-74072:4509008")
-    compileOnly fg.deobf("curse.maven:constructs-armory-1-18-2-port-867883:4559247")
-    compileOnly fg.deobf("curse.maven:mantle-74924:4509007")
+    implementation fg.deobf("curse.maven:tinkers-construct-74072:4509008")
+    implementation fg.deobf("curse.maven:constructs-armory-1-18-2-port-867883:4559247")
+    implementation fg.deobf("curse.maven:mantle-74924:4509007")
     compileOnly fg.deobf("curse.maven:storms-237746:4426524")
     compileOnly fg.deobf("curse.maven:flywheel-486392:4341461")
     compileOnly fg.deobf("curse.maven:vampirism-233029:4082397")
