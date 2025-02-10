@@ -9,9 +9,7 @@ import com.momosoftworks.coldsweat.compat.kubejs.event.*;
 import dev.latvian.mods.kubejs.event.EventGroup;
 import dev.latvian.mods.kubejs.event.EventHandler;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 
-@EventBusSubscriber
 public class KubeEventHandlers
 {
     public static final EventGroup COLD_SWEAT = EventGroup.of("ColdSweatEvents");

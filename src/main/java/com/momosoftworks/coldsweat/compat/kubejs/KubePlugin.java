@@ -3,6 +3,7 @@ package com.momosoftworks.coldsweat.compat.kubejs;
 import dev.latvian.mods.kubejs.event.EventGroupRegistry;
 import dev.latvian.mods.kubejs.plugin.KubeJSPlugin;
 import dev.latvian.mods.kubejs.script.BindingRegistry;
+import net.neoforged.neoforge.common.NeoForge;
 
 public class KubePlugin implements KubeJSPlugin
 {
@@ -10,6 +11,7 @@ public class KubePlugin implements KubeJSPlugin
     public void registerEvents(EventGroupRegistry registry)
     {
         registry.register(KubeEventHandlers.COLD_SWEAT);
+        NeoForge.EVENT_BUS.register(KubeEventHandlers.class);
     }
 
     @Override
