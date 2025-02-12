@@ -5,6 +5,7 @@ import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.momosoftworks.coldsweat.util.serialization.SerializablePredicate;
 import com.momosoftworks.coldsweat.data.codec.util.IntegerBounds;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
 import net.minecraft.core.Registry;
@@ -22,11 +23,12 @@ import net.minecraftforge.registries.ForgeRegistries;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 public record ItemRequirement(Optional<List<Either<TagKey<Item>, Item>>> items, Optional<TagKey<Item>> tag,
                               Optional<IntegerBounds> count, Optional<IntegerBounds> durability,
                               Optional<List<EnchantmentRequirement>> enchantments, Optional<List<EnchantmentRequirement>> storedEnchantments,
-                              Optional<Potion> potion, NbtRequirement nbt)
+                              Optional<Potion> potion, NbtRequirement nbt, Optional<SerializablePredicate<ItemStack>> predicate)
 {
     public static final Codec<ItemRequirement> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             ConfigHelper.tagOrForgeRegistryCodec(Registry.ITEM_REGISTRY, ForgeRegistries.ITEMS).listOf().optionalFieldOf("items").forGetter(predicate -> predicate.items),
@@ -36,21 +38,42 @@ public record ItemRequirement(Optional<List<Either<TagKey<Item>, Item>>> items, 
             EnchantmentRequirement.CODEC.listOf().optionalFieldOf("enchantments").forGetter(predicate -> predicate.enchantments),
             EnchantmentRequirement.CODEC.listOf().optionalFieldOf("stored_enchantments").forGetter(predicate -> predicate.storedEnchantments),
             ForgeRegistries.POTIONS.getCodec().optionalFieldOf("potion").forGetter(predicate -> predicate.potion),
-            NbtRequirement.CODEC.optionalFieldOf("nbt", new NbtRequirement(new CompoundTag())).forGetter(predicate -> predicate.nbt)
+            NbtRequirement.CODEC.optionalFieldOf("nbt", new NbtRequirement(new CompoundTag())).forGetter(predicate -> predicate.nbt),
+            Codec.STRING.xmap(SerializablePredicate::<ItemStack>deserialize, SerializablePredicate::serialize)
+                        .optionalFieldOf("predicate").forGetter(predicate -> predicate.predicate)
     ).apply(instance, ItemRequirement::new));
 
     public static final ItemRequirement NONE = new ItemRequirement(Optional.empty(), Optional.empty(), Optional.empty(),
                                                                    Optional.empty(), Optional.empty(), Optional.empty(),
                                                                    Optional.empty(), new NbtRequirement());
 
+    public ItemRequirement(Optional<List<Either<TagKey<Item>, Item>>> items, Optional<TagKey<Item>> tag,
+                           Optional<IntegerBounds> count, Optional<IntegerBounds> durability,
+                           Optional<List<EnchantmentRequirement>> enchantments,
+                           Optional<List<EnchantmentRequirement>> storedEnchantments,
+                           Optional<Potion> potion, NbtRequirement nbt)
+    {
+        this(items, tag, count, durability, enchantments, storedEnchantments, potion, nbt, Optional.empty());
+    }
+
+    public ItemRequirement(Predicate<ItemStack> predicate)
+    {
+        this(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
+             Optional.empty(), Optional.empty(), Optional.empty(), new NbtRequirement(),
+             Optional.of(new SerializablePredicate<>(predicate)));
+    }
+
     public boolean test(ItemStack stack, boolean ignoreCount)
     {
+        if (this.predicate.isPresent())
+        {   return this.predicate.get().test(stack);
+        }
         if (stack.isEmpty() && items.isPresent() && !items.get().isEmpty())
         {   return false;
         }
 
-        if (this.nbt.tag().isEmpty())
-        {   return true;
+        if (!this.nbt.test(stack.getTag()))
+        {   return false;
         }
         if (items.isPresent())
         {

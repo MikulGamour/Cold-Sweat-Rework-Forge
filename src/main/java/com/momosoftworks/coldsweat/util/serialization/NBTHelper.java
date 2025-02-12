@@ -4,7 +4,6 @@ import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.api.registry.TempModifierRegistry;
 import com.momosoftworks.coldsweat.api.temperature.modifier.TempModifier;
 import com.momosoftworks.coldsweat.api.util.Temperature;
-import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.registries.ModItems;
 import net.minecraft.nbt.*;
@@ -22,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 @Mod.EventBusSubscriber
@@ -166,14 +166,6 @@ public class NBTHelper
         }
     }
 
-    public static EntityRequirement readEntityPredicate(CompoundTag tag)
-    {   return EntityRequirement.deserialize(tag);
-    }
-
-    public static CompoundTag writeEntityRequirement(EntityRequirement predicate)
-    {   return predicate.serialize();
-    }
-
     public static ListTag listTagOf(List<?> list)
     {
         ListTag tag = new ListTag();
@@ -247,5 +239,15 @@ public class NBTHelper
         {   return StringTag.valueOf(string);
         }
         return null;
+    }
+
+    public static <T, V> T deserializePredicate(CompoundTag tag, Function<SerializablePredicate<V>, T> constructor, String errorMessage)
+    {
+        try
+        {   return constructor.apply(SerializablePredicate.deserialize(tag.getString("predicate")));
+        }
+        catch (Exception e)
+        {   throw ColdSweat.LOGGER.throwing(new RuntimeException(errorMessage));
+        }
     }
 }

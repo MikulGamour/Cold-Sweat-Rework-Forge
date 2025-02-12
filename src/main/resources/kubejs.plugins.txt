@@ -1,1 +1,1 @@
-com.momosoftworks.coldsweat.util.compat.kubejs.KubePlugin
+com.momosoftworks.coldsweat.compat.kubejs.KubePlugin
