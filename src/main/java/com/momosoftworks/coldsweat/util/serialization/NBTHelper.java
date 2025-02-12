@@ -3,7 +3,6 @@ package com.momosoftworks.coldsweat.util.serialization;
 import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.api.registry.TempModifierRegistry;
 import com.momosoftworks.coldsweat.api.util.Temperature;
-import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.registries.ModItems;
 import net.minecraft.entity.Entity;
@@ -22,6 +21,7 @@ import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -166,14 +166,6 @@ public class NBTHelper
         }
     }
 
-    public static EntityRequirement readEntityPredicate(CompoundNBT tag)
-    {   return EntityRequirement.deserialize(tag);
-    }
-
-    public static CompoundNBT writeEntityRequirement(EntityRequirement predicate)
-    {   return predicate.serialize();
-    }
-
     public static ListNBT listTagOf(List<?> list)
     {
         ListNBT tag = new ListNBT();
@@ -247,5 +239,15 @@ public class NBTHelper
         {   return StringNBT.valueOf((String) obj);
         }
         return null;
+    }
+
+    public static <T, V> T deserializePredicate(CompoundNBT tag, Function<SerializablePredicate<V>, T> constructor, String errorMessage)
+    {
+        try
+        {   return constructor.apply(SerializablePredicate.deserialize(tag.getString("predicate")));
+        }
+        catch (Exception e)
+        {   throw ColdSweat.LOGGER.throwing(new RuntimeException(errorMessage));
+        }
     }
 }

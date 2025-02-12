@@ -1,6 +1,10 @@
 package com.momosoftworks.coldsweat.compat.kubejs;
 
+import com.momosoftworks.coldsweat.api.event.common.temperautre.TempModifierEvent;
 import com.momosoftworks.coldsweat.api.event.common.temperautre.TemperatureChangedEvent;
+import com.momosoftworks.coldsweat.compat.kubejs.event.AddModifierEventJS;
+import com.momosoftworks.coldsweat.compat.kubejs.event.ApplyInsulationEventJS;
+import com.momosoftworks.coldsweat.compat.kubejs.event.ModRegistriesEventJS;
 import com.momosoftworks.coldsweat.compat.kubejs.event.TempChangedEventJS;
 import dev.latvian.kubejs.script.ScriptType;
 import me.shedaniel.architectury.event.EventResult;
@@ -9,11 +13,23 @@ public class KubeEventHandlers
 {
     public static final String COLD_SWEAT = "cs:";
 
+    public static final String REGISTER = event("registries");
+
     public static final String TEMP_CHANGED = event("temperatureChanged");
+    public static final String MODIFIER_ADD = event("addModifier");
+
+    public static final String APPLY_INSULATION = event("applyInsulation");
 
     public static void init()
     {
+        KubeEventSignatures.REGISTRIES.register(KubeEventHandlers::buildRegistries);
         KubeEventSignatures.TEMPERATURE_CHANGED.register(KubeEventHandlers::onTemperatureChanged);
+        KubeEventSignatures.INSULATE_ITEM.register(KubeEventHandlers::onInsulateItem);
+        KubeEventSignatures.ADD_MODIFIER.register(KubeEventHandlers::onTempModifierAdd);
+    }
+
+    private static void buildRegistries()
+    {   new ModRegistriesEventJS().post(ScriptType.SERVER, REGISTER);
     }
 
     private static String event(String name)
@@ -23,5 +39,13 @@ public class KubeEventHandlers
 
     static EventResult onTemperatureChanged(TemperatureChangedEvent event)
     {   return EventResult.interrupt(new TempChangedEventJS(event).post(ScriptType.SERVER, TEMP_CHANGED));
+    }
+
+    private static EventResult onInsulateItem(InsulateItemEvent event)
+    {   return EventResult.interrupt(new ApplyInsulationEventJS(event).post(ScriptType.SERVER, APPLY_INSULATION));
+    }
+
+    private static EventResult onTempModifierAdd(TempModifierEvent.Add event)
+    {   return EventResult.interrupt(new AddModifierEventJS(event).post(ScriptType.SERVER, MODIFIER_ADD));
     }
 }

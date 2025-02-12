@@ -12,6 +12,7 @@ import net.minecraft.util.registry.Registry;
 import net.minecraftforge.fml.common.Mod;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 @Mod.EventBusSubscriber(bus = Mod.EventBusSubscriber.Bus.MOD)
 public class EntityRequirement
@@ -28,12 +29,14 @@ public class EntityRequirement
     public final Optional<EntityRequirement> vehicle;
     public final Optional<EntityRequirement> passenger;
     public final Optional<EntityRequirement> target;
+    public final Optional<Predicate<Entity>> predicate;
 
     public EntityRequirement(Optional<EntityType<?>> type, Optional<ITag<EntityType<?>>> tag,
                                 Optional<LocationRequirement> location, Optional<LocationRequirement> steppingOn,
                              Optional<EffectsRequirement> effects, Optional<NbtRequirement> nbt, Optional<EntityFlagsRequirement> flags,
                              Optional<EquipmentRequirement> equipment, Optional<PlayerDataRequirement> playerData,
-                             Optional<EntityRequirement> vehicle, Optional<EntityRequirement> passenger, Optional<EntityRequirement> target)
+                             Optional<EntityRequirement> vehicle, Optional<EntityRequirement> passenger, Optional<EntityRequirement> target,
+                             Optional<Predicate<Entity>> predicate)
     {
         this.type = type;
         this.tag = tag;
@@ -47,6 +50,7 @@ public class EntityRequirement
         this.vehicle = vehicle;
         this.passenger = passenger;
         this.target = target;
+        this.predicate = predicate;
     }
     public static EntityRequirement NONE = new EntityRequirement(Optional.empty(), Optional.empty(), Optional.empty(),
                                                                 Optional.empty(), Optional.empty(), Optional.empty(),
@@ -63,7 +67,8 @@ public class EntityRequirement
             EntityFlagsRequirement.CODEC.optionalFieldOf("flags").forGetter(requirement -> requirement.flags),
             EquipmentRequirement.CODEC.optionalFieldOf("equipment").forGetter(requirement -> requirement.equipment)
     ).apply(instance, (type, tag, location, standingOn, effects, nbt, flags, equipment) -> new EntityRequirement(type, tag, location, standingOn, effects, nbt, flags, equipment,
-                                                                                                            Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty())));
+                                                                                                                 Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
+                                                                                                                 Optional.empty())));
 
     private static final List<Codec<EntityRequirement>> REQUIREMENT_CODEC_STACK = new ArrayList<>(Arrays.asList(SIMPLE_CODEC));
     // Allow for up to 16 layers of inner codecs
@@ -71,6 +76,22 @@ public class EntityRequirement
     {   for (int i = 0; i < 16; i++)
         {   addCodecStack();
         }
+    }
+
+    public EntityRequirement(Predicate<Entity> predicate)
+    {
+        this(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
+             Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
+             Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
+             Optional.of(predicate));
+    }
+
+    public EntityRequirement(Optional<EntityType<?>> type, Optional<ITag<EntityType<?>>> tag, Optional<LocationRequirement> location,
+                             Optional<LocationRequirement> steppingOn, Optional<EffectsRequirement> effects, Optional<NbtRequirement> nbt,
+                             Optional<EntityFlagsRequirement> flags, Optional<EquipmentRequirement> equipment, Optional<PlayerDataRequirement> playerData,
+                             Optional<EntityRequirement> vehicle, Optional<EntityRequirement> passenger, Optional<EntityRequirement> target)
+    {
+        this(type, tag, location, steppingOn, effects, nbt, flags, equipment, playerData, vehicle, passenger, target, Optional.empty());
     }
 
     public static Codec<EntityRequirement> getCodec()
@@ -102,6 +123,9 @@ public class EntityRequirement
     {
         if (entity == null)
         {   return true;
+        }
+        if (this.predicate.isPresent())
+        {   return this.predicate.get().test(entity);
         }
         if (Objects.equals(this, NONE))
         {   return true;

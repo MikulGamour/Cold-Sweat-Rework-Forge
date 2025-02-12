@@ -5,6 +5,7 @@ import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.momosoftworks.coldsweat.util.serialization.SerializablePredicate;
 import com.momosoftworks.coldsweat.data.codec.util.IntegerBounds;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
 import net.minecraft.enchantment.Enchantment;
@@ -22,6 +23,7 @@ import net.minecraft.util.registry.Registry;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 public class ItemRequirement
 {
@@ -33,11 +35,12 @@ public class ItemRequirement
     public final Optional<List<EnchantmentRequirement>> storedEnchantments;
     public final Optional<Potion> potion;
     public final NbtRequirement nbt;
+    public final Optional<SerializablePredicate<ItemStack>> predicate;
 
     public ItemRequirement(Optional<List<Either<ITag<Item>, Item>>> items, Optional<ITag<Item>> tag,
                            Optional<IntegerBounds> count, Optional<IntegerBounds> durability,
                            Optional<List<EnchantmentRequirement>> enchantments, Optional<List<EnchantmentRequirement>> storedEnchantments,
-                           Optional<Potion> potion, NbtRequirement nbt)
+                           Optional<Potion> potion, NbtRequirement nbt, Optional<SerializablePredicate<ItemStack>> predicate)
     {
         this.items = items;
         this.tag = tag;
@@ -47,8 +50,8 @@ public class ItemRequirement
         this.storedEnchantments = storedEnchantments;
         this.potion = potion;
         this.nbt = nbt;
+        this.predicate = predicate;
     }
-
     public static final Codec<ItemRequirement> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             ConfigHelper.tagOrBuiltinCodec(Registry.ITEM_REGISTRY, Registry.ITEM).listOf().optionalFieldOf("items").forGetter(predicate -> predicate.items),
             ITag.codec(ItemTags::getAllTags).optionalFieldOf("tag").forGetter(predicate -> predicate.tag),
@@ -57,21 +60,42 @@ public class ItemRequirement
             EnchantmentRequirement.CODEC.listOf().optionalFieldOf("enchantments").forGetter(predicate -> predicate.enchantments),
             EnchantmentRequirement.CODEC.listOf().optionalFieldOf("stored_enchantments").forGetter(predicate -> predicate.storedEnchantments),
             Registry.POTION.optionalFieldOf("potion").forGetter(predicate -> predicate.potion),
-            NbtRequirement.CODEC.optionalFieldOf("nbt", new NbtRequirement(new CompoundNBT())).forGetter(predicate -> predicate.nbt)
+            NbtRequirement.CODEC.optionalFieldOf("nbt", new NbtRequirement(new CompoundNBT())).forGetter(predicate -> predicate.nbt),
+            Codec.STRING.xmap(SerializablePredicate::<ItemStack>deserialize, SerializablePredicate::serialize)
+                        .optionalFieldOf("predicate").forGetter(predicate -> predicate.predicate)
     ).apply(instance, ItemRequirement::new));
 
     public static final ItemRequirement NONE = new ItemRequirement(Optional.empty(), Optional.empty(), Optional.empty(),
                                                                    Optional.empty(), Optional.empty(), Optional.empty(),
                                                                    Optional.empty(), new NbtRequirement());
 
+    public ItemRequirement(Optional<List<Either<ITag<Item>, Item>>> items, Optional<ITag<Item>> tag,
+                           Optional<IntegerBounds> count, Optional<IntegerBounds> durability,
+                           Optional<List<EnchantmentRequirement>> enchantments,
+                           Optional<List<EnchantmentRequirement>> storedEnchantments,
+                           Optional<Potion> potion, NbtRequirement nbt)
+    {
+        this(items, tag, count, durability, enchantments, storedEnchantments, potion, nbt, Optional.empty());
+    }
+
+    public ItemRequirement(Predicate<ItemStack> predicate)
+    {
+        this(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
+             Optional.empty(), Optional.empty(), Optional.empty(), new NbtRequirement(),
+             Optional.of(new SerializablePredicate<>(predicate)));
+    }
+
     public boolean test(ItemStack stack, boolean ignoreCount)
     {
+        if (this.predicate.isPresent())
+        {   return this.predicate.get().test(stack);
+        }
         if (stack.isEmpty() && items.isPresent() && !items.get().isEmpty())
         {   return false;
         }
 
-        if (this.nbt.tag.isEmpty())
-        {   return true;
+        if (!this.nbt.test(stack.getTag()))
+        {   return false;
         }
         if (items.isPresent())
         {
