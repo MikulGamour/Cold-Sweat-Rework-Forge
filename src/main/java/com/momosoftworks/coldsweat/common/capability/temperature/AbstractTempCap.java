@@ -1,5 +1,6 @@
 package com.momosoftworks.coldsweat.common.capability.temperature;
 
+import com.momosoftworks.coldsweat.api.event.common.temperautre.TemperatureChangedEvent;
 import com.momosoftworks.coldsweat.api.temperature.modifier.TempModifier;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.api.util.Temperature.Trait;
@@ -22,6 +23,7 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.*;
@@ -283,9 +285,10 @@ public class AbstractTempCap implements ITemperatureCap
     {
         Supplier<Double> defaultSupplier = () -> Temperature.apply(baseValue, entity, type, this.getModifiers(type));
         AttributeInstance attribute = EntityTempManager.getAttribute(type, entity);
+        double newValue;
         // If the attribute is null, return the default value
         if (attribute == null)
-        {   return defaultSupplier.get();
+        {   newValue = defaultSupplier.get();
         }
         // If base attribute is unset
         else
@@ -303,8 +306,12 @@ public class AbstractTempCap implements ITemperatureCap
             for (AttributeModifier mod : attributeModifiers.stream().filter(mod -> mod.getOperation() == AttributeModifier.Operation.MULTIPLY_TOTAL).toList())
             {   value *= 1.0D + mod.getAmount();
             }
-            return value;
+            newValue = value;
         }
+        if (newValue != baseValue)
+        {   MinecraftForge.EVENT_BUS.post(new TemperatureChangedEvent(entity, type, getTrait(type), newValue));
+        }
+        return newValue;
     }
 
     @Override
