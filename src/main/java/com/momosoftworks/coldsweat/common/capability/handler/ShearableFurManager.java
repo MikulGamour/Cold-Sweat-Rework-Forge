@@ -182,7 +182,7 @@ public class ShearableFurManager
     @SubscribeEvent
     public static void onGoatTick(LivingEvent.LivingUpdateEvent event)
     {
-        LivingEntity entity = event.getEntity();
+        LivingEntity entity = event.getEntityLiving();
         getFurCap(entity).ifPresent(cap ->
         {
             EntityDropData furConfig = ConfigSettings.FUR_TIMINGS.get();

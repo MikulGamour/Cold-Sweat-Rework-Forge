@@ -43,7 +43,7 @@ public class ArmorUnderTempModifier extends TempModifier
             }
 
             // Special functionality for certain linings
-            if (CompatManager.hasOzzyLiner(stack))
+            if (CompatManager.ArmorUnderwear.hasOzzyLiner(stack))
             {   nbt.putFloat("OzzyTemp", (float) (CSMath.blend(-4, 4, bodyTemp, -100, 100)));
             }
             else nbt.remove("OzzyTemp");

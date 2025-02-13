@@ -39,7 +39,7 @@ public class BoilerRecipeOverride
                     if (slot instanceof ResultSlot resultSlot)
                     {
                         if (crafting.recipeMatches(boilerRecipe))
-                        {   slot.set(boilerRecipe.assemble(getCraftingContainer(resultSlot), server.registryAccess()));
+                        {   slot.set(boilerRecipe.assemble(getCraftingContainer(resultSlot)));
                         }
                     }
                 }

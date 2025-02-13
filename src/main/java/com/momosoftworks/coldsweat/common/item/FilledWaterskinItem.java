@@ -382,7 +382,7 @@ public class FilledWaterskinItem extends Item
     {
         if (this.allowdedIn(tab))
         {   ItemStack stack = new ItemStack(this);
-            stack = CompatManager.setWaterPurity(stack, 3);
+            stack = CompatManager.Thirst.setWaterPurity(stack, 3);
             itemList.add(stack);
         }
     }

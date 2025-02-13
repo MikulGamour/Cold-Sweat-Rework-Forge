@@ -7,6 +7,7 @@ import com.momosoftworks.coldsweat.data.codec.configuration.SpawnBiomeData;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.registries.ModEntities;
 import com.momosoftworks.coldsweat.util.serialization.RegistryHelper;
+import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.util.random.WeightedRandomList;
@@ -42,12 +43,12 @@ public class AddEntitySpawns
         RegistryAccess registryAccess = RegistryHelper.getRegistryAccess();
         if (registryAccess == null) return;
 
-        for (Biome biome : registryAccess.registryOrThrow(Registry.BIOME_REGISTRY))
+        for (Holder<Biome> biome : registryAccess.registryOrThrow(Registry.BIOME_REGISTRY).holders().toList())
         {
             // Get spawner map
             Map<MobCategory, WeightedRandomList<MobSpawnSettings.SpawnerData>> spawnerMap;
             try
-            {   spawnerMap = new HashMap<>((Map<MobCategory, WeightedRandomList<MobSpawnSettings.SpawnerData>>) SPAWNERS.get(biome.getMobSettings()));
+            {   spawnerMap = new HashMap<>((Map<MobCategory, WeightedRandomList<MobSpawnSettings.SpawnerData>>) SPAWNERS.get(biome.value().getMobSettings()));
             }
             catch (IllegalAccessException e)
             {   return;
@@ -61,7 +62,7 @@ public class AddEntitySpawns
                     RegistryHelper.mapForgeRegistryTagList(ForgeRegistries.ENTITIES, spawnBiomeData.entities())
                     .forEach(entityType ->
                     {
-                        List<MobSpawnSettings.SpawnerData> spawners = new ArrayList<>(biome.getMobSettings().getMobs(spawnBiomeData.category()).unwrap());
+                        List<MobSpawnSettings.SpawnerData> spawners = new ArrayList<>(biome.value().getMobSettings().getMobs(spawnBiomeData.category()).unwrap());
                         spawners.removeIf(spawnerData -> spawnerData.type == entityType);
                         spawners.add(new MobSpawnSettings.SpawnerData(entityType, spawnBiomeData.weight(), 1, 3));
                         spawnerMap.put(spawnBiomeData.category(), WeightedRandomList.create(spawners));
@@ -71,7 +72,7 @@ public class AddEntitySpawns
 
             // Write spawner map
             try
-            {   SPAWNERS.set(biome.getMobSettings(), ImmutableMap.copyOf(spawnerMap));
+            {   SPAWNERS.set(biome.value().getMobSettings(), ImmutableMap.copyOf(spawnerMap));
             }
             catch (IllegalAccessException e)
             {   e.printStackTrace();
