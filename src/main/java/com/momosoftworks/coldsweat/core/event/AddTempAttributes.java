@@ -67,7 +67,7 @@ public class AddTempAttributes
     @SubscribeEvent
     public static void onEntitiesCreated(ServerConfigsLoadedEvent event)
     {
-        for (EntityType<?> entityType : ForgeRegistries.ENTITY_TYPES.getValues())
+        for (EntityType<?> entityType : ForgeRegistries.ENTITIES.getValues())
         {
             EntityType<? extends LivingEntity> type;
             try

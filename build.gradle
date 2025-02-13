@@ -137,7 +137,7 @@ repositories {
 
 dependencies {
     implementation 'com.github.t9t.minecraft-rcon-client:minecraft-rcon-client:1.0.0'
-    minecraft 'net.minecraftforge:forge:1.18.2-40.2.4'
+    minecraft 'net.minecraftforge:forge:1.18.2-40.3.3'
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
     runtimeOnly fg.deobf("curse.maven:spark-361579:4505375")
