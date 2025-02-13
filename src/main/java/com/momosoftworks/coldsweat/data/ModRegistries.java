@@ -37,7 +37,7 @@ public class ModRegistries
     public static final ResourceKey<Registry<EntityTempData>> ENTITY_TEMP_DATA = createRegistry(ResourceKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "entity/entity_temp")), EntityTempData.CODEC, EntityTempData.class);
 
     // Special registries
-    public static final ResourceKey<Registry<RemoveRegistryData<?>>> REMOVE_REGISTRY_DATA = createRegistry(ResourceKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "remove")), RemoveRegistryData.CODEC, null);
+    public static final ResourceKey<Registry<RemoveRegistryData<?>>> REMOVE_REGISTRY_DATA = createRegistry(ResourceKey.createRegistryKey(new ResourceLocation(ColdSweat.MOD_ID, "remove")), RemoveRegistryData.CODEC, (Class) RemoveRegistryData.class);
 
     public static <K, V extends ConfigData> ResourceKey<Registry<V>> createRegistry(ResourceKey<Registry<V>> registry, Codec<V> codec, Class<V> type)
     {

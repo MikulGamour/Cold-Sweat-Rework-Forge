@@ -2801,6 +2801,7 @@ Technical Changes:
 
 Fixes:
 * (1.21) Fixed crash loading KubeJS integration when Architectury is not installed
+* (1.21) Fixed crash when initializing the creative menu in some cases
 * Fixed removing insulation in the sewing table duplicating the insulation item
 * Fixed crash when the player is wet on a dedicated server
 - Fixed NBT arguments in JSON not parsing correctly in some cases, especially with nested compound tags

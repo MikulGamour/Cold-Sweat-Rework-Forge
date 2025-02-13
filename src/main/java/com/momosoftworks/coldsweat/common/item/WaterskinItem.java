@@ -30,8 +30,8 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 
 public class WaterskinItem extends Item
@@ -74,7 +74,7 @@ public class WaterskinItem extends Item
             BlockEntity blockEntity = level.getBlockEntity(pos);
             if (blockEntity != null)
             {
-                blockEntity.getCapability(ForgeCapabilities.FLUID_HANDLER, context.getClickedFace()).ifPresent(cap ->
+                blockEntity.getCapability(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY, context.getClickedFace()).ifPresent(cap ->
                 {
                     for (int i = 0; i < cap.getTanks(); i++)
                     {
