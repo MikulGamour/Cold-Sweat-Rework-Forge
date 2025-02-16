@@ -1,5 +1,6 @@
 package com.momosoftworks.coldsweat.api.event.core.registry;
 
+import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.api.registry.TempModifierRegistry;
 import com.momosoftworks.coldsweat.api.temperature.modifier.TempModifier;
 import com.momosoftworks.coldsweat.util.exceptions.RegistryFailureException;
@@ -48,12 +49,12 @@ public class TempModifierRegisterEvent extends Event
                 {   return (TempModifier) clazz.newInstance();
                 }
                 catch (Exception e)
-                {   throw new RegistryFailureException(id, "TempModifier", "Failed to instantiate class " + classPath, e);
+                {   throw ColdSweat.LOGGER.throwing(new RegistryFailureException(id, "TempModifier", "Failed to instantiate class " + classPath, e));
                 }
             });
         }
         catch (Exception e)
-        {   throw new RegistryFailureException(id, "TempModifier", e.getMessage(), e);
+        {   throw ColdSweat.LOGGER.throwing(new RegistryFailureException(id, "TempModifier", e.getMessage(), e));
         }
     }
 }
