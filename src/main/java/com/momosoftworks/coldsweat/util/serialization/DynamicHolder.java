@@ -68,7 +68,7 @@ public class DynamicHolder<T>
     public static <T> DynamicHolder<T> createSyncedWithRegistries(Supplier<T> valueCreator, Loader<T> loader, Writer<T> encoder, Reader<T> decoder, Saver<T> saver, SyncType syncType)
     {
         if (syncType == SyncType.NONE)
-        {   throw new IllegalArgumentException("SyncType cannot be NONE for a synced DynamicHolder.");
+        {   throw ColdSweat.LOGGER.throwing(new IllegalArgumentException("SyncType cannot be NONE for a synced DynamicHolder."));
         }
         DynamicHolder<T> holder = new DynamicHolder<>(valueCreator, loader);
         holder.encoder = encoder;
@@ -82,7 +82,7 @@ public class DynamicHolder<T>
     public static <T> DynamicHolder<T> createSynced(Supplier<T> valueCreator, Consumer<DynamicHolder<T>> loader, Function<T, CompoundTag> encoder, Function<CompoundTag, T> decoder, Consumer<T> saver, SyncType syncType)
     {
         if (syncType == SyncType.NONE)
-        {   throw new IllegalArgumentException("SyncType cannot be NONE for a synced DynamicHolder.");
+        {   throw ColdSweat.LOGGER.throwing(new IllegalArgumentException("SyncType cannot be NONE for a synced DynamicHolder."));
         }
         DynamicHolder<T> holder = new DynamicHolder<>(valueCreator, loader);
         holder.encoder = (val, registryAccess) -> encoder.apply(val);
@@ -95,7 +95,7 @@ public class DynamicHolder<T>
     public T get()
     {
         if (this.requireRegistries)
-        {   throw new RuntimeException("RegistryAccess is required for this DynamicHolder, yet none was provided.");
+        {   throw ColdSweat.LOGGER.throwing(new RuntimeException("RegistryAccess is required for this DynamicHolder, yet none was provided."));
         }
         if (this.value == null)
         {   this.load(true);
