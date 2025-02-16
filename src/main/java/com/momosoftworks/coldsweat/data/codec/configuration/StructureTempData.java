@@ -80,10 +80,7 @@ public class StructureTempData extends ConfigData implements IForgeRegistryEntry
             return null;
         }
         List<Either<TagKey<ConfiguredStructureFeature<?, ?>>, Holder<ConfiguredStructureFeature<?, ?>>>> structures = ConfigHelper.parseRegistryItems(Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY, registryAccess, (String) entry.get(0));
-        if (structures.isEmpty())
-        {   ColdSweat.LOGGER.error("Error parsing structure config: {} does not contain any valid structures", entry);
-            return null;
-        }
+        if (structures.isEmpty()) return null;
         double temp = ((Number) entry.get(1)).doubleValue();
         Temperature.Units units = entry.size() == 3 ? Temperature.Units.valueOf(((String) entry.get(2)).toUpperCase()) : Temperature.Units.MC;
 

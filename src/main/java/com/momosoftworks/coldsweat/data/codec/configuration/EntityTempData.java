@@ -95,15 +95,12 @@ public class EntityTempData extends ConfigData implements RequirementHolder, IFo
     public static EntityTempData fromToml(List<?> entry)
     {
         if (entry.size() < 3)
-        {   ColdSweat.LOGGER.error("Error parsing entity config: not enough arguments");
+        {   ColdSweat.LOGGER.error("Error parsing entity temp config: not enough arguments");
             return null;
         }
         List<Either<TagKey<EntityType<?>>, EntityType<?>>> entities = ConfigHelper.getEntityTypes((String) entry.get(0));
+        if (entities.isEmpty()) return null;
 
-        if (entities.isEmpty())
-        {   ColdSweat.LOGGER.error("Error parsing entity config: {} does not contain any valid entities", entry);
-            return null;
-        }
         double temp = ((Number) entry.get(1)).doubleValue();
         double range = ((Number) entry.get(2)).doubleValue();
         Temperature.Units units = entry.size() > 3

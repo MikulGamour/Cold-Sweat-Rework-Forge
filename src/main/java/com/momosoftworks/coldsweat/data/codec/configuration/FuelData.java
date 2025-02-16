@@ -68,15 +68,12 @@ public class FuelData extends ConfigData implements RequirementHolder, IForgeReg
     public static FuelData fromToml(List<?> entry, FuelType fuelType)
     {
         if (entry.size() < 2)
-        {   ColdSweat.LOGGER.error("Error parsing entity config: not enough arguments");
+        {   ColdSweat.LOGGER.error("Error parsing fuel config: not enough arguments");
             return null;
         }
         List<Either<TagKey<Item>, Item>> items = ConfigHelper.getItems((String) entry.get(0));
+        if (items.isEmpty()) return null;
 
-        if (items.isEmpty())
-        {   ColdSweat.LOGGER.error("Error parsing fuel config: {} does not contain any valid items", entry);
-            return null;
-        }
         double fuel = ((Number) entry.get(1)).doubleValue();
         NbtRequirement nbtRequirement = entry.size() > 2
                                         ? new NbtRequirement(NBTHelper.parseCompoundNbt((String) entry.get(3)))

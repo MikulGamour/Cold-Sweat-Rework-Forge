@@ -133,11 +133,8 @@ public class BlockTempData extends ConfigData implements IForgeRegistryEntry<Blo
             return null;
         }
         List<Either<TagKey<Block>, Block>> blocks = ConfigHelper.getBlocks((String) entry.get(0));
+        if (blocks.isEmpty()) return null;
 
-        if (blocks.isEmpty())
-        {   ColdSweat.LOGGER.error("Error parsing block config: {} does not contain any valid blocks", entry);
-            return null;
-        }
         // Parse block IDs into blocks
         Block[] effectBlocks = RegistryHelper.mapForgeRegistryTagList(ForgeRegistries.BLOCKS, blocks).toArray(new Block[0]);
 

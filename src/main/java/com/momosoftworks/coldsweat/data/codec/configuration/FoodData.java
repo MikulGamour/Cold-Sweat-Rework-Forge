@@ -82,15 +82,11 @@ public class FoodData extends ConfigData implements RequirementHolder, IForgeReg
     public static FoodData fromToml(List<?> entry)
     {
         if (entry.size() < 2)
-        {   ColdSweat.LOGGER.error("Error parsing entity config: not enough arguments");
+        {   ColdSweat.LOGGER.error("Error parsing food config: not enough arguments");
             return null;
         }
         List<Either<TagKey<Item>, Item>> items = ConfigHelper.getItems((String) entry.get(0));
-
-        if (items.isEmpty())
-        {   ColdSweat.LOGGER.error("Error parsing food config: {} does not contain any valid items", entry);
-            return null;
-        }
+        if (items.isEmpty()) return null;
         double temperature = ((Number) entry.get(1)).doubleValue();
         NbtRequirement nbtRequirement = entry.size() > 2
                                         ? new NbtRequirement(NBTHelper.parseCompoundNbt((String) entry.get(2)))
