@@ -736,7 +736,7 @@ public class CSMath
     @Nullable
     public static <T> T orElse(T... values)
     {   for (int i = 0; i < values.length; i++)
-        {   if (values[i] != null)return values[i];
+        {   if (values[i] != null) return values[i];
         }
         return null;
     }
