@@ -22,7 +22,7 @@ import com.momosoftworks.coldsweat.data.tag.ModBlockTags;
 import com.momosoftworks.coldsweat.data.tag.ModDimensionTags;
 import com.momosoftworks.coldsweat.data.tag.ModEffectTags;
 import com.momosoftworks.coldsweat.data.tag.ModItemTags;
-import com.momosoftworks.coldsweat.util.math.FastMultiMap;
+import com.momosoftworks.coldsweat.util.math.RegistryMultiMap;
 import com.momosoftworks.coldsweat.util.serialization.RegistryHelper;
 import net.minecraft.core.*;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -58,7 +58,7 @@ import java.util.stream.Collectors;
 @EventBusSubscriber
 public class ConfigLoadingHandler
 {
-    public static final Multimap<ResourceKey<Registry<? extends ConfigData>>, RemoveRegistryData<?>> REMOVED_REGISTRIES = new FastMultiMap<>();
+    public static final Multimap<ResourceKey<Registry<? extends ConfigData>>, RemoveRegistryData<?>> REMOVED_REGISTRIES = new RegistryMultiMap<>();
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void loadConfigs(ServerConfigsLoadedEvent event)
@@ -67,7 +67,7 @@ public class ConfigLoadingHandler
         BlockTempRegistry.flush();
 
         RegistryAccess registryAccess = event.getServer().registryAccess();
-        Multimap<ResourceKey<Registry<? extends ConfigData>>, Holder<? extends ConfigData>> registries = new FastMultiMap<>();
+        Multimap<ResourceKey<Registry<? extends ConfigData>>, Holder<? extends ConfigData>> registries = new RegistryMultiMap<>();
 
         // User JSON configs (config folder)
         ColdSweat.LOGGER.info("Loading registries from configs...");
@@ -106,7 +106,7 @@ public class ConfigLoadingHandler
     {
         if (registryAccess == null)
         {   ColdSweat.LOGGER.error("Failed to load registries from null RegistryAccess");
-            return new FastMultiMap<>();
+            return new RegistryMultiMap<>();
         }
         /*
          Read mod-related tags for config settings
@@ -163,7 +163,7 @@ public class ConfigLoadingHandler
         /*
          Fetch JSON registries
         */
-        Multimap<ResourceKey<Registry<? extends ConfigData>>, Holder<? extends ConfigData>> registries = new FastMultiMap<>();
+        Multimap<ResourceKey<Registry<? extends ConfigData>>, Holder<? extends ConfigData>> registries = new RegistryMultiMap<>();
         for (Map.Entry<String, ModRegistries.RegistryHolder<?>> entry : ModRegistries.getRegistries().entrySet())
         {
             ResourceKey<Registry<? extends ConfigData>> key = (ResourceKey) entry.getValue().registry();
@@ -179,13 +179,13 @@ public class ConfigLoadingHandler
     {
         if (registryAccess == null)
         {   ColdSweat.LOGGER.error("Failed to load registries from null RegistryAccess");
-            return new FastMultiMap<>();
+            return new RegistryMultiMap<>();
         }
 
         /*
          Parse user-defined JSON data from the configs folder
         */
-        Multimap<ResourceKey<Registry<? extends ConfigData>>, Holder<? extends ConfigData>> registries = new FastMultiMap<>();
+        Multimap<ResourceKey<Registry<? extends ConfigData>>, Holder<? extends ConfigData>> registries = new RegistryMultiMap<>();
         for (Map.Entry<String, ModRegistries.RegistryHolder<?>> entry : ModRegistries.getRegistries().entrySet())
         {
             ResourceKey<Registry<? extends ConfigData>> key = (ResourceKey) entry.getValue().registry();
@@ -376,6 +376,9 @@ public class ConfigLoadingHandler
             insulator.data().tag().ifPresent(tag ->
             {   items.addAll(BuiltInRegistries.ITEM.getTag(tag).get().stream().map(Holder::value).toList());
             });
+            if (items.isEmpty())
+            {   items.add(null);
+            }
 
             for (Item item : items)
             {
@@ -411,6 +414,9 @@ public class ConfigLoadingHandler
             fuelData.data().tag().ifPresent(tag ->
             {   items.addAll(BuiltInRegistries.ITEM.getTag(tag).get().stream().map(Holder::value).toList());
             });
+            if (items.isEmpty())
+            {   items.add(null);
+            }
 
             for (Item item : items)
             {
@@ -442,6 +448,9 @@ public class ConfigLoadingHandler
             foodData.data().tag().ifPresent(tag ->
             {   items.addAll(BuiltInRegistries.ITEM.getTag(tag).get().stream().map(Holder::value).toList());
             });
+            if (items.isEmpty())
+            {   items.add(null);
+            }
 
             for (Item item : items)
             {   ConfigSettings.FOOD_TEMPERATURES.get().put(item, foodData);
@@ -466,6 +475,10 @@ public class ConfigLoadingHandler
             carryTempData.data().tag().ifPresent(tag ->
             {   items.addAll(BuiltInRegistries.ITEM.getTag(tag).stream().flatMap(HolderSet.Named::stream).map(Holder::value).toList());
             });
+            if (items.isEmpty())
+            {   items.add(null);
+            }
+
             for (Item item : items)
             {   ConfigSettings.CARRIED_ITEM_TEMPERATURES.get().put(item, carryTempData);
             }
@@ -489,6 +502,10 @@ public class ConfigLoadingHandler
             dryingItemData.data().tag().ifPresent(tag ->
             {   items.addAll(BuiltInRegistries.ITEM.getTag(tag).get().stream().map(Holder::value).toList());
             });
+            if (items.isEmpty())
+            {   items.add(null);
+            }
+
             for (Item item : items)
             {   ConfigSettings.DRYING_ITEMS.get().put(item, dryingItemData);
             }
@@ -624,6 +641,9 @@ public class ConfigLoadingHandler
             {   return;
             }
             List<EntityType<?>> entities = RegistryHelper.mapBuiltinRegistryTagList(BuiltInRegistries.ENTITY_TYPE, mountData.entityData().entities().orElse(List.of()));
+            if (entities.isEmpty())
+            {   entities.add(null);
+            }
             for (EntityType<?> entity : entities)
             {   ConfigSettings.INSULATED_MOUNTS.get().put(entity, mountData);
             }
@@ -658,7 +678,11 @@ public class ConfigLoadingHandler
             List<Either<TagKey<EntityType<?>>, EntityType<?>>> types = new ArrayList<>();
             entityTempData.entity().entities().ifPresent(type -> types.addAll(type));
 
-            for (EntityType<?> entity : RegistryHelper.mapBuiltinRegistryTagList(BuiltInRegistries.ENTITY_TYPE, types))
+            List<EntityType<?>> entities = RegistryHelper.mapBuiltinRegistryTagList(BuiltInRegistries.ENTITY_TYPE, types);
+            if (entities.isEmpty())
+            {   entities.add(null);
+            }
+            for (EntityType<?> entity : entities)
             {   ConfigSettings.ENTITY_TEMPERATURES.get().put(entity, entityTempData);
             }
         });
