@@ -128,7 +128,6 @@ public class TempModifierInit
         event.register(new ResourceLocation(ColdSweat.MOD_ID, "cooling"), FrigidnessTempModifier::new);
         event.register(new ResourceLocation(ColdSweat.MOD_ID, "food"), FoodTempModifier::new);
         event.register(new ResourceLocation(ColdSweat.MOD_ID, "freezing"), FreezingTempModifier::new);
-        event.register(new ResourceLocation(ColdSweat.MOD_ID, "on_fire"), FireTempModifier::new);
         event.register(new ResourceLocation(ColdSweat.MOD_ID, "soul_sprout"), SoulSproutTempModifier::new);
         event.register(new ResourceLocation(ColdSweat.MOD_ID, "inventory_items"), InventoryItemsTempModifier::new);
         event.register(new ResourceLocation(ColdSweat.MOD_ID, "entities"), EntitiesTempModifier::new);

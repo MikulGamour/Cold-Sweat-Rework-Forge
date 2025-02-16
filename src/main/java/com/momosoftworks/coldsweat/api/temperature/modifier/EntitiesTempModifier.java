@@ -13,7 +13,6 @@ import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.world.World;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -27,7 +26,7 @@ public class EntitiesTempModifier extends TempModifier
         World level = affectedEnt.level;
         // Search for entities in an 8-block radius
         AxisAlignedBB aabb = new AxisAlignedBB(affectedEnt.blockPosition()).move(0, affectedEnt.getBbHeight() / 2 - 0.5, 0).inflate(16);
-        List<Entity> entities = affectedEnt.level.getEntities(affectedEnt, aabb, e -> e != affectedEnt);
+        List<Entity> entities = affectedEnt.level.getEntities((Entity) null, aabb, e -> true);
 
         Map<EntityTempData, Double> effects = new FastMap<>();
 
