@@ -3,6 +3,7 @@ package com.momosoftworks.coldsweat.data.codec.configuration;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.data.codec.impl.RequirementHolder;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
@@ -14,12 +15,12 @@ import com.momosoftworks.coldsweat.util.serialization.ListBuilder;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.tags.ITag;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.SoundEvents;
 import net.minecraftforge.registries.ForgeRegistries;
 
-import java.util.Arrays;
 import java.util.List;
 
 public class DryingItemData extends ConfigData implements RequirementHolder
@@ -71,16 +72,21 @@ public class DryingItemData extends ConfigData implements RequirementHolder
 
     public static DryingItemData fromToml(List<?> entry)
     {
-        if (entry.size() < 2) return null;
-
-        Item item = ForgeRegistries.ITEMS.getValue(new ResourceLocation((String) entry.get(0)));
+        if (entry.size() < 2)
+        {   ColdSweat.LOGGER.error("Error parsing drying item config: not enough arguments");
+            return null;
+        }
+        List<Either<ITag<Item>, Item>> items = ConfigHelper.getItems((String) entry.get(0));
+        if (items.isEmpty()) return null;
         Item result = ForgeRegistries.ITEMS.getValue(new ResourceLocation((String) entry.get(1)));
+        if (result == null) return null;
+
         ResourceLocation sound = entry.size() > 2
                                  ? new ResourceLocation((String) entry.get(2))
                                  : new ResourceLocation("minecraft:block.wet_grass.step");
 
-        if (item != null && result != null)
-        {   ItemRequirement input = new ItemRequirement(Arrays.asList(Either.right(item)), new NbtRequirement());
+        if (result != null)
+        {   ItemRequirement input = new ItemRequirement(items, new NbtRequirement());
             return new DryingItemData(input, new ItemStack(result), EntityRequirement.NONE, ForgeRegistries.SOUND_EVENTS.getValue(sound));
         }
         else return null;

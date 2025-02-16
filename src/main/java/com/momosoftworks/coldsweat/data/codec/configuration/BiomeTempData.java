@@ -10,7 +10,6 @@ import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
 import net.minecraft.util.registry.DynamicRegistries;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.biome.Biome;
-import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
@@ -84,24 +83,19 @@ public class BiomeTempData extends ConfigData
     }
 
     @Nullable
-    public static BiomeTempData fromToml(List<?> data, boolean isOffset, DynamicRegistries registryAccess)
+    public static BiomeTempData fromToml(List<?> entry, boolean isOffset, DynamicRegistries registryAccess)
     {
-        if (data.size() < 3)
+        if (entry.size() < 3)
         {   ColdSweat.LOGGER.error("Error parsing biome config: not enough arguments");
             return null;
         }
-
-        List<Biome> biomes = ConfigHelper.parseRegistryItems(Registry.BIOME_REGISTRY, registryAccess, (String) data.get(0));
-
-        if (biomes.isEmpty())
-        {   ColdSweat.LOGGER.error("Error parsing biome config: {} does not contain any valid biomes", data);
-            return null;
-        }
+        List<Biome> biomes = ConfigHelper.parseRegistryItems(Registry.BIOME_REGISTRY, registryAccess, (String) entry.get(0));
+        if (biomes.isEmpty()) return null;
 
         // The config defines a min and max value, with optional unit conversion
-        Temperature.Units units = data.size() == 4 ? Temperature.Units.valueOf(((String) data.get(3)).toUpperCase()) : Temperature.Units.MC;
-        double min = ((Number) data.get(1)).doubleValue();
-        double max = ((Number) data.get(2)).doubleValue();
+        Temperature.Units units = entry.size() == 4 ? Temperature.Units.valueOf(((String) entry.get(3)).toUpperCase()) : Temperature.Units.MC;
+        double min = ((Number) entry.get(1)).doubleValue();
+        double max = ((Number) entry.get(2)).doubleValue();
 
         // Maps the biome ID to the temperature (and variance if present)
         return new BiomeTempData(biomes, min, max, units, isOffset);

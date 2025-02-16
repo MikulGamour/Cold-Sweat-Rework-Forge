@@ -75,10 +75,7 @@ public class DimensionTempData extends ConfigData
             return null;
         }
         List<DimensionType> dimensions = ConfigHelper.parseRegistryItems(Registry.DIMENSION_TYPE_REGISTRY, registryAccess, (String) entry.get(0));
-        if (dimensions.isEmpty())
-        {   ColdSweat.LOGGER.error("Error parsing dimension config: {} does not contain valid dimensions", entry);
-            return null;
-        }
+        if (dimensions.isEmpty()) return null;
         double temp = ((Number) entry.get(1)).doubleValue();
         Temperature.Units units = entry.size() == 3 ? Temperature.Units.valueOf(((String) entry.get(2)).toUpperCase()) : Temperature.Units.MC;
         return new DimensionTempData(dimensions, temp, units, isOffset);

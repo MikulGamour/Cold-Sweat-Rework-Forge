@@ -153,13 +153,12 @@ public class ItemCarryTempData extends ConfigData implements RequirementHolder
     public static ItemCarryTempData fromToml(List<?> entry)
     {
         if (entry.size() < 4)
-        {   return null;
+        {   ColdSweat.LOGGER.error("Error parsing carried item temp config: not enough arguments");
+            return null;
         }
         List<Either<ITag<Item>, Item>> items = ConfigHelper.getItems((String) entry.get(0));
-
         if (items.isEmpty())
-        {   ColdSweat.LOGGER.error("Error parsing carried item temp config: {} does not contain any valid items", entry);
-            return null;
+        {   return null;
         }
         //temp
         double temp = ((Number) entry.get(1)).doubleValue();

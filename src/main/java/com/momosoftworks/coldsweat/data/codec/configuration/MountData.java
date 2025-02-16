@@ -58,15 +58,12 @@ public class MountData extends ConfigData implements RequirementHolder
     public static MountData fromToml(List<?> entry)
     {
         if (entry.size() < 2)
-        {   ColdSweat.LOGGER.error("Error parsing mount config: not enough arguments");
+        {   ColdSweat.LOGGER.error("Error parsing insulating mount config: not enough arguments");
             return null;
         }
         List<Either<ITag<EntityType<?>>, EntityType<?>>> entities = ConfigHelper.getEntityTypes((String) entry.get(0));
+        if (entities.isEmpty()) return null;
 
-        if (entities.isEmpty())
-        {   ColdSweat.LOGGER.error("Error parsing mount config: {} does not contain any valid entities", entry);
-            return null;
-        }
         double coldInsul = ((Number) entry.get(1)).doubleValue();
         double hotInsul = entry.size() < 3
                           ? coldInsul
