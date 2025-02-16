@@ -700,8 +700,7 @@ public class ConfigHelper
     public static <T> Optional<T> parseResource(ResourceManager resourceManager, ResourceLocation location, Codec<T> codec)
     {
         if (resourceManager == null)
-        {
-            return Optional.empty();
+        {   return Optional.empty();
         }
         try
         {
@@ -713,8 +712,8 @@ public class ConfigHelper
             }
         }
         catch (IOException e)
-        {
-            throw new RuntimeException("Failed to load JSON file: " + location, e);
+        {   ColdSweat.LOGGER.error(new RuntimeException("Failed to load JSON file: " + location, e));
+            return Optional.empty();
         }
     }
 

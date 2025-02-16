@@ -2,6 +2,7 @@ package com.momosoftworks.coldsweat.api.registry;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
+import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.api.temperature.modifier.TempModifier;
 import com.momosoftworks.coldsweat.util.exceptions.RegistryFailureException;
 import com.momosoftworks.coldsweat.util.math.CSMath;
@@ -25,8 +26,8 @@ public class TempModifierRegistry
         TempModifierHolder holder = new TempModifierHolder(supplier, id);
         if (TEMP_MODIFIERS.containsKey(id) || TEMP_MODIFIERS.values().stream().anyMatch(holder::equals))
         {
-            throw new RegistryFailureException(id, "TempModifier", String.format("Found duplicate TempModifier entries: %s (%s) %s (%s)", holder.getModifierClass().getName(), id,
-                                                             TEMP_MODIFIERS.get(id).getModifierClass().getName(), id), null);
+            throw ColdSweat.LOGGER.throwing(new RegistryFailureException(id, "TempModifier", String.format("Found duplicate TempModifier entries: %s (%s) %s (%s)", holder.getModifierClass().getName(), id,
+                                                                           TEMP_MODIFIERS.get(id).getModifierClass().getName(), id), null));
         }
         TEMP_MODIFIERS.put(id, holder);
     }

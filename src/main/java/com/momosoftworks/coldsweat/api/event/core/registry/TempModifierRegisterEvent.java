@@ -1,5 +1,6 @@
 package com.momosoftworks.coldsweat.api.event.core.registry;
 
+import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.api.registry.TempModifierRegistry;
 import com.momosoftworks.coldsweat.api.temperature.modifier.TempModifier;
 import com.momosoftworks.coldsweat.util.exceptions.RegistryFailureException;
@@ -11,11 +12,11 @@ import java.util.function.Supplier;
 
 /**
  * Builds the {@link TempModifierRegistry}. <br>
- * The event is fired during {@link net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent}. <br>
+ * The event is fired during world load, right after {@link com.momosoftworks.coldsweat.api.event.vanilla.ServerConfigsLoadedEvent}. <br>
  * <br>
- * This event is NOT {@link net.minecraftforge.eventbus.api.Cancelable}. <br>
+ * This event is NOT {@link net.neoforged.bus.api.ICancellableEvent}. <br>
  * <br>
- * This event is fired on the {@link MinecraftForge#EVENT_BUS}.
+ * This event is fired on the {@link net.neoforged.neoforge.common.NeoForge#EVENT_BUS}.
  */
 public class TempModifierRegisterEvent extends Event
 {
@@ -46,12 +47,12 @@ public class TempModifierRegisterEvent extends Event
                 {   return (TempModifier) clazz.newInstance();
                 }
                 catch (Exception e)
-                {   throw new RegistryFailureException(id, "TempModifier", "Failed to instantiate class " + classPath, e);
+                {   throw ColdSweat.LOGGER.throwing(new RegistryFailureException(id, "TempModifier", "Failed to instantiate class " + classPath, e));
                 }
             });
         }
         catch (Exception e)
-        {   throw new RegistryFailureException(id, "TempModifier", e.getMessage(), e);
+        {   throw ColdSweat.LOGGER.throwing(new RegistryFailureException(id, "TempModifier", e.getMessage(), e));
         }
     }
 }

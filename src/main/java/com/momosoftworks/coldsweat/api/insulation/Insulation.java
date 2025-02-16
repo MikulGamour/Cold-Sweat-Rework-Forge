@@ -2,7 +2,7 @@ package com.momosoftworks.coldsweat.api.insulation;
 
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.util.serialization.NbtSerializable;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -184,7 +184,7 @@ public abstract class Insulation implements NbtSerializable
                 {   return type;
                 }
             }
-            throw new IllegalArgumentException("Unknown insulation type: " + name);
+            throw ColdSweat.LOGGER.throwing(new IllegalArgumentException("Unknown insulation type: " + name));
         }
     }
 }

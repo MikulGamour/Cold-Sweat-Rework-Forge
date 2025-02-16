@@ -1,5 +1,6 @@
 package com.momosoftworks.coldsweat.common.capability.temperature;
 
+import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.api.event.common.temperautre.TemperatureChangedEvent;
 import com.momosoftworks.coldsweat.api.temperature.modifier.TempModifier;
 import com.momosoftworks.coldsweat.api.util.Temperature;
@@ -66,7 +67,7 @@ public class AbstractTempCap implements ITemperatureCap
         if (trait == Trait.BODY) return getTrait(Trait.CORE) + getTrait(Trait.BASE);
         // Throw exception if this temperature trait is not supported
         if (!traits.containsKey(trait))
-        {   throw new IllegalArgumentException("Invalid temperature trait: " + trait);
+        {   throw ColdSweat.LOGGER.throwing(new IllegalArgumentException("Invalid temperature trait: " + trait));
         }
 
         return traits.get(trait);
@@ -89,7 +90,7 @@ public class AbstractTempCap implements ITemperatureCap
         };
         // Throw exception if this temperature trait is not supported
         if (traits.replace(trait, value) == null)
-        {   throw new IllegalArgumentException("Invalid temperature trait: " + trait);
+        {   throw ColdSweat.LOGGER.throwing(new IllegalArgumentException("Invalid temperature trait: " + trait));
         }
     }
 
@@ -111,7 +112,7 @@ public class AbstractTempCap implements ITemperatureCap
     public List<TempModifier> getModifiers(Trait trait)
     {   // Throw exception if this modifier type is not supported
         return modifiers.computeIfAbsent(trait, t ->
-        {   throw new IllegalArgumentException("Invalid modifier trait: " + t);
+        {   throw ColdSweat.LOGGER.throwing(new IllegalArgumentException("Invalid modifier trait: " + t));
         });
     }
 
