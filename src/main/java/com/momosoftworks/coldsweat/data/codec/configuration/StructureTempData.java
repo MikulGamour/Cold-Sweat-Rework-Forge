@@ -78,10 +78,7 @@ public class StructureTempData extends ConfigData
             return null;
         }
         List<Either<TagKey<Structure>, Holder<Structure>>> structures = ConfigHelper.parseRegistryItems(Registry.STRUCTURE_REGISTRY, registryAccess, (String) entry.get(0));
-        if (structures.isEmpty())
-        {   ColdSweat.LOGGER.error("Error parsing structure config: {} does not contain any valid structures", entry);
-            return null;
-        }
+        if (structures.isEmpty()) return null;
         double temp = ((Number) entry.get(1)).doubleValue();
         Temperature.Units units = entry.size() == 3 ? Temperature.Units.valueOf(((String) entry.get(2)).toUpperCase()) : Temperature.Units.MC;
 
