@@ -7,23 +7,28 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class FastMultiMap<K, V> implements Multimap<K, V>
+/**
+ * Optimized for holding registries, with some key tweaks not typical of a Multimap:<br>
+ * • Values are stored in a LinkedHashSet, so order is preserved.<br>
+ * • {@code get()} always returns values assigned to the "null" key, in addition to those assigned to the given key.<br>
+ */
+public class RegistryMultiMap<K, V> implements Multimap<K, V>
 {
-    public FastMultiMap()
+    public RegistryMultiMap()
     {}
 
-    public FastMultiMap(Multimap<K, V> multimap)
+    public RegistryMultiMap(Multimap<K, V> multimap)
     {   putAll(multimap);
     }
 
-    public FastMultiMap(Collection<Map.Entry<K, V>> entries)
+    public RegistryMultiMap(Collection<Map.Entry<K, V>> entries)
     {
         for (Map.Entry<K, V> entry : entries)
         {   put(entry.getKey(), entry.getValue());
         }
     }
 
-    private final FastMap<K, HashSet<V>> internal = new FastMap<>();
+    private final FastMap<K, LinkedHashSet<V>> internal = new FastMap<>();
     private int totalSize = 0;
 
     @Override
@@ -71,7 +76,7 @@ public class FastMultiMap<K, V> implements Multimap<K, V>
     @Override
     public boolean put(K key, V value)
     {
-        Set<V> values = internal.computeIfAbsent(key, k -> new HashSet<>());
+        Set<V> values = internal.computeIfAbsent(key, k -> new LinkedHashSet<>());
         if (values.add(value))
         {
             totalSize++;
@@ -134,7 +139,7 @@ public class FastMultiMap<K, V> implements Multimap<K, V>
         Set<V> oldValues = internal.get(key);
         if (oldValues == null)
         {
-           oldValues = new HashSet<>();
+           oldValues = new LinkedHashSet<>();
         }
         else
         {
@@ -158,7 +163,7 @@ public class FastMultiMap<K, V> implements Multimap<K, V>
         {
             totalSize -= removed.size();
         }
-        return removed != null ? removed : new HashSet<>();
+        return removed != null ? removed : new LinkedHashSet<>();
     }
 
     @Override
@@ -169,10 +174,11 @@ public class FastMultiMap<K, V> implements Multimap<K, V>
     }
 
     @Override
-    public HashSet<V> get(K key)
+    public LinkedHashSet<V> get(K key)
     {
-        HashSet<V> values = internal.get(key);
-        return values != null ? values : new HashSet<>();
+        LinkedHashSet<V> values = CSMath.orElse(internal.get(key), new LinkedHashSet<>());
+        values.addAll(CSMath.orElse(internal.get(null), new LinkedHashSet<>()));
+        return values;
     }
 
     @Override
@@ -185,7 +191,7 @@ public class FastMultiMap<K, V> implements Multimap<K, V>
     public Multiset<K> keys()
     {
         HashMultiset<K> keys = HashMultiset.create();
-        for (Map.Entry<K, HashSet<V>> entry : internal.entrySet())
+        for (Map.Entry<K, LinkedHashSet<V>> entry : internal.entrySet())
         {
             keys.add(entry.getKey(), entry.getValue().size());
         }
@@ -202,7 +208,7 @@ public class FastMultiMap<K, V> implements Multimap<K, V>
             {
                 return new Iterator<V>()
                 {
-                    private final Iterator<HashSet<V>> setIterator = internal.values().iterator();
+                    private final Iterator<LinkedHashSet<V>> setIterator = internal.values().iterator();
                     private Iterator<V> currentIterator = Collections.emptyIterator();
 
                     @Override
@@ -251,8 +257,8 @@ public class FastMultiMap<K, V> implements Multimap<K, V>
             {
                 return new Iterator<Map.Entry<K, V>>()
                 {
-                    private final Iterator<Map.Entry<K, HashSet<V>>> entryIterator = internal.entrySet().iterator();
-                    private Map.Entry<K, HashSet<V>> currentEntry;
+                    private final Iterator<Map.Entry<K, LinkedHashSet<V>>> entryIterator = internal.entrySet().iterator();
+                    private Map.Entry<K, LinkedHashSet<V>> currentEntry;
                     private Iterator<V> valueIterator = Collections.emptyIterator();
 
                     @Override
