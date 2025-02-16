@@ -132,10 +132,8 @@ public class InsulatorData extends ConfigData implements RequirementHolder
             return null;
         }
         List<Either<TagKey<Item>, Item>> items = ConfigHelper.getItems((String) entry.get(0));
-
         if (items.isEmpty())
-        {   ColdSweat.LOGGER.error("Error parsing {} insulator config: string {} does not contain any valid items", slot.getSerializedName(), entry);
-            return null;
+        {   return null;
         }
         boolean adaptive = entry.size() > 3 && entry.get(3).equals("adaptive");
         ItemComponentsRequirement components = entry.size() > 4 ? ItemComponentsRequirement.parse((String) entry.get(4)) : new ItemComponentsRequirement();

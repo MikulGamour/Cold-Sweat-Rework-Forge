@@ -71,11 +71,8 @@ public class SpawnBiomeData extends ConfigData
             return null;
         }
         List<Either<TagKey<Biome>, Holder<Biome>>> biomes = ConfigHelper.parseRegistryItems(Registries.BIOME, registryAccess, (String) entry.get(0));
+        if (biomes.isEmpty()) return null;
 
-        if (biomes.isEmpty())
-        {   ColdSweat.LOGGER.error("Error parsing entity spawn biome config: {} does not contain any valid biomes", entry);
-            return null;
-        }
         return new SpawnBiomeData(biomes, net.minecraft.world.entity.MobCategory.CREATURE, ((Number) entry.get(1)).intValue(),
                                   List.of(Either.right(entityType)));
     }

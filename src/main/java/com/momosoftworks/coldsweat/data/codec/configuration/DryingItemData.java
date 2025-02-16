@@ -3,6 +3,7 @@ package com.momosoftworks.coldsweat.data.codec.configuration;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.data.codec.impl.RequirementHolder;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
@@ -16,6 +17,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -73,16 +75,21 @@ public class DryingItemData extends ConfigData implements RequirementHolder
     @Nullable
     public static DryingItemData fromToml(List<?> entry)
     {
-        if (entry.size() < 2) return null;
-
-        Item item = BuiltInRegistries.ITEM.get(ResourceLocation.parse((String) entry.get(0)));
+        if (entry.size() < 2)
+        {   ColdSweat.LOGGER.error("Error parsing drying item config: not enough arguments");
+            return null;
+        }
+        List<Either<TagKey<Item>, Item>> items = ConfigHelper.getItems((String) entry.get(0));
+        if (items.isEmpty()) return null;
         Item result = BuiltInRegistries.ITEM.get(ResourceLocation.parse((String) entry.get(1)));
+        if (result == null) return null;
+
         ResourceLocation sound = entry.size() > 2
                                  ? ResourceLocation.parse((String) entry.get(2))
                                  : ResourceLocation.parse("minecraft:block.wet_grass.step");
 
-        if (item != null && result != null)
-        {   ItemRequirement input = new ItemRequirement(List.of(Either.right(item)), new ItemComponentsRequirement());
+        if (result != null)
+        {   ItemRequirement input = new ItemRequirement(items, new ItemComponentsRequirement());
             return new DryingItemData(input, new ItemStack(result), EntityRequirement.NONE, BuiltInRegistries.SOUND_EVENT.get(sound));
         }
         else return null;
