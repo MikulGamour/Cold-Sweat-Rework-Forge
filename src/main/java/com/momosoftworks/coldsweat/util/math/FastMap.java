@@ -167,9 +167,8 @@ public class FastMap<K, V> implements Map<K, V>, Cloneable, Serializable
         EntryImpl entry = _entries[keyHash( key ) & _mask];
         while ( entry != null )
         {
-            if ( key.equals( entry._key ) )
-            {
-                return true;
+            if (Objects.equals(key, entry._key))
+            {   return true;
             }
             entry = entry._next;
         }
@@ -188,9 +187,8 @@ public class FastMap<K, V> implements Map<K, V>, Cloneable, Serializable
         EntryImpl entry = _mapFirst;
         while ( entry != null )
         {
-            if ( value.equals( entry._value ) )
-            {
-                return true;
+            if (Objects.equals(value, entry._value))
+            {   return true;
             }
             entry = entry._after;
         }
@@ -207,12 +205,11 @@ public class FastMap<K, V> implements Map<K, V>, Cloneable, Serializable
      */
     public V get( Object key )
     {
-        EntryImpl<K, V> entry = _entries[keyHash( key ) & _mask];
+        EntryImpl<K, V> entry = _entries[keyHash(key ) & _mask];
         while ( entry != null )
         {
-            if ( key.equals( entry._key ) )
-            {
-                return entry._value;
+            if (Objects.equals(key, entry._key))
+            {   return entry._value;
             }
             entry = entry._next;
         }
@@ -234,7 +231,7 @@ public class FastMap<K, V> implements Map<K, V>, Cloneable, Serializable
             if (entry == null)
             {   continue;
             }
-            if (key.equals(entry._key))
+            if (Objects.equals(key, entry._key))
             {   return entry._value;
             }
         }
@@ -252,7 +249,7 @@ public class FastMap<K, V> implements Map<K, V>, Cloneable, Serializable
         EntryImpl entry = _entries[keyHash( key ) & _mask];
         while ( entry != null )
         {
-            if ( key.equals( entry._key ) )
+            if (Objects.equals(key, entry._key))
             {   return entry;
             }
             entry = entry._next;
@@ -276,7 +273,7 @@ public class FastMap<K, V> implements Map<K, V>, Cloneable, Serializable
         EntryImpl entry = _entries[keyHash( key ) & _mask];
         while ( entry != null )
         {
-            if ( key.equals( entry._key ) )
+            if (Objects.equals(key, entry._key))
             {
                 Object prevValue = entry._value;
                 entry._value = value;
