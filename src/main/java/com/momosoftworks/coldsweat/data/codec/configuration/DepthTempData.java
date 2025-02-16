@@ -4,6 +4,7 @@ import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.api.util.Temperature;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
@@ -123,22 +124,22 @@ public class DepthTempData extends ConfigData
         {
             // Checks to ensure the region is valid
             // Must have at least one bound
-            if (top == VerticalBound.NONE && bottom == VerticalBound.NONE) throw new IllegalArgumentException("Temperature region must have at least one bound");
+            if (top == VerticalBound.NONE && bottom == VerticalBound.NONE) throw ColdSweat.LOGGER.throwing(new IllegalArgumentException("Temperature region must have at least one bound"));
             // Boundless upward
             if (top == VerticalBound.NONE)
             {   // Boundless region must be constant
-                if (type != RampType.CONSTANT) throw new IllegalArgumentException("\"top\" region undefined. Boundless temperature region must have a constant temperature");
+                if (type != RampType.CONSTANT) throw ColdSweat.LOGGER.throwing(new IllegalArgumentException("\"top\" region undefined. Boundless temperature region must have a constant temperature"));
                 top = new VerticalBound(VerticalAnchor.CONSTANT, Integer.MAX_VALUE, bottom.units, bottom.temperature);
             }
             // Boundless downward
             if (bottom == VerticalBound.NONE)
             {   // Boundless region must be constant
-                if (type != RampType.CONSTANT) throw new IllegalArgumentException("\"bottom\" region undefined. Boundless temperature region must have a constant temperature");
+                if (type != RampType.CONSTANT) throw ColdSweat.LOGGER.throwing(new IllegalArgumentException("\"bottom\" region undefined. Boundless temperature region must have a constant temperature"));
                 bottom = new VerticalBound(VerticalAnchor.CONSTANT, Integer.MIN_VALUE, top.units, top.temperature);
             }
             // Constant temperature ramp type must have a constant temperature
             if (type == RampType.CONSTANT && !top.temperature.equals(bottom.temperature))
-            {   throw new IllegalArgumentException("Constant temperature ramp type must have a constant temperature; got " + top.temperature + " and " + bottom.temperature);
+            {   throw ColdSweat.LOGGER.throwing(new IllegalArgumentException("Constant temperature ramp type must have a constant temperature; got " + top.temperature + " and " + bottom.temperature));
             }
 
             // Create the region
@@ -228,7 +229,7 @@ public class DepthTempData extends ConfigData
                 ).apply(instance, (temp, type, strength) ->
                 {
                     if (type == ContainerType.STATIC && temp.equals(Double.NaN) && strength > 0)
-                    {   throw new IllegalArgumentException("Static temperature container must have a temperature");
+                    {   throw ColdSweat.LOGGER.throwing(new IllegalArgumentException("Static temperature container must have a temperature"));
                     }
                     return new TempContainer(temp, type, strength);
                 })),
@@ -299,7 +300,7 @@ public class DepthTempData extends ConfigData
                     {   return type;
                     }
                 }
-                throw new IllegalArgumentException("Unknown special temperature value: " + name);
+                throw ColdSweat.LOGGER.throwing(new IllegalArgumentException("Unknown special temperature value: " + name));
             }
         }
 
@@ -348,7 +349,7 @@ public class DepthTempData extends ConfigData
                 {   return type;
                 }
             }
-            throw new IllegalArgumentException("Unknown ramp type: " + name);
+            throw ColdSweat.LOGGER.throwing(new IllegalArgumentException("Unknown ramp type: " + name));
         }
     }
 
