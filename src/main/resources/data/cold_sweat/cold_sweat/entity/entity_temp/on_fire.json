@@ -1,0 +1,11 @@
+{
+  "entity": {
+    "flags": {
+      "is_on_fire": true
+    }
+  },
+  "temperature": 15,
+  "units": "f",
+  "range": 6,
+  "affects_self": true
+}

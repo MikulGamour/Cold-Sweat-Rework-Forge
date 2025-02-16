@@ -24,26 +24,29 @@ public class EntityTempData extends ConfigData implements RequirementHolder
     final double temperature;
     final double range;
     final Temperature.Units units;
-    final EntityRequirement playerRequirement;
+    final EntityRequirement otherEntityRequirement;
     final double maxEffect;
+    final boolean affectsSelf;
 
     public EntityTempData(EntityRequirement entity, double temperature, double range,
-                          Temperature.Units units, EntityRequirement playerRequirement,
-                          double maxEffect, List<String> requiredMods)
+                          Temperature.Units units, EntityRequirement otherEntityRequirement,
+                          double maxEffect, boolean affectsSelf, List<String> requiredMods)
     {
         super(requiredMods);
         this.entity = entity;
         this.temperature = temperature;
         this.range = range;
         this.units = units;
-        this.playerRequirement = playerRequirement;
+        this.otherEntityRequirement = otherEntityRequirement;
         this.maxEffect = maxEffect;
+        this.affectsSelf = affectsSelf;
     }
 
     public EntityTempData(EntityRequirement entity, double temperature, double range,
-                          Temperature.Units units, EntityRequirement playerRequirement, double maxEffect)
+                          Temperature.Units units, EntityRequirement otherEntityRequirement,
+                          double maxEffect, boolean affectsSelf)
     {
-        this(entity, temperature, range, units, playerRequirement, maxEffect, ConfigHelper.getModIDs(CSMath.listOrEmpty(entity.entities()), ForgeRegistries.ENTITY_TYPES));
+        this(entity, temperature, range, units, otherEntityRequirement, maxEffect, affectsSelf, ConfigHelper.getModIDs(CSMath.listOrEmpty(entity.entities()), ForgeRegistries.ENTITY_TYPES));
     }
 
     public static final Codec<EntityTempData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -51,8 +54,9 @@ public class EntityTempData extends ConfigData implements RequirementHolder
             Codec.DOUBLE.fieldOf("temperature").forGetter(EntityTempData::temperature),
             Codec.DOUBLE.fieldOf("range").forGetter(EntityTempData::range),
             Temperature.Units.CODEC.optionalFieldOf("units", Temperature.Units.MC).forGetter(EntityTempData::units),
-            EntityRequirement.getCodec().optionalFieldOf("player", EntityRequirement.NONE).forGetter(EntityTempData::playerRequirement),
+            EntityRequirement.getCodec().optionalFieldOf("affected_entity", EntityRequirement.NONE).forGetter(EntityTempData::playerRequirement),
             Codec.DOUBLE.optionalFieldOf("max_effect", Double.MAX_VALUE).forGetter(EntityTempData::maxEffect),
+            Codec.BOOL.optionalFieldOf("affects_self", false).forGetter(EntityTempData::affectsSelf),
             Codec.STRING.listOf().optionalFieldOf("required_mods", List.of()).forGetter(EntityTempData::requiredMods)
     ).apply(instance, EntityTempData::new));
 
@@ -69,10 +73,13 @@ public class EntityTempData extends ConfigData implements RequirementHolder
     {   return units;
     }
     public EntityRequirement playerRequirement()
-    {   return playerRequirement;
+    {   return otherEntityRequirement;
     }
     public double maxEffect()
     {   return maxEffect;
+    }
+    public boolean affectsSelf()
+    {   return affectsSelf;
     }
 
     public double getTemperature()
@@ -106,7 +113,7 @@ public class EntityTempData extends ConfigData implements RequirementHolder
 
         EntityRequirement requirement = new EntityRequirement(entities);
 
-        return new EntityTempData(requirement, temp, range, units, EntityRequirement.NONE, maxEffect);
+        return new EntityTempData(requirement, temp, range, units, EntityRequirement.NONE, maxEffect, false);
     }
 
     @Override
@@ -114,11 +121,12 @@ public class EntityTempData extends ConfigData implements RequirementHolder
     {   return this.entity.test(entity);
     }
 
-    public boolean test(Entity entity, Entity affectedPlayer)
+    public boolean test(Entity entity, Entity affectedEntity)
     {
-        return entity.distanceTo(affectedPlayer) <= range
+        return (this.affectsSelf || entity != affectedEntity)
+            && entity.distanceTo(affectedEntity) <= range
             && this.test(entity)
-            && this.playerRequirement.test(affectedPlayer);
+            && this.otherEntityRequirement.test(affectedEntity);
     }
 
     public double getTemperatureEffect(Entity entity, Entity affectedPlayer)
@@ -142,6 +150,8 @@ public class EntityTempData extends ConfigData implements RequirementHolder
             && Double.compare(that.range, range) == 0
             && entity.equals(that.entity)
             && units == that.units
-            && playerRequirement.equals(that.playerRequirement);
+            && otherEntityRequirement.equals(that.otherEntityRequirement)
+            && Double.compare(that.maxEffect, maxEffect) == 0
+            && affectsSelf == that.affectsSelf;
     }
 }
