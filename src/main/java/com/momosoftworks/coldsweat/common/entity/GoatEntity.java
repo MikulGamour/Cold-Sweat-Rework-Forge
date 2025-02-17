@@ -9,7 +9,7 @@ import com.momosoftworks.coldsweat.core.init.MemoryInit;
 import com.momosoftworks.coldsweat.core.init.SensorTypeInit;
 import com.momosoftworks.coldsweat.core.init.SoundInit;
 import com.momosoftworks.coldsweat.data.tag.ModBlockTags;
-import com.momosoftworks.coldsweat.util.compat.CompatManager;
+import com.momosoftworks.coldsweat.compat.CompatManager;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.*;
 import net.minecraft.entity.ai.attributes.AttributeModifierMap;

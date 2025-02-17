@@ -1,4 +1,4 @@
-package com.momosoftworks.coldsweat.util.compat.kubejs.event;
+package com.momosoftworks.coldsweat.compat.kubejs.event;
 
 import com.momosoftworks.coldsweat.api.event.common.temperautre.TemperatureChangedEvent;
 import com.momosoftworks.coldsweat.api.util.Temperature;

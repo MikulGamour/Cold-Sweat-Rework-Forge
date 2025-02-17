@@ -1,4 +1,4 @@
-package com.momosoftworks.coldsweat.util.compat;
+package com.momosoftworks.coldsweat.compat;
 
 import com.blackgear.cavesandcliffs.common.entity.GoatEntity;
 import com.blackgear.cavesandcliffs.core.registries.entity.CCBEntityTypes;

@@ -1,7 +1,7 @@
 package com.momosoftworks.coldsweat.mixin;
 
 import com.momosoftworks.coldsweat.config.ConfigSettings;
-import com.momosoftworks.coldsweat.util.compat.CompatManager;
+import com.momosoftworks.coldsweat.compat.CompatManager;
 import com.momosoftworks.coldsweat.util.registries.ModDamageSources;
 import net.minecraft.block.AbstractFireBlock;
 import net.minecraft.block.BlockState;

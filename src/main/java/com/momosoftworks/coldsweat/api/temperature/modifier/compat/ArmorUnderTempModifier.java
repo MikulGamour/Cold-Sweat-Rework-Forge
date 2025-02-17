@@ -2,7 +2,7 @@ package com.momosoftworks.coldsweat.api.temperature.modifier.compat;
 
 import com.momosoftworks.coldsweat.api.temperature.modifier.TempModifier;
 import com.momosoftworks.coldsweat.api.util.Temperature;
-import com.momosoftworks.coldsweat.util.compat.CompatManager;
+import com.momosoftworks.coldsweat.compat.CompatManager;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
