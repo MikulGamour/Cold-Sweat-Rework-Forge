@@ -247,18 +247,22 @@ public class ModRegistriesEventJS extends StartupEventJS
         {   ColdSweat.LOGGER.error("KubeJS: Non-Minecraft namespace required for TempModifier IDs (i.e. mymod:my_modifier)");
             return;
         }
-        class TempModifierJS extends TempModifier
-        {
-            public TempModifierJS()
-            {}
 
-            @Override
-            protected Function<Double, Double> calculate(LivingEntity entity, Temperature.Trait trait)
-            {
-                return constructor.apply(new TempModifierDataJS(entity, trait));
-            }
+        TempModifierRegistry.register(key, () -> new TempModifierJS(constructor));
+    }
+
+    static class TempModifierJS extends TempModifier
+    {
+        Function<TempModifierDataJS, Function<Double, Double>> constructor;
+
+        public TempModifierJS(Function<TempModifierDataJS, Function<Double, Double>> constructor)
+        {   this.constructor = constructor;
         }
 
-        TempModifierRegistry.register(key, TempModifierJS::new);
+        @Override
+        protected Function<Double, Double> calculate(LivingEntity entity, Temperature.Trait trait)
+        {
+            return constructor.apply(new TempModifierDataJS(entity, trait));
+        }
     }
 }

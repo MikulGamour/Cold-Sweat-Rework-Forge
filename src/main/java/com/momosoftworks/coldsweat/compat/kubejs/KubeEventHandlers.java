@@ -1,5 +1,6 @@
 package com.momosoftworks.coldsweat.compat.kubejs;
 
+import com.momosoftworks.coldsweat.api.event.common.insulation.InsulateItemEvent;
 import com.momosoftworks.coldsweat.api.event.common.temperautre.TempModifierEvent;
 import com.momosoftworks.coldsweat.api.event.common.temperautre.TemperatureChangedEvent;
 import com.momosoftworks.coldsweat.compat.kubejs.event.AddModifierEventJS;
