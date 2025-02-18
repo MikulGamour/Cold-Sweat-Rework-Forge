@@ -345,10 +345,10 @@ public class ItemSettingsConfig
                 .defineListAllowEmpty(Arrays.asList("Drying Items"), () -> Arrays.asList(
                         Arrays.asList("minecraft:sponge", "minecraft:wet_sponge")
                 ),
-                it -> it instanceof List<?> list
-                && list.size() == 2
-                && list.get(0) instanceof String
-                && list.get(1) instanceof String);
+                it -> it instanceof List<?>
+                && ((List<?>) it).size() == 2
+                && ((List<?>) it).get(0) instanceof String
+                && ((List<?>) it).get(1) instanceof String);
 
         BUILDER.pop();
 
