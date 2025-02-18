@@ -290,10 +290,10 @@ public class ConfigLoadingHandler
         }
     }
 
-    private static <T extends ConfigData, H extends Holder<T>> void removeEntries(Collection<RemoveRegistryData<T>> removals, Collection<H> registry)
+    private static <T extends ConfigData, H extends T> void removeEntries(Collection<RemoveRegistryData<T>> removals, Collection<H> registry)
     {
         for (RemoveRegistryData<T> data : removals)
-        {   registry.removeIf(holder -> data.matches(holder.value()));
+        {   registry.removeIf(data::matches);
         }
     }
 
