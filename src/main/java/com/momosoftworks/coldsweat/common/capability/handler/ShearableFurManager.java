@@ -164,8 +164,8 @@ public class ShearableFurManager
     @SubscribeEvent
     public static void onEntityLoaded(PlayerEvent.StartTracking event)
     {
-        if (event.getEntity() instanceof ServerPlayer player && event.getTarget() instanceof Goat goat)
-        {   syncData(goat, player);
+        if (event.getEntity() instanceof ServerPlayer player && getFurCap(event.getTarget()).isPresent())
+        {   syncData(((LivingEntity) event.getTarget()), player);
         }
     }
 
