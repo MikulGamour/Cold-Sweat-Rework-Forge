@@ -37,7 +37,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.function.ToIntFunction;
 
-public class ThermolithBlock extends Block implements ITileEntityProvider
+public class ThermolithBlock extends Block
 {
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
     public static final BooleanProperty POWERED = BlockStateProperties.POWERED;
@@ -104,13 +104,12 @@ public class ThermolithBlock extends Block implements ITileEntityProvider
     }
 
     @Override
-    public TileEntity createTileEntity(BlockState state, IBlockReader world)
-    {   return BlockEntityInit.THERMOLITH_BLOCK_ENTITY_TYPE.get().create();
+    public boolean hasTileEntity(BlockState state)
+    {   return true;
     }
 
-    @Nullable
     @Override
-    public TileEntity newBlockEntity(IBlockReader world)
+    public TileEntity createTileEntity(BlockState state, IBlockReader world)
     {   return BlockEntityInit.THERMOLITH_BLOCK_ENTITY_TYPE.get().create();
     }
 

@@ -13,7 +13,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.DimensionType;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
-import net.minecraft.world.gen.feature.structure.Structure;
+import net.minecraft.world.gen.feature.StructureFeature;
 
 import java.util.function.Function;
 
@@ -102,7 +102,7 @@ public class BiomeTempModifier extends TempModifier
 
     public static Pair<Double, Double> getStructureTemp(World level, BlockPos pos)
     {
-        Structure<?> structure = WorldHelper.getStructureAt(level, pos);
+        StructureFeature<?, ?> structure = WorldHelper.getStructureAt(level, pos);
         if (structure == null) return Pair.of(null, 0d);
 
         Double strucTemp = CSMath.getIfNotNull(ConfigSettings.STRUCTURE_TEMPS.get(level.registryAccess()).get(structure), StructureTempData::getTemperature, null);

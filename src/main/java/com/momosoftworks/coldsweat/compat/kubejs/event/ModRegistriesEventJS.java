@@ -252,7 +252,7 @@ public class ModRegistriesEventJS extends StartupEventJS
     {
         DynamicRegistries registryAccess = RegistryHelper.getDynamicRegistries();
         if (registryAccess == null) return;
-        Structure<?> structure = RegistryHelper.getStructure(new ResourceLocation(structureId), registryAccess);
+        StructureFeature<?, ?> structure = RegistryHelper.getStructure(new ResourceLocation(structureId), registryAccess);
         if (structure == null)
         {   ColdSweat.LOGGER.error("Failed to find structure with ID: {}", structureId);
             return;
@@ -272,7 +272,7 @@ public class ModRegistriesEventJS extends StartupEventJS
     {
         DynamicRegistries registryAccess = RegistryHelper.getDynamicRegistries();
         if (registryAccess == null) return;
-        Structure<?> structure = RegistryHelper.getStructure(new ResourceLocation(structureId), registryAccess);
+        StructureFeature<?, ?> structure = RegistryHelper.getStructure(new ResourceLocation(structureId), registryAccess);
         if (structure == null)
         {   ColdSweat.LOGGER.error("Failed to find structure with ID: {}", structureId);
             return;

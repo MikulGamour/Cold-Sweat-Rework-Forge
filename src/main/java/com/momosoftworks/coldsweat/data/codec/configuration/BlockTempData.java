@@ -152,12 +152,12 @@ public class BlockTempData extends ConfigData
                                  : Double.MAX_VALUE;
 
         // Get block predicate
-        Optional<BlockRequirement.StateRequirement> blockPredicates = entry.size() > 5 && entry.get(5) instanceof String && !NBTHelper.isBlank((String) entry.get(4))
-                                                                      ? Optional.of(BlockRequirement.StateRequirement.fromToml(((String) entry.get(4)).split(","), effectBlocks[0]))
+        Optional<BlockRequirement.StateRequirement> blockPredicates = entry.size() > 5 && entry.get(5) instanceof String && !NBTHelper.isBlank((String) entry.get(5))
+                                                                      ? Optional.of(BlockRequirement.StateRequirement.fromToml(((String) entry.get(5)).split(","), effectBlocks[0]))
                                                                       : Optional.empty();
 
-        Optional<NbtRequirement> nbtRequirement = entry.size() > 6 && entry.get(6) instanceof String&& !NBTHelper.isBlank((String) entry.get(5))
-                                                  ? Optional.of(new NbtRequirement(NBTHelper.parseCompoundNbt((String) entry.get(5))))
+        Optional<NbtRequirement> nbtRequirement = entry.size() > 6 && entry.get(6) instanceof String && !NBTHelper.isBlank((String) entry.get(6))
+                                                  ? Optional.of(new NbtRequirement(NBTHelper.parseCompoundNbt((String) entry.get(6))))
                                                   : Optional.empty();
 
         double tempLimit = entry.size() > 7

@@ -26,7 +26,7 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.server.MinecraftServer;
+import net.minecraft.resources.IResource;
 import net.minecraft.item.Item;
 import net.minecraft.tags.ITag;
 import net.minecraft.util.JSONUtils;
@@ -38,6 +38,7 @@ import net.minecraft.util.registry.Registry;
 import net.minecraft.world.DimensionType;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.gen.feature.StructureFeature;
 import net.minecraft.world.gen.feature.structure.Structure;
 import net.minecraft.world.server.ServerWorld;
 import net.minecraftforge.api.distmarker.Dist;
@@ -47,7 +48,6 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.minecraftforge.fml.loading.FMLPaths;
-import net.minecraftforge.registries.ForgeRegistries;
 
 import java.io.*;
 import java.nio.file.Path;
@@ -127,10 +127,32 @@ public class ConfigLoadingHandler
          Fetch JSON registries
         */
         Multimap<RegistryKey<Registry<? extends ConfigData>>, ? extends ConfigData> registries = new RegistryMultiMap<>();
-        for (Map.Entry<String, ModRegistries.RegistryHolder<?>> entry : ModRegistries.getRegistries().entrySet())
+        for (ModRegistries.ConfigRegistry<?> registry : ModRegistries.getRegistries().values())
         {
-            RegistryKey key = entry.getValue().registry;
-            registries.putAll(key, registryAccess.registryOrThrow(key));
+            registry.flush();
+            try
+            {
+                ResourceLocation registryPath = new ResourceLocation(ColdSweat.MOD_ID, "config/" + registry.key().location().getPath());
+                for (ResourceLocation resourceLocation : ModRegistries.getResourceManager().listResources(registryPath.getPath(), file -> file.endsWith(".json")))
+                {
+                    IResource resource = ModRegistries.getResourceManager().getResource(resourceLocation);
+                    try (InputStream inputStream = resource.getInputStream())
+                    {
+                        // Create a reader from the input stream
+                        registry.codec().parse(JsonOps.INSTANCE, JSONUtils.parse(new InputStreamReader(inputStream)))
+                                .resultOrPartial(ColdSweat.LOGGER::error)
+                                .ifPresent(data ->
+                                {
+                                    ((ModRegistries.ConfigRegistry) registry).register(resourceLocation, data);
+                                    ((RegistryMultiMap) registries).put(registry.key(), data);
+                                });
+                    }
+                    catch (Exception e)
+                    {   ColdSweat.LOGGER.error("Failed to load JSON registry: {}", registry.key(), e);
+                    }
+                }
+            }
+            catch (IOException ignored) {}
         }
         return registries;
     }
@@ -149,10 +171,10 @@ public class ConfigLoadingHandler
          Parse user-defined JSON data from the configs folder
         */
         Multimap<RegistryKey<Registry<? extends ConfigData>>, ? extends ConfigData> registries = new RegistryMultiMap<>();
-        for (Map.Entry<String, ModRegistries.RegistryHolder<?>> entry : ModRegistries.getRegistries().entrySet())
+        for (Map.Entry<String, ModRegistries.ConfigRegistry<?>> entry : ModRegistries.getRegistries().entrySet())
         {
-            RegistryKey<Registry<? extends ConfigData>> key = (RegistryKey) entry.getValue().registry;
-            Codec<?> codec = entry.getValue().codec;
+            RegistryKey<Registry<? extends ConfigData>> key = (RegistryKey) entry.getValue().key();
+            Codec<?> codec = entry.getValue().codec();
             registries.putAll(key, parseConfigData((RegistryKey) key, (Codec) codec, registryAccess));
         }
         return registries;
@@ -261,7 +283,7 @@ public class ConfigLoadingHandler
         {
             List<? extends ConfigData> sortedHolders = new ArrayList<>(registries.get(key));
             sortedHolders.sort(Comparator.comparing(holder ->
-            {   return RegistryHelper.getKey(holder, dynamicRegistries).getPath().equals("default") ? 1 : 0;
+            {   return RegistryHelper.getKey(holder).getPath().equals("default") ? 1 : 0;
             }));
             registries.replaceValues(key, (Iterable) sortedHolders);
         }
@@ -272,8 +294,8 @@ public class ConfigLoadingHandler
         // Clear the static map
         REMOVED_REGISTRIES.clear();
         // Gather registry removals & add them to the static map
-        Set<RemoveRegistryData<?>> removals = registryAccess.registryOrThrow(ModRegistries.REMOVE_REGISTRY_DATA).stream().collect(Collectors.toSet());
-        removals.addAll(parseConfigData(ModRegistries.REMOVE_REGISTRY_DATA, RemoveRegistryData.CODEC, registryAccess));
+        Collection<RemoveRegistryData<?>> removals = ModRegistries.REMOVE_REGISTRY_DATA.data().values();
+        removals.addAll(parseConfigData(ModRegistries.REMOVE_REGISTRY_DATA.key(), RemoveRegistryData.CODEC, registryAccess));
         removals.forEach(data ->
         {
             RegistryKey<Registry<? extends ConfigData>> key = (RegistryKey) data.registry();
@@ -297,21 +319,21 @@ public class ConfigLoadingHandler
         }
     }
 
-    public static <T extends ConfigData> Collection<T> removeEntries(Collection<T> registries, RegistryKey<Registry<T>> registryName)
+    public static <T extends ConfigData> Collection<T> removeEntries(Collection<T> registries, ModRegistries.ConfigRegistry<T> registry)
     {
-        REMOVED_REGISTRIES.get((RegistryKey) registryName).forEach(data ->
+        REMOVED_REGISTRIES.get((RegistryKey) registry.key()).forEach(data ->
         {
             RemoveRegistryData<T> removeData = ((RemoveRegistryData<T>) data);
-            if (removeData.registry() == registryName)
+            if (removeData.registry().equals(registry.key()))
             {   registries.removeIf(removeData::matches);
             }
         });
         return registries;
     }
 
-    public static <T extends ConfigData> boolean isRemoved(T entry, RegistryKey<Registry<T>> registryName)
+    public static <T extends ConfigData> boolean isRemoved(T entry, ModRegistries.ConfigRegistry<T> registry)
     {
-        return REMOVED_REGISTRIES.get((RegistryKey) registryName).stream().anyMatch(data -> ((RemoveRegistryData<T>) data).matches(entry));
+        return REMOVED_REGISTRIES.get((RegistryKey) registry.key()).stream().anyMatch(data -> ((RemoveRegistryData<T>) data).matches(entry));
     }
 
     private static void addInsulatorConfigs(Collection<InsulatorData> insulators)
@@ -554,7 +576,7 @@ public class ConfigLoadingHandler
             if (!structureTempData.areRequiredModsLoaded())
             {   return;
             }
-            for (Structure<?> structure : structureTempData.structures())
+            for (StructureFeature<?, ?> structure : structureTempData.structures())
             {
                 if (structureTempData.isOffset())
                 {   ConfigSettings.STRUCTURE_OFFSETS.get(registryAccess).put(structure, structureTempData);

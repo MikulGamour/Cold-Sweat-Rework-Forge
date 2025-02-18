@@ -32,6 +32,7 @@ import net.minecraft.util.text.IFormattableTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
 import net.minecraft.world.DimensionType;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.gen.feature.StructureFeature;
 import net.minecraft.world.gen.feature.structure.Structure;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.common.thread.EffectiveSide;
@@ -85,8 +86,8 @@ public class ConfigSettings
     public static final DynamicHolder<Map<Biome, BiomeTempData>> BIOME_OFFSETS;
     public static final DynamicHolder<Map<DimensionType, DimensionTempData>> DIMENSION_TEMPS;
     public static final DynamicHolder<Map<DimensionType, DimensionTempData>> DIMENSION_OFFSETS;
-    public static final DynamicHolder<Map<Structure<?>, StructureTempData>> STRUCTURE_TEMPS;
-    public static final DynamicHolder<Map<Structure<?>, StructureTempData>> STRUCTURE_OFFSETS;
+    public static final DynamicHolder<Map<StructureFeature<?, ?>, StructureTempData>> STRUCTURE_TEMPS;
+    public static final DynamicHolder<Map<StructureFeature<?, ?>, StructureTempData>> STRUCTURE_OFFSETS;
     public static final DynamicHolder<List<DepthTempData>> DEPTH_REGIONS;
     public static final DynamicHolder<Boolean> CHECK_SLEEP_CONDITIONS;
     public static final DynamicHolder<SeasonalTempData> SUMMER_TEMPS;
@@ -356,7 +357,7 @@ public class ConfigSettings
 
         STRUCTURE_TEMPS = addSettingWithRegistries("structure_temperatures", FastMap::new, (holder, registryAccess) ->
         {
-            Map<Structure<?>, StructureTempData> dataMap = ConfigHelper.getRegistryMap(WorldSettingsConfig.STRUCTURE_TEMPERATURES.get(), Registry.STRUCTURE_FEATURE_REGISTRY,
+            Map<StructureFeature<?, ?>, StructureTempData> dataMap = ConfigHelper.getRegistryMap(WorldSettingsConfig.STRUCTURE_TEMPERATURES.get(), Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY,
                                                                                    toml -> StructureTempData.fromToml(toml, false, registryAccess), StructureTempData::structures);
             ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.STRUCTURE_TEMP_DATA);
 
@@ -365,7 +366,7 @@ public class ConfigSettings
 
         STRUCTURE_OFFSETS = addSettingWithRegistries("structure_offsets", FastMap::new, (holder, registryAccess) ->
         {
-            Map<Structure<?>, StructureTempData> dataMap = ConfigHelper.getRegistryMap(WorldSettingsConfig.STRUCTURE_TEMP_OFFSETS.get(), Registry.STRUCTURE_FEATURE_REGISTRY,
+            Map<StructureFeature<?, ?>, StructureTempData> dataMap = ConfigHelper.getRegistryMap(WorldSettingsConfig.STRUCTURE_TEMP_OFFSETS.get(), Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY,
                                                                                    toml -> StructureTempData.fromToml(toml, true, registryAccess), StructureTempData::structures);
             ConfigLoadingHandler.removeEntries(dataMap.values(), ModRegistries.STRUCTURE_TEMP_DATA);
 

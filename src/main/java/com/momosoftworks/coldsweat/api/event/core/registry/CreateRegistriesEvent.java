@@ -2,6 +2,7 @@ package com.momosoftworks.coldsweat.api.event.core.registry;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
+import com.momosoftworks.coldsweat.data.ModRegistries;
 import com.momosoftworks.coldsweat.data.codec.configuration.RemoveRegistryData;
 import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import net.minecraft.util.RegistryKey;
@@ -35,8 +36,8 @@ public abstract class CreateRegistriesEvent extends Event
     {   return registries;
     }
 
-    public <T> Collection<T> getRegistry(RegistryKey<Registry<T>> key)
-    {   return (Collection<T>) registries.get((RegistryKey) key);
+    public <T extends ConfigData> Collection<T> getRegistry(ModRegistries.ConfigRegistry<T> key)
+    {   return (Collection<T>) registries.get((RegistryKey) key.key());
     }
 
     /**

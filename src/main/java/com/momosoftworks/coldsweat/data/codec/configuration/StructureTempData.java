@@ -8,6 +8,7 @@ import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
 import net.minecraft.util.registry.DynamicRegistries;
 import net.minecraft.util.registry.Registry;
+import net.minecraft.world.gen.feature.StructureFeature;
 import net.minecraft.world.gen.feature.structure.Structure;
 
 import javax.annotation.Nullable;
@@ -16,12 +17,12 @@ import java.util.List;
 
 public class StructureTempData extends ConfigData
 {
-    List<Structure<?>> structures;
+    List<StructureFeature<?, ?>> structures;
     double temperature;
     Temperature.Units units;
     boolean isOffset;
 
-    public StructureTempData(List<Structure<?>> structures, double temperature,
+    public StructureTempData(List<StructureFeature<?, ?>> structures, double temperature,
                              Temperature.Units units, boolean isOffset, List<String> requiredMods)
     {
         super(requiredMods);
@@ -31,27 +32,27 @@ public class StructureTempData extends ConfigData
         this.isOffset = isOffset;
     }
 
-    public StructureTempData(List<Structure<?>> structures, double temperature,
+    public StructureTempData(List<StructureFeature<?, ?>> structures, double temperature,
                              Temperature.Units units, boolean isOffset)
     {
-        this(structures, temperature, units, isOffset, ConfigHelper.getModIDs(structures, Registry.STRUCTURE_FEATURE_REGISTRY));
+        this(structures, temperature, units, isOffset, ConfigHelper.getModIDs(structures, Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY));
     }
 
-    public StructureTempData(Structure<?> structure, double temperature,
+    public StructureTempData(StructureFeature<?, ?> structure, double temperature,
                              Temperature.Units units, boolean isOffset)
     {
         this(Arrays.asList(structure), temperature, units, isOffset);
     }
 
     public static final Codec<StructureTempData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            Registry.STRUCTURE_FEATURE.listOf().fieldOf("structures").forGetter(data -> data.structures),
+            ConfigHelper.dynamicCodec(Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY).listOf().fieldOf("structures").forGetter(data -> data.structures),
             Codec.DOUBLE.fieldOf("temperature").forGetter(data -> data.temperature),
             Temperature.Units.CODEC.optionalFieldOf("units", Temperature.Units.MC).forGetter(data -> data.units),
             Codec.BOOL.optionalFieldOf("offset", false).forGetter(data -> data.isOffset),
             Codec.STRING.listOf().optionalFieldOf("required_mods", Arrays.asList()).forGetter(StructureTempData::requiredMods)
     ).apply(instance, StructureTempData::new));
 
-    public List<Structure<?>> structures()
+    public List<StructureFeature<?, ?>> structures()
     {   return structures;
     }
     public double temperature()
@@ -75,7 +76,7 @@ public class StructureTempData extends ConfigData
         {   ColdSweat.LOGGER.error("Error parsing structure config: {} does not have enough arguments", entry);
             return null;
         }
-        List<Structure<?>> structures = ConfigHelper.parseRegistryItems(Registry.STRUCTURE_FEATURE_REGISTRY, registryAccess, (String) entry.get(0));
+        List<StructureFeature<?, ?>> structures = ConfigHelper.parseRegistryItems(Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY, registryAccess, (String) entry.get(0));
         if (structures.isEmpty()) return null;
         double temp = ((Number) entry.get(1)).doubleValue();
         Temperature.Units units = entry.size() == 3 ? Temperature.Units.valueOf(((String) entry.get(2)).toUpperCase()) : Temperature.Units.MC;

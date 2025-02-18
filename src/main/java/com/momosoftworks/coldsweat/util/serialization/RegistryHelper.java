@@ -1,6 +1,8 @@
 package com.momosoftworks.coldsweat.util.serialization;
 
 import com.mojang.datafixers.util.Either;
+import com.momosoftworks.coldsweat.data.ModRegistries;
+import com.momosoftworks.coldsweat.data.codec.impl.ConfigData;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import net.minecraft.client.Minecraft;
@@ -14,6 +16,7 @@ import net.minecraft.util.registry.Registry;
 import net.minecraft.world.DimensionType;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.Biome;
+import net.minecraft.world.gen.feature.StructureFeature;
 import net.minecraft.world.gen.feature.structure.Structure;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.loading.FMLEnvironment;
@@ -68,8 +71,8 @@ public class RegistryHelper
         List<T> list = new ArrayList<>();
         for (Either<ITag<T>, T> either : eitherList)
         {
-            either.ifLeft(tagKey ->
-            {   list.addAll(tagKey.getValues());
+            either.ifLeft(tag ->
+            {   if (tag != null) list.addAll(tag.getValues());
             });
             either.ifRight(list::add);
         }
@@ -86,18 +89,21 @@ public class RegistryHelper
         }
     }
 
-    public static ResourceLocation getKey(Object object, DynamicRegistries registryAccess)
+    public static ResourceLocation getKey(ConfigData object)
     {
-        if (object instanceof Biome)
-        {   return getBiomeId((Biome) object, registryAccess);
+        for (ModRegistries.ConfigRegistry<?> registry : ModRegistries.getRegistries().values())
+        {
+            if (registry.type().isInstance(object))
+            {
+                for (Map.Entry<ResourceLocation, ?> entry : registry.data().entrySet())
+                {
+                    if (entry.getValue() == object)
+                    {   return entry.getKey();
+                    }
+                }
+            }
         }
-        if (object instanceof DimensionType)
-        {   return getDimensionId((DimensionType) object, registryAccess);
-        }
-        if (object instanceof Structure)
-        {   return getStructureId((Structure<?>) object, registryAccess);
-        }
-        return null;
+        return new ResourceLocation("unknown");
     }
 
     @Nullable
@@ -121,12 +127,12 @@ public class RegistryHelper
     }
 
     @Nullable
-    public static Structure<?> getStructure(ResourceLocation structureId, DynamicRegistries registryAccess)
-    {   return registryAccess.registryOrThrow(Registry.STRUCTURE_FEATURE_REGISTRY).get(structureId);
+    public static StructureFeature<?, ?> getStructure(ResourceLocation structureId, DynamicRegistries registryAccess)
+    {   return registryAccess.registryOrThrow(Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY).get(structureId);
     }
 
     @Nullable
-    public static ResourceLocation getStructureId(Structure<?> structure, DynamicRegistries registryAccess)
-    {   return registryAccess.registryOrThrow(Registry.STRUCTURE_FEATURE_REGISTRY).getKey(structure);
+    public static ResourceLocation getStructureId(StructureFeature<?, ?> structure, DynamicRegistries registryAccess)
+    {   return registryAccess.registryOrThrow(Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY).getKey(structure);
     }
 }

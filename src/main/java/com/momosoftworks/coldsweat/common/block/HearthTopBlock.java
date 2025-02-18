@@ -17,12 +17,8 @@ import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 
-public class HearthTopBlock extends Block
+public class HearthTopBlock extends SmokestackBlock
 {
-    public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
-    public static final BooleanProperty UP = BlockStateProperties.UP;
-    public static final BooleanProperty DOWN = BlockStateProperties.DOWN;
-
     public static Properties getProperties()
     {
         return Properties

@@ -45,6 +45,7 @@ import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
 import net.minecraft.util.math.vector.Vector3d;
 import net.minecraft.util.registry.DynamicRegistries;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.GameRules;
 import net.minecraft.world.IWorld;
 import net.minecraft.world.World;
@@ -54,6 +55,7 @@ import net.minecraft.world.chunk.ChunkSection;
 import net.minecraft.world.chunk.ChunkStatus;
 import net.minecraft.world.chunk.IChunk;
 import net.minecraft.world.gen.Heightmap;
+import net.minecraft.world.gen.feature.StructureFeature;
 import net.minecraft.world.gen.feature.structure.Structure;
 import net.minecraft.world.gen.feature.structure.StructureManager;
 import net.minecraft.world.gen.feature.structure.StructureStart;
@@ -229,7 +231,7 @@ public abstract class WorldHelper
     }
 
     @Nullable
-    public static Structure<?> getStructureAt(World level, BlockPos pos)
+    public static StructureFeature<?, ?> getStructureAt(World level, BlockPos pos)
     {
         if (!(level instanceof ServerWorld)) return null;
 
@@ -256,7 +258,8 @@ public abstract class WorldHelper
                     {
                         // If the structure has a piece at the position, get the temperature
                         if (structurestart.getPieces().stream().anyMatch(piece -> piece.getBoundingBox().isInside(pos)))
-                        {   return structure;
+                        {
+                            return serverLevel.registryAccess().registryOrThrow(Registry.CONFIGURED_STRUCTURE_FEATURE_REGISTRY).get(Registry.STRUCTURE_FEATURE.getKey(structure));
                         }
                     }
                 }
