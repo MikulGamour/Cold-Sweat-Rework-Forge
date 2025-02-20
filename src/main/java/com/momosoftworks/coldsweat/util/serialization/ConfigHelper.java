@@ -63,7 +63,7 @@ public class ConfigHelper
         for (String objString : objects)
         {
             ResourceLocation id = new ResourceLocation(objString);
-            Optional<T> obj = reg.getOptional(RegistryKey.create(registry, id));
+            Optional<T> obj = reg.getOptional(id);
             if (!obj.isPresent())
             {
                 ColdSweat.LOGGER.error("Error parsing config: \"{}\" does not exist", objString);
@@ -95,7 +95,7 @@ public class ConfigHelper
             else
             {
                 ResourceLocation id = new ResourceLocation(objString);
-                Optional<T> obj = reg.getOptional(RegistryKey.create(registry, id));
+                Optional<T> obj = reg.getOptional(id);
                 if (!reg.containsKey(id) || !obj.isPresent())
                 {
                     ColdSweat.LOGGER.error("Error parsing config: {} \"{}\" does not exist", registry.location().getPath(), objString);
@@ -322,7 +322,7 @@ public class ConfigHelper
                                                                                 DynamicRegistries dynamicRegistries)
     {
         Registry<K> registry = dynamicRegistries.registryOrThrow(gameRegistry);
-        return deserializeEitherRegistry(tag, key, modRegistry, rl -> registry.getOptional(RegistryKey.create(gameRegistry, rl)).orElse(null), dynamicRegistries);
+        return deserializeEitherRegistry(tag, key, modRegistry, rl -> registry.getOptional(rl).orElse(null), dynamicRegistries);
     }
 
     private static <K, V extends ConfigData> Map<K, V> deserializeEitherRegistry(CompoundNBT tag, String key,
@@ -416,7 +416,7 @@ public class ConfigHelper
                                                                                              DynamicRegistries dynamicRegistries)
     {
         Registry<K> registry = dynamicRegistries.registryOrThrow(gameRegistry);
-        return deserializeEitherMultimapRegistry(tag, key, modRegistry, k -> registry.getOptional(RegistryKey.create(gameRegistry, k)).orElse(null), dynamicRegistries);
+        return deserializeEitherMultimapRegistry(tag, key, modRegistry, rl -> registry.getOptional(rl).orElse(null), dynamicRegistries);
     }
 
     private static <K, V extends ConfigData> Multimap<K, V> deserializeEitherMultimapRegistry(CompoundNBT tag, String key,

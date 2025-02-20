@@ -108,7 +108,7 @@ public class RegistryHelper
 
     @Nullable
     public static Biome getBiome(ResourceLocation biomeId, DynamicRegistries registryAccess)
-    {   return registryAccess.registryOrThrow(Registry.BIOME_REGISTRY).getOptional(RegistryKey.create(Registry.BIOME_REGISTRY, biomeId)).orElse(null);
+    {   return registryAccess.registryOrThrow(Registry.BIOME_REGISTRY).get(biomeId);
     }
 
     @Nullable
@@ -118,7 +118,7 @@ public class RegistryHelper
 
     @Nullable
     public static DimensionType getDimension(ResourceLocation dimensionId, DynamicRegistries registryAccess)
-    {   return registryAccess.registryOrThrow(Registry.DIMENSION_TYPE_REGISTRY).getOptional(RegistryKey.create(Registry.DIMENSION_TYPE_REGISTRY, dimensionId)).orElse(null);
+    {   return registryAccess.registryOrThrow(Registry.DIMENSION_TYPE_REGISTRY).get(dimensionId);
     }
 
     @Nullable

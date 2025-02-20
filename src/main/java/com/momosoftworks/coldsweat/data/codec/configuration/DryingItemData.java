@@ -53,7 +53,7 @@ public class DryingItemData extends ConfigData implements RequirementHolder
              // Required mods
              ListBuilder.begin(ConfigHelper.getModIDs(CSMath.listOrEmpty(data.items()), ForgeRegistries.ITEMS))
              .add(ForgeRegistries.ITEMS.getKey(result.getItem()).getNamespace())
-             .add(sound.getLocation().getNamespace())
+             .add(ForgeRegistries.SOUND_EVENTS.getKey(sound).getNamespace())
              .build());
     }
 
