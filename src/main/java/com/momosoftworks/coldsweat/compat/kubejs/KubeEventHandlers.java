@@ -44,14 +44,14 @@ public class KubeEventHandlers
     }
 
     static EventResult onTemperatureChanged(TemperatureChangedEvent event)
-    {   return EventResult.interrupt(new TempChangedEventJS(event).post(ScriptType.SERVER, TEMP_CHANGED));
+    {   return EventResult.interrupt(!new TempChangedEventJS(event).post(ScriptType.SERVER, TEMP_CHANGED));
     }
 
     private static EventResult onInsulateItem(InsulateItemEvent event)
-    {   return EventResult.interrupt(new ApplyInsulationEventJS(event).post(ScriptType.SERVER, APPLY_INSULATION));
+    {   return EventResult.interrupt(!new ApplyInsulationEventJS(event).post(ScriptType.SERVER, APPLY_INSULATION));
     }
 
     private static EventResult onTempModifierAdd(TempModifierEvent.Add event)
-    {   return EventResult.interrupt(new AddModifierEventJS(event).post(ScriptType.SERVER, MODIFIER_ADD));
+    {   return EventResult.interrupt(!new AddModifierEventJS(event).post(ScriptType.SERVER, MODIFIER_ADD));
     }
 }

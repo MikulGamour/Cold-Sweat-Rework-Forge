@@ -33,7 +33,7 @@ import java.util.Map;
 public class SewingContainer extends AbstractRepairContainer
 {
     protected boolean quickMoving = false;
-    protected IInventory playerInventory;
+    protected PlayerInventory playerInventory;
 
     public SewingContainer(int containerId, PlayerInventory inventory)
     {   this(ContainerInit.SEWING_CONTAINER_TYPE.get(), containerId, inventory, IWorldPosCallable.NULL);
@@ -89,15 +89,7 @@ public class SewingContainer extends AbstractRepairContainer
     }
 
     public ItemStack getItem(int index)
-    {   return this.getContainerForSlot(index).getItem(index);
-    }
-
-    public void setItem(int index, ItemStack stack)
-    {   this.getContainerForSlot(index).setItem(index, stack);
-    }
-
-    protected IInventory getContainerForSlot(int index)
-    {   return index == this.getResultSlot() ? this.resultSlots : this.inputSlots;
+    {   return this.getSlot(index).getItem();
     }
 
     public void growItem(int index, int amount)
@@ -139,6 +131,8 @@ public class SewingContainer extends AbstractRepairContainer
                     cap.removeInsulationItem(cap.getInsulationItem(cap.getInsulation().size() - 1));
                     // Play shear sound
                     player.level.playSound(null, player.blockPosition(), SoundEvents.SHEEP_SHEAR, SoundCategory.PLAYERS, 0.8F, 1.0F);
+                    // Update armor item NBT for syncing to client
+                    input1.getOrCreateTag().merge(cap.serializeNBT());
                 }
             });
             this.createResult();
@@ -293,6 +287,7 @@ public class SewingContainer extends AbstractRepairContainer
                     }
                     else player.drop(itemStack, true);
                 }
+                this.getSlot(i).set(ItemStack.EMPTY);
             }
         }
         super.removed(player);

@@ -101,7 +101,7 @@ public class ProcessEquipmentInsulation
                         }
 
                         // Used for tracking "fully_insulated" advancement
-                        if ((armorInsulation.get("cold_insulators") + armorInsulation.get("heat_insulators")) / 2 >= ItemInsulationManager.getInsulationSlots(armorStack))
+                        if ((armorInsulation.getOrDefault("cold_insulators", 0d) + armorInsulation.getOrDefault("heat_insulators", 0d)) / 2 >= ItemInsulationManager.getInsulationSlots(armorStack))
                         {   fullyInsulatedSlots++;
                         }
 

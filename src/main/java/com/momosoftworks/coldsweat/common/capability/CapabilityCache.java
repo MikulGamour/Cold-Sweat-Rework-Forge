@@ -7,13 +7,14 @@ import net.minecraftforge.common.util.LazyOptional;
 
 import java.util.Map;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class CapabilityCache<C, K extends ICapabilityProvider>
 {
     protected final Map<K, LazyOptional<C>> cache = new FastMap<>();
-    protected final Capability<C> capability;
+    protected final Supplier<Capability<C>> capability;
 
-    public CapabilityCache(Capability<C> capability)
+    public CapabilityCache(Supplier<Capability<C>> capability)
     {   this.capability = capability;
     }
 
@@ -21,7 +22,7 @@ public class CapabilityCache<C, K extends ICapabilityProvider>
     {
         return cache.computeIfAbsent(key, e ->
         {
-            LazyOptional<C> cap = e.getCapability(capability);
+            LazyOptional<C> cap = e.getCapability(capability.get());
             cap.addListener((opt) -> cache.remove(e));
             return cap;
         });

@@ -89,7 +89,7 @@ public class EntityTempManager
 
     public static final Set<EntityType<? extends LivingEntity>> TEMPERATURE_ENABLED_ENTITIES = new HashSet<>(Arrays.asList(EntityType.PLAYER));
 
-    public static SidedCapabilityCache<ITemperatureCap, Entity> CAP_CACHE = new SidedCapabilityCache<>(ModCapabilities.ENTITY_TEMPERATURE);
+    public static SidedCapabilityCache<ITemperatureCap, Entity> CAP_CACHE = new SidedCapabilityCache<>(() -> ModCapabilities.ENTITY_TEMPERATURE);
     public static Map<Entity, Map<ResourceLocation, Double>> TEMP_MODIFIER_IMMUNITIES = new WeakHashMap<>();
 
     public static LazyOptional<ITemperatureCap> getTemperatureCap(Entity entity)

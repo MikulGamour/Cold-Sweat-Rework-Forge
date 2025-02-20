@@ -6,12 +6,13 @@ import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fml.common.thread.EffectiveSide;
 
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class SidedCapabilityCache<C, K extends ICapabilityProvider> extends CapabilityCache<C, K>
 {
     private final CapabilityCache<C, K> clientCache = new CapabilityCache<>(this.capability);
 
-    public SidedCapabilityCache(Capability<C> capability)
+    public SidedCapabilityCache(Supplier<Capability<C>> capability)
     {   super(capability);
     }
 

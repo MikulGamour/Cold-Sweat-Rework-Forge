@@ -1,19 +1,17 @@
 package com.momosoftworks.coldsweat.common.capability.handler;
 
 import com.momosoftworks.coldsweat.ColdSweat;
-import com.momosoftworks.coldsweat.common.capability.SidedCapabilityCache;
-import com.momosoftworks.coldsweat.common.capability.shearing.IShearableCap;
 import com.momosoftworks.coldsweat.common.capability.ModCapabilities;
+import com.momosoftworks.coldsweat.common.capability.SidedCapabilityCache;
 import com.momosoftworks.coldsweat.common.capability.shearing.IShearableCap;
 import com.momosoftworks.coldsweat.common.capability.shearing.ShearableFurCap;
 import com.momosoftworks.coldsweat.common.entity.GoatEntity;
 import com.momosoftworks.coldsweat.compat.CompatManager;
+import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.core.network.ColdSweatPacketHandler;
 import com.momosoftworks.coldsweat.core.network.message.SyncShearableDataMessage;
-import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.data.codec.configuration.EntityDropData;
 import com.momosoftworks.coldsweat.data.loot.ModLootTables;
-import com.momosoftworks.coldsweat.util.serialization.Triplet;
 import com.momosoftworks.coldsweat.util.world.WorldHelper;
 import net.minecraft.entity.AgeableEntity;
 import net.minecraft.entity.Entity;
@@ -24,7 +22,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.particles.ParticleTypes;
 import net.minecraft.util.*;
-import net.minecraft.world.Difficulty;
 import net.minecraftforge.common.Tags;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ICapabilityProvider;
@@ -34,7 +31,6 @@ import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.entity.living.LivingEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
-import net.minecraftforge.eventbus.api.Event;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.network.PacketDistributor;
@@ -45,7 +41,7 @@ import javax.annotation.Nullable;
 @Mod.EventBusSubscriber
 public class ShearableFurManager
 {
-    public static SidedCapabilityCache<IShearableCap, Entity> CAP_CACHE = new SidedCapabilityCache<>(ModCapabilities.SHEARABLE_FUR);
+    public static SidedCapabilityCache<IShearableCap, Entity> CAP_CACHE = new SidedCapabilityCache<>(() -> ModCapabilities.SHEARABLE_FUR);
 
     @SubscribeEvent
     public static void attachCapabilityToEntityHandler(AttachCapabilitiesEvent<Entity> event)
