@@ -35,7 +35,6 @@ import com.momosoftworks.coldsweat.util.registries.ModBlocks;
 import com.momosoftworks.coldsweat.util.registries.ModEffects;
 import com.momosoftworks.coldsweat.util.registries.ModItems;
 import com.momosoftworks.coldsweat.util.world.WorldHelper;
-import net.minecraft.client.gui.screen.inventory.InventoryScreen;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
@@ -725,31 +724,30 @@ public class EntityTempManager
     @SubscribeEvent
     public static void onEatFood(LivingEntityUseItemEvent.Finish event)
     {
+        ItemStack item = event.getItem();
         if (event.getEntity() instanceof PlayerEntity
-        && (event.getItem().getUseAnimation() == UseAction.DRINK || event.getItem().getUseAnimation() == UseAction.EAT)
+        && (item.getUseAnimation() == UseAction.DRINK || item.getUseAnimation() == UseAction.EAT)
         && !event.getEntity().level.isClientSide)
         {
             PlayerEntity player = (PlayerEntity) event.getEntity();
             // If food item defined in config
-            for (FoodData foodData : ConfigSettings.FOOD_TEMPERATURES.get().get(event.getItem().getItem()))
+            for (FoodData foodData : ConfigSettings.FOOD_TEMPERATURES.get().get(item.getItem()))
             {
-                if (foodData != null && foodData.test(event.getItem()))
+                if (foodData != null && foodData.test(item))
                 {
-                    double effect = foodData.temperature();
-                    if (foodData.duration() > 0)
-                    {
-                        // Special case for soul sprouts
-                        FoodTempModifier foodModifier = event.getItem().getItem() == ModItems.SOUL_SPROUT
-                                                        ? new SoulSproutTempModifier(effect)
-                                                        : new FoodTempModifier(effect);
-                        // Store the duration of the TempModifier
-                        foodModifier.getNBT().putInt("duration", foodData.duration());
-                        // Add the TempModifier
-                        Temperature.addModifier(player, foodModifier.expires(foodData.duration()), Temperature.Trait.BASE, Placement.Duplicates.BY_CLASS);
-                    }
-                    else
-                    {   Temperature.addModifier(player, new FoodTempModifier(effect).expires(0), Temperature.Trait.CORE, Placement.Duplicates.EXACT);
-                    }
+                    double temperature = foodData.temperature();
+                    int duration = foodData.duration();
+                    Temperature.Trait trait = foodData.duration() > 0 ? Temperature.Trait.BASE : Temperature.Trait.CORE;
+                    // Custom class for soul sprouts
+                    FoodTempModifier foodModifier = item.getItem() == ModItems.SOUL_SPROUT
+                                                    ? new SoulSproutTempModifier(temperature)
+                                                    : new FoodTempModifier(temperature);
+                    // Store the duration of the TempModifier
+                    foodModifier.getNBT().putString("item", ForgeRegistries.ITEMS.getKey(item.getItem()).toString());
+                    foodModifier.getNBT().putDouble("temperature", temperature);
+                    foodModifier.getNBT().putInt("duration", duration);
+                    // Add the TempModifier
+                    Temperature.addOrReplaceModifier(player, foodModifier.expires(duration), trait, Placement.Duplicates.EXACT);
                 }
             }
         }
