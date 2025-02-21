@@ -19,6 +19,8 @@ public class ChangelogGenerator {
             font-weight: bold;""";
 
     private static final String WARNING_STYLE = "color: orange;";
+    private static final String URGENT_STYLE = "color: #e06c75; font-weight: bold;";  // Softer red color
+
     static class Section {
         String title;
         List<String> items = new ArrayList<>();
@@ -90,13 +92,15 @@ public class ChangelogGenerator {
 
             String trimmed = line.trim();
 
-            // Skip empty lines and version number
-            if (trimmed.isEmpty() || sections.size() == 1 && currentSection.items.isEmpty() && !trimmed.endsWith(":")) {
+            // Skip empty lines and version number (but allow !! lines)
+            if (trimmed.isEmpty() ||
+                    (sections.size() == 1 && currentSection.items.isEmpty() &&
+                            !trimmed.endsWith(":") && !trimmed.startsWith("!!"))) {
                 continue;
             }
 
             // Check if line is a list item first
-            boolean isListItem = trimmed.startsWith("*") || trimmed.startsWith("-") || trimmed.startsWith("!");
+            boolean isListItem = trimmed.startsWith("*") || trimmed.startsWith("-") || trimmed.startsWith("!!");
 
             // New section (ends with : and not indented and not a list item)
             if (trimmed.endsWith(":") && indent == 0 && !isListItem) {
@@ -106,16 +110,16 @@ public class ChangelogGenerator {
                 continue;
             }
 
-            // Main item (starts with * or - without indentation)
-            if ((trimmed.startsWith("*") || trimmed.startsWith("-")) && indent < 4) {
-                String prefix = trimmed.substring(0, 1);
-                String content = trimmed.substring(1).trim();
+            // Main item (starts with *, - or !!)
+            if ((trimmed.startsWith("*") || trimmed.startsWith("-") || trimmed.startsWith("!!")) && indent < 4) {
+                String prefix = trimmed.startsWith("!!") ? "!!" : trimmed.substring(0, 1);
+                String content = trimmed.startsWith("!!") ? trimmed.substring(2).trim() : trimmed.substring(1).trim();
                 currentItem = prefix + "\n" + content;  // Store prefix and content separately
                 currentSection.items.add(currentItem);
                 currentSection.subItems.put(currentItem, new ArrayList<>());
             }
             // Warning (starts with !)
-            else if (trimmed.startsWith("!")) {
+            else if (trimmed.startsWith("!") && !trimmed.startsWith("!!")) {
                 currentItem = "!\n" + trimmed.substring(1).trim();  // Store with warning prefix
                 currentSection.items.add(currentItem);
                 currentSection.subItems.put(currentItem, new ArrayList<>());
@@ -177,6 +181,8 @@ public class ChangelogGenerator {
                     writer.write(String.format("<li><span style=\"color: #ffffff; font-weight: bold;\">%s</span>\n", content));
                 } else if (prefix.equals("!")) {
                     writer.write(String.format("<li style=\"%s\">! %s\n", WARNING_STYLE, content));
+                } else if (prefix.equals("!!")) {
+                    writer.write(String.format("<li style=\"%s\">!! %s\n", URGENT_STYLE, content));
                 } else {
                     writer.write(String.format("<li>%s\n", content));
                 }
