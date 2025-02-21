@@ -225,12 +225,12 @@ public abstract class WorldHelper
         return sections[CSMath.clamp(chunk.getSectionIndex(y), 0, sections.length - 1)];
     }
 
-    @Nullable
-    public static Holder<Structure> getStructureAt(Level level, BlockPos pos)
+    public static Optional<Holder<Structure>> getStructureAt(Level level, BlockPos pos)
     {
-        if (!(level instanceof ServerLevel serverLevel)) return null;
+        if (!(level instanceof ServerLevel serverLevel)) return Optional.empty();
 
         StructureManager structureManager = serverLevel.structureManager();
+        Registry<Structure> structureRegistry = serverLevel.registryAccess().registryOrThrow(Registries.STRUCTURE);
 
         // Iterate over all structures at the position (ignores Y level)
         for (Map.Entry<Structure, LongSet> entry : structureManager.getAllStructuresAt(pos).entrySet())
@@ -247,15 +247,19 @@ public abstract class WorldHelper
 
                 if (structurestart != null && structurestart.isValid())
                 {
-                    // If the structure has a piece at the position, get the temperature
+                    // If the structure has a piece at the position, get the structure's holder
                     if (structureManager.structureHasPieceAt(pos, structurestart))
                     {
-                        return serverLevel.registryAccess().registryOrThrow(Registries.STRUCTURE).wrapAsHolder(structure);
+                        ResourceLocation structureId = structureRegistry.getKey(structure);
+                        if (structureId == null)
+                        {   return Optional.empty();
+                        }
+                        return (Optional<Holder<Structure>>) (Object) structureRegistry.getHolder(ResourceKey.create(Registries.STRUCTURE, structureId));
                     }
                 }
             }
         }
-        return null;
+        return Optional.empty();
     }
 
     /**
@@ -569,7 +573,7 @@ public abstract class WorldHelper
     {
         List<TempSnapshot> snapshots = TEMPERATURE_CHECKS.computeIfAbsent(level.dimension(), dim -> new ArrayList<>());
         int tickSpeedMultiplier = Math.max(1, level.getGameRules().getInt(GameRules.RULE_RANDOMTICKING) / 20);
-        
+
         for (int i = 0; i < snapshots.size(); i++)
         {
             TempSnapshot snapshot = snapshots.get(i);
