@@ -36,8 +36,6 @@ public class BiomeTempModifier extends TempModifier
     public Function<Double, Double> calculate(LivingEntity entity, Temperature.Trait trait)
     {
         int samples = this.getNBT().getInt("Samples");
-        try
-        {
             double worldTemp = 0;
             Level level = entity.level();
             BlockPos entPos = entity.blockPosition();
@@ -100,10 +98,6 @@ public class BiomeTempModifier extends TempModifier
 
             double finalWorldTemp = worldTemp;
             return temp -> temp + finalWorldTemp;
-        }
-        catch (Exception e)
-        {   return temp -> temp;
-        }
     }
 
     public static Pair<Double, Double> getStructureTemp(Level level, BlockPos pos)
