@@ -44,7 +44,9 @@ public class KubeEventHandlers
     }
 
     static EventResult onTemperatureChanged(TemperatureChangedEvent event)
-    {   return EventResult.interrupt(!new TempChangedEventJS(event).post(ScriptType.SERVER, TEMP_CHANGED));
+    {
+        boolean isClient = event.getEntity().level.isClientSide();
+        return EventResult.interrupt(!new TempChangedEventJS(event).post(isClient ? ScriptType.CLIENT : ScriptType.SERVER, TEMP_CHANGED));
     }
 
     private static EventResult onInsulateItem(InsulateItemEvent event)

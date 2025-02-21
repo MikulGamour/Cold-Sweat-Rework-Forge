@@ -33,7 +33,10 @@ public class KubePlugin extends KubeJSPlugin
 
     @SubscribeEvent
     public static void gatherDefaultModifiers(GatherDefaultTempModifiersEvent event)
-    {   KubeEventSignatures.GATHER_MODIFIERS.invoker().gatherDefaultModifiers(event);
+    {
+        if (!event.getEntity().level.isClientSide())
+        {   KubeEventSignatures.GATHER_MODIFIERS.invoker().gatherDefaultModifiers(event);
+        }
     }
 
     @SubscribeEvent
@@ -48,18 +51,24 @@ public class KubePlugin extends KubeJSPlugin
     @SubscribeEvent
     public static void onItemInsulated(InsulateItemEvent event)
     {
-        EventResult result = KubeEventSignatures.INSULATE_ITEM.invoker().insulateItem(event);
-        if (!result.value())
-        {   event.setCanceled(true);
+        if (!event.getPlayer().level.isClientSide())
+        {
+            EventResult result = KubeEventSignatures.INSULATE_ITEM.invoker().insulateItem(event);
+            if (!result.value())
+            {   event.setCanceled(true);
+            }
         }
     }
 
     @SubscribeEvent
     public static void onModifierAdded(TempModifierEvent.Add event)
     {
-        EventResult result = KubeEventSignatures.ADD_MODIFIER.invoker().addModifier(event);
-        if (!result.value())
-        {   event.setCanceled(true);
+        if (!event.getEntity().level.isClientSide())
+        {
+            EventResult result = KubeEventSignatures.ADD_MODIFIER.invoker().addModifier(event);
+            if (!result.value())
+            {   event.setCanceled(true);
+            }
         }
     }
 }

@@ -71,7 +71,10 @@ public class BlockTempModifier extends TempModifier
                         BlockState state = stateCache.get(blockpos);
                         if (state == null)
                         {   ChunkSection section = WorldHelper.getChunkSection(chunk, blockpos.getY());
-                            state = section.getBlockState(blockpos.getX() & 15, blockpos.getY() & 15, blockpos.getZ() & 15);
+                            if (section == null)
+                            {   state = chunk.getBlockState(blockpos);
+                            }
+                            else state = section.getBlockState(blockpos.getX() & 15, blockpos.getY() & 15, blockpos.getZ() & 15);
                             stateCache.put(blockpos.immutable(), state);
                         }
 
