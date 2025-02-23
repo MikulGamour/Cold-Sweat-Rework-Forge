@@ -14,18 +14,20 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.StructureManager;
 import net.minecraft.world.level.biome.Biome;
+import net.minecraft.world.level.block.state.pattern.BlockInWorld;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureStart;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.Optional;
+import java.util.function.Predicate;
 
 public record LocationRequirement(Optional<Integer> x, Optional<Integer> y, Optional<Integer> z,
                                   Optional<Either<TagKey<Biome>, ResourceKey<Biome>>> biome,
                                   Optional<Either<TagKey<Structure>, ResourceKey<Structure>>> structure,
                                   Optional<Either<TagKey<Level>, ResourceKey<Level>>> dimension,
                                   Optional<IntegerBounds> light, Optional<BlockRequirement> block,
-                                  Optional<FluidRequirement> fluid)
+                                  Optional<FluidRequirement> fluid, Optional<Predicate<BlockInWorld>> predicate)
 {
     public static final Codec<LocationRequirement> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.INT.optionalFieldOf("x").forGetter(location -> location.x),
@@ -39,12 +41,37 @@ public record LocationRequirement(Optional<Integer> x, Optional<Integer> y, Opti
             FluidRequirement.CODEC.optionalFieldOf("fluid").forGetter(location -> location.fluid)
     ).apply(instance, LocationRequirement::new));
 
+    public LocationRequirement(Optional<Integer> x, Optional<Integer> y, Optional<Integer> z,
+                               Optional<Either<TagKey<Biome>, ResourceKey<Biome>>> biome,
+                               Optional<Either<TagKey<Structure>, ResourceKey<Structure>>> structure,
+                               Optional<Either<TagKey<Level>, ResourceKey<Level>>> dimension,
+                               Optional<IntegerBounds> light, Optional<BlockRequirement> block,
+                               Optional<FluidRequirement> fluid)
+    {
+        this(x, y, z, biome, structure, dimension, light, block, fluid, Optional.empty());
+    }
+
+    public LocationRequirement(Predicate<BlockInWorld> predicate)
+    {
+        this(Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(),
+             Optional.empty(), Optional.empty(), Optional.empty(), Optional.of(predicate));
+    }
+
+    public static final LocationRequirement NONE = new LocationRequirement(Optional.empty(), Optional.empty(), Optional.empty(),
+                                                                           Optional.empty(), Optional.empty(), Optional.empty(),
+                                                                           Optional.empty(), Optional.empty(), Optional.empty(),
+                                                                           Optional.empty());
+
     public boolean test(Level level, Vec3 pos)
     {   return this.test(level, BlockPos.containing(pos));
     }
 
     public boolean test(Level level, BlockPos origin)
     {
+        if (this.predicate.isPresent())
+        {   return this.predicate.get().test(new BlockInWorld(level, origin, true));
+        }
+
         BlockPos.MutableBlockPos pos = origin.mutable();
         this.x.ifPresent(x -> pos.move(x, 0, 0));
         this.y.ifPresent(y -> pos.move(0, y, 0));

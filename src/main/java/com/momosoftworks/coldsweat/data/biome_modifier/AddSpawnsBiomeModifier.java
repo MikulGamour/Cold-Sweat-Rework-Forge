@@ -3,12 +3,12 @@ package com.momosoftworks.coldsweat.data.biome_modifier;
 import com.mojang.serialization.Codec;
 import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.core.init.BiomeCodecInit;
+import com.momosoftworks.coldsweat.data.codec.util.FunctionalSpawnerData;
 import com.momosoftworks.coldsweat.data.codec.configuration.SpawnBiomeData;
 import com.momosoftworks.coldsweat.util.serialization.RegistryHelper;
 import net.minecraft.core.Holder;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.biome.Biome;
-import net.minecraft.world.level.biome.MobSpawnSettings;
 import net.minecraftforge.common.world.BiomeModifier;
 import net.minecraftforge.common.world.ModifiableBiomeInfo;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -29,8 +29,14 @@ public record AddSpawnsBiomeModifier(boolean useConfigs) implements BiomeModifie
                 RegistryHelper.mapForgeRegistryTagList(ForgeRegistries.ENTITY_TYPES, spawn.entities())
                 .forEach(entityType ->
                 {
-                    builder.getMobSpawnSettings().getSpawner(MobCategory.CREATURE).removeIf(spawnerData -> spawnerData.type == entityType);
-                    builder.getMobSpawnSettings().addSpawn(MobCategory.CREATURE, new MobSpawnSettings.SpawnerData(entityType, spawn.weight(), 1, 1));
+                    FunctionalSpawnerData spawnerData = new FunctionalSpawnerData(entityType, spawn.weight(), spawn.count().min(), spawn.count().max(),
+                                                                                 (level, structureManager, chunkGenerator, category, data, pos) ->
+                                                                                 {
+                                                                                     return spawn.location().test(level, pos)
+                                                                                         && spawn.blockBelow().test(level, pos.below());
+                                                                                 });
+                    builder.getMobSpawnSettings().getSpawner(MobCategory.CREATURE).removeIf(oldData -> oldData.type == entityType);
+                    builder.getMobSpawnSettings().addSpawn(MobCategory.CREATURE, spawnerData);
                 });
             }
         }
