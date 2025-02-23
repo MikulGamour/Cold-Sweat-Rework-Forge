@@ -1,11 +1,9 @@
 package com.momosoftworks.coldsweat.data.codec.requirement.sub_type;
 
-import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
 import com.momosoftworks.coldsweat.data.codec.util.IntegerBounds;
-import net.minecraft.advancements.critereon.MinMaxBounds;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LightningBolt;
 import net.minecraft.world.level.Level;
@@ -21,8 +19,9 @@ public record LightningBoltRequirement(IntegerBounds blocksSetOnFire, Optional<E
             EntityRequirement.getCodec().optionalFieldOf("entity_struck").forGetter(LightningBoltRequirement::entityStruck)
     ).apply(instance, LightningBoltRequirement::new));
 
-    public static net.minecraft.advancements.critereon.LightningBoltPredicate blockSetOnFire(MinMaxBounds.Ints pBlocksSetOnFire) {
-        return new net.minecraft.advancements.critereon.LightningBoltPredicate(pBlocksSetOnFire, Optional.empty());
+    @Override
+    public MapCodec<? extends EntitySubRequirement> getCodec()
+    {   return CODEC;
     }
 
     @Override

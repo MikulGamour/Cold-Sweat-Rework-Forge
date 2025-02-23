@@ -34,7 +34,8 @@ public record PlayerDataRequirement(IntegerBounds level, Optional<GameType> game
                                     Optional<Map<ResourceLocation, Either<AdvancementCompletionRequirement, AdvancementCriteriaRequirement>>> advancements,
                                     Optional<EntityRequirement> lookingAt) implements EntitySubRequirement, RequirementHolder
 {
-    public static MapCodec<PlayerDataRequirement> getCodec()
+    @Override
+    public MapCodec<? extends EntitySubRequirement> getCodec()
     {   return getCodec(EntityRequirement.getCodec());
     }
 

@@ -17,6 +17,11 @@ public record SlimeRequirement(IntegerBounds size) implements EntitySubRequireme
     ).apply(instance, SlimeRequirement::new));
 
     @Override
+    public MapCodec<? extends EntitySubRequirement> getCodec()
+    {   return CODEC;
+    }
+
+    @Override
     public boolean test(Entity entity, Level level, @Nullable Vec3 position)
     {   return entity instanceof Slime slime && this.size.test(slime.getSize());
     }

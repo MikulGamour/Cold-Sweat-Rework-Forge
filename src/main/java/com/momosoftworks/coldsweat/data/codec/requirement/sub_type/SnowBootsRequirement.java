@@ -13,6 +13,11 @@ public class SnowBootsRequirement implements EntitySubRequirement
     public static final MapCodec<SnowBootsRequirement> CODEC = MapCodec.unit(new SnowBootsRequirement());
 
     @Override
+    public MapCodec<? extends EntitySubRequirement> getCodec()
+    {   return CODEC;
+    }
+
+    @Override
     public boolean test(Entity entity, Level level, @Nullable Vec3 position)
     {
         return entity instanceof LivingEntity living

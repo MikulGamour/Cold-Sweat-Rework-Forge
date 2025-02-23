@@ -21,6 +21,11 @@ public record RaiderRequirement(boolean hasRaid, boolean isCaptain) implements E
     public static final RaiderPredicate CAPTAIN_WITHOUT_RAID = new RaiderPredicate(false, true);
 
     @Override
+    public MapCodec<? extends EntitySubRequirement> getCodec()
+    {   return CODEC;
+    }
+
+    @Override
     public boolean test(Entity entity, Level level, @Nullable Vec3 position)
     {
         return entity instanceof Raider raider

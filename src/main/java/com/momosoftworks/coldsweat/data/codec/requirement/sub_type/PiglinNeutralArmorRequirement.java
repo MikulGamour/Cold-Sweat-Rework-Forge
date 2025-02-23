@@ -16,6 +16,11 @@ public class PiglinNeutralArmorRequirement implements EntitySubRequirement
     private PiglinNeutralArmorRequirement() {}
 
     @Override
+    public MapCodec<? extends EntitySubRequirement> getCodec()
+    {   return CODEC;
+    }
+
+    @Override
     public boolean test(Entity entity, Level level, @Nullable Vec3 position)
     {
         if (entity instanceof LivingEntity living)

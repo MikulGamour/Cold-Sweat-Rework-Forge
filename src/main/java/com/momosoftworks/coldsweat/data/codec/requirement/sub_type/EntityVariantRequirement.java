@@ -17,6 +17,11 @@ public record EntityVariantRequirement(String variant) implements EntitySubRequi
     ).apply(instance, EntityVariantRequirement::new));
 
     @Override
+    public MapCodec<? extends EntitySubRequirement> getCodec()
+    {   return CODEC;
+    }
+
+    @Override
     public boolean test(Entity entity, Level level, @Nullable Vec3 position)
     {
         return entity instanceof VariantHolder<?> variantHolder
