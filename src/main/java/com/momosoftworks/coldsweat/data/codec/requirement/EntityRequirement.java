@@ -53,6 +53,16 @@ public record EntityRequirement(Optional<List<Either<TagKey<EntityType<?>>, Enti
              Optional.empty(), Optional.ofNullable(predicate));
     }
 
+    public EntityRequirement(Collection<EntityType<?>> entities, @Nullable Predicate<Entity> predicate)
+    {
+        this(Optional.of(entities.stream().map(Either::<TagKey<EntityType<?>>, EntityType<?>>right).toList()),
+             Optional.empty(), Optional.empty(), Optional.empty(),
+             Optional.empty(), Optional.empty(), Optional.empty(),
+             Optional.empty(), Optional.empty(), Optional.empty(),
+             Optional.empty(), Optional.empty(), Optional.empty(),
+             Optional.ofNullable(predicate));
+    }
+
     public static final EntityRequirement NONE = new EntityRequirement(Optional.empty(), Optional.empty(), Optional.empty(),
                                                                        Optional.empty(), Optional.empty(), Optional.empty(),
                                                                        Optional.empty(), Optional.empty(), Optional.empty(),

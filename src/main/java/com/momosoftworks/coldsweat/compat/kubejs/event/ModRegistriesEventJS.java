@@ -18,6 +18,7 @@ import dev.latvian.mods.kubejs.event.KubeStartupEvent;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.biome.Biome;
@@ -297,6 +298,63 @@ public class ModRegistriesEventJS implements KubeStartupEvent
 
     public void addStructureOffset(String structureId, double temperature)
     {   addStructureOffset(structureId, temperature, "mc");
+    }
+
+    /*
+     Entity Temperature
+     */
+
+    public void addEntityTemperature(Consumer<EntityTempBuilderJS> builder)
+    {
+        EntityTempBuilderJS entityTempJS = new EntityTempBuilderJS();
+        builder.accept(entityTempJS);
+        EntityTempData entityTempData = entityTempJS.build();
+        if (!entityTempData.areRequiredModsLoaded()) return;
+
+        if (entityTempJS.entities.isEmpty())
+        {   entityTempJS.entities.add(null);
+        }
+        for (EntityType<?> item : entityTempJS.entities)
+        {   ConfigSettings.ENTITY_TEMPERATURES.get().put(item, entityTempData);
+        }
+    }
+
+    /*
+     Insulating Mounts
+     */
+
+    public void addInsulatingMount(Consumer<InsulatingMountBuilderJS> builder)
+    {
+        InsulatingMountBuilderJS insulatingMountJS = new InsulatingMountBuilderJS();
+        builder.accept(insulatingMountJS);
+        MountData mountData = insulatingMountJS.build();
+        if (!mountData.areRequiredModsLoaded()) return;
+
+        if (insulatingMountJS.entities.isEmpty())
+        {   insulatingMountJS.entities.add(null);
+        }
+        for (EntityType<?> item : insulatingMountJS.entities)
+        {   ConfigSettings.INSULATED_MOUNTS.get().put(item, mountData);
+        }
+    }
+
+    /*
+     Spawn Biomes
+     */
+
+    public void addSpawnBiomes(Consumer<SpawnBiomeBuilderJS> builder)
+    {
+        SpawnBiomeBuilderJS spawnBiomeJS = new SpawnBiomeBuilderJS();
+        builder.accept(spawnBiomeJS);
+        SpawnBiomeData spawnBiomeData = spawnBiomeJS.build();
+        if (!spawnBiomeData.areRequiredModsLoaded()) return;
+
+        if (spawnBiomeJS.biomes.isEmpty())
+        {   spawnBiomeJS.biomes.add(null);
+        }
+        for (Holder<Biome> biome : spawnBiomeJS.biomes)
+        {   ConfigSettings.ENTITY_SPAWN_BIOMES.get().put(biome, spawnBiomeData);
+        }
     }
 
     /*
