@@ -32,6 +32,7 @@
     "MixinLoadItemStack",
     "MixinMenuChanged",
     "MixinMinecart",
+    "MixinMobSpawning",
     "MixinPreServerLoad",
     "MixinShearsDispenseBehavior",
     "MixinSoulCampfire",
