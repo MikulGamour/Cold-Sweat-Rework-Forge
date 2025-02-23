@@ -3,8 +3,10 @@ package com.momosoftworks.coldsweat.data.codec.requirement;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.JsonOps;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.data.codec.impl.RequirementHolder;
+import com.momosoftworks.coldsweat.data.codec.requirement.sub_type.EntitySubRequirement;
 import com.momosoftworks.coldsweat.data.codec.util.IntegerBounds;
 import com.momosoftworks.coldsweat.util.entity.EntityHelper;
 import net.minecraft.advancements.AdvancementProgress;
@@ -17,11 +19,13 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.registries.ForgeRegistries;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Optional;
@@ -29,19 +33,16 @@ import java.util.Optional;
 public record PlayerDataRequirement(Optional<GameType> gameType, Optional<Map<StatRequirement, IntegerBounds>> stats,
                                     Optional<Map<ResourceLocation, Boolean>> recipes,
                                     Optional<Map<ResourceLocation, Either<AdvancementCompletionRequirement, AdvancementCriteriaRequirement>>> advancements,
-                                    Optional<EntityRequirement> lookingAt) implements RequirementHolder
+                                    Optional<EntityRequirement> lookingAt) implements EntitySubRequirement, RequirementHolder
 {
-    public static final Codec<PlayerDataRequirement> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            GameType.CODEC.optionalFieldOf("game_mode").forGetter(requirement -> requirement.gameType),
-            Codec.unboundedMap(StatRequirement.CODEC, IntegerBounds.CODEC).optionalFieldOf("stats").forGetter(requirement -> requirement.stats),
-            Codec.unboundedMap(ResourceLocation.CODEC, Codec.BOOL).optionalFieldOf("recipes").forGetter(requirement -> requirement.recipes),
-            Codec.unboundedMap(ResourceLocation.CODEC, Codec.either(AdvancementCompletionRequirement.CODEC, AdvancementCriteriaRequirement.CODEC)).optionalFieldOf("advancements").forGetter(requirement -> requirement.advancements),
-            EntityRequirement.getCodec().optionalFieldOf("looking_at").forGetter(requirement -> requirement.lookingAt)
-    ).apply(instance, PlayerDataRequirement::new));
+    @Override
+    public MapCodec<? extends EntitySubRequirement> getCodec()
+    {   return getCodec(EntityRequirement.getCodec());
+    }
 
-    public static Codec<PlayerDataRequirement> getCodec(Codec<EntityRequirement> lastCodec)
+    public static MapCodec<PlayerDataRequirement> getCodec(Codec<EntityRequirement> lastCodec)
     {
-        return RecordCodecBuilder.create(instance -> instance.group(
+        return RecordCodecBuilder.mapCodec(instance -> instance.group(
                 GameType.CODEC.optionalFieldOf("game_mode").forGetter(requirement -> requirement.gameType),
                 Codec.unboundedMap(StatRequirement.CODEC, IntegerBounds.CODEC).optionalFieldOf("stats").forGetter(requirement -> requirement.stats),
                 Codec.unboundedMap(ResourceLocation.CODEC, Codec.BOOL).optionalFieldOf("recipes").forGetter(requirement -> requirement.recipes),
@@ -104,6 +105,11 @@ public record PlayerDataRequirement(Optional<GameType> gameType, Optional<Map<St
             }
         }
         return true;
+    }
+
+    @Override
+    public boolean test(Entity entity, Level level, @Nullable Vec3 position)
+    {   return test(entity);
     }
 
     @Override
