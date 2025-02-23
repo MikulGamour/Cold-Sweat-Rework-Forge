@@ -10,7 +10,6 @@ import com.momosoftworks.coldsweat.data.codec.requirement.EntityRequirement;
 import com.momosoftworks.coldsweat.util.math.CSMath;
 import com.momosoftworks.coldsweat.util.serialization.ConfigHelper;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -21,37 +20,43 @@ import java.util.List;
 public class MountData extends ConfigData implements RequirementHolder
 {
     final EntityRequirement entityData;
+    final EntityRequirement riderData;
     final double coldInsulation;
     final double heatInsulation;
 
-    public MountData(EntityRequirement entityData, double coldInsulation, double heatInsulation, List<String> requiredMods)
+    public MountData(EntityRequirement entityData, EntityRequirement riderData, double coldInsulation, double heatInsulation, List<String> requiredMods)
     {
         super(requiredMods);
         this.entityData = entityData;
+        this.riderData = riderData;
         this.coldInsulation = coldInsulation;
         this.heatInsulation = heatInsulation;
     }
 
-    public MountData(EntityRequirement entityData, double coldInsulation, double heatInsulation)
+    public MountData(EntityRequirement entityData, EntityRequirement riderData, double coldInsulation, double heatInsulation)
     {
-        this(entityData, coldInsulation, heatInsulation, ConfigHelper.getModIDs(CSMath.listOrEmpty(entityData.entities()), BuiltInRegistries.ENTITY_TYPE));
+        this(entityData, riderData, coldInsulation, heatInsulation, ConfigHelper.getModIDs(CSMath.listOrEmpty(entityData.entities()), BuiltInRegistries.ENTITY_TYPE));
     }
 
     public static Codec<MountData> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             EntityRequirement.getCodec().fieldOf("entity").forGetter(MountData::entityData),
+            EntityRequirement.getCodec().optionalFieldOf("rider", EntityRequirement.NONE).forGetter(MountData::rider),
             Codec.DOUBLE.fieldOf("cold_insulation").forGetter(MountData::coldInsulation),
             Codec.DOUBLE.fieldOf("heat_insulation").forGetter(MountData::heatInsulation),
             Codec.STRING.listOf().optionalFieldOf("required_mods", List.of()).forGetter(MountData::requiredMods)
     ).apply(instance, MountData::new));
 
+    public EntityRequirement entityData()
+    {   return entityData;
+    }
+    public EntityRequirement rider()
+    {   return riderData;
+    }
     public double coldInsulation()
     {   return coldInsulation;
     }
     public double heatInsulation()
     {   return heatInsulation;
-    }
-    public EntityRequirement entityData()
-    {   return entityData;
     }
 
     @Nullable
@@ -69,7 +74,7 @@ public class MountData extends ConfigData implements RequirementHolder
                           ? coldInsul
                           : ((Number) entry.get(2)).doubleValue();
 
-        return new MountData(new EntityRequirement(entities), coldInsul, hotInsul);
+        return new MountData(new EntityRequirement(entities), EntityRequirement.NONE, coldInsul, hotInsul);
     }
 
     @Override
@@ -91,6 +96,7 @@ public class MountData extends ConfigData implements RequirementHolder
         MountData that = (MountData) obj;
         return super.equals(obj)
             && entityData.equals(that.entityData)
+            && riderData.equals(that.riderData)
             && Double.compare(that.coldInsulation, coldInsulation) == 0
             && Double.compare(that.heatInsulation, heatInsulation) == 0;
     }
