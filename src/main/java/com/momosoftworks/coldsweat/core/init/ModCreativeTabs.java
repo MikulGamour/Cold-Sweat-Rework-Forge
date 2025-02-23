@@ -2,23 +2,15 @@ package com.momosoftworks.coldsweat.core.init;
 
 import com.momosoftworks.coldsweat.ColdSweat;
 import com.momosoftworks.coldsweat.api.event.client.InsulatorTabBuildEvent;
-import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.compat.CompatManager;
+import com.momosoftworks.coldsweat.config.ConfigSettings;
 import com.momosoftworks.coldsweat.data.codec.configuration.InsulatorData;
-import com.momosoftworks.coldsweat.util.ClientOnlyHelper;
-import com.momosoftworks.coldsweat.util.entity.DummyPlayer;
 import com.momosoftworks.coldsweat.util.item.ItemStackHelper;
 import com.momosoftworks.coldsweat.util.serialization.ObjectBuilder;
-import net.minecraft.core.Holder;
 import net.minecraft.core.component.DataComponentMap;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.ArmorItem;
-import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.*;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
@@ -98,6 +90,7 @@ public class ModCreativeTabs
     private static List<ItemStack> sort(Collection<Map.Entry<Item, InsulatorData>> items)
     {
         List<Map.Entry<Item, InsulatorData>> list = new ArrayList<>(items);
+        list.removeIf(entry -> entry.getKey() == null || entry.getKey() == Items.AIR);
 
         // Sort by tags the items are in
         list.sort(Comparator.comparing(entry -> entry.getKey().builtInRegistryHolder().tags().sequential().map(tag -> tag.location().toString()).reduce("", (a, b) -> a + b)));
