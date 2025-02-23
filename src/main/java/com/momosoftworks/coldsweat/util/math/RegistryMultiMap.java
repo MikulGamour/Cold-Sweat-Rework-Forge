@@ -173,12 +173,25 @@ public class RegistryMultiMap<K, V> implements Multimap<K, V>
         totalSize = 0;
     }
 
+    /**
+     * Returns the values associated with this key, as well as those associated with the "null" key.
+     */
     @Override
     public LinkedHashSet<V> get(K key)
     {
         LinkedHashSet<V> values = CSMath.orElse(internal.get(key), new LinkedHashSet<>());
-        values.addAll(CSMath.orElse(internal.get(null), new LinkedHashSet<>()));
+        LinkedHashSet<V> nullValues = internal.get(null);
+        if (nullValues != null)
+        {   values.addAll(nullValues);
+        }
         return values;
+    }
+
+    /**
+     * Strictly returns values which are assigned to the key, excluding null entries.
+     */
+    public LinkedHashSet<V> getRaw(K key)
+    {   return CSMath.orElse(internal.get(key), new LinkedHashSet<>());
     }
 
     @Override
