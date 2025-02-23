@@ -66,6 +66,9 @@ public class ModRegistriesEventJS extends StartupEventJS
             case ARMOR -> ConfigSettings.INSULATING_ARMORS.get();
             case CURIO -> ConfigSettings.INSULATING_CURIOS.get();
         };
+        if (insulatorJS.items.isEmpty())
+        {   insulatorJS.items.add(null);
+        }
         for (Item item : insulatorJS.items)
         {   map.put(item, insulator);
         }
@@ -83,6 +86,9 @@ public class ModRegistriesEventJS extends StartupEventJS
         FoodData foodData = foodJS.build();
         if (!foodData.areRequiredModsLoaded()) return;
 
+        if (foodJS.items.isEmpty())
+        {   foodJS.items.add(null);
+        }
         for (Item item : foodJS.items)
         {   ConfigSettings.FOOD_TEMPERATURES.get().put(item, foodData);
         }
@@ -99,6 +105,9 @@ public class ModRegistriesEventJS extends StartupEventJS
         FuelData fuelData = fuelJS.build(fuelType);
         if (!fuelData.areRequiredModsLoaded()) return;
 
+        if (fuelJS.items.isEmpty())
+        {   fuelJS.items.add(null);
+        }
         for (Item item : fuelJS.items)
         {   config.get().put(item, fuelData);
         }
@@ -131,6 +140,9 @@ public class ModRegistriesEventJS extends StartupEventJS
         ItemCarryTempData carryData = carriedItemJS.build();
         if (!carryData.areRequiredModsLoaded()) return;
 
+        if (carriedItemJS.items.isEmpty())
+        {   carriedItemJS.items.add(null);
+        }
         for (Item item : carriedItemJS.items)
         {   ConfigSettings.CARRIED_ITEM_TEMPERATURES.get().put(item, carryData);
         }
@@ -147,6 +159,9 @@ public class ModRegistriesEventJS extends StartupEventJS
         DryingItemData dryingData = dryingItemJS.build();
         if (!dryingData.areRequiredModsLoaded()) return;
 
+        if (dryingItemJS.items.isEmpty())
+        {   dryingItemJS.items.add(null);
+        }
         for (Item item : dryingItemJS.items)
         {   ConfigSettings.DRYING_ITEMS.get().put(item, dryingData);
         }

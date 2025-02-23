@@ -85,6 +85,7 @@ public class CreativeTabInit
     private static List<ItemStack> sort(Collection<Map.Entry<Item, InsulatorData>> items)
     {
         List<Map.Entry<Item, InsulatorData>> list = new ArrayList<>(items);
+        list.removeIf(entry -> entry.getKey() == null || entry.getKey() == Items.AIR);
 
         // Sort by tags the items are in
         list.sort(Comparator.comparing(entry -> ForgeRegistries.ITEMS.tags().getReverseTag(entry.getKey()).orElse(null).getTagKeys().sequential().map(tag -> tag.location().toString()).reduce("", (a, b) -> a + b)));
