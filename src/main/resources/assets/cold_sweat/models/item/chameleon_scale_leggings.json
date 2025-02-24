@@ -1,0 +1,6 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "cold_sweat:item/chameleon_scale_leggings"
+  }
+}

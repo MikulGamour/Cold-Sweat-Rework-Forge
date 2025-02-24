@@ -41,6 +41,8 @@ public abstract class Insulation implements NbtSerializable
     public abstract double getCold();
     public abstract double getHeat();
 
+    public abstract <T extends Insulation> T copy();
+
     /**
      * Sort the list of insulation items, starting with cold insulation, then neutral, then heat, then adaptive.<br>
      * This method does not modify the input list

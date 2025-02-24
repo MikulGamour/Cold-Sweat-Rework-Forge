@@ -28,10 +28,12 @@ public class StaticInsulation extends Insulation
     {   this(pair.getFirst().doubleValue(), pair.getSecond().doubleValue());
     }
 
+    @Override
     public double getCold()
     {   return cold;
     }
 
+    @Override
     public double getHeat()
     {   return heat;
     }
@@ -69,6 +71,11 @@ public class StaticInsulation extends Insulation
             insulation.add(new StaticInsulation(0d, heatInsul));
         }
         return insulation;
+    }
+
+    @Override
+    public <T extends Insulation> T copy()
+    {   return (T) new StaticInsulation(cold, heat);
     }
 
     @Override

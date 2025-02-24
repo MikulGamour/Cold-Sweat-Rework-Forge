@@ -29,5 +29,9 @@ public class ModItems
     public static final Item FUR_PARKA = ItemInit.GOAT_FUR_PARKA.get();
     public static final Item FUR_PANTS = ItemInit.GOAT_FUR_PANTS.get();
     public static final Item FUR_BOOTS = ItemInit.GOAT_FUR_BOOTS.get();
+    public static final Item CHAMELEON_HELMET = ItemInit.CHAMELEON_HELMET.get();
+    public static final Item CHAMELEON_CHESTPLATE = ItemInit.CHAMELEON_CHESTPLATE.get();
+    public static final Item CHAMELEON_LEGGINGS = ItemInit.CHAMELEON_LEGGINGS.get();
+    public static final Item CHAMELEON_BOOTS = ItemInit.CHAMELEON_BOOTS.get();
     public static final Item SMOKESTACK = ItemInit.SMOKESTACK.get();
 }

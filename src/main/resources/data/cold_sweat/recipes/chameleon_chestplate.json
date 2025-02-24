@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern":
+  [
+    "M M",
+    "MMM",
+    "MMM"
+  ],
+  "key":
+  {
+    "M":
+    {
+      "item": "cold_sweat:chameleon_molt"
+    }
+  },
+  "result":
+  {
+    "item": "cold_sweat:chameleon_scale_chestplate",
+    "count": 1
+  }
+}

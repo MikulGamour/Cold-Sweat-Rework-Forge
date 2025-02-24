@@ -2,11 +2,13 @@ package com.momosoftworks.coldsweat.client.event;
 
 import com.momosoftworks.coldsweat.client.renderer.block.IceboxBlockEntityRenderer;
 import com.momosoftworks.coldsweat.client.renderer.entity.ChameleonEntityRenderer;
+import com.momosoftworks.coldsweat.client.renderer.layer.ChameleonArmorLayer;
 import com.momosoftworks.coldsweat.client.renderer.model.armor.*;
 import com.momosoftworks.coldsweat.client.renderer.model.entity.ChameleonModel;
 import com.momosoftworks.coldsweat.core.init.EntityInit;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.EntityModelSet;
+import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -25,6 +27,13 @@ public class RegisterModels
     public static GoatPantsModel<?> GOAT_PANTS_MODEL = null;
     public static GoatBootsModel<?> GOAT_BOOTS_MODEL = null;
 
+    public static ChameleonHelmetModel<?> CHAMELEON_HELMET_MODEL = null;
+    public static ChameleonChestplateModel<?> CHAMELEON_CHESTPLATE_MODEL = null;
+    public static ChameleonLeggingsModel<?> CHAMELEON_LEGGINGS_MODEL = null;
+    public static ChameleonBootsModel<?> CHAMELEON_BOOTS_MODEL = null;
+
+    public static EmptyArmorModel<?> EMPTY_ARMOR_MODEL = null;
+
     public static void checkForInitModels()
     {
         if (HOGLIN_HEADPIECE_MODEL != null) return;
@@ -40,6 +49,13 @@ public class RegisterModels
         GOAT_PARKA_MODEL = new GoatParkaModel<>(mcModels.bakeLayer(GoatParkaModel.LAYER_LOCATION));
         GOAT_PANTS_MODEL = new GoatPantsModel<>(mcModels.bakeLayer(GoatPantsModel.LAYER_LOCATION));
         GOAT_BOOTS_MODEL = new GoatBootsModel<>(mcModels.bakeLayer(GoatBootsModel.LAYER_LOCATION));
+
+        CHAMELEON_HELMET_MODEL = new ChameleonHelmetModel<>(mcModels.bakeLayer(ChameleonHelmetModel.LAYER_LOCATION));
+        CHAMELEON_CHESTPLATE_MODEL = new ChameleonChestplateModel<>(mcModels.bakeLayer(ChameleonChestplateModel.LAYER_LOCATION));
+        CHAMELEON_LEGGINGS_MODEL = new ChameleonLeggingsModel<>(mcModels.bakeLayer(ChameleonLeggingsModel.LAYER_LOCATION));
+        CHAMELEON_BOOTS_MODEL = new ChameleonBootsModel<>(mcModels.bakeLayer(ChameleonBootsModel.LAYER_LOCATION));
+
+        EMPTY_ARMOR_MODEL = new EmptyArmorModel<>(mcModels.bakeLayer(EmptyArmorModel.LAYER_LOCATION));
     }
 
     @SubscribeEvent
@@ -57,6 +73,13 @@ public class RegisterModels
         event.registerLayerDefinition(GoatPantsModel.LAYER_LOCATION, GoatPantsModel::createArmorLayer);
         event.registerLayerDefinition(GoatBootsModel.LAYER_LOCATION, GoatBootsModel::createArmorLayer);
 
+        event.registerLayerDefinition(ChameleonHelmetModel.LAYER_LOCATION, ChameleonHelmetModel::createArmorLayer);
+        event.registerLayerDefinition(ChameleonChestplateModel.LAYER_LOCATION, ChameleonChestplateModel::createArmorLayer);
+        event.registerLayerDefinition(ChameleonLeggingsModel.LAYER_LOCATION, ChameleonLeggingsModel::createArmorLayer);
+        event.registerLayerDefinition(ChameleonBootsModel.LAYER_LOCATION, ChameleonBootsModel::createArmorLayer);
+
+        event.registerLayerDefinition(EmptyArmorModel.LAYER_LOCATION, EmptyArmorModel::createArmorLayer);
+
         event.registerLayerDefinition(IceboxBlockEntityRenderer.LAYER_LOCATION, IceboxBlockEntityRenderer::createBodyLayer);
     }
 
@@ -64,5 +87,17 @@ public class RegisterModels
     public static void registerRenderers(EntityRenderersEvent.RegisterRenderers event)
     {
         event.registerEntityRenderer(EntityInit.CHAMELEON.get(), ChameleonEntityRenderer::new);
+    }
+
+    @SubscribeEvent
+    public static void addLayers(EntityRenderersEvent.AddLayers event)
+    {
+        Minecraft mc = Minecraft.getInstance();
+        if (event.getSkin("default") instanceof PlayerRenderer playerRenderer)
+        {   playerRenderer.addLayer(new ChameleonArmorLayer<>(playerRenderer, mc.getModelManager()));
+        }
+        if (event.getSkin("slim") instanceof PlayerRenderer playerRenderer)
+        {   playerRenderer.addLayer(new ChameleonArmorLayer<>(playerRenderer, mc.getModelManager()));
+        }
     }
 }

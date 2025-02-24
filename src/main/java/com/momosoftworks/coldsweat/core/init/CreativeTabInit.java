@@ -61,6 +61,10 @@ public class CreativeTabInit
                         ModItems.FUR_PARKA.getDefaultInstance(),
                         ModItems.FUR_PANTS.getDefaultInstance(),
                         ModItems.FUR_BOOTS.getDefaultInstance(),
+                        ModItems.CHAMELEON_HELMET.getDefaultInstance(),
+                        ModItems.CHAMELEON_CHESTPLATE.getDefaultInstance(),
+                        ModItems.CHAMELEON_LEGGINGS.getDefaultInstance(),
+                        ModItems.CHAMELEON_BOOTS.getDefaultInstance(),
                         ModItems.CHAMELEON_SPAWN_EGG.getDefaultInstance()
                 ));
             })

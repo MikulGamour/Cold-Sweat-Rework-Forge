@@ -38,16 +38,7 @@ public class ItemInsulationCap implements IInsulatableCap
             {
                 if (pair instanceof AdaptiveInsulation insul)
                 {
-                    double factor = insul.getFactor();
-                    double adaptSpeed = insul.getSpeed();
-
-                    double newFactor;
-                    if (CSMath.betweenInclusive(CSMath.blend(-1, 1, worldTemp, minTemp, maxTemp), -0.25, 0.25))
-                    {   newFactor = CSMath.shrink(factor, adaptSpeed);
-                    }
-                    else
-                    {   newFactor = CSMath.clamp(factor + CSMath.blend(-adaptSpeed, adaptSpeed, worldTemp, minTemp, maxTemp), -1, 1);
-                    }
+                    double newFactor = AdaptiveInsulation.calculateChange(insul, worldTemp, minTemp, maxTemp);
                     insul.setFactor(newFactor);
                 }
             }

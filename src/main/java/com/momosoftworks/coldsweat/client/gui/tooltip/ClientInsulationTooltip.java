@@ -159,7 +159,10 @@ public class ClientInsulationTooltip implements ClientTooltipComponent
     {
         PoseStack poseStack = graphics.pose();
         Font font = Minecraft.getInstance().font;
+
         List<Insulation> sortedInsulation = Insulation.sort(insulations);
+        setAdaptations(sortedInsulation, stack);
+
         boolean overflow = sortedInsulation.size() >= 10;
         int defaultArmorSlots = ConfigSettings.INSULATION_SLOTS.get().getSlots(LivingEntity.getEquipmentSlotForItem(stack), stack);
         int insulSlotCount = Math.max(slot == Insulation.Slot.ARMOR ? defaultArmorSlots : 0,
@@ -359,5 +362,19 @@ public class ClientInsulationTooltip implements ClientTooltipComponent
         // Return the width of the tooltip
         if (!overflow) finalWidth += 2;
         return finalWidth + 6;
+    }
+
+    static void setAdaptations(List<Insulation> insulations, ItemStack stack)
+    {
+        for (int i = 0; i < insulations.size(); i++)
+        {
+            Insulation insul = insulations.get(i).copy();
+            if (insul instanceof AdaptiveInsulation adaptive)
+            {
+                // Set factor stored in NBT
+                AdaptiveInsulation.setFactorFromNBT(adaptive, stack);
+            }
+            insulations.set(i, insul);
+        }
     }
 }

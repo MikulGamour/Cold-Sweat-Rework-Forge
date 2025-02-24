@@ -174,7 +174,11 @@ public class ItemSettingsConfig
                                 List.of("cold_sweat:goat_fur_cap",      8,  0),
                                 List.of("cold_sweat:goat_fur_parka",    12, 0),
                                 List.of("cold_sweat:goat_fur_pants",    10, 0),
-                                List.of("cold_sweat:goat_fur_boots",    8,  0))
+                                List.of("cold_sweat:goat_fur_boots",    8,  0),
+                                List.of("cold_sweat:chameleon_scale_helmet", 8, 0.0085, "adaptive"),
+                                List.of("cold_sweat:chameleon_scale_chestplate", 12, 0.0085, "adaptive"),
+                                List.of("cold_sweat:chameleon_scale_leggings", 10, 0.0085, "adaptive"),
+                                List.of("cold_sweat:chameleon_scale_boots", 8, 0.0085, "adaptive"))
                             .addIf(CompatManager.isEnvironmentalLoaded(),
                                 () -> List.of("environmental:yak_hair", 1.5, -1)
                         ).build(),
@@ -200,7 +204,11 @@ public class ItemSettingsConfig
                                 List.of("cold_sweat:goat_fur_cap",       8,  0),
                                 List.of("cold_sweat:goat_fur_parka",     12, 0),
                                 List.of("cold_sweat:goat_fur_pants",     10, 0),
-                                List.of("cold_sweat:goat_fur_boots",     8,  0))
+                                List.of("cold_sweat:goat_fur_boots",     8,  0),
+                                List.of("cold_sweat:chameleon_scale_helmet", 8, 0.0085, "adaptive"),
+                                List.of("cold_sweat:chameleon_scale_chestplate", 12, 0.0085, "adaptive"),
+                                List.of("cold_sweat:chameleon_scale_leggings", 10, 0.0085, "adaptive"),
+                                List.of("cold_sweat:chameleon_scale_boots", 8, 0.0085, "adaptive"))
                             .addIf(CompatManager.isEnvironmentalLoaded(),
                                 () -> List.of("environmental:yak_pants", 7.5, -5)
                         ).build(),

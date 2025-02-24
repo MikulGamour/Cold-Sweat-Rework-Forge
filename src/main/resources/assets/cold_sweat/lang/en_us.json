@@ -27,6 +27,10 @@
   "item.cold_sweat.goat_fur_parka":      "Goat Fur Parka",
   "item.cold_sweat.goat_fur_pants":      "Goat Fur Pants",
   "item.cold_sweat.goat_fur_boots":      "Goat Fur Boots",
+  "item.cold_sweat.chameleon_scale_helmet":     "Chameleon Scale Helmet",
+  "item.cold_sweat.chameleon_scale_chestplate": "Chameleon Scale Chestplate",
+  "item.cold_sweat.chameleon_scale_leggings":   "Chameleon Scale Leggings",
+  "item.cold_sweat.chameleon_scale_boots":      "Chameleon Scale Boots",
 
   "item.minecraft.potion.effect.ice_resistance":           "Potion of Ice Resistance",
   "item.minecraft.lingering_potion.effect.ice_resistance": "Lingering Potion of Ice Resistance",

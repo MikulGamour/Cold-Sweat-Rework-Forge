@@ -53,6 +53,15 @@ public class ItemInit
     public static final RegistryObject<Item> GOAT_FUR_BOOTS = ITEMS.register("goat_fur_boots", () ->
             new GoatArmorItem(ModArmorMaterials.GOAT_FUR, ArmorItem.Type.BOOTS, new Item.Properties()));
 
+    public static final RegistryObject<Item> CHAMELEON_HELMET = ITEMS.register("chameleon_scale_helmet", () ->
+            new ChameleonArmorItem(ModArmorMaterials.CHAMELEON, ArmorItem.Type.HELMET, new Item.Properties()));
+    public static final RegistryObject<Item> CHAMELEON_CHESTPLATE = ITEMS.register("chameleon_scale_chestplate", () ->
+            new ChameleonArmorItem(ModArmorMaterials.CHAMELEON, ArmorItem.Type.CHESTPLATE, new Item.Properties()));
+    public static final RegistryObject<Item> CHAMELEON_LEGGINGS = ITEMS.register("chameleon_scale_leggings", () ->
+            new ChameleonArmorItem(ModArmorMaterials.CHAMELEON, ArmorItem.Type.LEGGINGS, new Item.Properties()));
+    public static final RegistryObject<Item> CHAMELEON_BOOTS = ITEMS.register("chameleon_scale_boots", () ->
+            new ChameleonArmorItem(ModArmorMaterials.CHAMELEON, ArmorItem.Type.BOOTS, new Item.Properties()));
+
     // Block Items
     public static final RegistryObject<BlockItem> BOILER = ITEMS.register("boiler", () -> new BlockItem(BlockInit.BOILER.get(), BoilerBlock.getItemProperties()));
     public static final RegistryObject<BlockItem> ICEBOX = ITEMS.register("icebox", () -> new BlockItem(BlockInit.ICEBOX.get(), IceboxBlock.getItemProperties()));

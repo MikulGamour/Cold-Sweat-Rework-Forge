@@ -3,7 +3,9 @@ package com.momosoftworks.coldsweat.api.insulation;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.momosoftworks.coldsweat.util.math.CSMath;
+import com.momosoftworks.coldsweat.util.serialization.NBTHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.item.ItemStack;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +32,32 @@ public class AdaptiveInsulation extends Insulation
         this.speed = speed;
     }
 
+    public static double calculateChange(AdaptiveInsulation insulation, double worldTemp, double minTemp, double maxTemp)
+    {
+        double factor = insulation.getFactor();
+        double adaptSpeed = insulation.getSpeed();
+
+        double newFactor;
+        if (CSMath.betweenInclusive(CSMath.blend(-1, 1, worldTemp, minTemp, maxTemp), -0.5, 0.5))
+        {   newFactor = CSMath.shrink(factor, adaptSpeed);
+        }
+        else
+        {   newFactor = CSMath.clamp(factor + CSMath.blend(-adaptSpeed, adaptSpeed, worldTemp, minTemp, maxTemp), -1, 1);
+        }
+        return newFactor;
+    }
+
+    public static double getFactorFromNBT(ItemStack stack)
+    {   return NBTHelper.getTagOrEmpty(stack).getDouble("InsulationAdaptation");
+    }
+    public static void setFactorFromNBT(AdaptiveInsulation insulation, ItemStack stack)
+    {
+        double storedFactor = getFactorFromNBT(stack);
+        if (storedFactor != 0)
+        {   insulation.setFactor(storedFactor);
+        }
+    }
+
     public double getInsulation()
     {   return insulation;
     }
@@ -46,12 +74,19 @@ public class AdaptiveInsulation extends Insulation
     {   return speed;
     }
 
+    @Override
     public double getCold()
     {   return CSMath.blend(insulation * 0.75, 0, factor, -1, 1);
     }
 
+    @Override
     public double getHeat()
     {   return CSMath.blend(0, insulation * 0.75, factor, -1, 1);
+    }
+
+    @Override
+    public <T extends Insulation> T copy()
+    {   return (T) new AdaptiveInsulation(insulation, factor, speed);
     }
 
     @Override
