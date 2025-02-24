@@ -32,21 +32,21 @@ public record PlayerDataRequirement(Optional<GameType> gameType, Optional<Map<St
                                     Optional<EntityRequirement> lookingAt) implements RequirementHolder
 {
     public static final Codec<PlayerDataRequirement> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            GameType.CODEC.optionalFieldOf("gameType").forGetter(requirement -> requirement.gameType),
+            GameType.CODEC.optionalFieldOf("game_mode").forGetter(requirement -> requirement.gameType),
             Codec.unboundedMap(StatRequirement.CODEC, IntegerBounds.CODEC).optionalFieldOf("stats").forGetter(requirement -> requirement.stats),
             Codec.unboundedMap(ResourceLocation.CODEC, Codec.BOOL).optionalFieldOf("recipes").forGetter(requirement -> requirement.recipes),
             Codec.unboundedMap(ResourceLocation.CODEC, Codec.either(AdvancementCompletionRequirement.CODEC, AdvancementCriteriaRequirement.CODEC)).optionalFieldOf("advancements").forGetter(requirement -> requirement.advancements),
-            EntityRequirement.getCodec().optionalFieldOf("lookingAt").forGetter(requirement -> requirement.lookingAt)
+            EntityRequirement.getCodec().optionalFieldOf("looking_at").forGetter(requirement -> requirement.lookingAt)
     ).apply(instance, PlayerDataRequirement::new));
 
     public static Codec<PlayerDataRequirement> getCodec(Codec<EntityRequirement> lastCodec)
     {
         return RecordCodecBuilder.create(instance -> instance.group(
-                GameType.CODEC.optionalFieldOf("gameType").forGetter(requirement -> requirement.gameType),
+                GameType.CODEC.optionalFieldOf("game_mode").forGetter(requirement -> requirement.gameType),
                 Codec.unboundedMap(StatRequirement.CODEC, IntegerBounds.CODEC).optionalFieldOf("stats").forGetter(requirement -> requirement.stats),
                 Codec.unboundedMap(ResourceLocation.CODEC, Codec.BOOL).optionalFieldOf("recipes").forGetter(requirement -> requirement.recipes),
                 Codec.unboundedMap(ResourceLocation.CODEC, Codec.either(AdvancementCompletionRequirement.CODEC, AdvancementCriteriaRequirement.CODEC)).optionalFieldOf("advancements").forGetter(requirement -> requirement.advancements),
-                lastCodec.optionalFieldOf("lookingAt").forGetter(requirement -> requirement.lookingAt)
+                lastCodec.optionalFieldOf("looking_at").forGetter(requirement -> requirement.lookingAt)
         ).apply(instance, PlayerDataRequirement::new));
     }
 

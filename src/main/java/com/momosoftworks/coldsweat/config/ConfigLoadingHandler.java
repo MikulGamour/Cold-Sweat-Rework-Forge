@@ -377,9 +377,6 @@ public class ConfigLoadingHandler
             insulator.data().items().ifPresent(itemList ->
             {   items.addAll(RegistryHelper.mapForgeRegistryTagList(ForgeRegistries.ITEMS, itemList));
             });
-            insulator.data().tag().ifPresent(tag ->
-            {   items.addAll(ForgeRegistries.ITEMS.tags().getTag(tag).stream().toList());
-            });
             if (items.isEmpty())
             {   items.add(null);
             }
@@ -415,9 +412,6 @@ public class ConfigLoadingHandler
             fuelData.data().items().ifPresent(itemList ->
             {   items.addAll(RegistryHelper.mapForgeRegistryTagList(ForgeRegistries.ITEMS, itemList));
             });
-            fuelData.data().tag().ifPresent(tag ->
-            {   items.addAll(ForgeRegistries.ITEMS.tags().getTag(tag).stream().toList());
-            });
             if (items.isEmpty())
             {   items.add(null);
             }
@@ -449,9 +443,6 @@ public class ConfigLoadingHandler
             foodData.data().items().ifPresent(itemList ->
             {   items.addAll(RegistryHelper.mapForgeRegistryTagList(ForgeRegistries.ITEMS, itemList));
             });
-            foodData.data().tag().ifPresent(tag ->
-            {   items.addAll(ForgeRegistries.ITEMS.tags().getTag(tag).stream().toList());
-            });
             if (items.isEmpty())
             {   items.add(null);
             }
@@ -476,9 +467,6 @@ public class ConfigLoadingHandler
             carryTempData.data().items().ifPresent(itemList ->
             {   items.addAll(RegistryHelper.mapForgeRegistryTagList(ForgeRegistries.ITEMS, itemList));
             });
-            carryTempData.data().tag().ifPresent(tag ->
-            {   items.addAll(ForgeRegistries.ITEMS.tags().getTag(tag).stream().toList());
-            });
             if (items.isEmpty())
             {   items.add(null);
             }
@@ -502,9 +490,6 @@ public class ConfigLoadingHandler
             List<Item> items = new ArrayList<>();
             dryingItemData.data().items().ifPresent(itemList ->
             {   items.addAll(RegistryHelper.mapForgeRegistryTagList(ForgeRegistries.ITEMS, itemList));
-            });
-            dryingItemData.data().tag().ifPresent(tag ->
-            {   items.addAll(ForgeRegistries.ITEMS.tags().getTag(tag).stream().toList());
             });
             if (items.isEmpty())
             {   items.add(null);

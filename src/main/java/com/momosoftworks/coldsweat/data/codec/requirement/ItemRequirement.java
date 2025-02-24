@@ -19,50 +19,43 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraftforge.registries.ForgeRegistries;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Predicate;
 
-public record ItemRequirement(Optional<List<Either<TagKey<Item>, Item>>> items, Optional<TagKey<Item>> tag,
+public record ItemRequirement(Optional<List<Either<TagKey<Item>, Item>>> items,
                               Optional<IntegerBounds> count, Optional<IntegerBounds> durability,
-                              Optional<List<EnchantmentRequirement>> enchantments, Optional<List<EnchantmentRequirement>> storedEnchantments,
+                              Optional<List<EnchantmentRequirement>> enchantments,
                               Optional<Potion> potion, NbtRequirement nbt, Optional<Predicate<ItemStack>> predicate)
 {
     public static final Codec<ItemRequirement> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             ConfigHelper.tagOrBuiltinCodec(Registries.ITEM, ForgeRegistries.ITEMS).listOf().optionalFieldOf("items").forGetter(predicate -> predicate.items),
-            TagKey.codec(Registries.ITEM).optionalFieldOf("tag").forGetter(predicate -> predicate.tag),
             IntegerBounds.CODEC.optionalFieldOf("count").forGetter(predicate -> predicate.count),
             IntegerBounds.CODEC.optionalFieldOf("durability").forGetter(predicate -> predicate.durability),
             EnchantmentRequirement.CODEC.listOf().optionalFieldOf("enchantments").forGetter(predicate -> predicate.enchantments),
-            EnchantmentRequirement.CODEC.listOf().optionalFieldOf("stored_enchantments").forGetter(predicate -> predicate.storedEnchantments),
             ForgeRegistries.POTIONS.getCodec().optionalFieldOf("potion").forGetter(predicate -> predicate.potion),
-            NbtRequirement.CODEC.optionalFieldOf("nbt", new NbtRequirement(new CompoundTag())).forGetter(predicate -> predicate.nbt)
+            NbtRequirement.CODEC.optionalFieldOf("nbt", new NbtRequirement()).forGetter(predicate -> predicate.nbt)
     ).apply(instance, ItemRequirement::new));
 
     public static final ItemRequirement NONE = new ItemRequirement(Optional.empty(), Optional.empty(), Optional.empty(),
-                                                                   Optional.empty(), Optional.empty(), Optional.empty(),
-                                                                   Optional.empty(), new NbtRequirement());
+                                                                   Optional.empty(), Optional.empty(), new NbtRequirement());
 
-    public ItemRequirement(Optional<List<Either<TagKey<Item>, Item>>> items, Optional<TagKey<Item>> tag,
+    public ItemRequirement(Optional<List<Either<TagKey<Item>, Item>>> items,
                            Optional<IntegerBounds> count, Optional<IntegerBounds> durability,
                            Optional<List<EnchantmentRequirement>> enchantments,
-                           Optional<List<EnchantmentRequirement>> storedEnchantments,
                            Optional<Potion> potion, NbtRequirement nbt)
     {
-        this(items, tag, count, durability, enchantments, storedEnchantments, potion, nbt, Optional.empty());
+        this(items, count, durability, enchantments, potion, nbt, Optional.empty());
     }
 
     public ItemRequirement(List<Either<TagKey<Item>, Item>> items, NbtRequirement nbt)
     {
-        this(Optional.of(items), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), nbt);
+        this(Optional.of(items), Optional.empty(), Optional.empty(), Optional.empty(), Optional.empty(), nbt);
     }
 
     public ItemRequirement(Collection<Item> items, @Nullable Predicate<ItemStack> predicate)
     {
-        this(Optional.of(items.stream().map(Either::<TagKey<Item>, Item>right).toList()), Optional.empty(), Optional.empty(), Optional.empty(),
-             Optional.empty(), Optional.empty(), Optional.empty(), new NbtRequirement(), Optional.ofNullable(predicate));
+        this(Optional.of(items.stream().map(Either::<TagKey<Item>, Item>right).toList()), Optional.empty(), Optional.empty(),
+             Optional.empty(), Optional.empty(), new NbtRequirement(), Optional.ofNullable(predicate));
     }
 
     public boolean test(ItemStack stack, boolean ignoreCount)
@@ -91,9 +84,6 @@ public record ItemRequirement(Optional<List<Either<TagKey<Item>, Item>>> items, 
         if (!this.nbt.test(stack.getTag()))
         {   return false;
         }
-        if (tag.isPresent() && !stack.is(tag.get()))
-        {   return false;
-        }
         if (!ignoreCount && count.isPresent() && !count.get().test(stack.getCount()))
         {   return false;
         }
@@ -109,18 +99,10 @@ public record ItemRequirement(Optional<List<Either<TagKey<Item>, Item>>> items, 
         else if (enchantments.isPresent())
         {
             Map<Enchantment, Integer> stackEnchantments = EnchantmentHelper.deserializeEnchantments(stack.getEnchantmentTags());
+            stackEnchantments.putAll(EnchantmentHelper.deserializeEnchantments(EnchantedBookItem.getEnchantments(stack)));
             for (EnchantmentRequirement enchantment : enchantments.get())
             {
                 if (!enchantment.test(stackEnchantments))
-                {   return false;
-                }
-            }
-        }
-        else if (storedEnchantments.isPresent())
-        {
-            Map<Enchantment, Integer> stackEnchantments = EnchantmentHelper.deserializeEnchantments(EnchantedBookItem.getEnchantments(stack));
-            for (EnchantmentRequirement enchantment : storedEnchantments.get())
-            {   if (!enchantment.test(stackEnchantments))
                 {   return false;
                 }
             }
@@ -140,9 +122,12 @@ public record ItemRequirement(Optional<List<Either<TagKey<Item>, Item>>> items, 
         if (obj == null || getClass() != obj.getClass()) return false;
 
         ItemRequirement that = (ItemRequirement) obj;
-        return items.equals(that.items) && tag.equals(that.tag) && count.equals(that.count)
-            && durability.equals(that.durability) && enchantments.equals(that.enchantments)
-            && storedEnchantments.equals(that.storedEnchantments) && potion.equals(that.potion)
-            && nbt.equals(that.nbt) && predicate.equals(that.predicate);
+        return items.equals(that.items)
+            && count.equals(that.count)
+            && durability.equals(that.durability)
+            && enchantments.equals(that.enchantments)
+            && potion.equals(that.potion)
+            && nbt.equals(that.nbt)
+            && predicate.equals(that.predicate);
     }
 }
