@@ -17,6 +17,7 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.state.pattern.BlockInWorld;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.HashSet;
 import java.util.List;
@@ -43,7 +44,7 @@ public class SpawnBiomeBuilderJS
             return this;
         }
         List<Either<TagKey<Biome>, Holder<Biome>>> biomesList = ConfigHelper.parseRegistryItems(Registries.BIOME, registryAccess, biomes);
-        this.biomes.addAll(RegistryHelper.mapRegistryTagList(Registries.BIOME, biomesList, registryAccess));
+        this.biomes.addAll(RegistryHelper.mapVanillaRegistryTagList(Registries.BIOME, biomesList, registryAccess));
         return this;
     }
 
@@ -68,7 +69,7 @@ public class SpawnBiomeBuilderJS
 
     public SpawnBiomeBuilderJS entities(String... entities)
     {
-        this.entities.addAll(RegistryHelper.mapBuiltinRegistryTagList(BuiltInRegistries.ENTITY_TYPE, ConfigHelper.getEntityTypes(entities)));
+        this.entities.addAll(RegistryHelper.mapForgeRegistryTagList(ForgeRegistries.ENTITY_TYPES, ConfigHelper.getEntityTypes(entities)));
         return this;
     }
 

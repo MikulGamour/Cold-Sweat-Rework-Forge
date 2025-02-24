@@ -32,7 +32,7 @@ public interface EntitySubRequirement
             "type",
             requirement -> {
                 Supplier<MapCodec<? extends EntitySubRequirement>> matchingSupplier = REQUIREMENT_MAP.values().stream()
-                        .filter(supplier -> supplier.get().equals(requirement.getCodec()))
+                        .filter(supplier -> supplier.get().equals(((EntitySubRequirement) requirement).getCodec()))
                         .findFirst()
                         .orElseThrow(() -> new IllegalStateException("Unknown requirement type: " + requirement.getClass()));
                 return REQUIREMENT_MAP.inverse().get(matchingSupplier);

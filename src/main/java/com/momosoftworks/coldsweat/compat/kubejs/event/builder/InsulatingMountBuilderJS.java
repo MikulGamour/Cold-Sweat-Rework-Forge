@@ -8,6 +8,7 @@ import com.momosoftworks.coldsweat.util.serialization.RegistryHelper;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -26,7 +27,7 @@ public class InsulatingMountBuilderJS
 
     public InsulatingMountBuilderJS entities(String... entities)
     {
-        this.entities.addAll(RegistryHelper.mapBuiltinRegistryTagList(BuiltInRegistries.ENTITY_TYPE, ConfigHelper.getEntityTypes(entities)));
+        this.entities.addAll(RegistryHelper.mapForgeRegistryTagList(ForgeRegistries.ENTITY_TYPES, ConfigHelper.getEntityTypes(entities)));
         return this;
     }
 
